@@ -369,6 +369,7 @@ window.promptSelectUnit = function(title, unitsToSelectFrom) {
         $('usm-title').innerText = title;
         const grid = $('usm-grid');
         grid.innerHTML = '';
+        
         unitsToSelectFrom.forEach(u => {
             const card = document.createElement('div');
             card.className = 'beast-card unlocked';
@@ -380,9 +381,26 @@ window.promptSelectUnit = function(title, unitsToSelectFrom) {
             card.onclick = () => { hide('unit-select-modal'); resolve(u); };
             grid.appendChild(card);
         });
+
+        // --- NOVO: BOTÃO DE CANCELAR ---
+        let oldCancel = $('btn-cancel-usm');
+        if(oldCancel) oldCancel.remove(); // Evita duplicar o botão se reabrir
+        
+        let cancelBtn = document.createElement('button');
+        cancelBtn.id = 'btn-cancel-usm';
+        cancelBtn.className = 'btn-danger';
+        cancelBtn.style.width = '100%';
+        cancelBtn.style.marginTop = '15px';
+        cancelBtn.innerText = '✕ Cancelar / Voltar';
+        cancelBtn.onclick = () => { hide('unit-select-modal'); resolve(null); };
+        
+        grid.parentElement.appendChild(cancelBtn);
+        // -------------------------------
+
         show('unit-select-modal');
     });
 };
+
 
 window.learnAbility = async function(u, newA) {
     if(u.abilities.includes(newA)){showMessage("Já possui essa habilidade!","#f39c12");return false;}
