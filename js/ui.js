@@ -1035,9 +1035,12 @@ function triggerStageEnd(win){
 }
 
 function advanceCampaign(){
-    game.isAnimating=false; const tb=$('turn-blocker'); if(tb) tb.style.display='none'; 
-    lastState=null; const undoBtn=$('btn-undo'); if(undoBtn) undoBtn.disabled=true;
-    game.isBossStage = false; 
+    game.isAnimating=false; 
+    const tb=$('turn-blocker'); 
+    if(tb) tb.style.display='none'; 
+    lastState=null; 
+    const undoBtn=$('btn-undo'); 
+    if(undoBtn) undoBtn.disabled=true;
     
     if(game.currentLevel > stats.maxLevel){
         stats.maxLevel=game.currentLevel;
@@ -1057,6 +1060,7 @@ function advanceCampaign(){
         autoSave();
     }, 50);
 }
+
 
 function startGame(load,isRoguelite=false,leaderId=null){
     hide('mode-screen');hide('main-menu');hide('result-screen');
