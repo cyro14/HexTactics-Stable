@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hex Tactics - Lendas Vivas</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#c9a227">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="game-container" class="hidden">
+    <canvas id="gameCanvas" class="layer"></canvas>
+    <div id="ui-layer" class="layer">
+        <div id="top-bar" class="panel">
+            <div class="turn-section">
+                <button id="btn-pause" class="btn-icon">⚙️</button>
+                <div>
+                    <div id="turn-badge">Turno: Jogador</div>
+                    <div id="gold-display">💰 <span id="ui-gold">0</span></div>
+                    <div id="mana-bar-container"></div>
+                    <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                        <button id="btn-grimoire" style="font-size: 9px; padding: 4px 8px; border-color: var(--tame-color); color: #e9d5ff; background: rgba(60,20,80,0.5); width: 100%;">📖 Grimório</button>
+                        <button id="btn-ingame-team" style="font-size: 9px; padding: 4px 8px; border-color: var(--success); color: #fff; background: rgba(20,60,20,0.5); width: 100%;">🎒 Mochila / Time</button>
+                    </div>
+                    
+                </div>
+            </div>
+            <div id="unit-info-container">
+                <div id="unit-stats-block">
+                    <div id="unit-name">—</div>
+                    <div id="unit-info"><div style="color:var(--text-dim);">Selecione um alvo</div></div>
+                </div>
+                <div id="unit-portrait"></div>
+            </div>
+        </div>
+        <div id="combat-log"></div>
+        <div id="spell-bar"></div>
+        <div id="action-bar" class="panel">
+            <button id="btn-undo" disabled><span class="gold-icon">&#x21BA;&#xFE0E;</span></button>
+            <button id="btn-tame" class="hidden">🪄 Domar</button>
+            <button id="btn-next-unit"><span class="gold-icon">&#x23ED;&#xFE0E;</span> Próx.</button>
+            <button id="btn-end-turn">⏳ Fim de Turno</button>
+        </div>
+    </div>
+    <div id="stage-indicator">FASE I</div>
+    <div id="turn-blocker"></div>
+</div>
+
+<div id="popup-layer" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:200;"></div>
+<div id="messages"></div>
+
+<div id="event-screen" class="layer screen hidden" style="z-index: 350; background: rgba(5,7,12,0.98);">
+    <div class="modal-card" style="max-width: 550px; width: 95%; background: linear-gradient(180deg, #10121a 0%, #060810 100%); border-color: var(--gold-dark);">
+        <div id="ev-icon" style="font-size: 70px; text-shadow: 0 0 20px var(--gold); margin-bottom: 10px;">❓</div>
+        <h1 id="ev-title" style="font-family:'Cinzel',serif;font-size:2.2rem;color:var(--gold);margin-top:0; border-bottom: 1px solid var(--gold-dark); padding-bottom: 10px;">Evento</h1>
+        <p id="ev-desc" style="color:#ccc;font-size:14px;line-height:1.6;margin-bottom:20px;text-align:justify;"></p>
+        <div id="ev-options" style="display:flex;flex-direction:column;gap:12px;"></div>
+    </div>
+</div>
+
+<div id="unit-select-modal" class="layer screen hidden" style="z-index: 900; background: rgba(0,0,0,0.95);">
+    <div class="modal-card" style="max-width: 650px; width: 95%; border-color: var(--gold-light);">
+        <h2 id="usm-title" style="color:var(--gold); font-family:'Cinzel',serif; margin-top:0;">Selecione a Unidade</h2>
+        <p id="usm-subtitle" style="color:#aaa; font-size:13px; margin-bottom: 15px;">Escolha quem receberá o efeito.</p>
+        <div id="usm-grid" class="bestiary-grid"></div>
+    </div>
+</div>
+
+<div id="spell-learn-modal" class="layer screen hidden">
+    <div class="spell-learn-card">
+        <h2 style="font-family:'Cinzel',serif;color:var(--gold);margin-top:0;">✨ Nova Magia Disponível!</h2>
+        <p id="slm-subtitle" style="color:#aaa;font-size:13px;margin-bottom:5px;"></p>
+        <p style="color:#888;font-size:11px;margin-bottom:15px;">Escolha uma magia para aprender (ou ignore):</p>
+        <div id="slm-options" class="spell-option-grid"></div>
+        <button id="btn-slm-skip" class="btn-danger" style="width:100%;margin-top:10px;">Ignorar (Não Aprender)</button>
+    </div>
+</div>
+
+<div id="grimoire-screen" class="layer screen hidden">
+    <h1 class="screen-title" style="font-size:2.2rem;">📖 Grimório</h1>
+    <p id="grimoire-subtitle" class="screen-subtitle"></p>
+    <div id="grimoire-mana-display" style="margin-top:10px;font-family:Cinzel,serif;font-size:13px;color:var(--gold-light);display:flex;gap:8px;flex-wrap:wrap;justify-content:center;"></div>
+    <div id="grimoire-grid" class="grimoire-grid"></div>
+    <button id="btn-close-grimoire">← Fechar</button>
+</div>
+
+<div id="ability-replace-modal" class="layer screen hidden" style="background:rgba(0,0,0,0.85);z-index:700;">
+    <div class="modal-card"><h2 style="font-family:'Cinzel',serif;color:var(--gold);margin-top:0;">Aprender Habilidade</h2><p id="arm-desc" style="color:#aaa;font-size:14px;margin-bottom:15px;"></p><div id="arm-options" style="display:flex;flex-direction:column;gap:10px;"></div><button id="btn-arm-cancel" class="btn-danger" style="width:100%;margin-top:15px;">Cancelar / Não Aprender</button></div>
+</div>
+
+<div id="item-popup" class="layer screen hidden" style="background:rgba(0,0,0,0.8);z-index:600;">
+    <div class="modal-card" style="border-color:var(--gold-light);background:linear-gradient(180deg,#1a1a24 0%,#0a0a14 100%);animation:popZelda 0.3s ease-out;">
+        <span id="item-popup-icon" style="font-size:80px;text-shadow:0 0 30px var(--gold);display:block;margin-bottom:10px;"></span>
+        <h2 id="item-popup-title" style="color:var(--gold-light);font-family:'Cinzel',serif;letter-spacing:2px;"></h2>
+        <p id="item-popup-desc" style="color:#ddd;font-size:16px;margin-bottom:20px;"></p>
+        <button id="btn-close-item-popup" class="btn-success" style="width:100%;font-size:14px;padding:12px;">Equipar</button>
+    </div>
+</div>
+
+<div id="main-menu" class="layer screen">
+    <h1 class="screen-title">HEX TACTICS</h1><p class="screen-subtitle">✦ Lendas Vivas ✦</p><div class="ornament"><div class="ornament-line"></div><div class="ornament-diamond"></div><div class="ornament-line"></div></div>
+    <div class="menu-box"><button id="btn-play" style="background:var(--success);color:#000;font-size:14px;padding:14px;">▶ JOGAR</button><button id="btn-open-reliquary" style="border-color:#9b59b6;">🏺 Relicário</button><button id="btn-open-bestiary" style="border-color:#3498db;">📖 Bestiário</button><button id="btn-open-help" style="border-color:#888;">❓ Como Jogar</button></div>
+</div>
+
+<div id="leader-selection" class="layer screen hidden">
+    <h1 class="screen-title" style="font-size:2.2rem;">Escolha seu Líder</h1>
+    <p class="screen-subtitle" style="margin-bottom:15px;">Sua estratégia começa aqui</p>
+    <div class="menu-box" id="leader-list" style="max-height:60vh;overflow-y:auto;padding-right:5px;"></div>
+    <button id="btn-close-leader" style="margin-top:15px;background:transparent;">← Voltar</button>
+</div>
+
+<div id="mode-screen" class="layer screen hidden">
+    <h1 class="screen-title" style="font-size:2.2rem;">Escolha seu Caminho</h1>
+    <div class="menu-box">
+        <button id="btn-campaign" style="border-color:var(--player-color);text-align:left;padding:12px;"><div style="font-size:14px;color:var(--player-color);">🛡️ MODO CAMPANHA</div><div style="font-size:10px;color:#aaa;margin-top:4px;text-transform:none;font-weight:normal;">Progressão com Save próprio. Morreu? Tente a fase novamente.</div></button>
+        <button id="btn-load-campaign" class="hidden btn-success">📜 Continuar Campanha</button>
+        <div style="height:1px;background:#333;margin:5px 0;"></div>
+        <button id="btn-roguelite" style="border-color:var(--enemy-color);text-align:left;padding:12px;"><div style="font-size:14px;color:var(--enemy-color);">☠️ MODO ROGUELITE</div><div style="font-size:10px;color:#aaa;margin-top:4px;text-transform:none;font-weight:normal;">Morte Permanente! Volta pra Fase 1 se perder, mas mantém Artefatos.</div></button>
+        <button id="btn-load-roguelite" class="hidden btn-success">📜 Continuar Roguelite</button>
+        <button id="btn-close-mode" style="margin-top:15px;background:transparent;">← Voltar</button>
+    </div>
+</div>
+
+<div id="help-screen" class="layer screen hidden">
+    <div class="modal-card" style="text-align:left;">
+        <h2 style="color:var(--gold);text-align:center;margin-top:0;font-family:'Cinzel',serif;">Guia Tático Básico</h2>
+        <ul style="color:#ccc;font-size:14px;line-height:1.6;padding-left:20px;">
+            <li style="margin-bottom:10px"><b>Objetivo Máximo:</b> Derrote o Líder inimigo para vencer a fase. Mas cuidado: se o seu Líder morrer, é Fim de Jogo!</li>
+            <li style="margin-bottom:10px"><b>Como ganhar Ouro:</b> Mova suas unidades para cima de Vilas (🏘️) para dominá-las e ganhar +2 💰. O Ouro serve para comprar itens e reviver tropas na Loja após a vitória.</li>
+            <li style="margin-bottom:10px"><b>Criando seu Exército:</b> Enfraqueça os monstros do mapa até ficarem com pouco HP. Depois, aproxime seu Líder e use a ação <b>🪄 Domar</b>! Não há limite de captura durante a fase, os extras vão para a Box.</li>
+            <li><b>Sistema de Magias:</b> Cada criatura no seu exército gera Mana pelo seu Tipo (Tag). Ao subir de nível, o Líder aprende magias do Grimório. Use-as pelo painel lateral durante seu turno!</li>
+        </ul>
+        <button id="btn-close-help" class="btn-success" style="width:100%;margin-top:20px;">Entendido</button>
+    </div>
+</div>
+
+<div id="shop-screen" class="layer screen hidden">
+    <h1 class="screen-title" style="font-size:2.5rem;">O Mercador</h1>
+    <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold-light);margin-bottom:10px;">Seu Ouro: 💰 <span id="shop-gold-display">0</span></div>
+    <div id="shop-grid" class="shop-grid"></div>
+    <div style="display:flex;gap:10px;margin-top:10px;justify-content:center;flex-wrap:wrap;"><button id="btn-refresh-shop" style="background:transparent;border-color:var(--warning);color:var(--warning);">🔄 Atualizar (-2💰)</button><button id="btn-leave-shop" class="btn-success" style="font-size:14px;padding:12px 30px;">Gerenciar Exército →</button></div>
+</div>
+
+<div id="management-screen" class="layer screen hidden">
+    <h1 class="screen-title" style="font-size:2.2rem;">Gerenciamento</h1>
+    <p class="screen-subtitle">Escale suas Lendas (Limite: <span id="mgmt-limit">0</span>)</p>
+    <div class="mgmt-container">
+        
+        <div class="mgmt-panel" style="flex:0.8; border-color:var(--gold);">
+            <div class="mgmt-header" style="color:var(--gold);">🎒 Mochila</div>
+            <div id="mgmt-inv-grid" class="mgmt-grid" style="grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));"></div>
+        </div>
+
+        <div class="mgmt-panel" style="flex:2;">
+            <div class="mgmt-header">📦 A Box (Reservas)</div>
+            <div id="mgmt-box-grid" class="mgmt-grid"></div>
+        </div>
+        <div class="mgmt-panel" style="flex:2;border-color:var(--tame-color);">
+            <div class="mgmt-header" style="color:var(--tame-color);">⚔️ Em Campo</div>
+            <div id="mgmt-deploy-grid" class="mgmt-grid"></div>
+        </div>
+        <div class="mgmt-panel" style="flex:1.5;border-color:var(--warning);">
+            <div class="mgmt-header" style="color:var(--warning);">🔗 Sinergias</div>
+            <div id="mgmt-synergy-list" class="syn-list"></div>
+        </div>
+    </div>
+    <button id="btn-start-stage" class="btn-success" style="margin-top:15px;font-size:14px;padding:12px 30px;">Avançar Combate →</button>
+    <button id="btn-close-team" class="btn-danger hidden" style="margin-top:15px;width:100%;">Voltar ao Menu</button>
+</div>
+
+<div id="route-map-screen" class="layer screen hidden" style="justify-content: flex-start; padding-top: 20px; background: rgba(5,7,12,0.98);">
+    <h1 class="screen-title" style="font-size: 2.2rem;">Mapa de Exploração</h1>
+    <p class="screen-subtitle" style="margin-bottom: 15px;">Escolha o próximo nó</p>
+    
+    <button id="btn-map-manage" class="btn-success" style="position: absolute; top: 15px; right: 15px; font-size: 10px; padding: 6px 12px;">🛡️ Exército</button>
+    
+    <div id="map-scroll-container" style="position: relative; width: 100%; max-width: 500px; height: 75vh; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column-reverse; margin-top: 10px; padding: 40px 0;">
+        <svg id="map-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
+        
+        <div id="map-nodes-container" style="position: relative; z-index: 2; width: 100%; display: flex; flex-direction: column-reverse; gap: 50px;"></div>
+    </div>
+</div>
+    
+<div id="bestiary-screen" class="layer screen hidden"><h1 class="screen-title" style="font-size:2.2rem;">Bestiário</h1><div id="bestiary-grid" class="bestiary-grid"></div><button id="btn-close-bestiary">← Fechar</button></div>
+
+<div id="reliquary-screen" class="layer screen hidden">
+    <h1 class="screen-title" style="font-size:2.2rem;color:#9b59b6;">Relicário</h1>
+    <p class="screen-subtitle" id="reliquary-subtitle">Artefatos Adquiridos</p>
+    <button id="btn-toggle-reliquary" style="margin-top:10px;border-color:var(--gold-light);color:var(--gold-light);background:transparent;">🔄 Ver Roguelite</button>
+    <div id="reliquary-grid" class="bestiary-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));"></div>
+    <button id="btn-close-reliquary">← Fechar</button>
+</div>
+
+<div id="unit-details-modal" class="layer screen hidden"><div class="modal-card"><span id="ud-icon" class="modal-icon"></span><h2 id="ud-name" style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold);margin:0 0 8px;"></h2><p id="ud-desc" style="color:#aaa;font-size:14px;line-height:1.5;margin-bottom:20px;"></p><button id="btn-close-details" class="btn-danger" style="width:100%;">✕ Fechar</button></div></div>
+
+<div id="beast-details-modal" class="layer screen hidden" style="background:rgba(0,0,0,0.85);z-index:800;">
+    <div class="modal-card" style="max-width:480px;width:95%;">
+        <h2 style="font-family:'Cinzel',serif;color:var(--gold);margin-top:0;">Detalhes da Unidade</h2>
+        <div id="bd-evos" style="display:flex;justify-content:center;align-items:center;gap:10px;margin:20px 0;"></div>
+        <div style="height:1px;background:linear-gradient(90deg,transparent,var(--gold-dark),transparent);margin:15px 0;"></div>
+        <h3 style="color:var(--text-muted);font-size:13px;font-family:'Cinzel',serif;margin-bottom:10px;">Comportamento em Terrenos</h3>
+        <div id="bd-terrains" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;"></div>
+        <button id="btn-close-beast-details" class="btn-success" style="width:100%;margin-top:20px;">Retornar</button>
+    </div>
+</div>
+
+<div id="evo-modal" class="layer screen hidden"><div class="modal-card" style="max-width:400px;"><h2 style="font-family:'Cinzel',serif;color:var(--gold);margin-top:0;">Linha Evolutiva</h2><div id="evo-container" class="evo-row"></div><button id="btn-close-evo" class="btn-danger" style="width:100%;">✕ Fechar</button></div></div>
+
+<div id="pause-menu" class="layer screen hidden">
+    <div class="modal-card">
+        <h2 class="screen-title" style="font-size:1.6rem;margin-bottom:20px;">Pausado</h2>
+        <div class="menu-box" style="margin:0 auto;">
+            <button id="btn-resume" class="btn-success">▶ Retornar</button>
+            <div style="display:flex;gap:10px;">
+                <button id="btn-open-bestiary-pause" style="flex:1;border-color:#3498db;">📖 Bestiário</button>
+                <button id="btn-open-reliquary-pause" style="flex:1;border-color:#9b59b6;">🏺 Relicário</button>
+            </div>
+            <button id="btn-team-pause" style="border-color:var(--success);">🛡️ Ver Time</button>
+            <button id="btn-help-pause" style="border-color:#888;">❓ Guia Tático</button>
+            <button id="btn-save" style="border-color:#3498db;">💾 Salvar e Sair</button>
+            <button id="btn-quit" class="btn-danger">✕ Abandonar Partida</button>
+        </div>
+    </div>
+</div>
+
+<div id="result-screen" class="layer screen hidden"><div class="modal-card"><h1 id="rs-title" style="font-family:'Cinzel',serif;font-size:2.5rem;margin:0 0 8px;">...</h1><p id="rs-desc" style="color:var(--text-muted);font-size:15px;margin-bottom:20px;">...</p><div id="rs-menu-win" class="hidden menu-box" style="margin:0 auto;"><button id="btn-go-shop" class="btn-success">💰 Visitar Mercador →</button></div><div id="rs-menu-lose" class="hidden menu-box" style="margin:0 auto;"><button id="btn-retry" class="btn-danger">↺ Tentar Novamente</button><button id="btn-menu-from-lose" style="background:transparent;margin-top:10px;">← Menu Principal</button></div></div></div>
+
+<script src="js/data.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('SW ativo', reg))
+                .catch(err => console.log('SW erro', err));
+        });
+    }
+</script>
+</body>
+</html>
