@@ -456,8 +456,7 @@ window.showBeastDetails = function(b,bypassUnlock=false){
 
 function updateUI(){
     const goldDisplay = $('ui-gold'); 
-    // NOVO: MOSTRAMOS O OURO E O DNA NA BARRA!
-    if(goldDisplay && game) goldDisplay.innerHTML = `${game.gold} 💰 &nbsp; | &nbsp; ${game.dna || 0} 🧬`; 
+    if(goldDisplay && game) goldDisplay.innerHTML = `${game.gold} &nbsp; | &nbsp; ${game.dna || 0} 🧬`; 
 
     updateManaUI();
     if(game && game.selectedUnit){
@@ -845,6 +844,7 @@ function generateRouteMap() {
     const map = [];
     const numFloors = 8; 
     
+    // 1. Geração inicial com base nas probabilidades normais
     for(let i = 0; i < numFloors; i++) {
         let numNodes = (i === numFloors - 1) ? 1 : 3;
         let floor = [];
@@ -858,11 +858,11 @@ function generateRouteMap() {
                     type = Math.random() < 0.8 ? 'BATTLE' : 'ELITE';
                 } else {
                     let r = Math.random();
-                    if(r < 0.35) type = 'BATTLE';
-                    else if(r < 0.55) type = 'EVENT';
-                    else if(r < 0.70) type = 'ELITE';
-                    else if(r < 0.85) type = 'SHOP';
-                    else type = 'LAB'; // NOVO: Laboratório foi adicionado à chance (15%)!
+                    if(r < 0.25) type = 'BATTLE';      
+                    else if(r < 0.45) type = 'EVENT';  
+                    else if(r < 0.60) type = 'ELITE';  
+                    else if(r < 0.80) type = 'SHOP';   
+                    else type = 'LAB';                 
                 }
             }
             floor.push({ id: `f${i}_n${j}`, floor: i, pos: j, type: type, next: [], status: i===0 ? 'reachable' : 'locked' });
@@ -870,6 +870,31 @@ function generateRouteMap() {
         map.push(floor);
     }
     
+    // --- NOVA TRAVA DE SEGURANÇA: MÍNIMO 3 MERCADORES E 3 LABORATÓRIOS (UM POR ROTA) ---
+    const validFloors = [1, 2, 3, 5, 6]; // Apenas andares com geração aleatória livre
+
+    for (let j = 0; j < 3; j++) {
+        // Garante pelo menos um Mercador (SHOP) na rota/coluna j
+        let hasShop = map.some(floor => floor[j] && floor[j].type === 'SHOP' && validFloors.includes(floor[j].floor));
+        if (!hasShop) {
+            let targetFloor = validFloors[Math.floor(Math.random() * validFloors.length)];
+            map[targetFloor][j].type = 'SHOP';
+        }
+
+        // Garante pelo menos um Laboratório (LAB) na rota/coluna j
+        let hasLab = map.some(floor => floor[j] && floor[j].type === 'LAB' && validFloors.includes(floor[j].floor));
+        if (!hasLab) {
+            // Filtra os andares para não sobrescrever o Mercador que acabou de ser travado ou já existia
+            let availableFloors = validFloors.filter(f => map[f][j].type !== 'SHOP');
+            if (availableFloors.length > 0) {
+                let targetFloor = availableFloors[Math.floor(Math.random() * availableFloors.length)];
+                map[targetFloor][j].type = 'LAB';
+            }
+        }
+    }
+    // ----------------------------------------------------------------------------------
+
+    // 2. Criação das conexões de caminhos (Mantém o seu loop original intacto)
     for(let i = 0; i < numFloors - 1; i++) {
         let currentFloor = map[i];
         let nextFloor = map[i+1];
@@ -886,6 +911,7 @@ function generateRouteMap() {
     game.routeMap = map;
     game.currentFloor = -1;
 }
+
 
 function renderRouteMap() {
     const container = $('map-nodes-container');
