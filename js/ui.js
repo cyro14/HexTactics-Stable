@@ -46,6 +46,8 @@ function autoSave() {
     if(game && !game.gameOver) {
         const sk = game.isRoguelite ? 'ht_save_rogue' : 'ht_save_camp';
         const sv = {
+            resources: game.resources,
+            kingdomMap: Array.from(game.kingdomMap.entries()),
             level: game.currentLevel, cols: game.cols, rows: game.rows, gold: game.gold,
             dna: game.dna || 0, // NOVO: Salva o DNA
             isRoguelite: game.isRoguelite, hasKey: game.hasKey, hasEgg: game.hasEgg,
@@ -1119,8 +1121,10 @@ function startGame(load,isRoguelite=false,leaderId=null){
     
     if(load){
         const d=JSON.parse(localStorage.getItem(sk));
+        game.resources = d.resources || { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
+        game.kingdomMap = new Map(d.kingdomMap || []);
         game.currentLevel=d.level;game.cols=d.cols;game.rows=d.rows;game.gold=d.gold||0;
-        game.dna=d.dna||0; // CARREGA O DNA
+        game.dna=d.dna||0;
         game.isRoguelite=d.isRoguelite||false;
         game.routeMap = d.routeMap; game.currentFloor = d.currentFloor; game.inventory = d.inventory || [];
         game.isBossStage = d.isBossStage || false; game.currentRouteType = d.currentRouteType || 'BATTLE';
@@ -1139,6 +1143,8 @@ function startGame(load,isRoguelite=false,leaderId=null){
     } else {
         if(localStorage.getItem(sk))localStorage.removeItem(sk);
         game.currentLevel=1;game.gold=0;game.dna=0;game.isRoguelite=isRoguelite;rosterMemory=[];deployedRoster=[]; game.inventory=[];
+        game.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
+        game.kingdomMap = new Map();
         if(leaderId)game.leaderData=LEADERS.find(l=>l.id===leaderId)||LEADERS[0];
         
         generateRouteMap();

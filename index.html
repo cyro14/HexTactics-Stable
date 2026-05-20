@@ -143,6 +143,27 @@
     <div style="display:flex;gap:10px;margin-top:10px;justify-content:center;flex-wrap:wrap;"><button id="btn-refresh-shop" style="background:transparent;border-color:var(--warning);color:var(--warning);">🔄 Atualizar (-2💰)</button><button id="btn-leave-shop" class="btn-success" style="font-size:14px;padding:12px 30px;">Gerenciar Exército →</button></div>
 </div>
 
+<div id="kingdom-screen" class="layer screen hidden" style="background: rgba(10,12,18,0.98);">
+    <h1 class="screen-title" style="font-size: 2.5rem; color: var(--gold);">O Seu Reino</h1>
+    
+    <div id="kingdom-resources" style="display:flex; gap:15px; justify-content:center; color:#ddd; margin-bottom:10px; font-family:Cinzel,serif; font-size: 14px;">
+        <span title="Madeira">🌲 <span id="res-wood">0</span></span> 
+        <span title="Pedra">⛰️ <span id="res-stone">0</span></span> 
+        <span title="Escamas">🐟 <span id="res-scales">0</span></span> 
+        <span title="Areia">⏳ <span id="res-sand">0</span></span>
+        <span title="Cristal de Sangue">🩸 <span id="res-blood">0</span></span>
+    </div>
+
+    <div id="kingdom-grid-container" style="position: relative; width: 100%; max-width: 600px; height: 50vh; margin: 0 auto; border: 1px solid var(--gold-dark); background: #050508;">
+        <canvas id="kingdomCanvas"></canvas>
+    </div>
+
+    <div id="building-menu" class="menu-box" style="display:flex; gap:10px; overflow-x:auto; padding:10px; margin-top:10px; max-width: 600px;">
+        </div>
+    
+    <button id="btn-leave-kingdom" class="btn-success" style="margin-top:15px;">Avançar para o Mapa →</button>
+</div>
+
 <div id="management-screen" class="layer screen hidden">
     <h1 class="screen-title" style="font-size:2.2rem;">Gerenciamento</h1>
     <p class="screen-subtitle">Escale suas Lendas (Limite: <span id="mgmt-limit">0</span>)</p>

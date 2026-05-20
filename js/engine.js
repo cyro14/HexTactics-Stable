@@ -133,11 +133,13 @@ class Game {
         this.reachableHexes = new Map(); this.tameMode = false; this.gameOver = false;
         this.isAnimating = false; this.cols = 13; this.rows = 9;
         this.gold = 0; 
-        this.dna = 0; // NOVA MOEDA: DNA!
+        this.dna = 0;
         this.isRoguelite = false; this.hasKey = false; this.hasEgg = false;
         this.leaderData = typeof LEADERS !== 'undefined' ? LEADERS[0] : {};
         this.activeSynergies = {}; this.manaPool = {}; this.spentMana = {};
         this.spellCooldowns = {}; this.activeSpell = null; this.lastDeadAlly = null; this.turnCount = 0;
+        this.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
+        this.kingdomMap = new Map();
     }
 
     getNearestEnemy(unit, maxRange) { return this.units.filter(u => u.faction !== unit.faction && u.hp > 0 && Hex.distance(unit, u) <= maxRange).sort((a, b) => Hex.distance(unit, a) - Hex.distance(unit, b))[0] || null; }
@@ -415,6 +417,15 @@ class Game {
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true;
 
         if (this.currentTurn === 1) {
+            this.units.filter(u => u.faction === 1).forEach(u => {
+                const hex = this.map.get(`${u.q},${u.r}`);
+                if (hex) {
+                    if (hex.terrain.id === 'FOREST') this.resources.wood = (this.resources.wood || 0) + 1;
+                    if (hex.terrain.id === 'MOUNTAIN') this.resources.stone = (this.resources.stone || 0) + 1;
+                    if (hex.terrain.id === 'WATER') this.resources.scales = (this.resources.scales || 0) + 1;
+                    if (hex.terrain.id === 'DESERT') this.resources.sand = (this.resources.sand || 0) + 1;
+                }
+            });
             this.units.filter(u => u.faction === 1).forEach(u => { if (u.status === 'shielded') u.status = null; });
             this.units.forEach(u => { if (u._mcDuration !== undefined) { u._mcDuration--; if (u._mcDuration <= 0) { u.faction = u._origFaction; delete u._origFaction; delete u._mcDuration; if (typeof showPopup === 'function') showPopup("Controle Perdido!", u, '#9b59b6'); } } });
             this.currentTurn = 2; const tb = document.getElementById('turn-blocker'); if (tb) tb.style.display = 'block'; this.updateTurnUI("Turno: Inimigo", 'var(--enemy-color)'); this.processStatus(2);
