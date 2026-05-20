@@ -624,20 +624,24 @@ class KingdomRenderer {
         this.game.kingdomMap.forEach(hex => {
             const p = this.getPos(hex.q, hex.r);
             
+            // GARANTIA DE TERRENO: Se o save transformou o objeto em string, recupera do data.js
+            const terrainData = typeof hex.terrain === 'string' ? TERRAINS[hex.terrain] : hex.terrain;
+            if(!terrainData) return; // Evita crash se o terreno for inválido
+
             // Desenha o Terreno
             this.hexPath(ctx, p.x, p.y, this.hexSize - 1);
-            ctx.fillStyle = hex.terrain.color;
+            ctx.fillStyle = terrainData.color || '#333';
             ctx.fill();
             ctx.strokeStyle = 'rgba(0,0,0,0.6)';
             ctx.lineWidth = 1;
             ctx.stroke();
 
             // Ícone do Terreno (Fosco no fundo)
-            if (hex.terrain.icon) {
+            if (terrainData.icon) {
                 ctx.font = `${this.hexSize * 0.5}px Arial`;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillStyle = 'rgba(255,255,255,0.3)';
-                ctx.fillText(hex.terrain.icon, p.x, p.y);
+                ctx.fillText(terrainData.icon, p.x, p.y);
             }
 
             // Desenha a Construção (Se houver)
