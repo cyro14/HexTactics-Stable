@@ -177,6 +177,21 @@ document.addEventListener("DOMContentLoaded",()=>{
     $('btn-load-campaign').addEventListener('click',()=>{startGame(true,false);});
     $('btn-load-roguelite').addEventListener('click',()=>{startGame(true,true);});
 
+    $('btn-toggle-build').addEventListener('click', () => {
+        const menu = $('building-menu');
+        if (menu.classList.contains('hidden')) {
+            menu.classList.remove('hidden');
+            renderBuildingMenu();
+        } else {
+            menu.classList.add('hidden');
+        }
+    });
+
+    $('btn-leave-kingdom').addEventListener('click', () => {
+        hide('kingdom-screen');
+        renderRouteMap(); // Sai do reino e volta para escolher a próxima rota
+    });
+    
     $('btn-retry').addEventListener('click',()=>{
         if(game.isRoguelite){if(confirm("Iniciar Nova Run? Seu Ouro e Exército serão perdidos!")){localStorage.removeItem('ht_save_rogue');openLeaderSelection(true);}}
         else{$('result-screen').classList.add('hidden');$('game-container').classList.remove('hidden');$('turn-blocker').style.display='none';const r=deployedRoster.map(m=>new Unit({...m,q:0,r:0,hasAttacked:false,status:null,isNew:false}));game.generateCampaignMap(r);renderer.initCamera(true);updateUI();}

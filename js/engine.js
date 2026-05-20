@@ -142,6 +142,29 @@ class Game {
         this.kingdomMap = new Map();
     }
 
+    generateKingdomMap() {
+        this.kingdomMap = new Map();
+        // Usa o tamanho base de um mapa inicial
+        const kCols = 13, kRows = 9; 
+        
+        for (let r = 0; r < kRows; r++) { 
+            const off = Math.floor(r / 2); 
+            for (let q = -off; q < kCols - off; q++) { 
+                const rnd = Math.random(); 
+                let t = TERRAINS.PLAINS; 
+                
+                // Distribuição de terrenos igual a do jogo, mas sem Vilas e Castelos
+                if (rnd > 0.90) t = TERRAINS.MOUNTAIN; 
+                else if (rnd > 0.80) t = TERRAINS.SNOW; 
+                else if (rnd > 0.65) t = TERRAINS.WATER; 
+                else if (rnd > 0.50) t = TERRAINS.FOREST; 
+                else if (rnd > 0.35) t = TERRAINS.DESERT; 
+                
+                this.kingdomMap.set(`${q},${r}`, { q: q, r: r, terrain: t, building: null }); 
+            } 
+        }
+    }
+
     getNearestEnemy(unit, maxRange) { return this.units.filter(u => u.faction !== unit.faction && u.hp > 0 && Hex.distance(unit, u) <= maxRange).sort((a, b) => Hex.distance(unit, a) - Hex.distance(unit, b))[0] || null; }
     getUnitLvl(b) { if (b.isBoss) return this.currentLevel; let isS = b.hp >= 50 || b.atk >= 12; return Math.max(1, this.currentLevel - (isS ? 1 : 2)); }
     getSynergies(factionId) { return typeof calculateSynergies === 'function' ? calculateSynergies(this.units.filter(u => u.faction === factionId)) : {}; }
@@ -417,13 +440,20 @@ class Game {
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true;
 
         if (this.currentTurn === 1) {
+            if (!this.resources) this.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
             this.units.filter(u => u.faction === 1).forEach(u => {
                 const hex = this.map.get(`${u.q},${u.r}`);
                 if (hex) {
-                    if (hex.terrain.id === 'FOREST') this.resources.wood = (this.resources.wood || 0) + 1;
-                    if (hex.terrain.id === 'MOUNTAIN') this.resources.stone = (this.resources.stone || 0) + 1;
-                    if (hex.terrain.id === 'WATER') this.resources.scales = (this.resources.scales || 0) + 1;
-                    if (hex.terrain.id === 'DESERT') this.resources.sand = (this.resources.sand || 0) + 1;
+                    let resGained = null, icon = '', color = '';
+
+                    if (hex.terrain.id === 'FOREST') { this.resources.wood++; resGained = '+1 Madeira'; icon = '🌲'; color = '#27ae60'; }
+                    else if (hex.terrain.id === 'MOUNTAIN') { this.resources.stone++; resGained = '+1 Pedra'; icon = '⛰️'; color = '#95a5a6'; }
+                    else if (hex.terrain.id === 'WATER') { this.resources.scales++; resGained = '+1 Escama'; icon = '🐟'; color = '#3498db'; }
+                    else if (hex.terrain.id === 'DESERT') { this.resources.sand++; resGained = '+1 Areia'; icon = '⏳'; color = '#f1c40f'; }
+                    
+                    if (resGained && typeof showPopup === 'function') {
+                        showPopup(`${icon} ${resGained}`, u, color);
+                    }
                 }
             });
             this.units.filter(u => u.faction === 1).forEach(u => { if (u.status === 'shielded') u.status = null; });
@@ -533,6 +563,106 @@ class Renderer {
             
             let starIcon = u.starLevel === 2 ? '🥉' : u.starLevel === 3 ? '🥈' : u.starLevel >= 4 ? '🌟' : '';
             if (u.level > 1 || starIcon) { ctx.font = 'bold 10px Cinzel,serif'; ctx.fillStyle = '#c9a227'; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.fillText(`Lv${u.level}${starIcon}`, p.x + hw / 2 + 12, barY + 5); }
+        });
+    }
+}
+
+class KingdomRenderer {
+    constructor(canvas, game) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.game = game;
+        this.hexSize = 45;
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.selectedHex = null;
+        window.addEventListener('resize', () => this.initCamera());
+    }
+    
+    initCamera() {
+        // Ajusta o canvas para o tamanho do container
+        const container = this.canvas.parentElement;
+        this.canvas.width = container.clientWidth;
+        this.canvas.height = container.clientHeight;
+        
+        const mapW = 13 * Math.sqrt(3);
+        const mapH = 9 * 1.5 + 0.5;
+        this.hexSize = Math.max(Math.min(this.canvas.width / mapW, this.canvas.height / mapH) * 0.85, 30);
+        
+        this.offsetX = this.canvas.width / 2;
+        this.offsetY = this.canvas.height / 2;
+        this.draw();
+    }
+
+    getPosUnscaled(q, r) { return { x: this.hexSize * Math.sqrt(3) * (q + r / 2), y: this.hexSize * 1.5 * r }; }
+    
+    getPos(q, r) { 
+        const u = this.getPosUnscaled(q, r); 
+        // Centraliza o grid fixo de 13x9
+        return { 
+            x: u.x + this.offsetX - (6 * this.hexSize * Math.sqrt(3)), 
+            y: u.y + this.offsetY - (4 * this.hexSize * 1.5) 
+        }; 
+    }
+
+    hexPath(ctx, cx, cy, size) {
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const a = (Math.PI / 180) * (60 * i - 30);
+            const px = cx + size * Math.cos(a);
+            const py = cy + size * Math.sin(a);
+            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+    }
+
+    draw() {
+        const ctx = this.ctx;
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        if(!this.game || !this.game.kingdomMap) return;
+
+        this.game.kingdomMap.forEach(hex => {
+            const p = this.getPos(hex.q, hex.r);
+            
+            // GARANTIA DE TERRENO: Se o save transformou o objeto em string, recupera do data.js
+            const terrainData = typeof hex.terrain === 'string' ? TERRAINS[hex.terrain] : hex.terrain;
+            if(!terrainData) return; // Evita crash se o terreno for inválido
+
+            // Desenha o Terreno
+            this.hexPath(ctx, p.x, p.y, this.hexSize - 1);
+            ctx.fillStyle = terrainData.color || '#333';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Ícone do Terreno (Fosco no fundo)
+            if (terrainData.icon) {
+                ctx.font = `${this.hexSize * 0.5}px Arial`;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.fillText(terrainData.icon, p.x, p.y);
+            }
+
+            // Desenha a Construção (Se houver)
+            if (hex.building) {
+                const b = BUILDINGS[hex.building];
+                if(b) {
+                    ctx.font = `${this.hexSize * 0.9}px Arial`;
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText(b.icon, p.x, p.y + 5);
+                }
+            }
+
+            // Hexágono Selecionado
+            if (this.selectedHex === hex) {
+                this.hexPath(ctx, p.x, p.y, this.hexSize - 1);
+                ctx.strokeStyle = '#f1c40f'; // Dourado
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(241, 196, 15, 0.2)';
+                ctx.fill();
+            }
         });
     }
 }
