@@ -3,6 +3,21 @@
 // ==========================================
 let selectedInventoryIndex = null; 
 
+window.countKingdomBuildings = function(buildingId) {
+    if (!game || !game.kingdomMap) return 0;
+    let count = 0;
+    game.kingdomMap.forEach(h => { if (h.building === buildingId) count++; });
+    return count;
+};
+
+window.getMaxBoxLimit = function() {
+    if (!game || !game.leaderData) return 6;
+    let base = game.leaderData.limit || 6;
+    if (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) base += 1;
+    base += (window.countKingdomBuildings('TOWN') * 2); // Bônus da Vila
+    return base;
+};
+
 function saveSnapshot(){
     lastState = {
         u: game.units.map(u => new Unit({...u})),
@@ -508,7 +523,21 @@ function generateShopItems(){
     shopItems.push({ name:"Poção de Exército", icon:"🧪", desc:"Cura 30 HP de todos.", cost:4, rarity:'common', color:'var(--rarity-common)', type:'consumable', filter:'none', action: async () => { rosterMemory.forEach(u=>u.hp=Math.min(u.maxHp,u.hp+30)); deployedRoster.forEach(u=>u.hp=Math.min(u.maxHp,u.hp+30)); return true; } });
     
     shopItems.push({ name:`Contrato: ${bName}`, icon:rB.e, desc:`Adiciona fera Lv${bLvl} à Box.`, cost:10 + (bLvl*2), rarity:'uncommon', color:'var(--rarity-uncommon)', type:'consumable', filter:rB.filter||'none', action: async () => { let newAbilities = [...rB.abilities]; if(game && game.leaderData.name === 'Piromante' && !newAbilities.includes('burn')) { newAbilities.push('burn'); } rosterMemory.push(new Unit({q:0,r:0,faction:1,isLeader:false,name:bName,baseName:rB.name,emoji:rB.e,hp:bHp,maxHp:bHp,mp:rB.mp,maxMp:rB.mp,atk:bAtk,range:rB.range,level:bLvl,abilities:newAbilities,isNew:true,filter:rB.filter,tags:rB.tags||[],fav:rB.fav||[]})); return true; } });
-    
+    // Bônus do Estábulo
+    if (typeof countKingdomBuildings === 'function' && window.countKingdomBuildings('STABLE') > 0) {
+        let horse = BEASTS.LAND.find(b => b.name === 'Cavalo');
+        if (horse) {
+            shopItems.push({ 
+                name:`Contrato: Cavalo (Estábulo)`, icon:horse.e, desc:`Adiciona um Cavalo Nv1 à Box.`, 
+                cost:10, rarity:'uncommon', color:'var(--rarity-uncommon)', type:'consumable', filter:'none', 
+                action: async () => { 
+                    let u = new Unit({q:0,r:0,faction:1,isLeader:false,name:horse.name,baseName:horse.name,emoji:horse.e,hp:horse.hp,maxHp:horse.hp,mp:horse.mp,maxMp:horse.mp,atk:horse.atk,range:horse.range,level:1,abilities:[...horse.abilities],isNew:true,filter:horse.filter,tags:horse.tags||[],fav:horse.fav||[]});
+                    rosterMemory.push(u); return true; 
+                } 
+            });
+        }
+    }
+
     let aA=ARTIFACTS.filter(a=>!arts.includes(a.id) && a.id !== 'art_omega').sort(()=>Math.random()-0.5);
     for(let i=0;i<1;i++){ 
         if(aA[i]){ 
@@ -547,7 +576,8 @@ function renderManagement(mode = 'prep'){
     let isBattle = (mode === 'battle');
     let readOnly = (mode === 'readonly');
     
-    let arts=getActiveArtifacts(); let maxLimit=game.leaderData.limit+(arts.includes('art_crown')?1:0);
+    let arts=getActiveArtifacts(); 
+    let maxLimit = window.getMaxBoxLimit();
     $('mgmt-limit').innerText=`${deployedRoster.filter(u=>!u.isLeader).length}/${maxLimit}`;
     
     const invGrid = $('mgmt-inv-grid');
@@ -1029,6 +1059,22 @@ async function activateNode(node) {
 function triggerStageEnd(win){
     show('result-screen');hide('rs-menu-win');hide('rs-menu-lose');
     if(win){
+        if (typeof countKingdomBuildings === 'function' && game.kingdomMap) {
+            let pWood = window.countKingdomBuildings('LUMBERMILL') * 3;
+            let pStone = window.countKingdomBuildings('MINE') * 3;
+            let pScales = window.countKingdomBuildings('FISHINGCAMP') * 3;
+            let pSand = window.countKingdomBuildings('SANDPIT') * 3;
+            let pGold = window.countKingdomBuildings('MINE') * 10;
+
+            if (!game.resources) game.resources = { wood:0, stone:0, scales:0, sand:0, blood:0 };
+            game.resources.wood += pWood; game.resources.stone += pStone;
+            game.resources.scales += pScales; game.resources.sand += pSand;
+            game.gold += pGold;
+            
+            if (pWood || pStone || pScales || pSand || pGold) {
+                setTimeout(() => showMessage(`Reino gerou: ${pWood}🌲 ${pStone}⛰️ ${pScales}🐟 ${pSand}⏳ ${pGold}💰`, '#2ecc71'), 1500);
+            }
+        }
         if(game.pendingDrop) {
             if(typeof window.giveRandomArtifact === 'function') window.giveRandomArtifact(game.pendingDrop);
             game.pendingDrop = null;
@@ -1194,37 +1240,53 @@ function updateKingdomResources() {
 function renderBuildingMenu() {
     const menu = $('building-menu');
     menu.innerHTML = '';
+    const hex = kRenderer.selectedHex;
     
+    if (!hex) { menu.innerHTML = '<div style="color:#aaa; padding:10px;">Selecione um hexágono no mapa para construir.</div>'; return; }
+    if (hex.building) { menu.innerHTML = `<div style="color:var(--warning); padding:10px; font-weight:bold;">Já existe uma construção aqui: ${BUILDINGS[hex.building].name}</div>`; return; }
+
+    let hasOptions = false;
     Object.values(BUILDINGS).forEach(b => {
-        let canAfford = true;
-        let costHtml = [];
-        for (let res in b.cost) {
-            let myAmt = game.resources[res] || 0;
-            if (myAmt < b.cost[res]) canAfford = false;
-            let icon = res==='wood'?'🌲':res==='stone'?'⛰️':res==='scales'?'🐟':res==='sand'?'⏳':'🩸';
-            costHtml.push(`${icon} ${b.cost[res]}`);
-        }
-        
+        // REGRA DE TERRENO RÍGIDA
+        if (!b.terrains.includes(hex.terrain.id)) return; 
+
+        hasOptions = true;
+        const canAfford = Object.entries(b.cost).every(([res, amt]) => (game.resources[res] || 0) >= amt);
         const btn = document.createElement('button');
-        btn.className = `shop-card`;
-        btn.style.minWidth = '160px';
-        btn.style.borderColor = canAfford ? (selectedBuilding === b.id ? 'var(--success)' : 'var(--gold)') : '#555';
-        btn.style.opacity = canAfford ? '1' : '0.5';
+        btn.style.cssText = `display:flex; flex-direction:column; align-items:center; min-width:140px; background:rgba(20,20,30,0.8); border:1px solid ${canAfford ? 'var(--success)' : '#555'}; padding:10px; border-radius:8px; cursor:${canAfford ? 'pointer' : 'not-allowed'};`;
         
-        btn.innerHTML = `
-            <div style="font-size:24px;">${b.icon}</div>
-            <div style="color:var(--gold-light); font-family:Cinzel,serif; font-size:12px;">${b.name}</div>
-            <div style="font-size:9px; color:#aaa; margin:4px 0;">${b.desc}</div>
-            <div style="font-size:10px; color:#ddd;">${costHtml.join(' | ')}</div>
-        `;
+        const costHtml = Object.entries(b.cost).map(([res, amt]) => {
+            let icon = res==='wood'?'🌲':res==='stone'?'⛰️':res==='scales'?'🐟':res==='sand'?'⏳':'🩸';
+            let color = (game.resources[res] || 0) >= amt ? '#fff' : 'var(--enemy-color)';
+            return `<span style="color:${color}; font-size:12px;">${icon}${amt}</span>`;
+        }).join(' ');
+
+        btn.innerHTML = `<span style="font-size:28px;">${b.icon}</span><span style="font-size:12px; color:var(--gold-light); margin:5px 0; font-weight:bold;">${b.name}</span><div style="display:flex; gap:8px;">${costHtml}</div><span style="font-size:9px; color:#aaa; margin-top:5px; text-align:center;">${b.desc}</span>`;
         
-        btn.onclick = () => {
-            if (!canAfford) { showMessage("Recursos insuficientes!", "#e74c3c"); return; }
-            selectedBuilding = selectedBuilding === b.id ? null : b.id;
-            renderBuildingMenu();
-        };
+        if (canAfford) {
+            btn.onclick = () => {
+                Object.entries(b.cost).forEach(([res, amt]) => game.resources[res] -= amt);
+                hex.building = b.id; 
+                
+                // GATILHOS IMEDIATOS: IGREJA E FAZENDA
+                if (b.id === 'CHURCH') {
+                    let celestial = new Unit({q:0,r:0,faction:1,isLeader:false,name:"Guardião Celestial",baseName:"Guardião",emoji:"👼",hp:45,maxHp:45,mp:4,maxMp:4,atk:12,range:1,level:1,abilities:['leadership'],isNew:true,filter:'none',tags:['CELESTIAL'],fav:['PLAINS']});
+                    rosterMemory.push(celestial);
+                    showPopup("👼 Celestial Recebido!", hex, '#fffbc2');
+                }
+                if (b.id === 'FARM') {
+                    [...rosterMemory, ...deployedRoster].forEach(u => { u.maxHp += 10; u.hp += 10; });
+                    showPopup("🌾 +10 HP Geral!", hex, '#2ecc71');
+                }
+
+                openKingdom(); kRenderer.draw(); renderBuildingMenu(); autoSave(); 
+                if (b.id !== 'CHURCH' && b.id !== 'FARM') showPopup("✨ Construído!", hex, '#2ecc71');
+            };
+        }
         menu.appendChild(btn);
     });
+    
+    if(!hasOptions) menu.innerHTML = '<div style="color:#aaa; padding:10px;">Nenhuma construção disponível para este tipo de terreno.</div>';
 }
 
 function drawKingdom() {
