@@ -176,3 +176,15 @@ const EVENTS = [
     { title: 'Campo Assombrado', icon: '👻', desc: 'Espíritos repetem suas táticas de combate.', choices: [ { text: 'Estudo Macabro (-15% HP)', desc: 'Aprende Corte Amplo.', req: ()=>deployedRoster.some(u=>u.range===1), action: async () => { let u = await window.promptSelectUnit("Quem aprenderá Corte Amplo?", deployedRoster.filter(x=>x.range===1)); if(u) u.abilities.push('corte_amplo'); deployedRoster.forEach(x=>x.hp=Math.max(1, Math.floor(x.maxHp*0.85))); } }, { text: 'Purificar Terreno (15 Ouro)', desc: 'Receba 2 itens Épicos. Inimigos fracos.', req: ()=>game.gold>=15, action: async () => { game.gold-=15; await window.giveRandomArtifact('epic'); await window.giveRandomArtifact('epic'); game.eventFlags.hauntedCurse = true; } }, { text: 'Marchar às Cegas', desc: 'No próximo combate, suas unidades iniciam espalhadas.', req: ()=>true, action: async () => { game.eventFlags.scatterUnits = true; } } ] },
     { title: 'O Engenheiro Desertor', icon: '⚙️', desc: 'Um inimigo conserta uma máquina de cerco.', choices: [ { text: 'Fornecer Peças', desc: 'Ganha 1x "Apoio de Artilharia".', req: ()=>true, action: async () => { game.eventFlags.artillery = true; } }, { text: 'Saquear Catapulta', desc: 'Receba 3 "Minas Terrestres".', req: ()=>true, action: async () => { game.eventFlags.mines = 3; } }, { text: 'Recrutar Engenheiro (30 Ouro)', desc: 'Ele constrói Barricadas.', req: ()=>game.gold>=30, action: async () => { game.gold-=30; deployedRoster.push(new Unit({q:0, r:0, faction:1, name:'Engenheiro Desertor', emoji:'👷', hp:1, maxHp:1, mp:3, maxMp:3, atk:1, range:1, isNew:true})); game.eventFlags.barricades = true; } } ] }
 ];
+
+// ==========================================
+// ESTRUTURAS DO REINO 
+// ==========================================
+const BUILDINGS = {
+    STABLE: { id: 'STABLE', name: 'Estábulo', icon: '🐎', cost: { wood: 10, stone: 5 }, desc: 'O Mercador sempre venderá um Cavalo extra.' },
+    CHURCH: { id: 'CHURCH', name: 'Igreja', icon: '⛪', cost: { stone: 15, scales: 5 }, desc: 'Recebe um Celestial imediatamente na Box.' },
+    MINE: { id: 'MINE', name: 'Mina', icon: '⛏️', cost: { wood: 5, stone: 10 }, desc: 'Gera ouro passivamente ao visitar o Reino.' },
+    PARK: { id: 'PARK', name: 'Parque', icon: '⛲', cost: { wood: 10, sand: 10 }, desc: 'Aumenta muito a chance de domar monstros Lvl 1 com HP cheio.' },
+    FARM: { id: 'FARM', name: 'Cabana da Colheita', icon: '🌾', cost: { wood: 15 }, desc: 'Feras iniciam a run com +10 HP.' },
+    TOWN: { id: 'TOWN', name: 'Vila Base', icon: '🏘️', cost: { wood: 5, stone: 5 }, desc: 'Aumenta o espaço na Box. Adjacências geram Metrópole.' }
+};

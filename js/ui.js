@@ -46,6 +46,8 @@ function autoSave() {
     if(game && !game.gameOver) {
         const sk = game.isRoguelite ? 'ht_save_rogue' : 'ht_save_camp';
         const sv = {
+            resources: game.resources,
+            kingdomMap: Array.from(game.kingdomMap.entries()),
             level: game.currentLevel, cols: game.cols, rows: game.rows, gold: game.gold,
             dna: game.dna || 0, // NOVO: Salva o DNA
             isRoguelite: game.isRoguelite, hasKey: game.hasKey, hasEgg: game.hasEgg,
@@ -127,7 +129,6 @@ function showMessage(txt, col) {
     }
 }
 
-// CORREÇÃO: Função Global de Entrega de Artefatos
 window.giveRandomArtifact = function(rarity) {
     return new Promise(async (resolve) => {
         let pool = ARTIFACTS.filter(a => a.rarity === rarity && !getActiveArtifacts().includes(a.id) && a.id !== 'art_omega');
@@ -1040,14 +1041,14 @@ function triggerStageEnd(win){
         if (game.isBossStage) {
             if (game.currentLevel < 5) {
                 $('rs-desc').innerText = `O Chefe caiu! Prepare-se para o Ato ${game.currentLevel + 1}.`;
-                btn.innerText = "Próximo Ato →";
+                btn.innerText = "Retornar ao Reino 🏰";
                 btn.onclick = () => { 
                     game.currentLevel++; 
                     game.currentFloor = -1; 
                     game.isBossStage = false; 
                     generateRouteMap(); 
                     autoSave(); 
-                    renderRouteMap(); 
+                    openKingdom(); 
                 };
             } else {
                 $('rs-desc').innerText = `PARABÉNS! Você venceu a Exploração Final!\nO "Coração do Infinito" foi desbloqueado no modo Roguelite.`;
@@ -1067,8 +1068,8 @@ function triggerStageEnd(win){
             }
         } else {
             $('rs-desc').innerText=`Avançando...`;
-            btn.innerText = "Ver Caminhos →";
-            btn.onclick = () => { renderRouteMap(); };
+            btn.innerText = "Retornar ao Reino 🏰";
+            btn.onclick = () => { openKingdom(); };
         }
     } else {
         $('rs-title').innerText="Derrota";$('rs-title').style.color='#c0392b';
@@ -1119,8 +1120,10 @@ function startGame(load,isRoguelite=false,leaderId=null){
     
     if(load){
         const d=JSON.parse(localStorage.getItem(sk));
+        game.resources = d.resources || { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
+        game.kingdomMap = new Map(d.kingdomMap || []);
         game.currentLevel=d.level;game.cols=d.cols;game.rows=d.rows;game.gold=d.gold||0;
-        game.dna=d.dna||0; // CARREGA O DNA
+        game.dna=d.dna||0;
         game.isRoguelite=d.isRoguelite||false;
         game.routeMap = d.routeMap; game.currentFloor = d.currentFloor; game.inventory = d.inventory || [];
         game.isBossStage = d.isBossStage || false; game.currentRouteType = d.currentRouteType || 'BATTLE';
@@ -1139,6 +1142,8 @@ function startGame(load,isRoguelite=false,leaderId=null){
     } else {
         if(localStorage.getItem(sk))localStorage.removeItem(sk);
         game.currentLevel=1;game.gold=0;game.dna=0;game.isRoguelite=isRoguelite;rosterMemory=[];deployedRoster=[]; game.inventory=[];
+        game.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
+        game.kingdomMap = new Map();
         if(leaderId)game.leaderData=LEADERS.find(l=>l.id===leaderId)||LEADERS[0];
         
         generateRouteMap();
@@ -1148,4 +1153,194 @@ function startGame(load,isRoguelite=false,leaderId=null){
         
         renderRouteMap(); 
     }
+    
 }
+
+// ==========================================
+// SISTEMA DE GERENCIAMENTO DO REINO 2.0
+// ==========================================
+let kingdomHexSize = 45;
+let kingdomOffsetX = 0, kingdomOffsetY = 0;
+let selectedBuilding = null;
+
+function initKingdomMap() {
+    if (!game.kingdomMap || game.kingdomMap.size === 0) {
+        game.kingdomMap = new Map();
+        const kRadius = 3; // Tamanho do grid do reino
+        for (let q = -kRadius; q <= kRadius; q++) {
+            for (let r = Math.max(-kRadius, -q - kRadius); r <= Math.min(kRadius, -q + kRadius); r++) {
+                game.kingdomMap.set(`${q},${r}`, { q: q, r: r, building: null });
+            }
+        }
+        // Centro do Reino
+        game.kingdomMap.get("0,0").building = 'CASTLE_BASE'; 
+    }
+}
+
+function updateKingdomResources() {
+    if(game && game.resources) {
+        $('res-wood').innerText = game.resources.wood || 0;
+        $('res-stone').innerText = game.resources.stone || 0;
+        $('res-scales').innerText = game.resources.scales || 0;
+        $('res-sand').innerText = game.resources.sand || 0;
+        $('res-blood').innerText = game.resources.blood || 0;
+    }
+}
+
+function renderBuildingMenu() {
+    const menu = $('building-menu');
+    menu.innerHTML = '';
+    
+    Object.values(BUILDINGS).forEach(b => {
+        let canAfford = true;
+        let costHtml = [];
+        for (let res in b.cost) {
+            let myAmt = game.resources[res] || 0;
+            if (myAmt < b.cost[res]) canAfford = false;
+            let icon = res==='wood'?'🌲':res==='stone'?'⛰️':res==='scales'?'🐟':res==='sand'?'⏳':'🩸';
+            costHtml.push(`${icon} ${b.cost[res]}`);
+        }
+        
+        const btn = document.createElement('button');
+        btn.className = `shop-card`;
+        btn.style.minWidth = '160px';
+        btn.style.borderColor = canAfford ? (selectedBuilding === b.id ? 'var(--success)' : 'var(--gold)') : '#555';
+        btn.style.opacity = canAfford ? '1' : '0.5';
+        
+        btn.innerHTML = `
+            <div style="font-size:24px;">${b.icon}</div>
+            <div style="color:var(--gold-light); font-family:Cinzel,serif; font-size:12px;">${b.name}</div>
+            <div style="font-size:9px; color:#aaa; margin:4px 0;">${b.desc}</div>
+            <div style="font-size:10px; color:#ddd;">${costHtml.join(' | ')}</div>
+        `;
+        
+        btn.onclick = () => {
+            if (!canAfford) { showMessage("Recursos insuficientes!", "#e74c3c"); return; }
+            selectedBuilding = selectedBuilding === b.id ? null : b.id;
+            renderBuildingMenu();
+        };
+        menu.appendChild(btn);
+    });
+}
+
+function drawKingdom() {
+    const canvas = $('kingdomCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    game.kingdomMap.forEach(hex => {
+        let px = kingdomHexSize * Math.sqrt(3) * (hex.q + hex.r / 2) + kingdomOffsetX;
+        let py = kingdomHexSize * 1.5 * hex.r + kingdomOffsetY;
+        
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const a = (Math.PI / 180) * (60 * i - 30);
+            ctx.lineTo(px + (kingdomHexSize - 1) * Math.cos(a), py + (kingdomHexSize - 1) * Math.sin(a));
+        }
+        ctx.closePath();
+        ctx.fillStyle = '#10121a';
+        ctx.fill();
+        ctx.strokeStyle = '#333';
+        ctx.stroke();
+        
+        // Desenha a estrutura se houver
+        if (hex.building) {
+            let icon = hex.building === 'CASTLE_BASE' ? '🏰' : (BUILDINGS[hex.building] ? BUILDINGS[hex.building].icon : '');
+            ctx.font = `${kingdomHexSize * 0.8}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(icon, px, py);
+        } else if (selectedBuilding) {
+            // Highlight para construir
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            ctx.fill();
+        }
+    });
+}
+
+function triggerKingdomArrival() {
+    // Efeito passivo da Mina ao visitar o reino
+    let hasMine = Array.from(game.kingdomMap.values()).some(h => h.building === 'MINE');
+    if (hasMine) {
+        game.gold += 5;
+        if(typeof updateUI === 'function') updateUI();
+        showMessage("Mina gerou +5 Ouro!", "var(--gold-light)");
+    }
+}
+
+function openKingdom() {
+    hide('result-screen');
+    hide('route-map-screen');
+    show('kingdom-screen');
+    
+    initKingdomMap();
+    updateKingdomResources();
+    renderBuildingMenu();
+    
+    const canvas = $('kingdomCanvas');
+    canvas.width = canvas.parentElement.clientWidth;
+    canvas.height = canvas.parentElement.clientHeight;
+    kingdomOffsetX = canvas.width / 2;
+    kingdomOffsetY = canvas.height / 2;
+    
+    drawKingdom();
+    triggerKingdomArrival();
+}
+
+// Listener de construção no Reino
+document.addEventListener("DOMContentLoaded", () => {
+    $('kingdomCanvas').addEventListener('click', e => {
+        if (!selectedBuilding) return;
+        
+        const rect = $('kingdomCanvas').getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        let clickedHex = null;
+        let minDist = 999;
+        game.kingdomMap.forEach(hex => {
+            let px = kingdomHexSize * Math.sqrt(3) * (hex.q + hex.r / 2) + kingdomOffsetX;
+            let py = kingdomHexSize * 1.5 * hex.r + kingdomOffsetY;
+            let dist = Math.hypot(px - x, py - y);
+            if (dist < minDist && dist < kingdomHexSize) {
+                minDist = dist;
+                clickedHex = hex;
+            }
+        });
+        
+        if (clickedHex) {
+            if (clickedHex.building) {
+                showMessage("Espaço já ocupado!", "#e74c3c");
+                return;
+            }
+            
+            let bData = BUILDINGS[selectedBuilding];
+            // Deduz recursos
+            for (let res in bData.cost) {
+                game.resources[res] -= bData.cost[res];
+            }
+            
+            clickedHex.building = selectedBuilding;
+            
+            // --- GATILHOS IMEDIATOS DE CONSTRUÇÃO ---
+            if (selectedBuilding === 'CHURCH') {
+                let celestial = BEASTS.LAND.find(b => (b.tags||[]).includes('CELESTIAL')) || BEASTS.LAND[1]; // Pega a primeira celestial ou pássaro
+                rosterMemory.push(new Unit({q:0, r:0, faction:1, name:celestial.name, baseName:celestial.name, emoji:celestial.e, hp:celestial.hp, maxHp:celestial.hp, mp:celestial.mp, maxMp:celestial.mp, atk:celestial.atk, range:celestial.range, abilities:[...celestial.abilities], isNew:true, tags:celestial.tags||[]}));
+                showMessage("Igreja Erguida! Celestial adicionado à Box.", "#fffbc2");
+            } else {
+                showMessage("Construção concluída!", "var(--success)");
+            }
+            
+            selectedBuilding = null;
+            updateKingdomResources();
+            renderBuildingMenu();
+            drawKingdom();
+            autoSave();
+        }
+    });
+
+    $('btn-leave-kingdom').addEventListener('click', () => {
+        hide('kingdom-screen');
+        renderRouteMap();
+    });
+});
