@@ -144,24 +144,26 @@
 </div>
 
 <div id="kingdom-screen" class="layer screen hidden" style="background: rgba(10,12,18,0.98);">
-    <h1 class="screen-title" style="font-size: 2.5rem; color: var(--gold);">O Seu Reino</h1>
+    <h1 class="screen-title" style="font-size: 2.5rem; color: var(--gold); margin-top: 15px;">O Seu Reino</h1>
     
-    <div id="kingdom-resources" style="display:flex; gap:15px; justify-content:center; color:#ddd; margin-bottom:10px; font-family:Cinzel,serif; font-size: 14px;">
+    <div id="kingdom-resources" style="display:flex; gap:15px; justify-content:center; color:#ddd; margin-bottom:10px; font-family:Cinzel,serif; font-size: 16px; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--gold-dark);">
         <span title="Madeira">🌲 <span id="res-wood">0</span></span> 
         <span title="Pedra">⛰️ <span id="res-stone">0</span></span> 
         <span title="Escamas">🐟 <span id="res-scales">0</span></span> 
         <span title="Areia">⏳ <span id="res-sand">0</span></span>
-        <span title="Cristal de Sangue">🩸 <span id="res-blood">0</span></span>
     </div>
 
-    <div id="kingdom-grid-container" style="position: relative; width: 100%; max-width: 600px; height: 50vh; margin: 0 auto; border: 1px solid var(--gold-dark); background: #050508;">
+    <div id="kingdom-grid-container" style="position: relative; width: 100%; height: 60vh; border-top: 1px solid var(--gold-dark); border-bottom: 1px solid var(--gold-dark); background: #050508; overflow: hidden;">
         <canvas id="kingdomCanvas"></canvas>
     </div>
 
-    <div id="building-menu" class="menu-box" style="display:flex; gap:10px; overflow-x:auto; padding:10px; margin-top:10px; max-width: 600px;">
+    <div id="building-menu" class="hidden" style="position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); display:flex; gap:10px; overflow-x:auto; padding:15px; max-width: 90%; background:linear-gradient(180deg, rgba(20,20,30,0.95) 0%, rgba(5,5,10,0.95) 100%); border: 1px solid var(--gold-dark); border-radius: 8px; z-index: 100;">
         </div>
     
-    <button id="btn-leave-kingdom" class="btn-success" style="margin-top:15px;">Avançar para o Mapa →</button>
+    <div style="position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: center; gap: 20px; z-index: 101;">
+        <button id="btn-toggle-build" class="btn-warning" style="font-size: 16px; padding: 12px 30px; box-shadow: 0 0 15px rgba(241,196,15,0.3);">🔨 Construir</button>
+        <button id="btn-leave-kingdom" class="btn-success" style="font-size: 16px; padding: 12px 30px;">Avançar →</button>
+    </div>
 </div>
 
 <div id="management-screen" class="layer screen hidden">

@@ -457,7 +457,10 @@ window.showBeastDetails = function(b,bypassUnlock=false){
 
 function updateUI(){
     const goldDisplay = $('ui-gold'); 
-    if(goldDisplay && game) goldDisplay.innerHTML = `${game.gold} &nbsp; | &nbsp; ${game.dna || 0} 🧬`; 
+    if(goldDisplay && game) {
+        let res = game.resources || { wood:0, stone:0, scales:0, sand:0, blood:0 };
+        goldDisplay.innerHTML = `${game.gold}💰 | ${game.dna || 0}🧬 &nbsp;|&nbsp; 🌲${res.wood} ⛰️${res.stone} 🐟${res.scales} ⏳${res.sand}`; 
+    }
 
     updateManaUI();
     if(game && game.selectedUnit){
@@ -1143,6 +1146,7 @@ function startGame(load,isRoguelite=false,leaderId=null){
         if(localStorage.getItem(sk))localStorage.removeItem(sk);
         game.currentLevel=1;game.gold=0;game.dna=0;game.isRoguelite=isRoguelite;rosterMemory=[];deployedRoster=[]; game.inventory=[];
         game.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
+        game.generateKingdomMap();
         game.kingdomMap = new Map();
         if(leaderId)game.leaderData=LEADERS.find(l=>l.id===leaderId)||LEADERS[0];
         
@@ -1344,3 +1348,103 @@ document.addEventListener("DOMContentLoaded", () => {
         renderRouteMap();
     });
 });
+
+let kRenderer = null;
+
+function openKingdom() {
+    hide('result-screen');
+    hide('route-map-screen');
+    hide('game-container');
+    show('kingdom-screen');
+    
+    // Atualiza o visor de recursos no Reino
+    let res = game.resources || { wood:0, stone:0, scales:0, sand:0, blood:0 };
+    if($('res-wood')) $('res-wood').innerText = res.wood;
+    if($('res-stone')) $('res-stone').innerText = res.stone;
+    if($('res-scales')) $('res-scales').innerText = res.scales;
+    if($('res-sand')) $('res-sand').innerText = res.sand;
+
+    // Inicializa o Canvas na primeira vez que abre
+    if (!kRenderer) {
+        kRenderer = new KingdomRenderer($('kingdomCanvas'), game);
+        
+        $('kingdomCanvas').addEventListener('click', (e) => {
+            const rect = $('kingdomCanvas').getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            let clickedHex = null;
+            let minDist = 999;
+            
+            game.kingdomMap.forEach(h => {
+                const p = kRenderer.getPos(h.q, h.r);
+                const d = Math.hypot(p.x - x, p.y - y);
+                if (d < kRenderer.hexSize && d < minDist) { minDist = d; clickedHex = h; }
+            });
+            
+            kRenderer.selectedHex = clickedHex;
+            kRenderer.draw();
+            if (!$('building-menu').classList.contains('hidden')) {
+                renderBuildingMenu(); 
+            }
+        });
+    }
+    
+    kRenderer.initCamera();
+    hide('building-menu'); // O menu de construções começa fechado
+}
+
+function renderBuildingMenu() {
+    const menu = $('building-menu');
+    menu.innerHTML = '';
+    
+    const hex = kRenderer.selectedHex;
+    if (!hex) {
+        menu.innerHTML = '<div style="color:#aaa; padding:10px;">Selecione um hexágono no mapa para construir.</div>';
+        return;
+    }
+    if (hex.building) {
+        menu.innerHTML = `<div style="color:var(--warning); padding:10px; font-weight:bold;">Já existe uma construção aqui: ${BUILDINGS[hex.building].name}</div>`;
+        return;
+    }
+
+    let hasOptions = false;
+
+    Object.values(BUILDINGS).forEach(b => {
+        // REGRAS DE TERRENO
+        if (hex.terrain.id === 'WATER') return; // Nenhuma construção básica na água
+        if (b.id === 'MINE' && hex.terrain.id !== 'MOUNTAIN') return; // Mina apenas na montanha
+        if (b.id !== 'MINE' && hex.terrain.id === 'MOUNTAIN') return; // Apenas Mina na montanha
+
+        hasOptions = true;
+        const canAfford = Object.entries(b.cost).every(([res, amt]) => (game.resources[res] || 0) >= amt);
+        
+        const btn = document.createElement('button');
+        btn.style.cssText = `display:flex; flex-direction:column; align-items:center; min-width:140px; background:rgba(20,20,30,0.8); border:1px solid ${canAfford ? 'var(--success)' : '#555'}; padding:10px; border-radius:8px; cursor:${canAfford ? 'pointer' : 'not-allowed'};`;
+        
+        const costHtml = Object.entries(b.cost).map(([res, amt]) => {
+            let icon = res==='wood'?'🌲':res==='stone'?'⛰️':res==='scales'?'🐟':res==='sand'?'⏳':'🩸';
+            let color = (game.resources[res] || 0) >= amt ? '#fff' : 'var(--enemy-color)';
+            return `<span style="color:${color}; font-size:12px;">${icon}${amt}</span>`;
+        }).join(' ');
+
+        btn.innerHTML = `<span style="font-size:28px;">${b.icon}</span><span style="font-size:12px; color:var(--gold-light); margin:5px 0; font-weight:bold;">${b.name}</span><div style="display:flex; gap:8px;">${costHtml}</div><span style="font-size:9px; color:#aaa; margin-top:5px; text-align:center;">${b.desc}</span>`;
+        
+        if (canAfford) {
+            btn.onclick = () => {
+                // Paga o custo
+                Object.entries(b.cost).forEach(([res, amt]) => game.resources[res] -= amt);
+                hex.building = b.id; // Constrói!
+                
+                openKingdom(); // Atualiza os números no topo
+                kRenderer.draw(); // Desenha a casinha no grid
+                renderBuildingMenu(); // Atualiza o menu
+                autoSave(); // Salva o reino!
+                showPopup("✨ Construído!", hex, '#2ecc71');
+            };
+        }
+        menu.appendChild(btn);
+    });
+    
+    if(!hasOptions) menu.innerHTML = '<div style="color:#aaa; padding:10px;">Nenhuma construção disponível para este tipo de terreno.</div>';
+}
