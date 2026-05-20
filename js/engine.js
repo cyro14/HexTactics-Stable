@@ -47,6 +47,13 @@ class Unit {
             if (arts.includes('art_wild_call')) { this.tags.push('WILD_CALL'); } 
             if (arts.includes('art_umbral_seal') && !this.tags.includes('UMBRAL')) this.tags.push('UMBRAL');
             if (arts.includes('art_celestial_seal') && !this.tags.includes('CELESTIAL')) this.tags.push('CELESTIAL');
+            
+            // Bônus global da Fazenda para unidades recém adquiridas!
+            if (typeof countKingdomBuildings === 'function') {
+                let farms = window.countKingdomBuildings('FARM');
+                this.maxHp += (10 * farms);
+                this.hp += (10 * farms);
+            }
         }
     }
 
@@ -399,20 +406,70 @@ class Game {
     async attemptTame(tamer, wild) {
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true; this.isAnimating = true; let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
         try {
-            tamer.hasAttacked = true; tamer.mp = 0; let cC = 1.1 - (wild.hp / wild.maxHp); if (wild.isBoss) cC -= 0.35; if (tamer.faction === 1 && arts.includes('art_tame')) cC += 0.20; if (cC < 0.05) cC = 0.05; const tCol = tamer.faction === 1 ? '#4a9edd' : '#c0392b';
+            tamer.hasAttacked = true; tamer.mp = 0; 
+            let cC = 1.1 - (wild.hp / wild.maxHp); 
+            if (wild.isBoss) cC -= 0.35; 
+            if (tamer.faction === 1 && arts.includes('art_tame')) cC += 0.20; 
+            
+            // --- NOVO 2.0: BUFF DO PARQUE ---
+            // Se o alvo for Nível 1, tiver HP cheio e você tiver o Parque, ganha +40% de chance!
+            if (tamer.faction === 1 && wild.level === 1 && wild.hp === wild.maxHp && typeof countKingdomBuildings === 'function') {
+                if (window.countKingdomBuildings('PARK') > 0) cC += 0.40; 
+            }
+            // --------------------------------
+
+            if (cC < 0.05) cC = 0.05; 
+            const tCol = tamer.faction === 1 ? '#4a9edd' : '#c0392b';
+            
+            // Rola o dado para ver se domou
             if (Math.random() < cC) {
                 
-                this.dna = (this.dna || 0) + 1; // NOVO: GANHA DNA AO DOMAR!
+                this.dna = (this.dna || 0) + 1; // Drop de DNA
                 if (typeof showPopup === 'function') showPopup("+1 🧬", tamer, '#1abc9c');
                 
-                wild.faction = tamer.faction; wild.alerted = false; let maxL = arts.includes('art_crown') ? (this.leaderData.limit + 1) : (this.leaderData.limit || 6); let currTeam = this.units.filter(u => u.faction === 1 && !u.isLeader).length;
-                if (currTeam >= maxL && tamer.faction === 1) { this.units = this.units.filter(u => u !== wild); rosterMemory.push(wild); if (typeof showPopup === 'function') showPopup("📦 Para a Box!", wild, '#c9a227'); if (typeof addLog === 'function') addLog(`🪄 ${tamer.name} domou ${wild.name} (Box)!`, tCol); } else { if (typeof showPopup === 'function') showPopup("🪄 Domado!", wild, tamer.faction === 1 ? '#c9a227' : '#c0392b'); if (typeof addLog === 'function') addLog(`🪄 ${tamer.name} domou ${wild.name}!`, tCol); }
-                if (tamer.faction === 1) {
-                    if (typeof unlockInBestiary === 'function') unlockInBestiary(wild.name); if (arts.includes('art_hp')) { wild.maxHp += 15; wild.hp += 15; } if (arts.includes('art_atk')) { wild.atk += 4; }
-                    const leader = this.units.find(u => u.isLeader && u.faction === 1); if (leader) { (wild.tags || []).forEach(t => { if (!leader.grimTags.includes(t)) { leader.grimTags.push(t); if (typeof addLog === 'function') addLog(`📖 Grimório expandido: ${TAGS[t] ? TAGS[t].name : t}!`, '#c9a227'); } }); }
+                wild.faction = tamer.faction; 
+                wild.alerted = false; 
+                
+                // --- NOVO 2.0: LIMITE DA BOX PUXANDO DAS VILAS ---
+                let maxL = typeof window.getMaxBoxLimit === 'function' ? window.getMaxBoxLimit() : 6; 
+                // -------------------------------------------------
+                
+                let currTeam = this.units.filter(u => u.faction === 1 && !u.isLeader).length;
+                if (currTeam >= maxL && tamer.faction === 1) { 
+                    this.units = this.units.filter(u => u !== wild); 
+                    rosterMemory.push(wild); 
+                    if (typeof showPopup === 'function') showPopup("📦 Para a Box!", wild, '#c9a227'); 
+                    if (typeof addLog === 'function') addLog(`🪄 ${tamer.name} domou ${wild.name} (Box)!`, tCol); 
+                } else { 
+                    if (typeof showPopup === 'function') showPopup("🪄 Domado!", wild, tamer.faction === 1 ? '#c9a227' : '#c0392b'); 
+                    if (typeof addLog === 'function') addLog(`🪄 ${tamer.name} domou ${wild.name}!`, tCol); 
                 }
-                this.activeSynergies = this.getSynergies(1); if (typeof sleep === 'function') await sleep(600); return true;
-            } else { if (typeof showPopup === 'function') showPopup("Falhou!", wild, '#e74c3c'); if (typeof addLog === 'function') addLog(`✗ ${tamer.name} falhou ao domar.`, '#777'); wild.alerted = true; if (typeof sleep === 'function') await sleep(600); return false; }
+                
+                if (tamer.faction === 1) {
+                    if (typeof unlockInBestiary === 'function') unlockInBestiary(wild.name); 
+                    if (arts.includes('art_hp')) { wild.maxHp += 15; wild.hp += 15; } 
+                    if (arts.includes('art_atk')) { wild.atk += 4; }
+                    const leader = this.units.find(u => u.isLeader && u.faction === 1); 
+                    if (leader) { 
+                        (wild.tags || []).forEach(t => { 
+                            if (!leader.grimTags.includes(t)) { 
+                                leader.grimTags.push(t); 
+                                if (typeof addLog === 'function') addLog(`📖 Grimório expandido: ${TAGS[t] ? TAGS[t].name : t}!`, '#c9a227'); 
+                            } 
+                        }); 
+                    }
+                }
+                this.activeSynergies = this.getSynergies(1); 
+                if (typeof sleep === 'function') await sleep(600); 
+                return true;
+                
+            } else { 
+                if (typeof showPopup === 'function') showPopup("Falhou!", wild, '#e74c3c'); 
+                if (typeof addLog === 'function') addLog(`✗ ${tamer.name} falhou ao domar.`, '#777'); 
+                wild.alerted = true; 
+                if (typeof sleep === 'function') await sleep(600); 
+                return false; 
+            }
         } finally { this.isAnimating = false; }
     }
 
