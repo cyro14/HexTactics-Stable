@@ -231,6 +231,8 @@ function updateManaUI(){
         pip.style.color = mt.col; pip.style.borderColor = mt.col+'88';
         pip.style.width = 'auto'; pip.style.padding = '0 8px';
         pip.innerText = `${mt.icon} x${available}`;
+        pip.style.padding = '0 4px';
+        pip.style.fontSize = '9px';
         pip.title = `${mt.name}: ${available}/${Math.floor(total)}`;
         container.appendChild(pip);
     });
