@@ -1468,7 +1468,7 @@ function openKingdom() {
         hide('game-container');
         show('kingdom-screen');
         
-        // 1. GERAÇÃO DIRETA: Garante o Mapa do Reino caso não exista
+        // GERAÇÃO DIRETA: Garante o Mapa do Reino caso não exista
         if (!game.kingdomMap || game.kingdomMap.size === 0) {
             game.kingdomMap = new Map();
             const kCols = 13, kRows = 9; 
@@ -1487,17 +1487,19 @@ function openKingdom() {
             }
         }
 
-        // 2. ATUALIZAÇÃO SEGURA: Ignora se algum HTML estiver ausente
+        // CORREÇÃO: Atualiza os IDs exclusivos com prefixo 'k-' da tela do Reino
         let res = game.resources || { wood:0, stone:0, scales:0, sand:0, blood:0 };
-        const woodEl = $('res-wood'); if(woodEl) woodEl.innerText = res.wood;
-        const stoneEl = $('res-stone'); if(stoneEl) stoneEl.innerText = res.stone;
-        const scalesEl = $('res-scales'); if(scalesEl) scalesEl.innerText = res.scales;
-        const sandEl = $('res-sand'); if(sandEl) sandEl.innerText = res.sand;
+        if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
+        if($('k-res-dna')) $('k-res-dna').innerText = game.dna || 0;
+        if($('k-res-wood')) $('k-res-wood').innerText = res.wood;
+        if($('k-res-stone')) $('k-res-stone').innerText = res.stone;
+        if($('k-res-scales')) $('k-res-scales').innerText = res.scales;
+        if($('k-res-sand')) $('k-res-sand').innerText = res.sand;
 
-        // 3. RENDERIZAÇÃO PROTEGIDA
+        // RENDERIZAÇÃO PROTEGIDA
         setTimeout(() => {
             const canvasEl = $('kingdomCanvas');
-            if (!canvasEl) return; // Aborta se o Canvas não existir
+            if (!canvasEl) return;
 
             if (!kRenderer) {
                 kRenderer = new KingdomRenderer(canvasEl, game);
@@ -1527,11 +1529,11 @@ function openKingdom() {
             kRenderer.initCamera();
             kRenderer.draw();
             
-            if ($('building-menu')) hide('building-menu'); // O menu começa fechado
-        }, 150); // Tempo extra garantido para o CSS renderizar o tamanho do Canvas
+            if ($('building-menu')) hide('building-menu');
+        }, 150);
 
     } catch (e) {
-        console.error("Erro ignorado ao abrir o Reino:", e);
+        console.error("Erro ao abrir o Reino:", e);
     }
 }
 
