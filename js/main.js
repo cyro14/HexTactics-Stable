@@ -77,6 +77,7 @@ document.addEventListener("DOMContentLoaded",()=>{
                     }
                 }
                 game.activeSpell=null; renderSpellBar(); return;
+                $('spell-bar').classList.add('hidden');
             }
 
             if(su&&su.faction===FACTIONS.PLAYER.id&&su.status!=='stun'&&su.status!=='bind'){
@@ -217,4 +218,15 @@ document.addEventListener("DOMContentLoaded",()=>{
 
     $('btn-grimoire').addEventListener('click',()=>{openGrimoire();});
     $('btn-close-grimoire').addEventListener('click',()=>{$('grimoire-screen').classList.add('hidden');});
+
+    // Alternar visualização do menu de magias em combate (Estilo Reino)
+    $('btn-toggle-spells').addEventListener('click', () => {
+        const bar = $('spell-bar');
+        if (bar.classList.contains('hidden')) {
+            bar.classList.remove('hidden');
+            renderSpellBar(); // Renderiza as magias disponíveis atualizadas
+        } else {
+            bar.classList.add('hidden');
+        }
+    });
 });

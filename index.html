@@ -13,32 +13,37 @@
 <div id="game-container" class="hidden">
     <canvas id="gameCanvas" class="layer"></canvas>
     <div id="ui-layer" class="layer">
-        <div id="top-bar" class="panel">
-            <div class="turn-section">
+        <div id="top-bar" class="panel" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+            <div class="turn-section" style="flex: 1;">
                 <button id="btn-pause" class="btn-icon">⚙️</button>
                 <div>
                     <div id="turn-badge">Turno: Jogador</div>
-                    <div id="gold-display">💰 <span id="ui-gold">0</span></div>
-                    <div id="mana-bar-container"></div>
-                    <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
-                        <button id="btn-grimoire" style="font-size: 9px; padding: 4px 8px; border-color: var(--tame-color); color: #e9d5ff; background: rgba(60,20,80,0.5); width: 100%;">📖 Grimório</button>
-                        <button id="btn-ingame-team" style="font-size: 9px; padding: 4px 8px; border-color: var(--success); color: #fff; background: rgba(20,60,20,0.5); width: 100%;">🎒 Mochila / Time</button>
-                    </div>
-                    
+                    <div id="gold-display"><span id="ui-gold">0</span></div>
+                    <div id="mana-bar-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px; max-height: 55px; overflow-y: auto;"></div>
                 </div>
             </div>
-            <div id="unit-info-container">
+            
+            <div id="unit-info-container" style="flex: 1.2; display: grid; grid-template-columns: 1fr auto; gap: 4px; position: relative;">
                 <div id="unit-stats-block">
                     <div id="unit-name">—</div>
                     <div id="unit-info"><div style="color:var(--text-dim);">Selecione um alvo</div></div>
                 </div>
                 <div id="unit-portrait"></div>
+                
+                <div style="display: flex; gap: 4px; margin-top: 6px; grid-column: 1 / span 2; width: 100%;">
+                    <button id="btn-grimoire" style="font-size: 9px; padding: 6px 4px; border-color: var(--tame-color); color: #e9d5ff; background: rgba(60,20,80,0.5); flex: 1;">📖 Grimório</button>
+                    <button id="btn-ingame-team" style="font-size: 9px; padding: 6px 4px; border-color: var(--success); color: #fff; background: rgba(20,60,20,0.5); flex: 1;">🎒 Mochila/Time</button>
+                </div>
             </div>
         </div>
+        
         <div id="combat-log"></div>
-        <div id="spell-bar"></div>
+        
+        <div id="spell-bar" class="hidden" style="position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; padding: 10px; max-height: 40vh; overflow-y: auto; background: rgba(10,12,18,0.95); border: 1px solid var(--gold-dark); border-radius: 8px; z-index: 110; width: 90%; max-width: 400px;"></div>
+        
         <div id="action-bar" class="panel">
             <button id="btn-undo" disabled><span class="gold-icon">&#x21BA;&#xFE0E;</span></button>
+            <button id="btn-toggle-spells" class="btn-warning" style="font-size: 11px; padding: 4px 8px; font-weight: bold;">✨ Magias</button>
             <button id="btn-tame" class="hidden">🪄 Domar</button>
             <button id="btn-next-unit"><span class="gold-icon">&#x23ED;&#xFE0E;</span> Próx.</button>
             <button id="btn-end-turn">⏳ Fim de Turno</button>
