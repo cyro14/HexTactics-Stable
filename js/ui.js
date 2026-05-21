@@ -263,7 +263,8 @@ function renderSpellBar(){
         let cdText = cd > 0 ? `<span style="color:#f39c12; font-weight:bold;">[CD: ${cd}]</span> ` : '';
         const btn = document.createElement('div');
         btn.className = `spell-btn ${isActive?'spell-active':''} ${!can?'spell-disabled':''}`;
-        btn.innerHTML = `<span style="font-size:18px;">${spell.icon}</span><div style="flex:1;"><div style="font-family:Cinzel,serif;font-size:10px;color:${isActive?'#ff8888':'var(--gold-light)'};">${cdText}${spell.name}</div><div style="font-size:9px;color:#888;">Nv${spell.level} · ${costHtml}</div></div>`;
+btn.innerHTML = `<span style="font-size:16px;">${spell.icon}</span><div style="flex:1; line-height:1.2; text-align:left;"><div style="font-family:Cinzel,serif;font-size:11px;color:${isActive?'#ff8888':'var(--gold-light)'};">${cdText}${spell.name}</div><div style="font-size:9px;color:#888;">Nv${spell.level} · ${costHtml}</div></div>`;
+
         btn.title = spell.desc;
         
         if(can){
