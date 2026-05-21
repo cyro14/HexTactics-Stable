@@ -1176,6 +1176,9 @@ function startGame(load,isRoguelite=false,leaderId=null){
         game.isRoguelite=d.isRoguelite||false;
         game.routeMap = d.routeMap; game.currentFloor = d.currentFloor; game.inventory = d.inventory || [];
         game.isBossStage = d.isBossStage || false; game.currentRouteType = d.currentRouteType || 'BATTLE';
+        game.manaPool = d.manaPool || {};
+        game.spentMana = d.spentMana || {};
+        game.spellCooldowns = d.spellCooldowns || {};
         
         const stInd = $('stage-indicator'); if(stInd) stInd.innerText=`ATO ${toRoman(game.currentLevel)} - NÓ ${game.currentFloor + 1}`;
         game.map.clear();
@@ -1247,8 +1250,11 @@ function renderBuildingMenu() {
 
     let hasOptions = false;
     Object.values(BUILDINGS).forEach(b => {
-        // REGRA DE TERRENO RÍGIDA
-        if (!b.terrains.includes(hex.terrain.id)) return; 
+        // CORREÇÃO: Normaliza o ID se o terreno vier como String ou Objeto complexo
+        const currentTerrainId = typeof hex.terrain === 'string' ? hex.terrain : (hex.terrain.id || hex.terrain);
+        
+        // Validação rígida de biomas
+        if (!b.terrains.includes(currentTerrainId)) return; 
 
         hasOptions = true;
         const canAfford = Object.entries(b.cost).every(([res, amt]) => (game.resources[res] || 0) >= amt);
@@ -1264,15 +1270,15 @@ function renderBuildingMenu() {
         btn.innerHTML = `<span style="font-size:28px;">${b.icon}</span><span style="font-size:12px; color:var(--gold-light); margin:5px 0; font-weight:bold;">${b.name}</span><div style="display:flex; gap:8px;">${costHtml}</div><span style="font-size:9px; color:#aaa; margin-top:5px; text-align:center;">${b.desc}</span>`;
         
         if (canAfford) {
-            btn.onclick = () => {
+            btn.onclick = async () => {
                 Object.entries(b.cost).forEach(([res, amt]) => game.resources[res] -= amt);
                 hex.building = b.id; 
                 
-                // GATILHOS IMEDIATOS: IGREJA E FAZENDA
                 if (b.id === 'CHURCH') {
                     let celestial = new Unit({q:0,r:0,faction:1,isLeader:false,name:"Guardião Celestial",baseName:"Guardião",emoji:"👼",hp:45,maxHp:45,mp:4,maxMp:4,atk:12,range:1,level:1,abilities:['leadership'],isNew:true,filter:'none',tags:['CELESTIAL'],fav:['PLAINS']});
                     rosterMemory.push(celestial);
-                    showPopup("👼 Celestial Recebido!", hex, '#fffbc2');
+                    // Exibe a tela inteira de confirmação para o jogador saber o que ganhou
+                    await showZeldaPopup("👼", "Invocação Celestial!", "O Guardião Celestial foi enviado com sucesso para a sua Box!");
                 }
                 if (b.id === 'FARM') {
                     [...rosterMemory, ...deployedRoster].forEach(u => { u.maxHp += 10; u.hp += 10; });
@@ -1280,7 +1286,7 @@ function renderBuildingMenu() {
                 }
 
                 openKingdom(); kRenderer.draw(); renderBuildingMenu(); autoSave(); 
-                if (b.id !== 'CHURCH' && b.id !== 'FARM') showPopup("✨ Construído!", hex, '#2ecc71');
+                if (b.id !== 'CHURCH') showPopup("✨ Construído!", hex, '#2ecc71');
             };
         }
         menu.appendChild(btn);
