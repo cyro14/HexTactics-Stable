@@ -183,11 +183,11 @@ const EVENTS = [
 const BUILDINGS = {
     STABLE: { id: 'STABLE', name: 'Estábulo', icon: '🐎', cost: { wood: 10, stone: 5 }, desc: 'O Mercador sempre venderá um Cavalo extra.', terrains: ['PLAINS', 'DESERT', 'SNOW'] },
     CHURCH: { id: 'CHURCH', name: 'Igreja', icon: '⛪', cost: { stone: 15, scales: 5 }, desc: 'Recebe um Guardião Celestial imediatamente.', terrains: ['PLAINS', 'MOUNTAIN', 'SNOW'] },
-    MINE: { id: 'MINE', name: 'Mina', icon: '⛏️', cost: { wood: 5, stone: 10 }, desc: 'Gera +3 Pedra e +10 Ouro ao vencer batalhas.', terrains: ['MOUNTAIN'] },
+    MINE: { id: 'MINE', name: 'Mina', icon: '⛏️', cost: { wood: 5, stone: 10 }, desc: 'Gera +3 Pedra e +1 Ouro ao vencer batalhas.', terrains: ['MOUNTAIN'] },
     LUMBERMILL: { id: 'LUMBERMILL', name: 'Madeireira', icon: '🪓', cost: { stone: 5, sand: 5 }, desc: 'Gera +3 Madeira ao vencer batalhas.', terrains: ['FOREST'] },
     FISHINGCAMP: { id: 'FISHINGCAMP', name: 'Campo de Pesca', icon: '🎣', cost: { wood: 10 }, desc: 'Gera +3 Escamas ao vencer batalhas.', terrains: ['WATER'] },
     SANDPIT: { id: 'SANDPIT', name: 'Extrator de Areia', icon: '🐪', cost: { wood: 5, stone: 5 }, desc: 'Gera +3 Areia ao vencer batalhas.', terrains: ['DESERT'] },
     PARK: { id: 'PARK', name: 'Parque', icon: '⛲', cost: { wood: 10, sand: 10 }, desc: 'Grande chance de domar feras Nv1 com HP cheio.', terrains: ['PLAINS', 'FOREST', 'DESERT', 'SNOW'] },
-    FARM: { id: 'FARM', name: 'Cabana da Colheita', icon: '🌾', cost: { wood: 15 }, desc: 'Todas as feras ganham +10 HP Máx (Retroativo).', terrains: ['PLAINS'] },
+    FARM: { id: 'FARM', name: 'Fazenda', icon: '🌾', cost: { wood: 15 }, desc: 'Todas as feras ganham +10 HP Máx (Retroativo).', terrains: ['PLAINS'] },
     TOWN: { id: 'TOWN', name: 'Vila Base', icon: '🏘️', cost: { wood: 5, stone: 5 }, desc: 'Aumenta o espaço na Box em +2.', terrains: ['PLAINS', 'FOREST', 'DESERT', 'SNOW'] }
 };

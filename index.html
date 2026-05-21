@@ -14,16 +14,28 @@
     <canvas id="gameCanvas" class="layer"></canvas>
     <div id="ui-layer" class="layer">
         <div id="top-bar" class="panel" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+            
             <div class="turn-section" style="flex: 1;">
                 <button id="btn-pause" class="btn-icon">⚙️</button>
                 <div>
                     <div id="turn-badge">Turno: Jogador</div>
-                    <div id="gold-display"><span id="ui-gold">0</span></div>
+                    
+                    <div id="resources-grid" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 4px; font-size: 11px;">
+                        <span title="Ouro">💰<br><span id="ui-gold">0</span></span>
+                        <span title="DNA">🧬<br><span id="ui-dna">0</span></span>
+                        <span title="Madeira">🌲<br><span id="res-wood">0</span></span>
+                        <span title="Pedra">⛰️<br><span id="res-stone">0</span></span>
+                        <span title="Escamas">🐟<br><span id="res-scales">0</span></span>
+                        <span title="Areia">⏳<br><span id="res-sand">0</span></span>
+                    </div>
+                    
                     <div id="mana-bar-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px; max-height: 55px; overflow-y: auto;"></div>
+                    
+                    <button id="btn-grimoire" style="font-size: 9px; padding: 6px 4px; border-color: var(--tame-color); color: #e9d5ff; background: rgba(60,20,80,0.5); width: 100%; margin-top: 6px;">📖 Grimório</button>
                 </div>
             </div>
             
-            <div id="unit-info-container" style="flex: 1.2; display: grid; grid-template-columns: 1fr auto; gap: 4px; position: relative;">
+            <div id="unit-info-container" style="flex: 1; display: grid; grid-template-columns: 1fr auto; gap: 4px; position: relative;">
                 <div id="unit-stats-block">
                     <div id="unit-name">—</div>
                     <div id="unit-info"><div style="color:var(--text-dim);">Selecione um alvo</div></div>
@@ -31,8 +43,7 @@
                 <div id="unit-portrait"></div>
                 
                 <div style="display: flex; gap: 4px; margin-top: 6px; grid-column: 1 / span 2; width: 100%;">
-                    <button id="btn-grimoire" style="font-size: 9px; padding: 6px 4px; border-color: var(--tame-color); color: #e9d5ff; background: rgba(60,20,80,0.5); flex: 1;">📖 Grimório</button>
-                    <button id="btn-ingame-team" style="font-size: 9px; padding: 6px 4px; border-color: var(--success); color: #fff; background: rgba(20,60,20,0.5); flex: 1;">🎒 Mochila/Time</button>
+                    <button id="btn-ingame-team" style="font-size: 9px; padding: 6px 4px; border-color: var(--success); color: #fff; background: rgba(20,60,20,0.5); width: 100%;">🎒 Mochila/Time</button>
                 </div>
             </div>
         </div>
