@@ -13,45 +13,46 @@
 <div id="game-container" class="hidden">
     <canvas id="gameCanvas" class="layer"></canvas>
     <div id="ui-layer" class="layer">
-        <div id="top-bar" class="panel" style="display: flex; flex-direction: column; gap: 8px; padding: 8px;">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-        <div class="turn-section" style="flex: 1; min-width: 0;">
-            <button id="btn-pause" class="btn-icon" style="padding: 6px;">⚙️</button>
-            <div>
-                <div id="turn-badge" style="padding: 2px 6px; font-size: 10px;">Turno: Jogador</div>
-                <div id="resources-grid" style="display: flex; gap: 6px; margin-top: 4px; font-size: 10px; flex-wrap: wrap;">
-                    <span title="Ouro">💰 <span id="ui-gold">0</span></span>
-                    <span title="DNA">🧬 <span id="ui-dna">0</span></span>
-                    <span title="Madeira">🌲 <span id="res-wood">0</span></span>
-                    <span title="Pedra">⛰️ <span id="res-stone">0</span></span>
-                    <span title="Escamas">🐟 <span id="res-scales">0</span></span>
-                    <span title="Areia">⏳ <span id="res-sand">0</span></span>
+        <div id="top-bar" class="panel" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+            
+            <div class="turn-section" style="flex: 1;">
+                <button id="btn-pause" class="btn-icon">⚙️</button>
+                <div>
+                    <div id="turn-badge">Turno: Jogador</div>
+                    
+                    <div id="resources-grid" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 4px; font-size: 11px;">
+                        <span title="Ouro">💰<br><span id="ui-gold">0</span></span>
+                        <span title="DNA">🧬<br><span id="ui-dna">0</span></span>
+                        <span title="Madeira">🌲<br><span id="res-wood">0</span></span>
+                        <span title="Pedra">⛰️<br><span id="res-stone">0</span></span>
+                        <span title="Escamas">🐟<br><span id="res-scales">0</span></span>
+                        <span title="Areia">⏳<br><span id="res-sand">0</span></span>
+                    </div>
+                    
+                    <div id="mana-bar-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px; max-height: 55px; overflow-y: auto;"></div>
+                    
+                    <button id="btn-grimoire" style="font-size: 9px; padding: 6px 4px; border-color: var(--tame-color); color: #e9d5ff; background: rgba(60,20,80,0.5); width: 100%; margin-top: 6px;">📖 Grimório</button>
+                    <button id="btn-ingame-team" style="font-size: 9px; padding: 6px 4px; border-color: var(--success); color: #fff; background: rgba(20,60,20,0.5); width: 100%; margin-top: 6px;">🎒 Mochila/Time</button>
+
                 </div>
-                <div id="mana-bar-container" style="display: flex; flex-wrap: wrap; gap: 2px; margin-top: 4px; max-height: 40px; overflow-y: auto;"></div>
+            </div>
+            
+            <div id="unit-info-container" style="flex: 1; display: grid; grid-template-columns: 1fr auto; gap: 4px; position: relative;">
+                <div id="unit-stats-block">
+                    <div id="unit-name">—</div>
+                    <div id="unit-info"><div style="color:var(--text-dim);">Selecione um alvo</div></div>
+                </div>
+                <div id="unit-portrait"></div>
+                
+                <div style="display: flex; gap: 4px; margin-top: 6px; grid-column: 1 / span 2; width: 100%;">
+                </div>
             </div>
         </div>
         
-        <div id="unit-info-container" style="display: flex; gap: 6px; justify-content: flex-end; align-items: flex-start; flex: 1; min-width: 0;">
-            <div id="unit-stats-block" style="text-align: right;">
-                <div id="unit-name" style="font-size: 12px;">—</div>
-                <div id="unit-info"><div style="color:var(--text-dim); font-size: 10px;">Selecione um alvo</div></div>
-            </div>
-            <div id="unit-portrait" style="width: 44px; height: 44px; font-size: 24px;"></div>
-        </div>
-    </div>
-    
-    <div style="display: flex; gap: 6px; width: 100%;">
-        <button id="btn-grimoire" style="flex: 1; font-size: 10px; padding: 6px 4px; border-color: var(--tame-color); color: #e9d5ff; background: rgba(60,20,80,0.5); justify-content: center; letter-spacing: 0;">📖 Grimório</button>
-        <button id="btn-ingame-team" style="flex: 1; font-size: 10px; padding: 6px 4px; border-color: var(--success); color: #fff; background: rgba(20,60,20,0.5); justify-content: center; letter-spacing: 0;">🎒 Mochila/Time</button>
-    </div>
-</div>
-
-<div id="combat-log"></div>
-
-<div id="spell-bar" class="hidden" style="position: absolute; bottom: 65px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 4px; padding: 6px; max-height: 35vh; overflow-y: auto; background: rgba(10,12,18,0.95); border: 1px solid var(--gold-dark); border-radius: 8px; z-index: 110; width: auto; min-width: 260px; max-width: 95%;"></div>
-
-        
+        <div id="log-wrapper">
+        <span id="toggle-log-text">▼ Ocultar Log</span>
         <div id="combat-log"></div>
+        </div>
         
         <div id="spell-bar" class="hidden" style="position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; padding: 10px; max-height: 40vh; overflow-y: auto; background: rgba(10,12,18,0.95); border: 1px solid var(--gold-dark); border-radius: 8px; z-index: 110; width: 90%; max-width: 400px;"></div>
         

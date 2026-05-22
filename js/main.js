@@ -96,6 +96,20 @@ document.addEventListener("DOMContentLoaded",()=>{
     }
 
     // === BOTÕES DA INTERFACE ===
+
+    $('toggle-log-text').addEventListener('click', () => {
+        const log = $('combat-log');
+        const txt = $('toggle-log-text');
+        
+        if (log.classList.contains('hidden')) {
+            log.classList.remove('hidden');
+            txt.innerHTML = '▼ Ocultar Log';
+        } else {
+            log.classList.add('hidden');
+            txt.innerHTML = '▲ Mostrar Log';
+        }
+    });
+    
     $('unit-portrait').addEventListener('click',()=>{
         if(game&&game.selectedUnit){let u=game.selectedUnit;let template=ALL_BEASTS.find(x=>x.name===u.baseName||x.name===u.name);if(!template&&u.isLeader){template=LEADERS.find(x=>x.name===u.name);if(!template){template={name:u.name,emoji:u.emoji,hp:u.maxHp,mp:u.maxMp,atk:u.atk,range:u.range,filter:u.filter,fav:u.fav,isBoss:true};}}if(template){showBeastDetails(template,true);}}
     });
