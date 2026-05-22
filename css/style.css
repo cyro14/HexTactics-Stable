@@ -173,7 +173,6 @@ button.btn-success { border-color: var(--success); color: #a8f0c6; }
     /* Sobe o log de combate e a barra de magias para não colidirem com o rodapé novo */
     #combat-log { width: 220px; bottom: 55px; left: 5px; }
     #spell-bar { bottom: 55px; right: 5px; }
-}
     
     .shop-grid { grid-template-columns: repeat(2, 1fr); }
     .bestiary-grid { grid-template-columns: repeat(3, 1fr); }
