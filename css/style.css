@@ -42,7 +42,46 @@ canvas { display: block; width: 100%; height: 100%; }
 #unit-name { font-family: Cinzel, serif; font-size: 14px; font-weight: 700; margin-bottom: 2px; color: var(--gold-light); }
 #stage-indicator { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); background: var(--panel-bg); border: 1px solid var(--panel-border-bright); padding: 3px 14px; border-radius: 2px; font-family: Cinzel, serif; font-size: 11px; letter-spacing: 3px; color: var(--gold-light); z-index: 15; pointer-events: none; }
 
-#combat-log { position: absolute; bottom: 74px; left: 8px; width: 260px; display: flex; flex-direction: column; justify-content: flex-end; gap: 3px; pointer-events: none; z-index: 5; }
+#log-wrapper { 
+    position: absolute; 
+    bottom: 74px; 
+    left: 8px; 
+    width: 260px; 
+    display: flex; 
+    flex-direction: column; 
+    z-index: 105; 
+    pointer-events: none; 
+}
+
+#toggle-log-text { 
+    font-family: Cinzel, serif; 
+    font-size: 10px; 
+    color: var(--gold-dark); 
+    cursor: pointer; 
+    pointer-events: auto; /* Permite que seja clicado */
+    text-shadow: 1px 1px 2px #000; 
+    margin-bottom: 4px; 
+    letter-spacing: 1px; 
+    display: inline-block; 
+    width: fit-content; 
+    border-bottom: 1px solid var(--gold-dark); 
+    transition: color 0.2s; 
+}
+
+#toggle-log-text:hover {
+    color: var(--gold-light);
+}
+
+#combat-log { 
+    position: relative; 
+    width: 100%; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: flex-end; 
+    gap: 3px; 
+    pointer-events: none; 
+}
+
 .log-entry { background: rgba(4,6,12,.85); padding: 4px 10px; border-left: 2px solid var(--gold-dark); border-radius: 0 3px 3px 0; font-size: 11px; font-style: italic; color: var(--text-muted); animation: slideIn .2s ease-out; backdrop-filter: blur(8px); }
 
 @keyframes slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
@@ -171,7 +210,7 @@ button.btn-success { border-color: var(--success); color: #a8f0c6; }
     }
 
     /* Sobe o log de combate e a barra de magias para não colidirem com o rodapé novo */
-    #combat-log { width: 220px; bottom: 55px; left: 5px; }
+    #log-wrapper { width: 220px; bottom: 55px; left: 5px; }
     #spell-bar { bottom: 55px; right: 5px; }
     
     .shop-grid { grid-template-columns: repeat(2, 1fr); }
