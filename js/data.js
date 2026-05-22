@@ -117,9 +117,9 @@ const ALL_BEASTS = [...BEASTS.LAND,...BEASTS.WATER,...BEASTS.SNOW,...BEASTS.BOSS
 const ARTIFACTS = [ 
     {id:'art_hp',name:'Cálice Vital',icon:'🍷',desc:'+15 HP Máx (Tropas).',cost:15,rarity:'rare',color:'var(--rarity-rare)'}, 
     {id:'art_atk',name:'Lâmina de Sangue',icon:'🗡️',desc:'+8 Ataque (Tropas).',cost:20,rarity:'epic',color:'var(--rarity-epic)'}, 
-    {id:'art_move',name:'Botas de Hermes',icon:'🥾',desc:'+1 Movimento pro Herói.',cost:25,rarity:'legendary',color:'var(--rarity-legendary)'}, 
+    {id:'art_move',name:'Botas de Hermes',icon:'🥾',desc:'+1 Movimento pro Herói.',cost:15,rarity:'rare',color:'var(--rarity-rare)'}, 
     {id:'art_tame',name:'Anel do Domador',icon:'💍',desc:'+20% chance de Domar.',cost:18,rarity:'epic',color:'var(--rarity-epic)'}, 
-    {id:'art_gold',name:'Moeda Real',icon:'👑',desc:'Saquear Vilas = ouro em dobro.',cost:15,rarity:'rare',color:'var(--rarity-rare)'}, 
+    {id:'art_gold',name:'Moeda Real',icon:'👑',desc:'Saquear Vilas = ouro em dobro.',cost:18,rarity:'epic',color:'var(--rarity-epic)'}, 
     {id:'art_shield',name:'Escudo de Aegis',icon:'🛡️',desc:'Reduz dano recebido em 15%.',cost:18,rarity:'epic',color:'var(--rarity-epic)'}, 
     {id:'art_crown',name:'Coroa da Liderança',icon:'⚜️',desc:'Limite do exército +1.',cost:22,rarity:'legendary',color:'var(--rarity-legendary)'}, 
     {id:'art_hourglass',name:'Ampulheta',icon:'⏳',desc:'Herói cura 5 HP/turno.',cost:20,rarity:'epic',color:'var(--rarity-epic)'}, 
@@ -181,13 +181,13 @@ const EVENTS = [
 // ESTRUTURAS DO REINO (Atualização 2.0)
 // ==========================================
 const BUILDINGS = {
-    STABLE: { id: 'STABLE', name: 'Estábulo', icon: '🐎', cost: { wood: 10, stone: 5 }, desc: 'O Mercador sempre venderá um Cavalo extra.', terrains: ['PLAINS', 'DESERT', 'SNOW'] },
-    CHURCH: { id: 'CHURCH', name: 'Igreja', icon: '⛪', cost: { stone: 15, scales: 5 }, desc: 'Recebe um Guardião Celestial imediatamente.', terrains: ['PLAINS', 'MOUNTAIN', 'SNOW'] },
-    MINE: { id: 'MINE', name: 'Mina', icon: '⛏️', cost: { wood: 5, stone: 10 }, desc: 'Gera +3 Pedra e +1 Ouro ao vencer batalhas.', terrains: ['MOUNTAIN'] },
-    LUMBERMILL: { id: 'LUMBERMILL', name: 'Madeireira', icon: '🪓', cost: { stone: 5, sand: 5 }, desc: 'Gera +3 Madeira ao vencer batalhas.', terrains: ['FOREST'] },
-    FISHINGCAMP: { id: 'FISHINGCAMP', name: 'Campo de Pesca', icon: '🎣', cost: { wood: 10 }, desc: 'Gera +3 Escamas ao vencer batalhas.', terrains: ['WATER'] },
-    SANDPIT: { id: 'SANDPIT', name: 'Extrator de Areia', icon: '🐪', cost: { wood: 5, stone: 5 }, desc: 'Gera +3 Areia ao vencer batalhas.', terrains: ['DESERT'] },
-    PARK: { id: 'PARK', name: 'Parque', icon: '⛲', cost: { wood: 10, sand: 10 }, desc: 'Grande chance de domar feras Nv1 com HP cheio.', terrains: ['PLAINS', 'FOREST', 'DESERT', 'SNOW'] },
-    FARM: { id: 'FARM', name: 'Fazenda', icon: '🌾', cost: { wood: 15 }, desc: 'Todas as feras ganham +10 HP Máx (Retroativo).', terrains: ['PLAINS'] },
-    TOWN: { id: 'TOWN', name: 'Vila Base', icon: '🏘️', cost: { wood: 5, stone: 5 }, desc: 'Aumenta o espaço na Box em +2.', terrains: ['PLAINS', 'FOREST', 'DESERT', 'SNOW'] }
+    STABLE: { id: 'STABLE', name: 'Estábulo', icon: '🐎', cost: { wood: 6, stone: 3 }, desc: 'O Mercador sempre venderá um Cavalo extra.', terrains: ['PLAINS', 'DESERT', 'SNOW'] },
+    CHURCH: { id: 'CHURCH', name: 'Igreja', icon: '⛪', cost: { stone: 7, sand: 5 , wood:6}, desc: 'Recebe um Guardião Celestial imediatamente.', terrains: ['PLAINS', 'MOUNTAIN', 'SNOW'] },
+    MINE: { id: 'MINE', name: 'Mina', icon: '⛏️', cost: { wood: 5, stone: 2 }, desc: 'Gera +3 Pedra e +1 Ouro ao vencer batalhas.', terrains: ['MOUNTAIN'] },
+    LUMBERMILL: { id: 'LUMBERMILL', name: 'Madeireira', icon: '🪓', cost: { stone: 5, wood: 2 }, desc: 'Gera +3 Madeira ao vencer batalhas.', terrains: ['FOREST'] },
+    FISHINGCAMP: { id: 'FISHINGCAMP', name: 'Campo de Pesca', icon: '🎣', cost: { wood: 7 }, desc: 'Gera +3 Escamas ao vencer batalhas.', terrains: ['WATER'] },
+    SANDPIT: { id: 'SANDPIT', name: 'Extrator de Areia', icon: '🐪', cost: { wood: 2, stone: 1 }, desc: 'Gera +3 Areia ao vencer batalhas.', terrains: ['DESERT'] },
+    PARK: { id: 'PARK', name: 'Parque', icon: '⛲', cost: { stone: 10, sand: 10 }, desc: 'Grande chance de domar feras Nv1 com HP cheio.', terrains: ['PLAINS', 'FOREST', 'DESERT', 'SNOW'] },
+    FARM: { id: 'FARM', name: 'Fazenda', icon: '🌾', cost: { wood: 15 }, desc: 'Todas as feras ganham +10 HP Máx.', terrains: ['PLAINS'] },
+    TOWN: { id: 'TOWN', name: 'Vila Base', icon: '🏘️', cost: { wood: 5, stone: 5 , sand: 5}, desc: 'Aumenta o espaço na Box em +2.', terrains: ['PLAINS', 'FOREST', 'DESERT', 'SNOW'] }
 };
