@@ -190,5 +190,13 @@ const BUILDINGS = {
     SANDPIT: { id: 'SANDPIT', name: 'Extrator de Areia', icon: '🐪', cost: { wood: 2, stone: 1 }, desc: 'Gera +3 Areia ao vencer batalhas.', terrains: ['DESERT'] },
     PARK: { id: 'PARK', name: 'Parque', icon: '⛲', cost: { stone: 10, sand: 10 }, desc: 'Grande chance de domar feras Nv1 com HP cheio.', terrains: ['PLAINS', 'FOREST', 'DESERT', 'SNOW'] },
     FARM: { id: 'FARM', name: 'Fazenda', icon: '🌾', cost: { wood: 15 }, desc: 'Todas as feras ganham +10 HP Máx.', terrains: ['PLAINS'] },
-    TOWN: { id: 'TOWN', name: 'Vila', icon: '🏘️', cost: { wood: 5, stone: 5 , sand: 5, scales:5}, desc: 'Aumenta o espaço na equipe em +1.', terrains: ['PLAINS', 'FOREST', 'DESERT', 'SNOW'] }
+    TOWN: { id: 'TOWN', name: 'Vila', icon: '🏘️', cost: { wood: 5, stone: 5 , sand: 5, scales:5}, desc: 'Aumenta o espaço na equipe em +1.', terrains: ['PLAINS', 'FOREST', 'DESERT', 'SNOW'] },
+    BESTIARY: { id: 'BESTIARY', name: 'Bestiário', icon: '📖', cost: { wood: 0, scales: 0 }, desc: 'Aumenta a chance global de domar feras.', terrains: ['PLAINS', 'FOREST', 'SNOW'] },
+    MARKET: { id: 'MARKET', name: 'Mercado', icon: '⚖️', cost: { wood: 0, stone: 0 }, desc: 'Permite a troca de recursos básicos por ouro e vice-versa.', terrains: ['PLAINS', 'DESERT', 'SNOW'] },
+    CRYSTAL_TOWER: { id: 'CRYSTAL_TOWER', name: 'Torre de Cristal', icon: '🔮', cost: { stone: 15, sand: 10 }, desc: 'O líder inicia o 1º turno do combate com +1 de Mana.', terrains: ['MOUNTAIN', 'SNOW'] },
+    SHADOW_ALTAR: { id: 'SHADOW_ALTAR', name: 'Altar das Sombras', icon: '🪦', cost: { stone: 0, scales: 0 }, desc: 'Sacrifica feras por recursos (Apenas Líderes Umbrais).', terrains: ['MOUNTAIN', 'DESERT', 'FOREST'] },
+    FORGE: { id: 'FORGE', name: 'Forja', icon: '⚒️', cost: { wood: 0, stone: 0 }, desc: 'Forje itens e consumíveis direto para a sua mochila.', terrains: ['MOUNTAIN', 'PLAINS'] },
+    BARRACKS: { id: 'BARRACKS', name: 'Quartel', icon: '⛺', cost: { wood: 5, stone: 0 }, desc: 'Recrute feras que compartilham a afinidade do seu Líder.', terrains: ['PLAINS', 'DESERT'] },
+    LIBRARY: { id: 'LIBRARY', name: 'Biblioteca', icon: '📚', cost: { wood: 0, sand: 0 }, desc: '[Em Breve] Desbloqueia a Árvore de Habilidades.', terrains: ['PLAINS', 'SNOW'] },
+    PORT: { id: 'PORT', name: 'Porto', icon: '⚓', cost: { wood: 0, stone: 0 }, desc: 'Gera +5 Ouro ao vencer batalhas.', terrains: ['WATER'] },
 };

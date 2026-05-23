@@ -458,7 +458,10 @@ class Game {
             if (tamer.faction === 1 && wild.level === 1 && wild.hp === wild.maxHp && typeof countKingdomBuildings === 'function') {
                 if (window.countKingdomBuildings('PARK') > 0) cC += 0.40;
             }
-            // --------------------------------
+
+            if (tamer.faction === 1 && typeof countKingdomBuildings === 'function') {
+                cC += (window.countKingdomBuildings('BESTIARY') * 0.15);
+            }
 
             if (cC < 0.05) cC = 0.05;
             const tCol = tamer.faction === 1 ? '#4a9edd' : '#c0392b';
@@ -598,6 +601,18 @@ class Game {
                     else if (hex.terrain.id === 'WATER') { this.resources.scales++; resGained = '+1 Escama'; icon = '🐟'; color = '#3498db'; }
                     else if (hex.terrain.id === 'DESERT') { this.resources.sand++; resGained = '+1 Areia'; icon = '⏳'; color = '#f1c40f'; }
 
+                    // Passiva da Torre de Cristal no Turno 1
+                    if (this.turnCount === 0 && typeof countKingdomBuildings === 'function') {
+                        let towerLvl = window.countKingdomBuildings('CRYSTAL_TOWER');
+                        if (towerLvl > 0) {
+                            let pL = this.units.find(u => u.isLeader && u.faction === 1);
+                            if (pL && pL.tags && pL.tags.length > 0) {
+                                let primaryTag = pL.tags[0]; // Pega o primeiro elemento do líder
+                                this.manaPool[primaryTag] = (this.manaPool[primaryTag] || 0) + towerLvl;
+                                if (typeof showPopup === 'function') showPopup(`+${towerLvl} Mana 🔮`, pL, '#9b59b6');
+                            }
+                        }
+                    }
                     if (resGained && typeof showPopup === 'function') {
                         showPopup(`${icon} ${resGained}`, u, color);
                     }
@@ -684,8 +699,9 @@ class Renderer {
         }
 
         if (su && this.game.currentTurn === 1 && !this.game.activeSpell) {
-            this.game.units.forEach(tg => { 
-                if (tg.faction !== 1 && Hex.distance(su, tg) <= su.range && !su.hasAttacked) { const isTame = this.game.tameMode && tg.faction === 0 && Hex.distance(su, tg) === 1; const p = this.getPos(tg.vq, tg.vr); this.hexPath(ctx, p.x, p.y, this.hexSize - 1); ctx.fillStyle = isTame ? 'rgba(155,89,182,0.35)' : 'rgba(192,57,43,0.35)'; ctx.fill(); ctx.strokeStyle = isTame ? 'rgba(155,89,182,0.9)' : 'rgba(231,76,60,0.85)'; ctx.lineWidth = 2; ctx.stroke(); } });
+            this.game.units.forEach(tg => {
+                if (tg.faction !== 1 && Hex.distance(su, tg) <= su.getEffectiveRange(game) && !su.hasAttacked) { const isTame = this.game.tameMode && tg.faction === 0 && Hex.distance(su, tg) === 1; const p = this.getPos(tg.vq, tg.vr); this.hexPath(ctx, p.x, p.y, this.hexSize - 1); ctx.fillStyle = isTame ? 'rgba(155,89,182,0.35)' : 'rgba(192,57,43,0.35)'; ctx.fill(); ctx.strokeStyle = isTame ? 'rgba(155,89,182,0.9)' : 'rgba(231,76,60,0.85)'; ctx.lineWidth = 2; ctx.stroke(); }
+            });
             const sp = this.getPos(su.vq, su.vr); this.hexPath(ctx, sp.x, sp.y, this.hexSize - 1); ctx.strokeStyle = '#c9a227'; ctx.lineWidth = 2.5; ctx.stroke();
         } else if (!su && this.game.selectedHex) { const sh = this.getPos(this.game.selectedHex.q, this.game.selectedHex.r); this.hexPath(ctx, sh.x, sh.y, this.hexSize - 1); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2; ctx.stroke(); }
 
