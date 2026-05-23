@@ -262,6 +262,7 @@ function renderSpellBar(){
         
         let cdText = cd > 0 ? `<span style="color:#f39c12; font-weight:bold;">[CD: ${cd}]</span> ` : '';
         const btn = document.createElement('div');
+        btn.style.flexShrink = '0';
         btn.className = `spell-btn ${isActive?'spell-active':''} ${!can?'spell-disabled':''}`;
 btn.innerHTML = `<span style="font-size:16px;">${spell.icon}</span><div style="flex:1; line-height:1.2; text-align:left;"><div style="font-family:Cinzel,serif;font-size:11px;color:${isActive?'#ff8888':'var(--gold-light)'};">${cdText}${spell.name}</div><div style="font-size:9px;color:#888;">Nv${spell.level} · ${costHtml}</div></div>`;
 
@@ -278,8 +279,8 @@ btn.innerHTML = `<span style="font-size:16px;">${spell.icon}</span><div style="f
                     game.calculateReachable(leader);
                     updateUI();
                     renderer.draw();
-                    showMessage(`Mirando: ${spell.icon} ${spell.name}`, '#c9a227');
-                }
+                    showMessage(`✨ ${spell.name}: ${spell.desc}`, '#e8c84a');               
+                 }
                 renderSpellBar();
             });
         }
@@ -1222,7 +1223,7 @@ function startGame(load,isRoguelite=false,leaderId=null){
 }
 
 // ==========================================
-// SISTEMA DE GERENCIAMENTO DO REINO 2.0
+// SISTEMA DE GERENCIAMENTO DO REINO
 // ==========================================
 let kingdomHexSize = 45;
 let kingdomOffsetX = 0, kingdomOffsetY = 0;
@@ -1288,9 +1289,9 @@ function renderBuildingMenu() {
                 hex.building = b.id; 
                 
                 if (b.id === 'CHURCH') {
-                    let celestial = new Unit({q:0,r:0,faction:1,isLeader:false,name:"Guardião Celestial",baseName:"Guardião",emoji:"👼",hp:45,maxHp:45,mp:4,maxMp:4,atk:12,range:1,level:1,abilities:['leadership'],isNew:true,filter:'none',tags:['CELESTIAL'],fav:['PLAINS']});
+                    let celestial = new Unit({q:0,r:0,faction:1,isLeader:false,name:"Pomba Celestial",baseName:"Pomba",emoji:"🕊️",hp:45,maxHp:45,mp:4,maxMp:4,atk:12,range:1,level:1,abilities:['leadership'],isNew:true,filter:'none',tags:['CELESTIAL'],fav:['PLAINS']});
                     rosterMemory.push(celestial);
-                    await showZeldaPopup("👼", "Invocação Celestial!", "O Guardião Celestial foi enviado com sucesso para a sua Box!");
+                    await showZeldaPopup("🕊️", "Pomba Celestial!", "A Pomba Celestial foi enviada com sucesso para a sua Box!");
                 }
                 if (b.id === 'FARM') {
                     [...rosterMemory, ...deployedRoster].forEach(u => { u.maxHp += 10; u.hp += 10; });
@@ -1523,11 +1524,13 @@ function openKingdom() {
                     
                     kRenderer.selectedHex = clickedHex;
                     kRenderer.draw();
-                    if ($('building-menu') && !$('building-menu').classList.contains('hidden')) {
-                        renderBuildingMenu(); 
-                    }
-                });
-            }
+
+                    if ($('building-menu')) {
+                        $('building-menu').classList.remove('hidden');
+                        renderBuildingMenu();
+    }
+                    });
+                }
             
             kRenderer.initCamera();
             kRenderer.draw();
