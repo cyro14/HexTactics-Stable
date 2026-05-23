@@ -2,10 +2,14 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hex Tactics - Lendas Vivas</title>
     <link rel="manifest" href="./manifest.json">
+    <!-- Theme color for supported browsers; provide fallbacks for others -->
     <meta name="theme-color" content="#c9a227">
+    <!-- Fallbacks / alternatives for browsers that don't support theme-color -->
+    <meta name="msapplication-TileColor" content="#c9a227">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -30,13 +34,15 @@
                     </div>
                     
                     <div id="mana-bar-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px; max-height: 55px; overflow-y: auto;"></div>
-                    
-                    <button id="btn-grimoire" style="font-size: 9px; padding: 6px 4px; border-color: var(--tame-color); color: #e9d5ff; background: rgba(60,20,80,0.5); width: 100%; margin-top: 6px;">📖 Grimório</button>
-                    <button id="btn-ingame-team" style="font-size: 9px; padding: 6px 4px; border-color: var(--success); color: #fff; background: rgba(20,60,20,0.5); width: 100%; margin-top: 6px;">🎒 Mochila/Time</button>
-
+                    <div style="display: flex; gap: 10px; width: 100%; justify-content: center; margin-top: 4px;">
+                        <button id="btn-grimoire" style="flex: 0 1 130px; font-size: 10px; padding: 6px 4px; border-color: var(--tame-color); color: #e9d5ff; background: rgba(60,20,80,0.5); justify-content: center; letter-spacing: 0;">📖Grimório</button>
+                        <button id="btn-ingame-team" style="flex: 0 1 130px; font-size: 10px; padding: 6px 4px; border-color: var(--success); color: #fff; background: rgba(20,60,20,0.5); justify-content: center; letter-spacing: 0;">🎒Time</button>
+                    </div>
                 </div>
             </div>
             
+            
+
             <div id="unit-info-container" style="flex: 1; display: grid; grid-template-columns: 1fr auto; gap: 4px; position: relative;">
                 <div id="unit-stats-block">
                     <div id="unit-name">—</div>

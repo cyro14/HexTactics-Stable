@@ -6,7 +6,7 @@ let selectedInventoryIndex = null;
 window.countKingdomBuildings = function(buildingId) {
     if (!game || !game.kingdomMap) return 0;
     let count = 0;
-    game.kingdomMap.forEach(h => { if (h.building === buildingId) count++; });
+    game.kingdomMap.forEach(h => { if (h.building === buildingId) count += (h.bLevel || 1); });
     return count;
 };
 
@@ -1227,130 +1227,10 @@ function startGame(load,isRoguelite=false,leaderId=null){
 let kingdomHexSize = 45;
 let kingdomOffsetX = 0, kingdomOffsetY = 0;
 let selectedBuilding = null;
-
-function initKingdomMap() {
-    if (!game.kingdomMap || game.kingdomMap.size === 0) {
-        game.kingdomMap = new Map();
-        const kRadius = 3; // Tamanho do grid do reino
-        for (let q = -kRadius; q <= kRadius; q++) {
-            for (let r = Math.max(-kRadius, -q - kRadius); r <= Math.min(kRadius, -q + kRadius); r++) {
-                game.kingdomMap.set(`${q},${r}`, { q: q, r: r, building: null });
-            }
-        }
-        // Centro do Reino
-        game.kingdomMap.get("0,0").building = 'CASTLE_BASE'; 
-    }
-}
-
-function updateKingdomResources() {
-    if(game && game.resources) {
-        $('res-wood').innerText = game.resources.wood || 0;
-        $('res-stone').innerText = game.resources.stone || 0;
-        $('res-scales').innerText = game.resources.scales || 0;
-        $('res-sand').innerText = game.resources.sand || 0;
-        $('res-blood').innerText = game.resources.blood || 0;
-    }
-}
-
-function renderBuildingMenu() {
-    const menu = $('building-menu');
-    menu.innerHTML = '';
-    const hex = kRenderer.selectedHex;
-    
-    if (!hex) { menu.innerHTML = '<div style="color:#aaa; padding:10px;">Selecione um hexágono no mapa para construir.</div>'; return; }
-    if (hex.building) { menu.innerHTML = `<div style="color:var(--warning); padding:10px; font-weight:bold;">Já existe uma construção aqui: ${BUILDINGS[hex.building].name}</div>`; return; }
-
-    let hasOptions = false;
-    Object.values(BUILDINGS).forEach(b => {
-        // CORREÇÃO DEFINITIVA: Extrai o ID e força para maiúsculo
-        let tId = (typeof hex.terrain === 'string') ? hex.terrain : (hex.terrain.id || 'PLAINS');
-        tId = tId.toUpperCase();
-        
-        // Bloqueio rigoroso: Se o catálogo não tiver a lista ou o terreno não bater, não mostra a opção
-        if (!b.terrains || !b.terrains.includes(tId)) return; 
-
-        hasOptions = true;
-        const canAfford = Object.entries(b.cost).every(([res, amt]) => (game.resources[res] || 0) >= amt);
-        const btn = document.createElement('button');
-        btn.style.cssText = `display:flex; flex-direction:column; align-items:center; min-width:140px; background:rgba(20,20,30,0.8); border:1px solid ${canAfford ? 'var(--success)' : '#555'}; padding:10px; border-radius:8px; cursor:${canAfford ? 'pointer' : 'not-allowed'};`;
-        
-        const costHtml = Object.entries(b.cost).map(([res, amt]) => {
-            let icon = res==='wood'?'🌲':res==='stone'?'⛰️':res==='scales'?'🐟':res==='sand'?'⏳':'🩸';
-            let color = (game.resources[res] || 0) >= amt ? '#fff' : 'var(--enemy-color)';
-            return `<span style="color:${color}; font-size:12px;">${icon}${amt}</span>`;
-        }).join(' ');
-
-        btn.innerHTML = `<span style="font-size:28px;">${b.icon}</span><span style="font-size:12px; color:var(--gold-light); margin:5px 0; font-weight:bold;">${b.name}</span><div style="display:flex; gap:8px;">${costHtml}</div><span style="font-size:9px; color:#aaa; margin-top:5px; text-align:center;">${b.desc}</span>`;
-        
-        if (canAfford) {
-            btn.onclick = async () => {
-                Object.entries(b.cost).forEach(([res, amt]) => game.resources[res] -= amt);
-                hex.building = b.id; 
-                
-                if (b.id === 'CHURCH') {
-                    let celestial = new Unit({q:0,r:0,faction:1,isLeader:false,name:"Guardião Celestial",baseName:"Guardião",emoji:"👼",hp:45,maxHp:45,mp:4,maxMp:4,atk:12,range:1,level:1,abilities:['leadership'],isNew:true,filter:'none',tags:['CELESTIAL'],fav:['PLAINS']});
-                    rosterMemory.push(celestial);
-                    await showZeldaPopup("👼", "Invocação Celestial!", "O Guardião Celestial foi enviado com sucesso para a sua Box!");
-                }
-                if (b.id === 'FARM') {
-                    [...rosterMemory, ...deployedRoster].forEach(u => { u.maxHp += 10; u.hp += 10; });
-                    showPopup("🌾 +10 HP Geral!", hex, '#2ecc71');
-                }
-
-                openKingdom(); kRenderer.draw(); renderBuildingMenu(); autoSave(); 
-                if (b.id !== 'CHURCH') showPopup("✨ Construído!", hex, '#2ecc71');
-            };
-        }
-        menu.appendChild(btn);
-    });
-    
-    if(!hasOptions) menu.innerHTML = '<div style="color:#aaa; padding:10px;">Nenhuma construção disponível para este tipo de terreno.</div>';
-}
-
-function drawKingdom() {
-    const canvas = $('kingdomCanvas');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    game.kingdomMap.forEach(hex => {
-        let px = kingdomHexSize * Math.sqrt(3) * (hex.q + hex.r / 2) + kingdomOffsetX;
-        let py = kingdomHexSize * 1.5 * hex.r + kingdomOffsetY;
-        
-        ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
-            const a = (Math.PI / 180) * (60 * i - 30);
-            ctx.lineTo(px + (kingdomHexSize - 1) * Math.cos(a), py + (kingdomHexSize - 1) * Math.sin(a));
-        }
-        ctx.closePath();
-        ctx.fillStyle = '#10121a';
-        ctx.fill();
-        ctx.strokeStyle = '#333';
-        ctx.stroke();
-        
-        // Desenha a estrutura se houver
-        if (hex.building) {
-            let icon = hex.building === 'CASTLE_BASE' ? '🏰' : (BUILDINGS[hex.building] ? BUILDINGS[hex.building].icon : '');
-            ctx.font = `${kingdomHexSize * 0.8}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(icon, px, py);
-        } else if (selectedBuilding) {
-            // Highlight para construir
-            ctx.fillStyle = 'rgba(255,255,255,0.05)';
-            ctx.fill();
-        }
-    });
-}
-
-function triggerKingdomArrival() {
-    // Efeito passivo da Mina ao visitar o reino
-    let hasMine = Array.from(game.kingdomMap.values()).some(h => h.building === 'MINE');
-    if (hasMine) {
-        game.gold += 5;
-        if(typeof updateUI === 'function') updateUI();
-        showMessage("Mina gerou +5 Ouro!", "var(--gold-light)");
-    }
-}
+let kRenderer = null;
+let isKDragging = false;
+let startKX, startKY, initKOffX, initKOffY;
+let initKPinch = null, initKSize = null;
 
 function openKingdom() {
     hide('result-screen');
@@ -1358,199 +1238,220 @@ function openKingdom() {
     hide('game-container');
     show('kingdom-screen');
     
-    // 1. BLINDAGEM DE SAVE ANTIGO: Se o mapa estiver vazio, força a geração!
+    // 1. Gera o mapa do Reino se não existir no save
     if (!game.kingdomMap || game.kingdomMap.size === 0) {
-        if(typeof game.generateKingdomMap === 'function') {
-            game.generateKingdomMap();
+        game.kingdomMap = new Map();
+        const kCols = 13, kRows = 9; 
+        for (let r = 0; r < kRows; r++) { 
+            const off = Math.floor(r / 2); 
+            for (let q = -off; q < kCols - off; q++) { 
+                const rnd = Math.random(); 
+                let t = TERRAINS.PLAINS; 
+                if (rnd > 0.90) t = TERRAINS.MOUNTAIN; 
+                else if (rnd > 0.80) t = TERRAINS.SNOW; 
+                else if (rnd > 0.65) t = TERRAINS.WATER; 
+                else if (rnd > 0.50) t = TERRAINS.FOREST; 
+                else if (rnd > 0.35) t = TERRAINS.DESERT; 
+                game.kingdomMap.set(`${q},${r}`, { q: q, r: r, terrain: t, building: null, bLevel: null }); 
+            } 
         }
     }
 
-    // Atualiza o visor de recursos no Reino
-    let res = game.resources || { wood:0, stone:0, scales:0, sand:0, blood:0 };
-    if($('res-wood')) $('res-wood').innerText = res.wood;
-    if($('res-stone')) $('res-stone').innerText = res.stone;
-    if($('res-scales')) $('res-scales').innerText = res.scales;
-    if($('res-sand')) $('res-sand').innerText = res.sand;
+    // REGRA DE OURO: Garante apenas um Castelo Real no centro do mapa (coordenadas 4,4)
+    let hasCastle = Array.from(game.kingdomMap.values()).some(h => h.building === 'CASTLE');
+    if (!hasCastle) {
+        let centerHex = game.kingdomMap.get("4,4") || Array.from(game.kingdomMap.values())[0];
+        if (centerHex) { centerHex.building = 'CASTLE'; centerHex.bLevel = 1; }
+    }
 
-    // 2. ATRASO MILIMÉTRICO: Dá tempo para o CSS aplicar a largura/altura antes de desenhar
+    // Atualiza os contadores de recursos na tela
+    let res = game.resources || { wood:0, stone:0, scales:0, sand:0, blood:0 };
+    if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
+    if($('k-res-dna')) $('k-res-dna').innerText = game.dna || 0;
+    if($('k-res-wood')) $('k-res-wood').innerText = res.wood;
+    if($('k-res-stone')) $('k-res-stone').innerText = res.stone;
+    if($('k-res-scales')) $('k-res-scales').innerText = res.scales;
+    if($('k-res-sand')) $('k-res-sand').innerText = res.sand;
+
+    // Inicializa o motor gráfico e os inputs de câmera livre
     setTimeout(() => {
+        const canvasEl = $('kingdomCanvas');
+        if (!canvasEl) return;
+
         if (!kRenderer) {
-            kRenderer = new KingdomRenderer($('kingdomCanvas'), game);
+            kRenderer = new KingdomRenderer(canvasEl, game);
             
-            $('kingdomCanvas').addEventListener('click', (e) => {
-                const rect = $('kingdomCanvas').getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                let clickedHex = null;
-                let minDist = 999;
-                
-                game.kingdomMap.forEach(h => {
-                    const p = kRenderer.getPos(h.q, h.r);
-                    const d = Math.hypot(p.x - x, p.y - y);
-                    if (d < kRenderer.hexSize && d < minDist) { minDist = d; clickedHex = h; }
-                });
-                
-                kRenderer.selectedHex = clickedHex;
-                kRenderer.draw();
-                if (!$('building-menu').classList.contains('hidden')) {
-                    renderBuildingMenu(); 
+            // --- CONTROLES DE MOUSE (PC) ---
+            canvasEl.addEventListener('mousedown', e => {
+                isKDragging = false;
+                startKX = e.clientX; startKY = e.clientY;
+                initKOffX = kRenderer.offsetX; initKOffY = kRenderer.offsetY;
+            });
+
+            window.addEventListener('mousemove', e => {
+                if (startKX === undefined || !kRenderer || $('kingdom-screen').classList.contains('hidden')) return;
+                const dx = e.clientX - startKX;
+                const dy = e.clientY - startKY;
+                if (Math.abs(dx) > 8 || Math.abs(dy) > 8) isKDragging = true;
+                if (isKDragging) {
+                    kRenderer.offsetX = initKOffX + dx;
+                    kRenderer.offsetY = initKOffY + dy;
+                    kRenderer.draw();
                 }
             });
+
+            window.addEventListener('mouseup', e => {
+                if (startKX === undefined) return;
+                startKX = undefined;
+                if (!isKDragging) {
+                    const rect = canvasEl.getBoundingClientRect();
+                    processKingdomClick(e.clientX - rect.left, e.clientY - rect.top);
+                }
+            });
+
+            canvasEl.addEventListener('wheel', e => {
+                if ($('kingdom-screen').classList.contains('hidden')) return;
+                e.preventDefault();
+                kRenderer.hexSize = Math.max(25, Math.min(kRenderer.hexSize + (e.deltaY > 0 ? -4 : 4), 100));
+                kRenderer.draw();
+            }, { passive: false });
+
+            // --- CONTROLES DE TOQUE (MOBILE) ---
+            canvasEl.addEventListener('touchstart', e => {
+                if (e.touches.length === 2) {
+                    initKPinch = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                    initKSize = kRenderer.hexSize;
+                } else if (e.touches.length === 1) {
+                    isKDragging = false;
+                    startKX = e.touches[0].clientX; startKY = e.touches[0].clientY;
+                    initKOffX = kRenderer.offsetX; initKOffY = kRenderer.offsetY;
+                }
+            }, { passive: false });
+
+            canvasEl.addEventListener('touchmove', e => {
+                if ($('kingdom-screen').classList.contains('hidden')) return;
+                e.preventDefault();
+                if (e.touches.length === 2 && initKPinch) {
+                    const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                    kRenderer.hexSize = Math.max(25, Math.min(initKSize * (dist / initKPinch), 100));
+                    kRenderer.draw();
+                } else if (e.touches.length === 1 && startKX !== undefined) {
+                    const dx = e.touches[0].clientX - startKX;
+                    const dy = e.touches[0].clientY - startKY;
+                    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) isKDragging = true;
+                    if (isKDragging) {
+                        kRenderer.offsetX = initKOffX + dx;
+                        kRenderer.offsetY = initKOffY + dy;
+                        kRenderer.draw();
+                    }
+                }
+            }, { passive: false });
+
+            canvasEl.addEventListener('touchend', e => {
+                if (e.touches.length === 0) initKPinch = null;
+                if (startKX === undefined) return;
+                if (!isKDragging && e.changedTouches.length === 1) {
+                    const rect = canvasEl.getBoundingClientRect();
+                    processKingdomClick(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top);
+                }
+                startKX = undefined;
+            });
+        }
+
+        function processKingdomClick(x, y) {
+            let clickedHex = null, minDist = 999;
+            game.kingdomMap.forEach(h => {
+                const p = kRenderer.getPos(h.q, h.r);
+                const d = Math.hypot(p.x - x, p.y - y);
+                if (d < kRenderer.hexSize && d < minDist) { minDist = d; clickedHex = h; }
+            });
+            kRenderer.selectedHex = clickedHex;
+            kRenderer.draw();
+            if ($('building-menu') && !$('building-menu').classList.contains('hidden')) renderBuildingMenu();
         }
         
         kRenderer.initCamera();
-        hide('building-menu'); // O menu de construções começa fechado
-    }, 50); // <-- 50ms é o suficiente para o DOM respirar e aplicar o tamanho
-}
-
-// Listener de construção no Reino
-document.addEventListener("DOMContentLoaded", () => {
-    $('kingdomCanvas').addEventListener('click', e => {
-        if (!selectedBuilding) return;
-        
-        const rect = $('kingdomCanvas').getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        let clickedHex = null;
-        let minDist = 999;
-        game.kingdomMap.forEach(hex => {
-            let px = kingdomHexSize * Math.sqrt(3) * (hex.q + hex.r / 2) + kingdomOffsetX;
-            let py = kingdomHexSize * 1.5 * hex.r + kingdomOffsetY;
-            let dist = Math.hypot(px - x, py - y);
-            if (dist < minDist && dist < kingdomHexSize) {
-                minDist = dist;
-                clickedHex = hex;
-            }
-        });
-        
-        if (clickedHex) {
-            if (clickedHex.building) {
-                showMessage("Espaço já ocupado!", "#e74c3c");
-                return;
-            }
-            
-            let bData = BUILDINGS[selectedBuilding];
-            // Deduz recursos
-            for (let res in bData.cost) {
-                game.resources[res] -= bData.cost[res];
-            }
-            
-            clickedHex.building = selectedBuilding;
-            
-            // --- GATILHOS IMEDIATOS DE CONSTRUÇÃO ---
-            if (selectedBuilding === 'CHURCH') {
-                let celestial = BEASTS.LAND.find(b => (b.tags||[]).includes('CELESTIAL')) || BEASTS.LAND[1]; // Pega a primeira celestial ou pássaro
-                rosterMemory.push(new Unit({q:0, r:0, faction:1, name:celestial.name, baseName:celestial.name, emoji:celestial.e, hp:celestial.hp, maxHp:celestial.hp, mp:celestial.mp, maxMp:celestial.mp, atk:celestial.atk, range:celestial.range, abilities:[...celestial.abilities], isNew:true, tags:celestial.tags||[]}));
-                showMessage("Igreja Erguida! Celestial adicionado à Box.", "#fffbc2");
-            } else {
-                showMessage("Construção concluída!", "var(--success)");
-            }
-            
-            selectedBuilding = null;
-            updateKingdomResources();
-            renderBuildingMenu();
-            drawKingdom();
-            autoSave();
-        }
-    });
-
-    $('btn-leave-kingdom').addEventListener('click', () => {
-        hide('kingdom-screen');
-        renderRouteMap();
-    });
-});
-
-let kRenderer = null;
-
-function openKingdom() {
-    try {
-        hide('result-screen');
-        hide('route-map-screen');
-        hide('game-container');
-        show('kingdom-screen');
-        
-        // GERAÇÃO DIRETA: Garante o Mapa do Reino caso não exista
-        if (!game.kingdomMap || game.kingdomMap.size === 0) {
-            game.kingdomMap = new Map();
-            const kCols = 13, kRows = 9; 
-            for (let r = 0; r < kRows; r++) { 
-                const off = Math.floor(r / 2); 
-                for (let q = -off; q < kCols - off; q++) { 
-                    const rnd = Math.random(); 
-                    let t = TERRAINS.PLAINS; 
-                    if (rnd > 0.90) t = TERRAINS.MOUNTAIN; 
-                    else if (rnd > 0.80) t = TERRAINS.SNOW; 
-                    else if (rnd > 0.65) t = TERRAINS.WATER; 
-                    else if (rnd > 0.50) t = TERRAINS.FOREST; 
-                    else if (rnd > 0.35) t = TERRAINS.DESERT; 
-                    game.kingdomMap.set(`${q},${r}`, { q: q, r: r, terrain: t, building: null }); 
-                } 
-            }
-        }
-
-        // CORREÇÃO: Atualiza os IDs exclusivos com prefixo 'k-' da tela do Reino
-        let res = game.resources || { wood:0, stone:0, scales:0, sand:0, blood:0 };
-        if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
-        if($('k-res-dna')) $('k-res-dna').innerText = game.dna || 0;
-        if($('k-res-wood')) $('k-res-wood').innerText = res.wood;
-        if($('k-res-stone')) $('k-res-stone').innerText = res.stone;
-        if($('k-res-scales')) $('k-res-scales').innerText = res.scales;
-        if($('k-res-sand')) $('k-res-sand').innerText = res.sand;
-
-        // RENDERIZAÇÃO PROTEGIDA
-        setTimeout(() => {
-            const canvasEl = $('kingdomCanvas');
-            if (!canvasEl) return;
-
-            if (!kRenderer) {
-                kRenderer = new KingdomRenderer(canvasEl, game);
-                
-                canvasEl.addEventListener('click', (e) => {
-                    const rect = canvasEl.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    
-                    let clickedHex = null;
-                    let minDist = 999;
-                    
-                    game.kingdomMap.forEach(h => {
-                        const p = kRenderer.getPos(h.q, h.r);
-                        const d = Math.hypot(p.x - x, p.y - y);
-                        if (d < kRenderer.hexSize && d < minDist) { minDist = d; clickedHex = h; }
-                    });
-                    
-                    kRenderer.selectedHex = clickedHex;
-                    kRenderer.draw();
-                    if ($('building-menu') && !$('building-menu').classList.contains('hidden')) {
-                        renderBuildingMenu(); 
-                    }
-                });
-            }
-            
-            kRenderer.initCamera();
-            kRenderer.draw();
-            
-            if ($('building-menu')) hide('building-menu');
-        }, 150);
-
-    } catch (e) {
-        console.error("Erro ao abrir o Reino:", e);
-    }
+        kRenderer.draw();
+        if ($('building-menu')) hide('building-menu');
+    }, 150);
 }
 
 function renderBuildingMenu() {
     const menu = $('building-menu');
     menu.innerHTML = '';
+    
+    if (!kRenderer) return;
     const hex = kRenderer.selectedHex;
     
-    if (!hex) { menu.innerHTML = '<div style="color:#aaa; padding:10px;">Selecione um hexágono no mapa para construir.</div>'; return; }
-    if (hex.building) { menu.innerHTML = `<div style="color:var(--warning); padding:10px; font-weight:bold;">Já existe uma construção aqui: ${BUILDINGS[hex.building] ? BUILDINGS[hex.building].name : hex.building}</div>`; return; }
+    if (!hex) { menu.innerHTML = '<div style="color:#aaa; padding:10px;">Selecione um lote no mapa para interagir.</div>'; return; }
+    
+    // === MENU DE UPGRADE (Se o lote já tiver uma construção) ===
+    if (hex.building) {
+        let bData = BUILDINGS[hex.building];
+        if (!bData) { menu.innerHTML = '<div style="color:var(--warning); padding:10px;">Estrutura desconhecida.</div>'; return; }
+        
+        let bLvl = hex.bLevel || 1;
+        let maxLvl = bData.id === 'CASTLE' ? 1 : 3; 
+        
+        let html = `<div style="display:flex; flex-direction:column; align-items:center; min-width:220px; background:rgba(20,20,30,0.9); border:1px solid var(--gold); padding:10px; border-radius:8px;">
+            <span style="font-size:32px;">${bData.icon}</span>
+            <span style="font-size:13px; color:var(--gold-light); margin:4px 0; font-weight:bold;">${bData.name} <span style="color:#fff; background:#444; padding:1px 5px; border-radius:8px; font-size:10px;">Nv ${bLvl}</span></span>
+            <span style="font-size:10px; color:#aaa; margin-bottom:8px; text-align:center;">${bData.desc}</span>`;
+        
+        if (bLvl < maxLvl) {
+            let nextLvl = bLvl + 1;
+            let canAfford = Object.entries(bData.cost).every(([res, amt]) => (game.resources[res] || 0) >= (amt * nextLvl));
+            
+            let costHtml = Object.entries(bData.cost).map(([res, amt]) => {
+                let icon = res==='wood'?'🌲':res==='stone'?'⛰️':res==='scales'?'🐟':res==='sand'?'⏳':'🩸';
+                let reqAmt = amt * nextLvl;
+                let color = (game.resources[res] || 0) >= reqAmt ? '#fff' : 'var(--enemy-color)';
+                return `<span style="color:${color}; font-size:11px; font-weight:bold;">${icon}${reqAmt}</span>`;
+            }).join(' ');
+
+            html += `<div style="margin-bottom:4px; font-size:9px; color:var(--gold-dark); text-transform:uppercase;">Melhoria para Nv ${nextLvl}:</div>
+                     <div style="display:flex; gap:8px; margin-bottom:8px; background:rgba(0,0,0,0.5); padding:4px 8px; border-radius:4px;">${costHtml}</div>
+                     <button id="btn-upgrade-b" class="btn-warning" style="padding:6px 12px; font-size:10px; cursor:${canAfford?'pointer':'not-allowed'}; opacity:${canAfford?'1':'0.5'};">⬆️ Dar Upgrade</button>`;
+        } else {
+            html += `<div style="color:var(--success); font-size:11px; font-weight:bold; margin-top:6px; letter-spacing:1px;">NÍVEL MÁXIMO</div>`;
+        }
+        
+        html += `</div>`;
+        menu.innerHTML = html;
+        
+        if (bLvl < maxLvl) {
+            const btnU = $('btn-upgrade-b');
+            if (btnU) {
+                btnU.onclick = () => {
+                    let nextLvl = bLvl + 1;
+                    let canAfford = Object.entries(bData.cost).every(([res, amt]) => (game.resources[res] || 0) >= (amt * nextLvl));
+                    if (canAfford) {
+                        Object.entries(bData.cost).forEach(([res, amt]) => game.resources[res] -= (amt * nextLvl));
+                        hex.bLevel = nextLvl;
+                        
+                        if (bData.id === 'FARM') {
+                            [...rosterMemory, ...deployedRoster].forEach(u => { u.maxHp += 10; u.hp += 10; });
+                            showPopup("🌾 +10 HP Geral!", hex, '#2ecc71');
+                        }
+                        
+                        let resObj = game.resources || {};
+                        if($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
+                        if($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
+                        if($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
+                        if($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
+                        
+                        kRenderer.draw();
+                        renderBuildingMenu();
+                        autoSave();
+                        showPopup("⬆️ Nível " + nextLvl, hex, 'var(--gold-light)');
+                    }
+                };
+            }
+        }
+        return; 
+    }
 
     let hasOptions = false;
-    
-    // EXTRAÇÃO SEGURA DO TERRENO
     let tId = 'PLAINS';
     if (hex.terrain) {
         if (hex.terrain.id) tId = hex.terrain.id;
@@ -1559,7 +1460,7 @@ function renderBuildingMenu() {
     tId = tId.toUpperCase();
 
     Object.values(BUILDINGS).forEach(b => {
-        // FILTRO RÍGIDO: Se o terreno clicado não está na lista da construção, interrompe e não mostra o botão!
+        if (b.id === 'CASTLE') return; 
         if (!b.terrains || !b.terrains.includes(tId)) return; 
 
         hasOptions = true;
@@ -1570,32 +1471,41 @@ function renderBuildingMenu() {
         const costHtml = Object.entries(b.cost).map(([res, amt]) => {
             let icon = res==='wood'?'🌲':res==='stone'?'⛰️':res==='scales'?'🐟':res==='sand'?'⏳':'🩸';
             let color = (game.resources[res] || 0) >= amt ? '#fff' : 'var(--enemy-color)';
-            return `<span style="color:${color}; font-size:12px;">${icon}${amt}</span>`;
+            return `<span style="color:${color}; font-size:11px; font-weight:bold;">${icon}${amt}</span>`;
         }).join(' ');
 
-        btn.innerHTML = `<span style="font-size:28px;">${b.icon}</span><span style="font-size:12px; color:var(--gold-light); margin:5px 0; font-weight:bold;">${b.name}</span><div style="display:flex; gap:8px;">${costHtml}</div><span style="font-size:9px; color:#aaa; margin-top:5px; text-align:center;">${b.desc}</span>`;
+        btn.innerHTML = `<span style="font-size:26px;">${b.icon}</span><span style="font-size:11px; color:var(--gold-light); margin:4px 0; font-weight:bold;">${b.name}</span><div style="display:flex; gap:6px;">${costHtml}</div><span style="font-size:9px; color:#aaa; margin-top:6px; text-align:center;">${b.desc}</span>`;
         
         if (canAfford) {
             btn.onclick = async () => {
                 Object.entries(b.cost).forEach(([res, amt]) => game.resources[res] -= amt);
                 hex.building = b.id; 
+                hex.bLevel = 1; 
                 
                 if (b.id === 'CHURCH') {
-                    let celestial = new Unit({q:0,r:0,faction:1,isLeader:false,name:"Guardião Celestial",baseName:"Guardião",emoji:"👼",hp:45,maxHp:45,mp:4,maxMp:4,atk:12,range:1,level:1,abilities:['leadership'],isNew:true,filter:'none',tags:['CELESTIAL'],fav:['PLAINS']});
-                    rosterMemory.push(celestial);
-                    if(typeof showZeldaPopup === 'function') await showZeldaPopup("👼", "Invocação Celestial!", "O Guardião Celestial foi enviado com sucesso para a sua Box!");
+                    let celestial = BEASTS.LAND.find(bst => (bst.tags||[]).includes('CELESTIAL')) || BEASTS.LAND[1]; 
+                    rosterMemory.push(new Unit({q:0,r:0,faction:1,isLeader:false,name:celestial.name,baseName:celestial.name,emoji:celestial.e,hp:celestial.hp,maxHp:celestial.hp,mp:celestial.mp,maxMp:celestial.mp,atk:celestial.atk,range:celestial.range,level:1,abilities:[...celestial.abilities],isNew:true,filter:celestial.filter,tags:celestial.tags||[],fav:celestial.fav||[]}));
+                    if(typeof showZeldaPopup === 'function') await showZeldaPopup("👼", "Invocação Celestial!", "Uma fera Celestial foi enviada com sucesso para a Box!");
                 }
                 if (b.id === 'FARM') {
                     [...rosterMemory, ...deployedRoster].forEach(u => { u.maxHp += 10; u.hp += 10; });
                     showPopup("🌾 +10 HP Geral!", hex, '#2ecc71');
                 }
 
-                openKingdom(); kRenderer.draw(); renderBuildingMenu(); autoSave(); 
+                let resObj = game.resources || {};
+                if($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
+                if($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
+                if($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
+                if($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
+                
+                kRenderer.draw(); 
+                renderBuildingMenu(); 
+                autoSave(); 
                 if (b.id !== 'CHURCH') showPopup("✨ Construído!", hex, '#2ecc71');
             };
         }
         menu.appendChild(btn);
     });
     
-    if(!hasOptions) menu.innerHTML = '<div style="color:#aaa; padding:10px;">Nenhuma construção disponível para este tipo de terreno.</div>';
+    if(!hasOptions) menu.innerHTML = '<div style="color:#aaa; padding:10px; font-style:italic;">Nenhuma construção disponível para este tipo de terreno.</div>';
 }
