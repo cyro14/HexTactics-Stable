@@ -85,17 +85,17 @@ const SPELLS = [
     { id:'sl_barricade', name:'Construir Barricada', icon:'🚧', level:1, tags:['ROCK'], type:'def', range:0, cost:{}, desc:'O Engenheiro ganha +10HP Máx.', effect: async(g, c, t)=>{ let eng = g.units.find(u=>u.name==='Engenheiro Desertor'); if(eng) { eng.hp+=10; eng.maxHp+=10; showPopup("🚧 +10 HP", eng, '#aaa'); } return true; } }
 ];
 
-const LEADER_GRIMOIRE_TAGS = { 'mage':['MYSTIC','UMBRAL','CELESTIAL'], 'orc':['PRIMAL','ROCK','STALKER'], 'necro':['UMBRAL','VENOM','MYSTIC'], 'paladin':['CELESTIAL','ROCK','CARAPACE'], 'ranger':['SILVESTRE','STALKER','WING'], 'pyro':['FIRE','SAND','PRIMAL'], 'admiral':['ABYSSAL','ICE','WING'], 'vampire':['UMBRAL','MYSTIC','STALKER'] };
+const LEADER_GRIMOIRE_TAGS = { 'mage':['MYSTIC'], 'orc':['PRIMAL'], 'necro':['UMBRAL','VENOM'], 'paladin':['CELESTIAL','CARAPACE'], 'ranger':['SILVESTRE','STALKER'], 'pyro':['FIRE','SAND'], 'admiral':['ABYSSAL','ICE'], 'vampire':['UMBRAL','STALKER'] };
 
 const LEADERS = [
     { id:'mage', name:'Arquimago', emoji:'🧙🏻‍♂️', hp:60, atk:12, mp:4, range:2, limit:6, desc:'Mestre do controle.', tags:['MYSTIC'] },
     { id:'orc', name:'Chefe Orc', emoji:'👹', hp:80, atk:15, mp:5, range:1, limit:15, desc:'Líder de Horda (+10% ATK por aliado).', tags:['PRIMAL'] },
-    { id:'necro', name:'Necromante', emoji:'💀', hp:55, atk:10, mp:4, range:2, limit:8, desc:'Exército Morto (Domina como Umbral ao matar).', tags:['UMBRAL'] },
-    { id:'paladin', name:'Paladina', emoji:'🛡️', hp:85, atk:10, mp:4, range:1, limit:6, desc:'Escudo Sagrado (Chance de proteger adjacente).', tags:['CELESTIAL','CARAPACE'] },
-    { id:'ranger', name:'Arqueira', emoji:'🏹', hp:45, atk:14, mp:5, range:3, limit:6, desc:'Alcance longo e alta mobilidade.', tags:['SILVESTRE','STALKER'] },
-    { id:'pyro', name:'Piromante', emoji:'🔥', hp:50, atk:16, mp:4, range:2, limit:6, desc:'Feras compradas vêm com queimadura.', tags:['FIRE','MYSTIC'], abilities:['burn'] },
-    { id:'admiral', name:'Almirante', emoji:'🏴‍☠️', hp:65, atk:13, mp:5, range:1, limit:7, desc:'Teleporta na água. Pouca defesa fora dela.', tags:['ABYSSAL'], fav:['WATER'] },
-    { id:'vampire', name:'Lord Vampiro', emoji:'🧛🏻‍♂️', hp:65, atk:16, mp:6, range:1, limit:7, desc:'Roubo de vida. 20% domar. Fome se não atacar.', tags:['UMBRAL'], abilities:['lifesteal'] }
+    { id:'necro', name:'Necromante', emoji:'💀', hp:55, atk:10, mp:4, range:2, limit:8, desc:'Exército Morto (Domina como Umbral ao matar).', tags:['UMBRAL', 'VENOM'] },
+    { id:'paladin', name:'Paladina', emoji:'🛡️', hp:85, atk:10, mp:4, range:1, limit:6, desc:'Unidades compradas ganham a tag Celestial. Aliados até 2 hexes curam 2 HP por turno.', tags:['CELESTIAL','CARAPACE'] },
+    { id:'ranger', name:'Arqueira', emoji:'🏹', hp:45, atk:14, mp:5, range:3, limit:6, desc:'Alcance longo e Doma feras Silvestres facilmente. Silvestres adjacentes a ela recebem +1 de Alcance.', tags:['SILVESTRE','STALKER'] },
+    { id:'pyro', name:'Piromante', emoji:'🔥', hp:50, atk:16, mp:4, range:2, limit:6, desc:'Feras compradas e domadas vêm com queimadura e ganham a tag Ígnea.', tags:['FIRE','MYSTIC'], abilities:['burn'] },
+    { id:'admiral', name:'Almirante', emoji:'🏴‍☠️', hp:65, atk:13, mp:5, range:1, limit:7, desc:'Custo de movimento na Água é livre (1). Encontra e doma mais feras Abissais.', tags:['ABYSSAL', 'ICE'], fav:['WATER'] },
+    { id:'vampire', name:'Lord Vampiro', emoji:'🧛🏻‍♂️', hp:65, atk:16, mp:6, range:1, limit:7, desc:'Roubo de vida. Doma feras abatidas transformando em Rastreadores. Fome se não atacar.', tags:['UMBRAL', 'STALKER'], abilities:['lifesteal'] }
 ];
 
 const FACTIONS = { WILD:{id:0}, PLAYER:{id:1}, AI:{id:2} };
@@ -178,7 +178,7 @@ const EVENTS = [
 ];
 
 // ==========================================
-// ESTRUTURAS DO REINO (Atualização 2.0)
+// ESTRUTURAS DO REINO
 // ==========================================
 const BUILDINGS = {
     CASTLE: { id: 'CASTLE', name: 'Castelo Real', icon: '🏰', cost: {}, desc: 'O coração do seu Reino. Não pode ser destruído.', terrains: ['PLAINS', 'FOREST', 'MOUNTAIN', 'WATER', 'SNOW', 'DESERT'] },
