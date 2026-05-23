@@ -1104,7 +1104,7 @@ function triggerStageEnd(win) {
             let pStone = window.countKingdomBuildings('MINE') * 3;
             let pScales = window.countKingdomBuildings('FISHINGCAMP') * 3;
             let pSand = window.countKingdomBuildings('SANDPIT') * 3;
-            let pGold = window.countKingdomBuildings('MINE') * 10;
+            let pGold = (window.countKingdomBuildings('MINE') * 10)+(window.countKingdomBuildings('PORT') * 5);
 
             if (!game.resources) game.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
             game.resources.wood += pWood; game.resources.stone += pStone;
@@ -1447,8 +1447,101 @@ function renderBuildingMenu() {
             html += `<div style="color:var(--success); font-size:11px; font-weight:bold; margin-top:6px; letter-spacing:1px;">NÍVEL MÁXIMO</div>`;
         }
 
+        // --- ADIÇÃO DOS PAINÉIS INTERATIVOS ---
+        let actsHtml = '';
+        if (bData.id === 'MARKET') {
+            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
+                         <button id="btn-mkt-sell" class="btn-success" style="width:100%; font-size:10px; padding:6px; margin-bottom:4px;">Vender Recurso Aleatório (+5💰)</button>
+                         <button id="btn-mkt-buy" class="btn-warning" style="width:100%; font-size:10px; padding:6px;">Comprar Recurso Aleatório (-10💰)</button>`;
+        } else if (bData.id === 'FORGE') {
+            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
+                         <button id="btn-forge" class="btn-warning" style="width:100%; font-size:10px; padding:6px;">Forjar Equipamento (-25💰)</button>`;
+        } else if (bData.id === 'BARRACKS') {
+            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
+                         <button id="btn-barracks" class="btn-success" style="width:100%; font-size:10px; padding:6px;">Recrutar Tropa Aliada (-20💰)</button>`;
+        } else if (bData.id === 'LIBRARY') {
+            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
+                         <button disabled style="width:100%; font-size:10px; padding:6px; opacity:0.5; cursor:not-allowed;">Pesquisar Habilidade (Em Breve)</button>`;
+        } else if (bData.id === 'SHADOW_ALTAR') {
+            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">`;
+            if (game.leaderData && game.leaderData.tags && game.leaderData.tags.includes('UMBRAL')) {
+                actsHtml += `<button id="btn-altar-sac" class="btn-danger" style="width:100%; font-size:10px; padding:6px;">Sacrificar Fera (Gerar Recursos)</button>`;
+            } else {
+                actsHtml += `<div style="color:var(--enemy-color); font-size:9px; text-align:center;">Apenas líderes Umbrais possuem o conhecimento obscuro para utilizar este Altar.</div>`;
+            }
+        }
+        html += actsHtml;
         html += `</div>`;
         menu.innerHTML = html;
+
+        // --- FUNÇÕES DOS PAINÉIS INTERATIVOS ---
+        if ($('btn-mkt-sell')) {
+            $('btn-mkt-sell').onclick = () => {
+                let resTypes = ['wood', 'stone', 'scales', 'sand'];
+                let available = resTypes.filter(r => game.resources[r] > 0);
+                if (available.length > 0) {
+                    let rToSell = available[Math.floor(Math.random() * available.length)];
+                    game.resources[rToSell]--; game.gold += 5;
+                    showPopup(`-1 ${rToSell} / +5💰`, hex, 'var(--gold-light)');
+                    autoSave(); openKingdom(); renderBuildingMenu();
+                } else { alert("Você não possui recursos para vender!"); }
+            };
+        }
+        if ($('btn-mkt-buy')) {
+            $('btn-mkt-buy').onclick = () => {
+                if (game.gold >= 10) {
+                    let resTypes = ['wood', 'stone', 'scales', 'sand'];
+                    let rToBuy = resTypes[Math.floor(Math.random() * resTypes.length)];
+                    game.resources[rToBuy] += 2; game.gold -= 10;
+                    showPopup(`-10💰 / +2 ${rToBuy}`, hex, 'var(--success)');
+                    autoSave(); openKingdom(); renderBuildingMenu();
+                } else { alert("Ouro insuficiente!"); }
+            };
+        }
+        if ($('btn-forge')) {
+            $('btn-forge').onclick = () => {
+                if (game.gold >= 25) {
+                    let itP = ['POTION', 'BANDAGE', 'RUSTY_SWORD', 'WOODEN_SHIELD', 'SCROLL', 'SWORD', 'SHIELD', 'BOOTS', 'BOW', 'MAGIC'];
+                    let forged = itP[Math.floor(Math.random() * itP.length)];
+                    game.inventory.push({ id: forged, level: 1 }); game.gold -= 25;
+                    showPopup(`Item Forjado! (Mochila)`, hex, 'var(--gold)');
+                    autoSave(); openKingdom(); renderBuildingMenu();
+                } else { alert("Ouro insuficiente!"); }
+            };
+        }
+        if ($('btn-barracks')) {
+            $('btn-barracks').onclick = () => {
+                if (game.gold >= 20) {
+                    let tags = game.leaderData.tags || [];
+                    let pool = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW].filter(b => b.tags && b.tags.some(t => tags.includes(t)) && !b.minLevel);
+                    if (pool.length === 0) pool = BEASTS.LAND; // Fallback de segurança
+                    let b = pool[Math.floor(Math.random() * pool.length)];
+                    let maxL = typeof window.getMaxBoxLimit === 'function' ? window.getMaxBoxLimit() : 6;
+                    let newUnit = new Unit({ q: 0, r: 0, faction: 1, name: b.name, baseName: b.name, emoji: b.e, hp: b.hp, maxHp: b.hp, mp: b.mp, maxMp: b.mp, atk: b.atk, range: b.range, level: 1, abilities: [...b.abilities], isNew: true, filter: b.filter, tags: b.tags || [], fav: b.fav || [] });
+                    
+                    if (deployedRoster.filter(u => !u.isLeader).length >= maxL) {
+                        rosterMemory.push(newUnit); alert(`Quartel: Recrutou ${b.name} para a Box!`);
+                    } else {
+                        deployedRoster.push(newUnit); alert(`Quartel: Recrutou ${b.name} para o Exército!`);
+                    }
+                    game.gold -= 20; autoSave(); openKingdom(); renderBuildingMenu();
+                } else { alert("Ouro insuficiente!"); }
+            };
+        }
+        if ($('btn-altar-sac')) {
+            $('btn-altar-sac').onclick = async () => {
+                let m = [...rosterMemory, ...deployedRoster].filter(u => !u.isLeader);
+                if (m.length === 0) { alert("Nenhuma fera disponível para sacrifício!"); return; }
+                let sac = await window.promptSelectUnit("Selecione o Sacrifício Sombrio", m);
+                if (sac) {
+                    if (rosterMemory.includes(sac)) rosterMemory.splice(rosterMemory.indexOf(sac), 1);
+                    if (deployedRoster.includes(sac)) deployedRoster.splice(deployedRoster.indexOf(sac), 1);
+                    game.resources.wood += 5; game.resources.stone += 5; game.resources.scales += 5; game.resources.sand += 5;
+                    showPopup(`Sacrifício Feito! +Recursos`, hex, 'var(--blood-light)');
+                    autoSave(); openKingdom(); renderBuildingMenu();
+                }
+            };
+        }
 
         if (bLvl < maxLvl) {
             const btnU = $('btn-upgrade-b');

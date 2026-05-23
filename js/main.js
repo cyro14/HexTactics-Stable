@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 
             if(su&&su.faction===FACTIONS.PLAYER.id&&su.status!=='stun'&&su.status!=='bind'){
                 const dist=u?Hex.distance(su,u):0;
-                if(u&&u.faction!==FACTIONS.PLAYER.id&&dist<=su.range&&!su.hasAttacked){
+                if(u&&u.faction!==FACTIONS.PLAYER.id&&dist<=su.getEffectiveRange(game)&&!su.hasAttacked){
                     game.isAnimating=true;
                     if(game.tameMode&&u.faction===FACTIONS.WILD.id&&dist===1)await game.attemptTame(su,u);
                     else if(!game.tameMode)await game.executeCombat(su,u);
