@@ -26,7 +26,7 @@ class Unit {
             grimTags: d.grimTags || [], spellsCast: d.spellsCast || 0,
             _origFaction: d._origFaction, _mcDuration: d._mcDuration
         });
-        
+
         this.abilities = (d.abilities || []).concat(d.ability ? [d.ability] : []).filter(Boolean);
         this.maxXp = 250; this.hitTimer = false;
 
@@ -44,10 +44,10 @@ class Unit {
             if (arts.includes('art_atk')) { this.atk += 8; }
             if (this.isLeader && arts.includes('art_move')) { this.maxMp += 1; this.mp += 1; }
             if (this.isLeader && arts.includes('art_crystal')) { this.range += 1; this.atk += 5; }
-            if (arts.includes('art_wild_call')) { this.tags.push('WILD_CALL'); } 
+            if (arts.includes('art_wild_call')) { this.tags.push('WILD_CALL'); }
             if (arts.includes('art_umbral_seal') && !this.tags.includes('UMBRAL')) this.tags.push('UMBRAL');
             if (arts.includes('art_celestial_seal') && !this.tags.includes('CELESTIAL')) this.tags.push('CELESTIAL');
-            
+
             // Bônus global da Fazenda para unidades recém adquiridas!
             if (typeof countKingdomBuildings === 'function') {
                 let farms = window.countKingdomBuildings('FARM');
@@ -66,10 +66,23 @@ class Unit {
         return base;
     }
 
+    getEffectiveRange(game) {
+        let r = this.range;
+        // Se for Silvestre, Aliado e tiver uma Arqueira do lado
+        if (this.tags && this.tags.includes('SILVESTRE') && this.faction === 1 && game) {
+            let archer = game.units.find(u => u.baseName === 'Arqueira' && u.faction === 1 && Hex.distance(this, u) === 1);
+            if (archer) r += 1;
+        }
+        return r;
+    }
+
     getMovementCost(terrain, sys = {}) {
         if (this.fav.includes(terrain.id)) return 1;
         if (this.tags.includes('WING') && sys['WING'] >= 2) return 1;
         if (this.tags.includes('ABYSSAL') && sys['ABYSSAL'] >= 3) return 1;
+
+        if (this.baseName === 'Almirante' && terrain.id === 'WATER') return 1;
+
         return terrain.cost;
     }
 
@@ -89,9 +102,9 @@ class Unit {
 
     async triggerEvolve() {
         game.isAnimating = true;
-        if(typeof showPopup === 'function') showPopup(`⬆ Nível ${this.level}!`, this, '#c9a227');
-        if(typeof addLog === 'function') addLog(`✨ ${this.name} evoluiu para Nível ${this.level}!`, '#c9a227');
-        
+        if (typeof showPopup === 'function') showPopup(`⬆ Nível ${this.level}!`, this, '#c9a227');
+        if (typeof addLog === 'function') addLog(`✨ ${this.name} evoluiu para Nível ${this.level}!`, '#c9a227');
+
         const oF = this.filter;
         if (typeof sleep === 'function') {
             for (let i = 0; i < 6; i++) {
@@ -104,7 +117,7 @@ class Unit {
         if (this.level >= 2 && !this.isLeader) {
             let ev = EVOS[this.baseName] || [this.baseName + ' Alfa', this.baseName + ' Supremo'];
             this.name = this.level === 2 ? ev[0] : ev[1];
-            
+
             const evs = {
                 '🐺': () => { if (this.filter === 'none') this.filter = 'saturate(200%) hue-rotate(330deg)'; },
                 '🐗': () => this.emoji = '🦏', '🐻': () => this.emoji = '🐼', '🐭': () => this.emoji = '🐀',
@@ -139,7 +152,7 @@ class Game {
         this.currentTurn = 1; this.selectedUnit = null; this.selectedHex = null;
         this.reachableHexes = new Map(); this.tameMode = false; this.gameOver = false;
         this.isAnimating = false; this.cols = 13; this.rows = 9;
-        this.gold = 0; 
+        this.gold = 0;
         this.dna = 0;
         this.isRoguelite = false; this.hasKey = false; this.hasEgg = false;
         this.leaderData = typeof LEADERS !== 'undefined' ? LEADERS[0] : {};
@@ -152,23 +165,23 @@ class Game {
     generateKingdomMap() {
         this.kingdomMap = new Map();
         // Usa o tamanho base de um mapa inicial
-        const kCols = 13, kRows = 9; 
-        
-        for (let r = 0; r < kRows; r++) { 
-            const off = Math.floor(r / 2); 
-            for (let q = -off; q < kCols - off; q++) { 
-                const rnd = Math.random(); 
-                let t = TERRAINS.PLAINS; 
-                
+        const kCols = 13, kRows = 9;
+
+        for (let r = 0; r < kRows; r++) {
+            const off = Math.floor(r / 2);
+            for (let q = -off; q < kCols - off; q++) {
+                const rnd = Math.random();
+                let t = TERRAINS.PLAINS;
+
                 // Distribuição de terrenos igual a do jogo, mas sem Vilas e Castelos
-                if (rnd > 0.90) t = TERRAINS.MOUNTAIN; 
-                else if (rnd > 0.80) t = TERRAINS.SNOW; 
-                else if (rnd > 0.65) t = TERRAINS.WATER; 
-                else if (rnd > 0.50) t = TERRAINS.FOREST; 
-                else if (rnd > 0.35) t = TERRAINS.DESERT; 
-                
-                this.kingdomMap.set(`${q},${r}`, { q: q, r: r, terrain: t, building: null }); 
-            } 
+                if (rnd > 0.90) t = TERRAINS.MOUNTAIN;
+                else if (rnd > 0.80) t = TERRAINS.SNOW;
+                else if (rnd > 0.65) t = TERRAINS.WATER;
+                else if (rnd > 0.50) t = TERRAINS.FOREST;
+                else if (rnd > 0.35) t = TERRAINS.DESERT;
+
+                this.kingdomMap.set(`${q},${r}`, { q: q, r: r, terrain: t, building: null });
+            }
         }
     }
 
@@ -178,9 +191,9 @@ class Game {
 
     generateCampaignMap(savedRoster = []) {
         if (!this.eventFlags) this.eventFlags = {};
-        let act = this.currentLevel; let depth = Math.max(0, this.currentFloor); 
+        let act = this.currentLevel; let depth = Math.max(0, this.currentFloor);
         this.cols = 13 + (act - 1); this.rows = 9 + Math.floor((act - 1) / 2);
-        const stageInd = document.getElementById('stage-indicator'); 
+        const stageInd = document.getElementById('stage-indicator');
         if (stageInd) stageInd.innerText = `ATO ${toRoman(act)} - NÓ ${depth + 1}`;
         const log = document.getElementById('combat-log'); if (log) log.innerHTML = '';
         this.map.clear(); this.units = []; this.items.clear(); this.hasKey = false;
@@ -210,21 +223,46 @@ class Game {
         aiPool.sort(() => Math.random() - 0.5); let chosenAI = aiPool[0]; let vHp = Math.floor(chosenAI.hp * sFac) + 20; let vAtk = Math.floor(chosenAI.atk * sFac) + 4;
         this.units.push(new Unit({ q: aS.q, r: aS.r, faction: 2, isLeader: true, name: chosenAI.name, baseName: chosenAI.name, emoji: chosenAI.emoji, hp: vHp, maxHp: vHp, mp: chosenAI.mp, maxMp: chosenAI.mp, atk: vAtk, range: chosenAI.range, isBoss: true, level: act, tags: chosenAI.tags, fav: chosenAI.fav }));
 
-        let maxL = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) ? (this.leaderData.limit + 1) : (this.leaderData.limit || 6); 
-        const numAI = Math.min(maxL + 2, act + Math.floor(depth / 2)); 
+        let maxL = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) ? (this.leaderData.limit + 1) : (this.leaderData.limit || 6);
+        const numAI = Math.min(maxL + 2, act + Math.floor(depth / 2));
         const aN = Hex.getNeighbors(aS.q, aS.r); let lP = BEASTS.LAND.filter(b => !b.minLevel || act >= b.minLevel);
         for (let i = 0; i < numAI; i++) { const b = lP[Math.floor(Math.random() * lP.length)]; const hn = aN[i]; let uLvl = this.getUnitLvl(b); let fFac = 1 + (uLvl - 1) * 0.2; if (hn && this.map.has(`${hn.q},${hn.r}`)) { this.units.push(new Unit({ q: hn.q, r: hn.r, faction: 2, name: b.name, baseName: b.name, emoji: b.e, hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac), mp: b.mp, maxMp: b.mp, atk: Math.floor(b.atk * fFac), range: b.range, abilities: [...b.abilities], filter: b.filter, tags: b.tags || [], fav: b.fav || [], level: uLvl })); } }
 
         let wH = Array.from(this.map.values()).filter(h => h.terrain.id !== 'CASTLE' && Hex.distance(h, pS) > 3 && !this.getUnitAt(h.q, h.r));
         let itP = ['COIN', 'COIN', 'COIN', 'GEM', 'GEM', 'POTION', 'POTION', 'BANDAGE', 'BANDAGE', 'MEAT', 'MEAT', 'RUSTY_SWORD', 'RUSTY_SWORD', 'WOODEN_SHIELD', 'WOODEN_SHIELD', 'SCROLL'];
-        if(Math.random() > 0.5) itP.push('SWORD'); if(Math.random() > 0.6) itP.push('SHIELD'); if(Math.random() > 0.7) itP.push('BOOTS'); if(Math.random() > 0.8) itP.push('BOW'); if(Math.random() > 0.8) itP.push('APPLE'); if(Math.random() > 0.9) itP.push('MAGIC');
+        if (Math.random() > 0.5) itP.push('SWORD'); if (Math.random() > 0.6) itP.push('SHIELD'); if (Math.random() > 0.7) itP.push('BOOTS'); if (Math.random() > 0.8) itP.push('BOW'); if (Math.random() > 0.8) itP.push('APPLE'); if (Math.random() > 0.9) itP.push('MAGIC');
         let numI = Math.min(Math.floor((this.cols * this.rows) / 25) + Math.floor(Math.random() * 2), 6);
         if (Math.random() > 0.4 && wH.length > 2) { let idx1 = Math.floor(Math.random() * wH.length); this.items.set(wH.splice(idx1, 1)[0].getKey(), 'CHEST'); let idx2 = Math.floor(Math.random() * wH.length); this.items.set(wH.splice(idx2, 1)[0].getKey(), 'KEY'); }
         for (let i = 0; i < numI; i++) { if (wH.length > 0) { let idx = Math.floor(Math.random() * wH.length); this.items.set(wH.splice(idx, 1)[0].getKey(), itP[Math.floor(Math.random() * itP.length)]); } }
 
         let numW = 4 + act; const vC = wH.sort((a, b) => Math.abs(Hex.distance(a, pS) - Hex.distance(a, aS)) - Math.abs(Hex.distance(b, pS) - Hex.distance(b, aS)));
         if (vC.length > 0) { let bDef = BEASTS.BOSSES.find(b => act >= b.minLevel && act <= b.maxLevel) || BEASTS.BOSSES[BEASTS.BOSSES.length - 1]; this.units.push(new Unit({ q: vC[0].q, r: vC[0].r, faction: 0, name: bDef.name, baseName: bDef.name, emoji: bDef.e, hp: Math.floor(bDef.hp * sFac), maxHp: Math.floor(bDef.hp * sFac), mp: bDef.mp, maxMp: bDef.mp, atk: Math.floor(bDef.atk * sFac), range: bDef.range, abilities: [...bDef.abilities], filter: bDef.filter, tags: bDef.tags || [], fav: bDef.fav || [], isBoss: true, level: act })); wH = wH.filter(h => h !== vC[0]); }
-        while (numW > 0 && wH.length > 0) { const hex = wH.splice(Math.floor(Math.random() * wH.length), 1)[0]; let pool = BEASTS.LAND.filter(b => !b.minLevel || act >= b.minLevel); if (hex.terrain.id === 'WATER') pool = BEASTS.WATER.filter(b => !b.minLevel || act >= b.minLevel); if (hex.terrain.id === 'SNOW') pool = BEASTS.SNOW.filter(b => !b.minLevel || act >= b.minLevel); if (pool.length > 0) { const b = pool[Math.floor(Math.random() * pool.length)]; let uLvl = this.getUnitLvl(b); let fFac = 1 + (uLvl - 1) * 0.2; this.units.push(new Unit({ q: hex.q, r: hex.r, faction: 0, name: b.name, baseName: b.name, emoji: b.e, hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac), mp: b.mp, maxMp: b.mp, atk: Math.floor(b.atk * fFac), range: b.range, abilities: [...b.abilities], filter: b.filter, tags: b.tags || [], fav: b.fav || [], level: uLvl })); } numW--; }
+
+        while (numW > 0 && wH.length > 0) {
+            const hex = wH.splice(Math.floor(Math.random() * wH.length), 1)[0];
+
+            // Pool padrão para terra
+            let pool = BEASTS.LAND.filter(b => !b.minLevel || act >= b.minLevel);
+
+            // Habilidade do ALMIRANTE: As criaturas abissais invadem as planícies e florestas!
+            if (this.leaderData && this.leaderData.name === 'Almirante') {
+                let waterPool = BEASTS.WATER.filter(b => !b.minLevel || act >= b.minLevel);
+                // Empurra as feras da água DUAS VEZES no pool normal para forçar que apareçam com muita frequência
+                pool.push(...waterPool, ...waterPool);
+            }
+
+            // Se for água ou neve, mantém o tipo estrito
+            if (hex.terrain.id === 'WATER') pool = BEASTS.WATER.filter(b => !b.minLevel || act >= b.minLevel);
+            if (hex.terrain.id === 'SNOW') pool = BEASTS.SNOW.filter(b => !b.minLevel || act >= b.minLevel);
+
+            if (pool.length > 0) {
+                const b = pool[Math.floor(Math.random() * pool.length)];
+                let uLvl = this.getUnitLvl(b);
+                let fFac = 1 + (uLvl - 1) * 0.2;
+                this.units.push(new Unit({ q: hex.q, r: hex.r, faction: 0, name: b.name, baseName: b.name, emoji: b.e, hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac), mp: b.mp, maxMp: b.mp, atk: Math.floor(b.atk * fFac), range: b.range, abilities: [...b.abilities], filter: b.filter, tags: b.tags || [], fav: b.fav || [], level: uLvl }));
+            }
+            numW--;
+        }
 
         if (this.eventFlags.forceSnow) { this.map.forEach(h => { h.terrain = TERRAINS.SNOW; }); }
         if (this.eventFlags.noVillages) { this.map.forEach(h => { if (h.terrain.id === 'VILLAGE') h.terrain = TERRAINS.PLAINS; }); }
@@ -235,7 +273,7 @@ class Game {
         if (this.eventFlags.scatterUnits) { let pUnits = this.units.filter(u => u.faction === 1); let validHexes = Array.from(this.map.values()).filter(h => h.terrain.id !== 'WATER' && h.terrain.id !== 'MOUNTAIN' && !this.getUnitAt(h.q, h.r)).sort(() => Math.random() - 0.5); pUnits.forEach((u, i) => { if (validHexes[i]) { u.q = validHexes[i].q; u.r = validHexes[i].r; u.vq = u.q; u.vr = u.r; } }); }
         let pL2 = this.units.find(u => u.isLeader && u.faction === 1);
         if (pL2) { if (this.eventFlags.artillery) pL2.knownSpells.push('sl_artillery'); if (this.eventFlags.mines > 0) pL2.knownSpells.push('sl_mine'); if (this.eventFlags.barricades) pL2.knownSpells.push('sl_barricade'); if (this.eventFlags.epicConsumable) { pL2.maxHp += 25; pL2.hp += 25; } }
-        
+
         this.eventFlags = {}; this.activeSynergies = this.getSynergies(1); this.currentTurn = 1; this.gameOver = false; this.selectPlayerLeader();
     }
 
@@ -266,8 +304,8 @@ class Game {
                     if (accepted) {
                         if (iDef.type === 'equip') {
                             let existingEq = u.equipment.find(eq => eq.id === iType);
-                            if(existingEq) { if(iDef.onUnequip) iDef.onUnequip(u, existingEq.level); existingEq.level++; if(iDef.onEquip) iDef.onEquip(u, existingEq.level); if(typeof showPopup === 'function') showPopup(`✨ Fusão Lv${existingEq.level}!`, u, '#c9a227'); } 
-                            else { u.equipment.push({ id: iType, level: 1 }); if(iDef.onEquip) iDef.onEquip(u, 1); }
+                            if (existingEq) { if (iDef.onUnequip) iDef.onUnequip(u, existingEq.level); existingEq.level++; if (iDef.onEquip) iDef.onEquip(u, existingEq.level); if (typeof showPopup === 'function') showPopup(`✨ Fusão Lv${existingEq.level}!`, u, '#c9a227'); }
+                            else { u.equipment.push({ id: iType, level: 1 }); if (iDef.onEquip) iDef.onEquip(u, 1); }
                             this.items.delete(k);
                         } else { let r = await iDef.f(u, this); if (r !== false) this.items.delete(k); }
                         const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true; lastState = null;
@@ -282,7 +320,7 @@ class Game {
     getUnitAt(q, r) { return this.units.find(u => u.q === q && u.r === r); }
     calculateReachable(unit) {
         this.reachableHexes.clear(); const f = [{ q: unit.q, r: unit.r, cost: 0 }]; this.reachableHexes.set(`${unit.q},${unit.r}`, 0); let sys = this.getSynergies(unit.faction);
-        if (unit.name === 'Almirante' && this.map.get(`${unit.q},${unit.r}`)?.terrain.id === 'WATER') { this.map.forEach((h, k) => { if (h.terrain.id === 'WATER' && (!this.getUnitAt(h.q, h.r) || (h.q === unit.q && h.r === unit.r))) { let c = 1; if (c <= unit.mp && (!this.reachableHexes.has(k) || c < this.reachableHexes.get(k))) { this.reachableHexes.set(k, c); f.push({ q: h.q, r: h.r, cost: c }); } } }); }
+
         while (f.length > 0) {
             f.sort((a, b) => a.cost - b.cost); const curr = f.shift();
             Hex.getNeighbors(curr.q, curr.r).forEach(n => {
@@ -297,18 +335,25 @@ class Game {
         const hex = this.map.get(`${d.q},${d.r}`); if (!hex) return 1;
         let sysA = this.getSynergies(a.faction); let sysD = this.getSynergies(d.faction);
         let def = a.abilities.includes('pierce') ? 0 : hex.terrain.def;
-        if (d.fav.includes(hex.terrain.id)) def += 0.2; if (d.name === 'Almirante' && hex.terrain.id !== 'WATER') def -= 0.30;
-        if (d.tags.includes('WING') && sysD['WING'] >= 2 && def < 0) def = 0; if (d.tags.includes('ROCK') && sysD['ROCK'] >= 3) def = Math.min(0.60, def + 0.30);
+
+        if (d.fav.includes(hex.terrain.id)) def += 0.2;
+        if (d.name === 'Almirante' && hex.terrain.id !== 'WATER') def -= 0.30;
+
+        // Bônus Abissal na Água
+        if (d.tags.includes('ABYSSAL') && hex.terrain.id === 'WATER') def += 0.30;
+
+        if (d.tags.includes('WING') && sysD['WING'] >= 2 && def < 0) def = 0;
+        if (d.tags.includes('ROCK') && sysD['ROCK'] >= 3) def = Math.min(0.60, def + 0.30);
         if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_armor')) def += 0.15;
         if (d.status === 'shielded') def = Math.min(0.80, def + 0.30);
-        
+
         let isFlanking = false;
         if (a.tags.includes('STALKER') && sysA['STALKER'] >= 3) { Hex.getNeighbors(d.q, d.r).forEach(n => { let ally = this.getUnitAt(n.q, n.r); if (ally && ally.faction === a.faction && ally !== a && ally.tags.includes('STALKER')) isFlanking = true; }); }
         if (isFlanking) def = 0;
-        
+
         let lAtk = 0; if (a) Hex.getNeighbors(a.q, a.r).forEach(n => { let al = this.getUnitAt(n.q, n.r); if (al && al.faction === a.faction && al.abilities.includes('leadership') && al !== a) lAtk += 2; });
         if (d) Hex.getNeighbors(d.q, d.r).forEach(n => { let al = this.getUnitAt(n.q, n.r); if (al && al.faction === d.faction && al.abilities.includes('leadership') && al !== d) def += 0.2; });
-        
+
         let baseAtk = a.getEffectiveAtk(this); if (isFlanking) baseAtk *= 2;
         let base = Math.max(1, Math.floor((baseAtk + lAtk) * (0.9 + Math.random() * 0.2) * Math.max(0, 1 - def)));
         if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_shield')) base = Math.floor(base * 0.9);
@@ -320,16 +365,9 @@ class Game {
     async executeCombat(a, d) {
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true;
         this.isAnimating = true; const aCol = a.faction === 1 ? '#4a9edd' : a.faction === 2 ? '#c0392b' : '#27ae60';
-        
+
         try {
             let sysA = this.getSynergies(a.faction); let sysD = this.getSynergies(d.faction);
-
-            if (a.name === 'Lord Vampiro' && a.isLeader && Math.random() < 0.20 && d.hp > 0 && !d.isBoss) {
-                d.faction = a.faction; d.alerted = false; let maxL = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) ? (this.leaderData.limit + 1) : (this.leaderData.limit || 6); let currTeam = this.units.filter(u => u.faction === a.faction && !u.isLeader).length;
-                if (currTeam >= maxL && a.faction === 1) { this.units = this.units.filter(u => u !== d); rosterMemory.push(d); if (typeof showPopup === 'function') showPopup("📦 Para a Box!", d, '#8e44ad'); if (typeof addLog === 'function') addLog(`🧛 ${a.name} seduziu ${d.name} (Box)!`, '#8e44ad'); } else { if (typeof showPopup === 'function') showPopup("🧛 Domado!", d, '#8e44ad'); if (typeof addLog === 'function') addLog(`🧛 ${a.name} seduziu ${d.name}!`, '#8e44ad'); }
-                if (d.faction === 1) { if (typeof unlockInBestiary === 'function') unlockInBestiary(d.name); const leader = this.units.find(u => u.isLeader && u.faction === 1); if (leader) { (d.tags || []).forEach(t => { if (!leader.grimTags.includes(t)) leader.grimTags.push(t); }); } }
-                this.activeSynergies = this.getSynergies(a.faction); a.hasAttacked = true; a.mp = 0; this.checkWin(); if (typeof sleep === 'function') await sleep(600); return;
-            }
 
             if (d.faction === 1 && !d.isLeader) { let paladin = this.units.find(u => u.name === 'Paladina' && u.isLeader && u.faction === d.faction && Hex.distance(u, d) === 1 && u.hp > 0); if (paladin && paladin !== d && Math.random() < 0.20) { if (typeof showPopup === 'function') showPopup("🛡️ Proteção!", paladin, '#fffbc2'); if (typeof addLog === 'function') addLog(`🛡️ ${paladin.name} interceptou o ataque!`, '#fffbc2'); d = paladin; d._paladinDefending = true; } }
 
@@ -338,41 +376,41 @@ class Game {
             if (Math.random() < dodgeC) { if (typeof showPopup === 'function') showPopup("💨 Esquivou!", d, '#aaa'); if (typeof addLog === 'function') addLog(`💨 ${d.name} esquivou!`, '#aaa'); a.hasAttacked = true; if (!a.abilities.includes('hit_run') && !(a.tags.includes('SAND') && sysA['SAND'] >= 3)) a.mp = 0; await this.processRevide(a, d); if (typeof sleep === 'function') await sleep(600); return; }
 
             const dmg = this.calcDmg(a, d); d.hp -= dmg; a.hasAttacked = true; if (!a.abilities.includes('hit_run') && !(a.tags.includes('SAND') && sysA['SAND'] >= 3)) a.mp = 0; if (a.faction === 1) a.addXp(15);
-            
+
             if (renderer) { renderer.centerOn(d.vq, d.vr); d.hitTimer = true; renderer.draw(); if (typeof sleep === 'function') await sleep(150); d.hitTimer = false; renderer.draw(); }
             if (typeof showPopup === 'function') showPopup(`-${dmg}`, d, '#fff'); if (typeof addLog === 'function') addLog(`⚔ ${a.name} atingiu ${d.name} (-${dmg})`, aCol);
-            
+
             if (a.tags.includes('FIRE') && sysA['FIRE'] >= 3) { let aoe = Math.max(1, Math.floor(dmg * 0.2)); Hex.getNeighbors(d.q, d.r).forEach(n => { let targ = this.getUnitAt(n.q, n.r); if (targ && targ.faction !== a.faction && targ !== d && targ.hp > 0) { targ.hp -= aoe; if (typeof showPopup === 'function') showPopup(`🔥 -${aoe}`, targ, '#e67e22'); if (targ.hp <= 0) this.handleDeath(targ, a); } }); }
 
             if (a.abilities.includes('corte_amplo') && Hex.distance(a, d) === 1) { let aNeighbors = Hex.getNeighbors(a.q, a.r); aNeighbors.forEach(n => { let u = this.getUnitAt(n.q, n.r); if (u && u.faction !== a.faction && u !== d && u.hp > 0 && Hex.distance(u, d) === 1) { let cDmg = Math.floor(this.calcDmg(a, u) * 0.5); u.hp -= cDmg; if (typeof showPopup === 'function') showPopup(`-${cDmg} ⚔️`, u, '#fff'); if (u.hp <= 0) this.handleDeath(u, a); } }); }
 
             let lsPerc = a.abilities.includes('lifesteal') ? 0.8 : (a.isLeader && a.name === 'Necromante' ? 0.25 : 0); if (a.tags.includes('UMBRAL') && sysA['UMBRAL'] >= 3) lsPerc += 0.25; if (a.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_blood')) lsPerc += 0.15;
             if (lsPerc > 0) { const heal = Math.floor(dmg * lsPerc); a.hp = Math.min(a.maxHp, a.hp + heal); if (typeof showPopup === 'function') showPopup(`+${heal}`, a, '#2ecc71'); }
-            
+
             if (a.abilities.includes('freeze') && Math.random() < 0.25) { d.status = 'stun'; d.hp -= 5; if (typeof showPopup === 'function') showPopup("Congelado!", d, '#00ffff'); }
             if (a.tags.includes('ICE') && sysA['ICE'] >= 3) { d.status = 'chilled'; if (typeof showPopup === 'function') showPopup("Congelado!", d, '#00ffff'); }
             if (a.abilities.includes('electric')) { let cT = Hex.getNeighbors(d.q, d.r).map(n => this.getUnitAt(n.q, n.r)).filter(u => u && u.faction !== a.faction && u !== d && u.hp > 0); for (let t of cT) { let cDmg = Math.max(1, Math.floor(dmg * 0.5)); t.hp -= cDmg; if (typeof showPopup === 'function') showPopup(`⚡ -${cDmg}`, t, '#00ffff'); if (t.hp <= 0) this.handleDeath(t, a); } }
             if (a.name.includes("Bode") && Hex.distance(a, d) > 1 && d.hp > 0) { let bH = null; let mD = Hex.distance(a, d); Hex.getNeighbors(a.q, a.r).forEach(n => { if (!this.getUnitAt(n.q, n.r) && this.map.has(`${n.q},${n.r}`)) { let dist = Hex.distance({ q: n.q, r: n.r }, d); if (dist < mD) { mD = dist; bH = n; } } }); if (bH) { await this.moveUnit(a, bH.q, bH.r); } }
-            
+
             if (d.hp > 0) {
                 let pChance = a.abilities.includes('poison') ? 0.3 : 0; if (sysA['VENOM'] >= 2 && a.tags.includes('VENOM')) pChance = 1.0; if (Math.random() < pChance) { d.status = 'poison'; if (typeof showPopup === 'function') showPopup("Envenenado!", d, '#2ecc71'); }
                 let stChance = a.abilities.includes('stun') ? 0.25 : 0; if (a.tags.includes('SILVESTRE') && sysA['SILVESTRE'] >= 3) stChance += 0.15; if (Math.random() < stChance) { d.status = 'stun'; if (typeof showPopup === 'function') showPopup("Enraizado!", d, '#f39c12'); }
                 if (a.abilities.includes('bind')) { d.status = 'bind'; if (typeof showPopup === 'function') showPopup("Preso!", d, '#9b59b6'); }
                 if (a.abilities.includes('burn')) { d.hp -= 10; if (typeof showPopup === 'function') showPopup("-10 🔥", d, '#e67e22'); if (d.hp <= 0) this.handleDeath(d, a); }
             }
-            
+
             if (a.abilities.includes('swift')) { if (typeof showPopup === 'function') showPopup("Rápido!", a, '#f1c40f'); if (d.hp <= 0) { if (a.faction === 1) a.addXp(d.isBoss ? 100 : 30); this.handleDeath(d, a); this.checkWin(); } } else if (d.hp > 0) { await this.processRevide(a, d); } else { if (a.faction === 1) a.addXp(d.isBoss ? 100 : 30); this.handleDeath(d, a); this.checkWin(); }
-            
+
             if (a.hp > 0 && a.tags.includes('MYSTIC') && sysA['MYSTIC'] >= 2 && Math.random() < 0.30) { a.hasAttacked = false; a.mp = a.maxMp; if (typeof showPopup === 'function') showPopup("✨ Ação Extra!", a, '#9b59b6'); if (a.faction === 1) this.selectedUnit = a; }
 
             if (typeof sleep === 'function') await sleep(600);
-        } catch(e) { console.error("ERRO NO COMBATE:", e); } finally { this.isAnimating = false; }
+        } catch (e) { console.error("ERRO NO COMBATE:", e); } finally { this.isAnimating = false; }
     }
 
     async processRevide(a, d) {
         if (d.status === 'stun' || d.status === 'bind' || d.status === 'chilled') return;
-        
-        if (Hex.distance(a, d) <= d.range) {
+
+        if (Hex.distance(a, d) <= d.getEffectiveRange(game)) {
             if (typeof sleep === 'function') await sleep(450); if (!this.units.includes(a) || !this.units.includes(d)) return;
             const dCol = d.faction === 1 ? '#4a9edd' : d.faction === 2 ? '#c0392b' : '#27ae60'; if (a.faction === 0) a.alerted = true;
             let sysA = this.getSynergies(a.faction); let sysD = this.getSynergies(d.faction);
@@ -381,17 +419,17 @@ class Game {
 
             let rDmg = Math.floor(this.calcDmg(d, a) * 0.6); if (d.abilities.includes('counter')) rDmg = Math.floor(rDmg * 1.2); if (d._paladinDefending) { rDmg = Math.floor(this.calcDmg(d, a) * 0.5); delete d._paladinDefending; }
             if (d.faction === 1) d.addXp(8); a.hp -= rDmg;
-            
+
             if (renderer) { renderer.centerOn(a.vq, a.vr); a.hitTimer = true; renderer.draw(); if (typeof sleep === 'function') await sleep(150); a.hitTimer = false; renderer.draw(); }
             if (typeof showPopup === 'function') showPopup(`↩ -${rDmg}`, a, '#f39c12'); if (typeof addLog === 'function') addLog(`↩ ${d.name} revidou (-${rDmg})`, dCol);
             if (d.tags.includes('CARAPACE') && sysD['CARAPACE'] >= 2) { let refl = Math.max(1, Math.floor(rDmg * 0.1)); a.hp -= refl; if (typeof showPopup === 'function') showPopup(`🛡️ -${refl}`, a, '#aaa'); }
             let lsPerc = d.abilities.includes('lifesteal') ? 0.8 : (d.isLeader && d.name === 'Necromante' ? 0.25 : 0); if (d.tags.includes('UMBRAL') && sysD['UMBRAL'] >= 3) lsPerc += 0.25; if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_blood')) lsPerc += 0.15;
             if (lsPerc > 0) { const heal = Math.floor(rDmg * lsPerc); d.hp = Math.min(d.maxHp, d.hp + heal); if (typeof showPopup === 'function') showPopup(`+${heal}`, d, '#2ecc71'); }
-            
+
             if (d.abilities.includes('freeze') && Math.random() < 0.25) { a.status = 'stun'; a.hp -= 5; if (typeof showPopup === 'function') showPopup("Congelado!", a, '#00ffff'); }
             if (d.tags.includes('ICE') && sysD['ICE'] >= 3) { a.status = 'chilled'; if (typeof showPopup === 'function') showPopup("Congelado!", a, '#00ffff'); }
             if (d.abilities.includes('burn')) { a.hp -= 10; if (typeof showPopup === 'function') showPopup("-10 🔥", a, '#e67e22'); }
-            
+
             if (a.hp > 0) {
                 let pChance = d.abilities.includes('poison') ? 0.2 : 0; if (sysD['VENOM'] >= 2 && d.tags.includes('VENOM')) pChance = 1.0; if (Math.random() < pChance) { a.status = 'poison'; if (typeof showPopup === 'function') showPopup("Envenenado!", a, '#2ecc71'); }
                 if (d.abilities.includes('stun') && Math.random() < 0.2) { a.status = 'stun'; if (typeof showPopup === 'function') showPopup("Atordoado!", a, '#f39c12'); }
@@ -406,69 +444,77 @@ class Game {
     async attemptTame(tamer, wild) {
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true; this.isAnimating = true; let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
         try {
-            tamer.hasAttacked = true; tamer.mp = 0; 
-            let cC = 1.1 - (wild.hp / wild.maxHp); 
-            if (wild.isBoss) cC -= 0.35; 
-            if (tamer.faction === 1 && arts.includes('art_tame')) cC += 0.20; 
-            
-            // --- NOVO 2.0: BUFF DO PARQUE ---
+            tamer.hasAttacked = true; tamer.mp = 0;
+            let cC = 1.1 - (wild.hp / wild.maxHp);
+            if (wild.isBoss) cC -= 0.35;
+            if (tamer.faction === 1 && arts.includes('art_tame')) cC += 0.20;
+
+            // Bônus Específicos de Líder para Domar
+            if (tamer.baseName === 'Almirante' && wild.tags.includes('ABYSSAL')) cC += 0.40;
+            if (tamer.baseName === 'Arqueira' && wild.tags.includes('SILVESTRE')) cC += 0.40;
+
+            // BUFF DO PARQUE ---
             // Se o alvo for Nível 1, tiver HP cheio e você tiver o Parque, ganha +40% de chance!
             if (tamer.faction === 1 && wild.level === 1 && wild.hp === wild.maxHp && typeof countKingdomBuildings === 'function') {
-                if (window.countKingdomBuildings('PARK') > 0) cC += 0.40; 
+                if (window.countKingdomBuildings('PARK') > 0) cC += 0.40;
             }
             // --------------------------------
 
-            if (cC < 0.05) cC = 0.05; 
+            if (cC < 0.05) cC = 0.05;
             const tCol = tamer.faction === 1 ? '#4a9edd' : '#c0392b';
-            
+
             // Rola o dado para ver se domou
             if (Math.random() < cC) {
-                
+
                 this.dna = (this.dna || 0) + 1; // Drop de DNA
                 if (typeof showPopup === 'function') showPopup("+1 🧬", tamer, '#1abc9c');
-                
-                wild.faction = tamer.faction; 
-                wild.alerted = false; 
-                
-                // --- NOVO 2.0: LIMITE DA BOX PUXANDO DAS VILAS ---
-                let maxL = typeof window.getMaxBoxLimit === 'function' ? window.getMaxBoxLimit() : 6; 
-                // -------------------------------------------------
-                
-                let currTeam = this.units.filter(u => u.faction === 1 && !u.isLeader).length;
-                if (currTeam >= maxL && tamer.faction === 1) { 
-                    this.units = this.units.filter(u => u !== wild); 
-                    rosterMemory.push(wild); 
-                    if (typeof showPopup === 'function') showPopup("📦 Para a Box!", wild, '#c9a227'); 
-                    if (typeof addLog === 'function') addLog(`🪄 ${tamer.name} domou ${wild.name} (Box)!`, tCol); 
-                } else { 
-                    if (typeof showPopup === 'function') showPopup("🪄 Domado!", wild, tamer.faction === 1 ? '#c9a227' : '#c0392b'); 
-                    if (typeof addLog === 'function') addLog(`🪄 ${tamer.name} domou ${wild.name}!`, tCol); 
+
+                // Passiva do Piromante (Adiciona Ígneo)
+                if (tamer.baseName === 'Piromante' && !wild.tags.includes('FIRE')) {
+                    wild.tags.push('FIRE');
                 }
-                
+                wild.faction = tamer.faction;
+                wild.alerted = false;
+
+                // --- NOVO 2.0: LIMITE DA BOX PUXANDO DAS VILAS ---
+                let maxL = typeof window.getMaxBoxLimit === 'function' ? window.getMaxBoxLimit() : 6;
+                // -------------------------------------------------
+
+                let currTeam = this.units.filter(u => u.faction === 1 && !u.isLeader).length;
+                if (currTeam >= maxL && tamer.faction === 1) {
+                    this.units = this.units.filter(u => u !== wild);
+                    rosterMemory.push(wild);
+                    if (typeof showPopup === 'function') showPopup("📦 Para a Box!", wild, '#c9a227');
+                    if (typeof addLog === 'function') addLog(`🪄 ${tamer.name} domou ${wild.name} (Box)!`, tCol);
+                } else {
+                    if (typeof showPopup === 'function') showPopup("🪄 Domado!", wild, tamer.faction === 1 ? '#c9a227' : '#c0392b');
+                    if (typeof addLog === 'function') addLog(`🪄 ${tamer.name} domou ${wild.name}!`, tCol);
+                }
+
                 if (tamer.faction === 1) {
-                    if (typeof unlockInBestiary === 'function') unlockInBestiary(wild.name); 
-                    if (arts.includes('art_hp')) { wild.maxHp += 15; wild.hp += 15; } 
+                    if (typeof unlockInBestiary === 'function') unlockInBestiary(wild.name);
+                    if (arts.includes('art_hp')) { wild.maxHp += 15; wild.hp += 15; }
                     if (arts.includes('art_atk')) { wild.atk += 4; }
-                    const leader = this.units.find(u => u.isLeader && u.faction === 1); 
-                    if (leader) { 
-                        (wild.tags || []).forEach(t => { 
-                            if (!leader.grimTags.includes(t)) { 
-                                leader.grimTags.push(t); 
-                                if (typeof addLog === 'function') addLog(`📖 Grimório expandido: ${TAGS[t] ? TAGS[t].name : t}!`, '#c9a227'); 
-                            } 
-                        }); 
+                    const leader = this.units.find(u => u.isLeader && u.faction === 1);
+                    if (leader) {
+                        (wild.tags || []).forEach(t => {
+                            if (!leader.grimTags.includes(t)) {
+                                leader.grimTags.push(t);
+                                if (typeof addLog === 'function') addLog(`📖 Grimório expandido: ${TAGS[t] ? TAGS[t].name : t}!`, '#c9a227');
+                            }
+                        });
                     }
                 }
-                this.activeSynergies = this.getSynergies(1); 
-                if (typeof sleep === 'function') await sleep(600); 
+                this.activeSynergies = this.getSynergies(1);
+                if (typeof sleep === 'function') await sleep(600);
                 return true;
-                
-            } else { 
-                if (typeof showPopup === 'function') showPopup("Falhou!", wild, '#e74c3c'); 
-                if (typeof addLog === 'function') addLog(`✗ ${tamer.name} falhou ao domar.`, '#777'); 
-                wild.alerted = true; 
-                if (typeof sleep === 'function') await sleep(600); 
-                return false; 
+
+            } else {
+                if (typeof showPopup === 'function') showPopup("Falhou!", wild, '#e74c3c');
+                if (typeof addLog === 'function') addLog(`✗ ${tamer.name} falhou ao domar.`, '#777');
+                wild.alerted = true;
+                if (typeof sleep === 'function') await sleep(600);
+                return false;
             }
         } finally { this.isAnimating = false; }
     }
@@ -476,14 +522,45 @@ class Game {
     handleDeath(victim, killer = null) {
         if (typeof showPopup === 'function') showPopup("☠ Eliminado!", victim, '#e74c3c');
         if (victim.faction === 1 && !victim.isLeader) { this.lastDeadAlly = new Unit({ ...victim }); }
-        
+
         if (killer && killer.faction === 1 && victim.faction !== 1) { killer.addXp(victim.isBoss ? 100 : 30); let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : []; if (arts.includes('art_wild_call')) { killer.addXp(10); } }
 
+
+        // Lógica do Necromante (Doma Feras da Natureza ao abater)
         if (killer && killer.name === 'Necromante' && killer.isLeader && victim.faction !== killer.faction && !victim.isLeader) {
             victim.hp = Math.floor(victim.maxHp * 0.5); victim.faction = killer.faction; if (!victim.tags.includes('UMBRAL')) victim.tags.push('UMBRAL'); victim.alerted = false; let maxL = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) ? (this.leaderData.limit + 1) : (this.leaderData.limit || 6); let currTeam = this.units.filter(u => u.faction === killer.faction && !u.isLeader).length;
             if (killer.faction === 1 && currTeam >= maxL) { this.units = this.units.filter(u => u !== victim); rosterMemory.push(victim); if (typeof addLog === 'function') addLog(`💀 ${killer.name} ergueu ${victim.name} (Box)!`, '#8e44ad'); } else { if (typeof addLog === 'function') addLog(`💀 ${killer.name} ergueu ${victim.name}!`, '#8e44ad'); if (typeof showPopup === 'function') showPopup("💀 Sombrio!", victim, '#8e44ad'); }
             if (victim.faction === 1) { if (typeof unlockInBestiary === 'function') unlockInBestiary(victim.name); const leader = this.units.find(u => u.isLeader && u.faction === 1); if (leader) { (victim.tags || []).forEach(t => { if (!leader.grimTags.includes(t)) { leader.grimTags.push(t); } }); } }
             this.activeSynergies = this.getSynergies(killer.faction); return;
+        }
+
+        // Lógica do Vampiro (Doma Feras da Natureza ao abater)
+        if (killer && killer.name === 'Lord Vampiro' && killer.isLeader && victim.faction === 0) {
+            let chance = (victim.baseName === 'Morcego' || victim.name === 'Morcego') ? 1.0 : 0.3;
+            if (Math.random() <= chance) {
+                victim.hp = victim.maxHp;
+                victim.faction = killer.faction;
+                if (!victim.tags.includes('STALKER')) victim.tags.push('STALKER');
+                victim.alerted = false;
+
+                let maxL = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) ? (this.leaderData.limit + 1) : (this.leaderData.limit || 6);
+                let currTeam = this.units.filter(u => u.faction === killer.faction && !u.isLeader).length;
+
+                if (killer.faction === 1 && currTeam >= maxL) {
+                    this.units = this.units.filter(u => u !== victim); rosterMemory.push(victim);
+                    if (typeof addLog === 'function') addLog(`🧛 ${killer.name} seduziu ${victim.name} (Box)!`, '#8e44ad');
+                } else {
+                    if (typeof addLog === 'function') addLog(`🧛 ${killer.name} seduziu ${victim.name}!`, '#8e44ad');
+                    if (typeof showPopup === 'function') showPopup("🧛 Domado!", victim, '#8e44ad');
+                }
+
+                if (victim.faction === 1) {
+                    if (typeof unlockInBestiary === 'function') unlockInBestiary(victim.name);
+                    const leader = this.units.find(u => u.isLeader && u.faction === 1);
+                    if (leader) { (victim.tags || []).forEach(t => { if (!leader.grimTags.includes(t)) { leader.grimTags.push(t); } }); }
+                }
+                this.activeSynergies = this.getSynergies(killer.faction); return;
+            }
         }
 
         if (killer) { const kCol = killer.faction === 1 ? '#4a9edd' : '#c0392b'; if (typeof addLog === 'function') addLog(`☠ ${killer.name} eliminou ${victim.name}!`, kCol); if (victim.isLeader && victim.faction === 2 && killer.faction === 1) { this.gold += 10; if (typeof addLog === 'function') addLog(`💰 +10 Ouro da Vitória!`, 'var(--gold-light)'); if (typeof updateUI === 'function') updateUI(); } } else { if (typeof addLog === 'function') addLog(`☠ ${victim.name} foi eliminado.`, '#e74c3c'); }
@@ -497,6 +574,19 @@ class Game {
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true;
 
         if (this.currentTurn === 1) {
+            // Aura da Paladina (Cura 5 HP em área)
+            let paladin = this.units.find(u => u.baseName === 'Paladina' && u.faction === 1);
+            if (paladin) {
+                this.units.forEach(u => {
+                    if (u.faction === 1 && u.hp > 0 && Hex.distance(paladin, u) <= 2) {
+                        let curar = Math.min(u.maxHp - u.hp, 5);
+                        if (curar > 0) {
+                            u.hp += curar;
+                            if (typeof showPopup === 'function') showPopup(`+${curar} 🛡️`, u, '#fffbc2');
+                        }
+                    }
+                });
+            }
             if (!this.resources) this.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
             this.units.filter(u => u.faction === 1).forEach(u => {
                 const hex = this.map.get(`${u.q},${u.r}`);
@@ -507,7 +597,7 @@ class Game {
                     else if (hex.terrain.id === 'MOUNTAIN') { this.resources.stone++; resGained = '+1 Pedra'; icon = '⛰️'; color = '#95a5a6'; }
                     else if (hex.terrain.id === 'WATER') { this.resources.scales++; resGained = '+1 Escama'; icon = '🐟'; color = '#3498db'; }
                     else if (hex.terrain.id === 'DESERT') { this.resources.sand++; resGained = '+1 Areia'; icon = '⏳'; color = '#f1c40f'; }
-                    
+
                     if (resGained && typeof showPopup === 'function') {
                         showPopup(`${icon} ${resGained}`, u, color);
                     }
@@ -516,10 +606,10 @@ class Game {
             this.units.filter(u => u.faction === 1).forEach(u => { if (u.status === 'shielded') u.status = null; });
             this.units.forEach(u => { if (u._mcDuration !== undefined) { u._mcDuration--; if (u._mcDuration <= 0) { u.faction = u._origFaction; delete u._origFaction; delete u._mcDuration; if (typeof showPopup === 'function') showPopup("Controle Perdido!", u, '#9b59b6'); } } });
             this.currentTurn = 2; const tb = document.getElementById('turn-blocker'); if (tb) tb.style.display = 'block'; this.updateTurnUI("Turno: Inimigo", 'var(--enemy-color)'); this.processStatus(2);
-            if (!this.gameOver) { try { if(typeof sleep === 'function') await sleep(800); if (typeof window.runAITurn === 'function') await window.runAITurn(); if (!this.gameOver) this.startNextTurn(); } catch (e) { console.error("ERRO NO TURNO INIMIGO:", e); if(typeof sleep === 'function') await sleep(1000); this.startNextTurn(); } }
+            if (!this.gameOver) { try { if (typeof sleep === 'function') await sleep(800); if (typeof window.runAITurn === 'function') await window.runAITurn(); if (!this.gameOver) this.startNextTurn(); } catch (e) { console.error("ERRO NO TURNO INIMIGO:", e); if (typeof sleep === 'function') await sleep(1000); this.startNextTurn(); } }
         } else if (this.currentTurn === 2) {
             this.currentTurn = 0; this.updateTurnUI("Turno: Feras", 'var(--wild-color)'); this.processStatus(0);
-            if (!this.gameOver) { try { if(typeof sleep === 'function') await sleep(600); if (typeof window.runWildTurn === 'function') await window.runWildTurn(); if (!this.gameOver) this.startNextTurn(); } catch (e) { console.error("ERRO NO TURNO FERAS:", e); if(typeof sleep === 'function') await sleep(1000); this.startNextTurn(); } }
+            if (!this.gameOver) { try { if (typeof sleep === 'function') await sleep(600); if (typeof window.runWildTurn === 'function') await window.runWildTurn(); if (!this.gameOver) this.startNextTurn(); } catch (e) { console.error("ERRO NO TURNO FERAS:", e); if (typeof sleep === 'function') await sleep(1000); this.startNextTurn(); } }
         } else {
             this.currentTurn = 1; this.turnCount++; const tb = document.getElementById('turn-blocker'); if (tb) tb.style.display = 'none'; this.updateTurnUI("Turno: Jogador", 'var(--player-color)'); this.processStatus(1);
             if (typeof resetSpentMana === 'function') resetSpentMana(); if (typeof collectMana === 'function') collectMana();
@@ -561,12 +651,12 @@ class Game {
 // ==========================================
 class Renderer {
     constructor(canvas, game) { this.canvas = canvas; this.ctx = canvas.getContext('2d'); this.game = game; this.hexSize = 55; this.offsetX = 0; this.offsetY = 0; window.addEventListener('resize', () => this.initCamera(false)); }
-    
+
     initCamera(force = false) { this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight; if (force || this.hexSize < 35) { const mapW = this.game.cols * Math.sqrt(3); const mapH = this.game.rows * 1.5 + 0.5; this.hexSize = Math.max(Math.min(this.canvas.width / mapW, this.canvas.height / mapH) * 0.75, 40); } let pL = this.game.units.find(u => u.isLeader && u.faction === 1); if (pL) this.centerOn(pL.vq, pL.vr); else this.draw(); }
     getPosUnscaled(q, r) { return { x: this.hexSize * Math.sqrt(3) * (q + r / 2) + this.hexSize, y: this.hexSize * 1.5 * r + this.hexSize }; }
     getPos(q, r) { const u = this.getPosUnscaled(q, r); return { x: u.x + this.offsetX, y: u.y + this.offsetY }; }
     centerOn(q, r) { const p = this.getPosUnscaled(q, r); this.offsetX = (this.canvas.width / 2) - p.x; this.offsetY = (this.canvas.height / 2) - p.y; this.draw(); }
-    
+
     hexPath(ctx, cx, cy, size) { ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = (Math.PI / 180) * (60 * i - 30); const px = cx + size * Math.cos(a); const py = cy + size * Math.sin(a); i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); } ctx.closePath(); }
 
     draw() {
@@ -581,7 +671,7 @@ class Renderer {
             if (hex.terrain.id === 'VILLAGE' && hex.owner !== null) { ctx.fillStyle = hex.owner === 1 ? '#4a9edd' : '#c0392b'; ctx.beginPath(); ctx.arc(p.x + this.hexSize * 0.4, p.y - this.hexSize * 0.3, 6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
         });
 
-        this.game.items.forEach((iType, key) => { let [q, r] = key.split(',').map(Number); const p = this.getPos(q, r); ctx.save(); ctx.globalAlpha = 1.0; ctx.beginPath(); ctx.ellipse(p.x, p.y + this.hexSize * 0.35, this.hexSize * 0.4, this.hexSize * 0.2, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(20,20,30,0.9)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#f1c40f'; ctx.stroke(); ctx.font = `${this.hexSize * 0.6}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if(typeof ITEMS !== 'undefined' && ITEMS[iType]) { ctx.fillText(ITEMS[iType].icon, p.x, p.y + this.hexSize * 0.25); } ctx.restore(); });
+        this.game.items.forEach((iType, key) => { let [q, r] = key.split(',').map(Number); const p = this.getPos(q, r); ctx.save(); ctx.globalAlpha = 1.0; ctx.beginPath(); ctx.ellipse(p.x, p.y + this.hexSize * 0.35, this.hexSize * 0.4, this.hexSize * 0.2, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(20,20,30,0.9)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#f1c40f'; ctx.stroke(); ctx.font = `${this.hexSize * 0.6}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (typeof ITEMS !== 'undefined' && ITEMS[iType]) { ctx.fillText(ITEMS[iType].icon, p.x, p.y + this.hexSize * 0.25); } ctx.restore(); });
 
         const su = this.game.selectedUnit;
         if (this.game.activeSpell && su && su.isLeader && this.game.currentTurn === 1) {
@@ -594,30 +684,31 @@ class Renderer {
         }
 
         if (su && this.game.currentTurn === 1 && !this.game.activeSpell) {
-            this.game.units.forEach(tg => { if (tg.faction !== 1 && Hex.distance(su, tg) <= su.range && !su.hasAttacked) { const isTame = this.game.tameMode && tg.faction === 0 && Hex.distance(su, tg) === 1; const p = this.getPos(tg.vq, tg.vr); this.hexPath(ctx, p.x, p.y, this.hexSize - 1); ctx.fillStyle = isTame ? 'rgba(155,89,182,0.35)' : 'rgba(192,57,43,0.35)'; ctx.fill(); ctx.strokeStyle = isTame ? 'rgba(155,89,182,0.9)' : 'rgba(231,76,60,0.85)'; ctx.lineWidth = 2; ctx.stroke(); } });
+            this.game.units.forEach(tg => { 
+                if (tg.faction !== 1 && Hex.distance(su, tg) <= su.range && !su.hasAttacked) { const isTame = this.game.tameMode && tg.faction === 0 && Hex.distance(su, tg) === 1; const p = this.getPos(tg.vq, tg.vr); this.hexPath(ctx, p.x, p.y, this.hexSize - 1); ctx.fillStyle = isTame ? 'rgba(155,89,182,0.35)' : 'rgba(192,57,43,0.35)'; ctx.fill(); ctx.strokeStyle = isTame ? 'rgba(155,89,182,0.9)' : 'rgba(231,76,60,0.85)'; ctx.lineWidth = 2; ctx.stroke(); } });
             const sp = this.getPos(su.vq, su.vr); this.hexPath(ctx, sp.x, sp.y, this.hexSize - 1); ctx.strokeStyle = '#c9a227'; ctx.lineWidth = 2.5; ctx.stroke();
         } else if (!su && this.game.selectedHex) { const sh = this.getPos(this.game.selectedHex.q, this.game.selectedHex.r); this.hexPath(ctx, sh.x, sh.y, this.hexSize - 1); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2; ctx.stroke(); }
 
         this.game.units.forEach(u => {
             const p = this.getPos(u.vq, u.vr); const fBg = u.faction === 1 ? '#ffffff' : u.faction === 2 ? '#e74c3c' : '#2ecc71'; const sCol = u.faction === 1 ? '#111' : '#fff';
             let sMod = u.isBoss ? 1.35 : 1.0; if (u.level > 1 && !u.isLeader) sMod += 0.20; const r = this.hexSize * 0.6 * sMod;
-            
+
             ctx.beginPath(); ctx.ellipse(p.x, p.y + r + 2, r * 0.85, r * 0.25, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fill();
             ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fillStyle = fBg; ctx.fill(); ctx.lineWidth = u.isLeader ? 2.5 : 1.5; ctx.strokeStyle = sCol; ctx.stroke();
             if (u.status === 'poison') { ctx.fillStyle = 'rgba(39,174,96,0.35)'; ctx.fill(); } else if (u.status === 'stun' || u.status === 'bind' || u.status === 'chilled') { ctx.fillStyle = 'rgba(241,196,15,0.35)'; ctx.fill(); } else if (u.status === 'shielded') { ctx.fillStyle = 'rgba(149,165,166,0.35)'; ctx.fill(); }
-            
+
             ctx.save(); ctx.globalAlpha = (u.mp === 0 && u.hasAttacked) ? 0.5 : 1.0; ctx.font = `${this.hexSize * sMod * 0.85}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             if (u.hitTimer) ctx.filter = 'brightness(50%) sepia(100%) hue-rotate(-50deg) saturate(500%)'; else if (u.filter !== 'none') ctx.filter = u.filter;
             ctx.fillText(u.emoji, p.x, p.y + 1); ctx.restore();
-            
+
             if (u.isLeader) { ctx.font = `${this.hexSize * 0.55}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'center'; ctx.fillText('👑', p.x, p.y - r + 2); }
             if (u.faction === 0 && u.alerted) { ctx.font = `bold ${this.hexSize * 0.45}px Arial`; ctx.fillStyle = '#e74c3c'; ctx.textAlign = 'center'; ctx.fillText('⚠️', p.x + r - 5, p.y - r + 5); }
             if (u.isLeader && u.faction === 1 && (u.knownSpells || []).length > 0) { ctx.font = `${this.hexSize * 0.35}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'right'; ctx.fillText('✨', p.x + r - 2, p.y - r + 8); }
-            
+
             const hw = Math.min(50, Math.max(16, 16 + (u.maxHp / 5))); const barY = p.y - r - 8; const hpRatio = u.hp / u.maxHp;
             ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.beginPath(); ctx.roundRect(p.x - hw / 2, barY, hw, 5, 2); ctx.fill();
             const hpColor = hpRatio > 0.5 ? '#2ecc71' : hpRatio > 0.25 ? '#f39c12' : '#e74c3c'; ctx.fillStyle = hpColor; ctx.beginPath(); ctx.roundRect(p.x - hw / 2, barY, hw * hpRatio, 5, 2); ctx.fill();
-            
+
             let starIcon = u.starLevel === 2 ? '🥉' : u.starLevel === 3 ? '🥈' : u.starLevel >= 4 ? '🌟' : '';
             if (u.level > 1 || starIcon) { ctx.font = 'bold 10px Cinzel,serif'; ctx.fillStyle = '#c9a227'; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.fillText(`Lv${u.level}${starIcon}`, p.x + hw / 2 + 12, barY + 5); }
         });
@@ -635,31 +726,31 @@ class KingdomRenderer {
         this.selectedHex = null;
         window.addEventListener('resize', () => this.initCamera());
     }
-    
+
     initCamera() {
         // Ajusta o canvas para o tamanho do container
         const container = this.canvas.parentElement;
         this.canvas.width = container.clientWidth;
         this.canvas.height = container.clientHeight;
-        
+
         const mapW = 13 * Math.sqrt(3);
         const mapH = 9 * 1.5 + 0.5;
         this.hexSize = Math.max(Math.min(this.canvas.width / mapW, this.canvas.height / mapH) * 0.85, 30);
-        
+
         this.offsetX = this.canvas.width / 2;
         this.offsetY = this.canvas.height / 2;
         this.draw();
     }
 
     getPosUnscaled(q, r) { return { x: this.hexSize * Math.sqrt(3) * (q + r / 2), y: this.hexSize * 1.5 * r }; }
-    
-    getPos(q, r) { 
-        const u = this.getPosUnscaled(q, r); 
+
+    getPos(q, r) {
+        const u = this.getPosUnscaled(q, r);
         // Centraliza o grid fixo de 13x9
-        return { 
-            x: u.x + this.offsetX - (6 * this.hexSize * Math.sqrt(3)), 
-            y: u.y + this.offsetY - (4 * this.hexSize * 1.5) 
-        }; 
+        return {
+            x: u.x + this.offsetX - (6 * this.hexSize * Math.sqrt(3)),
+            y: u.y + this.offsetY - (4 * this.hexSize * 1.5)
+        };
     }
 
     hexPath(ctx, cx, cy, size) {
@@ -676,13 +767,13 @@ class KingdomRenderer {
     draw() {
         const ctx = this.ctx;
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        if(!this.game || !this.game.kingdomMap) return;
+        if (!this.game || !this.game.kingdomMap) return;
 
         this.game.kingdomMap.forEach(hex => {
             const p = this.getPos(hex.q, hex.r);
-            
+
             const terrainData = typeof hex.terrain === 'string' ? TERRAINS[hex.terrain] : hex.terrain;
-            if(!terrainData) return;
+            if (!terrainData) return;
 
             this.hexPath(ctx, p.x, p.y, this.hexSize - 1);
             ctx.fillStyle = terrainData.color || '#333';
@@ -700,11 +791,11 @@ class KingdomRenderer {
 
             if (hex.building) {
                 const b = BUILDINGS[hex.building];
-                if(b) {
+                if (b) {
                     ctx.font = `${this.hexSize * 0.8}px Arial`;
                     ctx.fillStyle = '#fff';
                     ctx.fillText(b.icon, p.x, p.y + 2);
-                    
+
                     // Desenha o badge de Nível se for maior que 1
                     if (hex.bLevel > 1) {
                         ctx.font = 'bold 11px Cinzel,serif';
@@ -729,37 +820,37 @@ class KingdomRenderer {
 }
 
 window.runAITurn = async function () {
-    const units = game.units.filter(u => u.faction === 2); 
+    const units = game.units.filter(u => u.faction === 2);
     let maxL = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) ? (game.leaderData.limit + 1) : (game.leaderData.limit || 6);
-    
+
     for (const u of units) {
         if (game.gameOver) return; if (u.mp === 0) continue;
         if (renderer) { renderer.centerOn(u.vq, u.vr); renderer.draw(); }
-        game.selectedUnit = u; if(typeof sleep === 'function') await sleep(300);
+        game.selectedUnit = u; if (typeof sleep === 'function') await sleep(300);
         game.calculateReachable(u); let acted = false; const myM = game.units.filter(x => x.faction === u.faction && !x.isLeader).length; const isSafe = u.hp / u.maxHp > 0.4;
-        
-        if (u.isLeader && myM < maxL && isSafe) { const n = Hex.getNeighbors(u.q, u.r).map(h => game.getUnitAt(h.q, h.r)).filter(Boolean); const wW = n.filter(e => e.faction === 0 && e.hp / e.maxHp <= 0.3); if (wW.length > 0) { await game.attemptTame(u, wW[0]); acted = true; if(typeof sleep === 'function') await sleep(500); } }
-        
+
+        if (u.isLeader && myM < maxL && isSafe) { const n = Hex.getNeighbors(u.q, u.r).map(h => game.getUnitAt(h.q, h.r)).filter(Boolean); const wW = n.filter(e => e.faction === 0 && e.hp / e.maxHp <= 0.3); if (wW.length > 0) { await game.attemptTame(u, wW[0]); acted = true; if (typeof sleep === 'function') await sleep(500); } }
+
         if (!acted && u.mp > 0) {
             let tgts = game.units.filter(t => t.faction === 1); if (u.isLeader && myM < maxL) tgts = tgts.concat(game.units.filter(t => t.faction === 0)); let cls = null; let minD = 999;
             tgts.forEach(t => { let d = Hex.distance(u, t); if (u.isLeader && t.faction === 0) { if (isSafe) { d -= 3; if (t.hp / t.maxHp <= 0.3) d -= 5; } else { d += 10; } } if (!u.isLeader && t.faction === 1) d -= 2; if (d < minD) { minD = d; cls = t; } });
-            
+
             if (cls) {
                 const moves = Array.from(game.reachableHexes.keys()); let bM = { q: u.q, r: u.r }; let bestScore = -9999;
                 moves.forEach(m => {
                     const [mq, mr] = m.split(',').map(Number); if (game.getUnitAt(mq, mr) && (mq !== u.q || mr !== u.r)) return;
                     let distToTarget = Hex.distance({ q: mq, r: mr }, cls); let score = -distToTarget * 10;
-                    if (distToTarget > 0 && distToTarget <= u.range) { score += 1000; score += distToTarget * 5; }
+                    if (distToTarget > 0 && distToTarget <= u.getEffectiveRange(game)) { score += 1000; score += distToTarget * 5; }
                     let hMap = game.map.get(m); if (hMap && hMap.terrain.id === 'VILLAGE' && hMap.owner !== 2) score += 20;
                     if (!isSafe && hMap && hMap.terrain.id === 'VILLAGE') score += 80;
                     if (score > bestScore) { bestScore = score; bM = { q: mq, r: mr }; }
                 });
-                
+
                 if (bM.q !== u.q || bM.r !== u.r) { u.mp -= (game.reachableHexes.get(`${bM.q},${bM.r}`) || 1); await game.moveUnit(u, bM.q, bM.r); }
                 if (Hex.distance(u, cls) <= u.range && !u.hasAttacked) { if (u.isLeader && cls.faction === 0 && Hex.distance(u, cls) === 1 && cls.hp / cls.maxHp <= 0.3 && myM < maxL) { await game.attemptTame(u, cls); } else { let risk = false; if (u.isLeader) { let cDmg = Math.floor(game.calcDmg(cls, u) * 0.6); if (cls.abilities.includes('counter')) cDmg = Math.floor(cDmg * 1.2); if (u.hp <= cDmg) risk = true; } if (!risk) await game.executeCombat(u, cls); } }
             }
         }
-        if(typeof sleep === 'function') await sleep(200);
+        if (typeof sleep === 'function') await sleep(200);
     }
 };
 
@@ -768,11 +859,11 @@ window.runWildTurn = async function () {
     for (const w of wilds) {
         if (game.gameOver) break; if (w.mp === 0) continue;
         if (!w.alerted) { w.hp = Math.min(w.maxHp, w.hp + 5); continue; }
-        if(renderer) { renderer.centerOn(w.vq, w.vr); renderer.draw(); } game.selectedUnit = w; if(typeof sleep === 'function') await sleep(250);
+        if (renderer) { renderer.centerOn(w.vq, w.vr); renderer.draw(); } game.selectedUnit = w; if (typeof sleep === 'function') await sleep(250);
         game.calculateReachable(w); let tgts = game.units.filter(u => u.faction !== 0); if (tgts.length === 0) continue;
-        
+
         let cls = null; let minD = 999; tgts.forEach(t => { let d = Hex.distance(w, t); if (d < minD) { minD = d; cls = t; } }); const isS = w.isBoss || w.maxHp >= 50 || w.atk >= 12;
-        
+
         if (cls) {
             let moves = Array.from(game.reachableHexes.keys()); let bM = { q: w.q, r: w.r }; let bestScore = -9999;
             moves.forEach(m => {
@@ -784,7 +875,7 @@ window.runWildTurn = async function () {
             if (bM.q !== w.q || bM.r !== w.r) { w.mp -= (game.reachableHexes.get(`${bM.q},${bM.r}`) || 1); await game.moveUnit(w, bM.q, bM.r); }
             if (Hex.distance(w, cls) <= w.range) { await game.executeCombat(w, cls); }
         }
-        if(typeof sleep === 'function') await sleep(200);
+        if (typeof sleep === 'function') await sleep(200);
     }
     game.selectedUnit = null;
 };
