@@ -681,11 +681,9 @@ class KingdomRenderer {
         this.game.kingdomMap.forEach(hex => {
             const p = this.getPos(hex.q, hex.r);
             
-            // GARANTIA DE TERRENO: Se o save transformou o objeto em string, recupera do data.js
             const terrainData = typeof hex.terrain === 'string' ? TERRAINS[hex.terrain] : hex.terrain;
-            if(!terrainData) return; // Evita crash se o terreno for inválido
+            if(!terrainData) return;
 
-            // Desenha o Terreno
             this.hexPath(ctx, p.x, p.y, this.hexSize - 1);
             ctx.fillStyle = terrainData.color || '#333';
             ctx.fill();
@@ -693,7 +691,6 @@ class KingdomRenderer {
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            // Ícone do Terreno (Fosco no fundo)
             if (terrainData.icon) {
                 ctx.font = `${this.hexSize * 0.5}px Arial`;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -701,20 +698,27 @@ class KingdomRenderer {
                 ctx.fillText(terrainData.icon, p.x, p.y);
             }
 
-            // Desenha a Construção (Se houver)
             if (hex.building) {
                 const b = BUILDINGS[hex.building];
                 if(b) {
-                    ctx.font = `${this.hexSize * 0.9}px Arial`;
+                    ctx.font = `${this.hexSize * 0.8}px Arial`;
                     ctx.fillStyle = '#fff';
-                    ctx.fillText(b.icon, p.x, p.y + 5);
+                    ctx.fillText(b.icon, p.x, p.y + 2);
+                    
+                    // Desenha o badge de Nível se for maior que 1
+                    if (hex.bLevel > 1) {
+                        ctx.font = 'bold 11px Cinzel,serif';
+                        ctx.fillStyle = 'var(--gold)';
+                        ctx.textAlign = 'right';
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillText(`Lv${hex.bLevel}`, p.x + this.hexSize * 0.6, p.y + this.hexSize * 0.5);
+                    }
                 }
             }
 
-            // Hexágono Selecionado
             if (this.selectedHex === hex) {
                 this.hexPath(ctx, p.x, p.y, this.hexSize - 1);
-                ctx.strokeStyle = '#f1c40f'; // Dourado
+                ctx.strokeStyle = '#f1c40f';
                 ctx.lineWidth = 3;
                 ctx.stroke();
                 ctx.fillStyle = 'rgba(241, 196, 15, 0.2)';

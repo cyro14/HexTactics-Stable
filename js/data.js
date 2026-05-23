@@ -181,6 +181,7 @@ const EVENTS = [
 // ESTRUTURAS DO REINO (Atualização 2.0)
 // ==========================================
 const BUILDINGS = {
+    CASTLE: { id: 'CASTLE', name: 'Castelo Real', icon: '🏰', cost: {}, desc: 'O coração do seu Reino. Não pode ser destruído.', terrains: ['PLAINS', 'FOREST', 'MOUNTAIN', 'WATER', 'SNOW', 'DESERT'] },
     STABLE: { id: 'STABLE', name: 'Estábulo', icon: '🐎', cost: { wood: 6, stone: 3 }, desc: 'O Mercador sempre venderá um Cavalo extra.', terrains: ['PLAINS', 'DESERT', 'SNOW'] },
     CHURCH: { id: 'CHURCH', name: 'Igreja', icon: '⛪', cost: { stone: 7, sand: 5 , wood:6}, desc: 'Recebe uma pomba Celestial imediatamente.', terrains: ['PLAINS', 'MOUNTAIN', 'SNOW'] },
     MINE: { id: 'MINE', name: 'Mina', icon: '⛏️', cost: { wood: 5, stone: 2 }, desc: 'Gera +3 Pedra e +1 Ouro ao vencer batalhas.', terrains: ['MOUNTAIN'] },
