@@ -14,7 +14,7 @@ window.getMaxBoxLimit = function() {
     if (!game || !game.leaderData) return 6;
     let base = game.leaderData.limit || 6;
     if (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) base += 1;
-    base += (window.countKingdomBuildings('TOWN') * 2); // Bônus da Vila
+    base += (window.countKingdomBuildings('TOWN')+1); // Bônus da Vila
     return base;
 };
 
