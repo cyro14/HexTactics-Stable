@@ -1250,7 +1250,7 @@ function startGame(load, isRoguelite = false, leaderId = null) {
 }
 
 // ==========================================
-// SISTEMA DE GERENCIAMENTO DO REINO 2.0
+// SISTEMA DE GERENCIAMENTO DO REINO
 // ==========================================
 let kingdomHexSize = 45;
 let kingdomOffsetX = 0, kingdomOffsetY = 0;
@@ -1260,48 +1260,32 @@ let isKDragging = false;
 let startKX, startKY, initKOffX, initKOffY;
 let initKPinch = null, initKSize = null;
 
-// Função para popups de recursos flutuantes na tela do Reino
-window.showKingdomPopup = function(txt, hex, col) {
-    if (!kRenderer) return;
-    const p = kRenderer.getPos(hex.q, hex.r);
-    const el = document.createElement('div');
-    el.className = 'dmg-popup';
-    el.innerText = txt;
-    el.style.color = col;
-    el.style.left = p.x + 'px';
-    el.style.top = (p.y - 20) + 'px';
-    el.style.transition = 'top 1.5s ease-out, opacity 1.5s ease-out';
-    $('popup-layer').appendChild(el);
-    setTimeout(() => { el.style.top = (p.y - 70) + 'px'; el.style.opacity = '0'; }, 50);
-    setTimeout(() => el.remove(), 1500);
-};
-
 function openKingdom() {
     hide('result-screen');
     hide('route-map-screen');
     hide('game-container');
     show('kingdom-screen');
-    
+
     // 1. Gera o mapa do Reino se não existir no save
     if (!game.kingdomMap || game.kingdomMap.size === 0) {
         game.kingdomMap = new Map();
-        const kCols = 13, kRows = 9; 
-        for (let r = 0; r < kRows; r++) { 
-            const off = Math.floor(r / 2); 
-            for (let q = -off; q < kCols - off; q++) { 
-                const rnd = Math.random(); 
-                let t = TERRAINS.PLAINS; 
-                if (rnd > 0.90) t = TERRAINS.MOUNTAIN; 
-                else if (rnd > 0.80) t = TERRAINS.SNOW; 
-                else if (rnd > 0.65) t = TERRAINS.WATER; 
-                else if (rnd > 0.50) t = TERRAINS.FOREST; 
-                else if (rnd > 0.35) t = TERRAINS.DESERT; 
-                game.kingdomMap.set(`${q},${r}`, { q: q, r: r, terrain: t, building: null, bLevel: null }); 
-            } 
+        const kCols = 13, kRows = 9;
+        for (let r = 0; r < kRows; r++) {
+            const off = Math.floor(r / 2);
+            for (let q = -off; q < kCols - off; q++) {
+                const rnd = Math.random();
+                let t = TERRAINS.PLAINS;
+                if (rnd > 0.90) t = TERRAINS.MOUNTAIN;
+                else if (rnd > 0.80) t = TERRAINS.SNOW;
+                else if (rnd > 0.65) t = TERRAINS.WATER;
+                else if (rnd > 0.50) t = TERRAINS.FOREST;
+                else if (rnd > 0.35) t = TERRAINS.DESERT;
+                game.kingdomMap.set(`${q},${r}`, { q: q, r: r, terrain: t, building: null, bLevel: null });
+            }
         }
     }
 
-    // Garante apenas um Castelo Real no centro do mapa (coordenadas 4,4)
+    // REGRA DE OURO: Garante apenas um Castelo Real no centro do mapa (coordenadas 4,4)
     let hasCastle = Array.from(game.kingdomMap.values()).some(h => h.building === 'CASTLE');
     if (!hasCastle) {
         let centerHex = game.kingdomMap.get("4,4") || Array.from(game.kingdomMap.values())[0];
@@ -1309,13 +1293,13 @@ function openKingdom() {
     }
 
     // Atualiza os contadores de recursos na tela
-    let res = game.resources || { wood:0, stone:0, scales:0, sand:0, blood:0 };
-    if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
-    if($('k-res-dna')) $('k-res-dna').innerText = game.dna || 0;
-    if($('k-res-wood')) $('k-res-wood').innerText = res.wood;
-    if($('k-res-stone')) $('k-res-stone').innerText = res.stone;
-    if($('k-res-scales')) $('k-res-scales').innerText = res.scales;
-    if($('k-res-sand')) $('k-res-sand').innerText = res.sand;
+    let res = game.resources || { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
+    if ($('k-res-gold')) $('k-res-gold').innerText = game.gold;
+    if ($('k-res-dna')) $('k-res-dna').innerText = game.dna || 0;
+    if ($('k-res-wood')) $('k-res-wood').innerText = res.wood;
+    if ($('k-res-stone')) $('k-res-stone').innerText = res.stone;
+    if ($('k-res-scales')) $('k-res-scales').innerText = res.scales;
+    if ($('k-res-sand')) $('k-res-sand').innerText = res.sand;
 
     // Inicializa o motor gráfico e os inputs de câmera livre
     setTimeout(() => {
@@ -1324,56 +1308,7 @@ function openKingdom() {
 
         if (!kRenderer) {
             kRenderer = new KingdomRenderer(canvasEl, game);
-            
-            // --- MOTOR DE PARTÍCULAS E SINALIZADORES VISUAIS ---
-            kRenderer.currentEffect = null;
-            kRenderer.animateHex = function(hex, type="build") {
-                let startTime = Date.now();
-                let duration = 500;
-                let color = type === "build" ? "#2ecc71" : "var(--gold-light)";
-                let interval = setInterval(() => {
-                    let elapsed = Date.now() - startTime;
-                    if (elapsed >= duration || !kRenderer || $('kingdom-screen').classList.contains('hidden')) {
-                        clearInterval(interval);
-                        kRenderer.currentEffect = null;
-                        kRenderer.draw();
-                        return;
-                    }
-                    kRenderer.currentEffect = { hex: hex, progress: elapsed / duration, color: color, type: type };
-                    kRenderer.draw();
-                }, 1000 / 30);
-            };
 
-            // Injeta o renderizador de efeitos sobre o desenho do mapa original
-            let originalDraw = kRenderer.draw.bind(kRenderer);
-            kRenderer.draw = function() {
-                originalDraw();
-                if (this.currentEffect) {
-                    let eff = this.currentEffect;
-                    let p = this.getPos(eff.hex.q, eff.hex.r);
-                    let ctx = this.ctx;
-                    ctx.save();
-                    
-                    // Onda de choque externa se expandindo
-                    ctx.beginPath();
-                    let radius = this.hexSize * (1 + eff.progress * 1.3);
-                    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-                    ctx.strokeStyle = eff.color;
-                    ctx.lineWidth = 5 * (1 - eff.progress);
-                    ctx.globalAlpha = 1 - eff.progress;
-                    ctx.stroke();
-                    
-                    // Brilho interno implodindo taticamente
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, this.hexSize * (1 - eff.progress), 0, Math.PI * 2);
-                    ctx.fillStyle = eff.color;
-                    ctx.globalAlpha = (1 - eff.progress) * 0.2;
-                    ctx.fill();
-                    
-                    ctx.restore();
-                }
-            };
-            
             // --- CONTROLES DE MOUSE (PC) ---
             canvasEl.addEventListener('mousedown', e => {
                 isKDragging = false;
@@ -1465,72 +1400,41 @@ function openKingdom() {
                 renderBuildingMenu();
             }
         }
-        
+
         kRenderer.initCamera();
         kRenderer.draw();
         if ($('building-menu')) hide('building-menu');
     }, 150);
 }
 
-// Mecânica Unificada de Trocas Selecionadas do Mercado Global
-window.executeMarketTrade = function(resType, amount, goldChange) {
-    if (goldChange < 0 && game.gold < Math.abs(goldChange)) { alert("Ouro insuficiente!"); return; }
-    if (amount < 0 && game.resources[resType] < Math.abs(amount)) { alert("Recursos insuficientes!"); return; }
-    
-    game.resources[resType] += amount;
-    game.gold += goldChange;
-    
-    let hex = kRenderer.selectedHex;
-    let icon = resType==='wood'?'🌲':resType==='stone'?'⛰️':resType==='scales'?'🐟':'⏳';
-    
-    // Feedback visual instantâneo por popup flutuante
-    if (amount > 0) {
-        window.showKingdomPopup(`+${amount} ${icon} / ${goldChange}💰`, hex, 'var(--success)');
-    } else {
-        window.showKingdomPopup(`${amount} ${icon} / +${goldChange}💰`, hex, 'var(--gold-light)');
-    }
-    
-    // Atualiza contadores numéricos
-    let resObj = game.resources || {};
-    if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
-    if($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
-    if($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
-    if($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
-    if($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
-    
-    kRenderer.animateHex(hex, "build");
-    autoSave();
-    renderBuildingMenu();
-};
-
 function renderBuildingMenu() {
     const menu = $('building-menu');
     menu.innerHTML = '';
-    
+
     if (!kRenderer) return;
     const hex = kRenderer.selectedHex;
-    
+
     if (!hex) { menu.innerHTML = '<div style="color:#aaa; padding:10px;">Selecione um lote no mapa para interagir.</div>'; return; }
-    
+
     // === MENU DE UPGRADE (Se o lote já tiver uma construção) ===
     if (hex.building) {
         let bData = BUILDINGS[hex.building];
         if (!bData) { menu.innerHTML = '<div style="color:var(--warning); padding:10px;">Estrutura desconhecida.</div>'; return; }
-        
+
         let bLvl = hex.bLevel || 1;
-        let maxLvl = bData.id === 'CASTLE' ? 1 : 3; 
-        
+        let maxLvl = bData.id === 'CASTLE' ? 1 : 3;
+
         let html = `<div style="display:flex; flex-direction:column; align-items:center; min-width:220px; background:rgba(20,20,30,0.9); border:1px solid var(--gold); padding:10px; border-radius:8px;">
             <span style="font-size:32px;">${bData.icon}</span>
             <span style="font-size:13px; color:var(--gold-light); margin:4px 0; font-weight:bold;">${bData.name} <span style="color:#fff; background:#444; padding:1px 5px; border-radius:8px; font-size:10px;">Nv ${bLvl}</span></span>
             <span style="font-size:10px; color:#aaa; margin-bottom:8px; text-align:center;">${bData.desc}</span>`;
-        
+
         if (bLvl < maxLvl) {
             let nextLvl = bLvl + 1;
             let canAfford = Object.entries(bData.cost).every(([res, amt]) => (game.resources[res] || 0) >= (amt * nextLvl));
-            
+
             let costHtml = Object.entries(bData.cost).map(([res, amt]) => {
-                let icon = res==='wood'?'🌲':res==='stone'?'⛰️':res==='scales'?'🐟':res==='sand'?'⏳':'🩸';
+                let icon = res === 'wood' ? '🌲' : res === 'stone' ? '⛰️' : res === 'scales' ? '🐟' : res === 'sand' ? '⏳' : '🩸';
                 let reqAmt = amt * nextLvl;
                 let color = (game.resources[res] || 0) >= reqAmt ? '#fff' : 'var(--enemy-color)';
                 return `<span style="color:${color}; font-size:11px; font-weight:bold;">${icon}${reqAmt}</span>`;
@@ -1538,49 +1442,107 @@ function renderBuildingMenu() {
 
             html += `<div style="margin-bottom:4px; font-size:9px; color:var(--gold-dark); text-transform:uppercase;">Melhoria para Nv ${nextLvl}:</div>
                      <div style="display:flex; gap:8px; margin-bottom:8px; background:rgba(0,0,0,0.5); padding:4px 8px; border-radius:4px;">${costHtml}</div>
-                     <button id="btn-upgrade-b" class="btn-warning" style="padding:6px 12px; font-size:10px; cursor:${canAfford?'pointer':'not-allowed'}; opacity:${canAfford?'1':'0.5'};">⬆️ Dar Upgrade</button>`;
+                     <button id="btn-upgrade-b" class="btn-warning" style="padding:6px 12px; font-size:10px; cursor:${canAfford ? 'pointer' : 'not-allowed'}; opacity:${canAfford ? '1' : '0.5'};">⬆️ Dar Upgrade</button>`;
         } else {
             html += `<div style="color:var(--success); font-size:11px; font-weight:bold; margin-top:6px; letter-spacing:1px;">NÍVEL MÁXIMO</div>`;
         }
-        
-        // --- ADIÇÃO DOS PAINÉIS INTERATIVOS REFORMULADOS ---
+
+        // --- ADIÇÃO DOS PAINÉIS INTERATIVOS ---
         let actsHtml = '';
         if (bData.id === 'MARKET') {
             actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
-                         <div style="font-size:9px; color:var(--gold-dark); margin-bottom:4px; text-transform:uppercase;">Vender (1 Unidade ➔ +5💰)</div>
-                         <div style="display:flex; gap:4px; margin-bottom:8px; width:100%;">
-                             <button onclick="executeMarketTrade('wood', -1, 5)" class="btn-success" style="flex:1; padding:4px 0; font-size:11px;">🌲</button>
-                             <button onclick="executeMarketTrade('stone', -1, 5)" class="btn-success" style="flex:1; padding:4px 0; font-size:11px;">⛰️</button>
-                             <button onclick="executeMarketTrade('scales', -1, 5)" class="btn-success" style="flex:1; padding:4px 0; font-size:11px;">🐟</button>
-                             <button onclick="executeMarketTrade('sand', -1, 5)" class="btn-success" style="flex:1; padding:4px 0; font-size:11px;">⏳</button>
-                         </div>
-                         <div style="font-size:9px; color:var(--gold-dark); margin-bottom:4px; text-transform:uppercase;">Comprar (-10💰 ➔ +2 Unidades)</div>
-                         <div style="display:flex; gap:4px; width:100%;">
-                             <button onclick="executeMarketTrade('wood', 2, -10)" class="btn-warning" style="flex:1; padding:4px 0; font-size:11px;">🌲</button>
-                             <button onclick="executeMarketTrade('stone', 2, -10)" class="btn-warning" style="flex:1; padding:4px 0; font-size:11px;">⛰️</button>
-                             <button onclick="executeMarketTrade('scales', 2, -10)" class="btn-warning" style="flex:1; padding:4px 0; font-size:11px;">🐟</button>
-                             <button onclick="executeMarketTrade('sand', 2, -10)" class="btn-warning" style="flex:1; padding:4px 0; font-size:11px;">⏳</button>
-                         </div>`;
+                         <button id="btn-mkt-sell" class="btn-success" style="width:100%; font-size:10px; padding:6px; margin-bottom:4px;">Vender Recurso Aleatório (+5💰)</button>
+                         <button id="btn-mkt-buy" class="btn-warning" style="width:100%; font-size:10px; padding:6px;">Comprar Recurso Aleatório (-10💰)</button>`;
         } else if (bData.id === 'FORGE') {
             actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
                          <button id="btn-forge" class="btn-warning" style="width:100%; font-size:10px; padding:6px;">Forjar Equipamento (-25💰)</button>`;
         } else if (bData.id === 'BARRACKS') {
             actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
                          <button id="btn-barracks" class="btn-success" style="width:100%; font-size:10px; padding:6px;">Recrutar Tropa Aliada (-20💰)</button>`;
+        } else if (bData.id === 'LIBRARY') {
+            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
+                         <button disabled style="width:100%; font-size:10px; padding:6px; opacity:0.5; cursor:not-allowed;">Pesquisar Habilidade (Em Breve)</button>`;
         } else if (bData.id === 'SHADOW_ALTAR') {
             actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">`;
             if (game.leaderData && game.leaderData.tags && game.leaderData.tags.includes('UMBRAL')) {
                 actsHtml += `<button id="btn-altar-sac" class="btn-danger" style="width:100%; font-size:10px; padding:6px;">Sacrificar Fera (Gerar Recursos)</button>`;
             } else {
-                actsHtml += `<div style="color:var(--enemy-color); font-size:9px; text-align:center;">Apenas líderes Umbrais possuem este conhecimento obscuro.</div>`;
+                actsHtml += `<div style="color:var(--enemy-color); font-size:9px; text-align:center;">Apenas líderes Umbrais possuem o conhecimento obscuro para utilizar este Altar.</div>`;
             }
         }
-        
         html += actsHtml;
         html += `</div>`;
         menu.innerHTML = html;
-        
-        // Atribuição de ouvintes de eventos para botões estáticos pós-injeção
+
+        // --- FUNÇÕES DOS PAINÉIS INTERATIVOS ---
+        if ($('btn-mkt-sell')) {
+            $('btn-mkt-sell').onclick = () => {
+                let resTypes = ['wood', 'stone', 'scales', 'sand'];
+                let available = resTypes.filter(r => game.resources[r] > 0);
+                if (available.length > 0) {
+                    let rToSell = available[Math.floor(Math.random() * available.length)];
+                    game.resources[rToSell]--; game.gold += 5;
+                    showPopup(`-1 ${rToSell} / +5💰`, hex, 'var(--gold-light)');
+                    autoSave(); openKingdom(); renderBuildingMenu();
+                } else { alert("Você não possui recursos para vender!"); }
+            };
+        }
+        if ($('btn-mkt-buy')) {
+            $('btn-mkt-buy').onclick = () => {
+                if (game.gold >= 10) {
+                    let resTypes = ['wood', 'stone', 'scales', 'sand'];
+                    let rToBuy = resTypes[Math.floor(Math.random() * resTypes.length)];
+                    game.resources[rToBuy] += 2; game.gold -= 10;
+                    showPopup(`-10💰 / +2 ${rToBuy}`, hex, 'var(--success)');
+                    autoSave(); openKingdom(); renderBuildingMenu();
+                } else { alert("Ouro insuficiente!"); }
+            };
+        }
+        if ($('btn-forge')) {
+            $('btn-forge').onclick = () => {
+                if (game.gold >= 25) {
+                    let itP = ['POTION', 'BANDAGE', 'RUSTY_SWORD', 'WOODEN_SHIELD', 'SCROLL', 'SWORD', 'SHIELD', 'BOOTS', 'BOW', 'MAGIC'];
+                    let forged = itP[Math.floor(Math.random() * itP.length)];
+                    game.inventory.push({ id: forged, level: 1 }); game.gold -= 25;
+                    showPopup(`Item Forjado! (Mochila)`, hex, 'var(--gold)');
+                    autoSave(); openKingdom(); renderBuildingMenu();
+                } else { alert("Ouro insuficiente!"); }
+            };
+        }
+        if ($('btn-barracks')) {
+            $('btn-barracks').onclick = () => {
+                if (game.gold >= 20) {
+                    let tags = game.leaderData.tags || [];
+                    let pool = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW].filter(b => b.tags && b.tags.some(t => tags.includes(t)) && !b.minLevel);
+                    if (pool.length === 0) pool = BEASTS.LAND; // Fallback de segurança
+                    let b = pool[Math.floor(Math.random() * pool.length)];
+                    let maxL = typeof window.getMaxBoxLimit === 'function' ? window.getMaxBoxLimit() : 6;
+                    let newUnit = new Unit({ q: 0, r: 0, faction: 1, name: b.name, baseName: b.name, emoji: b.e, hp: b.hp, maxHp: b.hp, mp: b.mp, maxMp: b.mp, atk: b.atk, range: b.range, level: 1, abilities: [...b.abilities], isNew: true, filter: b.filter, tags: b.tags || [], fav: b.fav || [] });
+                    
+                    if (deployedRoster.filter(u => !u.isLeader).length >= maxL) {
+                        rosterMemory.push(newUnit); alert(`Quartel: Recrutou ${b.name} para a Box!`);
+                    } else {
+                        deployedRoster.push(newUnit); alert(`Quartel: Recrutou ${b.name} para o Exército!`);
+                    }
+                    game.gold -= 20; autoSave(); openKingdom(); renderBuildingMenu();
+                } else { alert("Ouro insuficiente!"); }
+            };
+        }
+        if ($('btn-altar-sac')) {
+            $('btn-altar-sac').onclick = async () => {
+                let m = [...rosterMemory, ...deployedRoster].filter(u => !u.isLeader);
+                if (m.length === 0) { alert("Nenhuma fera disponível para sacrifício!"); return; }
+                let sac = await window.promptSelectUnit("Selecione o Sacrifício Sombrio", m);
+                if (sac) {
+                    if (rosterMemory.includes(sac)) rosterMemory.splice(rosterMemory.indexOf(sac), 1);
+                    if (deployedRoster.includes(sac)) deployedRoster.splice(deployedRoster.indexOf(sac), 1);
+                    game.resources.wood += 5; game.resources.stone += 5; game.resources.scales += 5; game.resources.sand += 5;
+                    showPopup(`Sacrifício Feito! +Recursos`, hex, 'var(--blood-light)');
+                    autoSave(); openKingdom(); renderBuildingMenu();
+                }
+            };
+        }
+
         if (bLvl < maxLvl) {
             const btnU = $('btn-upgrade-b');
             if (btnU) {
@@ -1590,99 +1552,29 @@ function renderBuildingMenu() {
                     if (canAfford) {
                         Object.entries(bData.cost).forEach(([res, amt]) => game.resources[res] -= (amt * nextLvl));
                         hex.bLevel = nextLvl;
-                        
+
                         if (bData.id === 'FARM') {
                             [...rosterMemory, ...deployedRoster].forEach(u => { u.maxHp += 10; u.hp += 10; });
-                            window.showKingdomPopup("🌾 Exército +10 HP!", hex, '#2ecc71');
+                            showPopup("🌾 +10 HP Geral!", hex, '#2ecc71');
                         }
-                        
-                        let resObj = game.resources || {};
-                        if($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
-                        if($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
-                        if($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
-                        if($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
-                        if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
 
-                        kRenderer.animateHex(hex, "upgrade"); // Dispara o shockwave de melhoria
-                        window.showKingdomPopup("⬆️ Nível Expandido!", hex, 'var(--gold-light)');
-                        autoSave();
+                        let resObj = game.resources || {};
+                        if ($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
+                        if ($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
+                        if ($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
+                        if ($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
+
+                        kRenderer.draw();
                         renderBuildingMenu();
+                        autoSave();
+                        showPopup("⬆️ Nível " + nextLvl, hex, 'var(--gold-light)');
                     }
                 };
             }
         }
-
-        if ($('btn-forge')) {
-            $('btn-forge').onclick = async () => {
-                if (game.gold >= 25) {
-                    // FILTRADO: Só itens de grade de equipamentos táticos, remove consumíveis
-                    let gearPool = ['RUSTY_SWORD', 'WOODEN_SHIELD', 'SWORD', 'SHIELD', 'BOOTS', 'BOW'];
-                    let forgedId = gearPool[Math.floor(Math.random() * gearPool.length)];
-                    let iDef = ITEMS[forgedId];
-                    
-                    game.inventory.push({ id: forgedId, level: 1 });
-                    game.gold -= 25;
-                    if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
-
-                    kRenderer.animateHex(hex, "upgrade");
-                    // Feedback grandioso via popup estilo RPG clássico
-                    await showZeldaPopup(iDef.icon, "Equipamento Forjado!", `Você forjou: ${iDef.name}\n${iDef.desc}`);
-                    autoSave();
-                    renderBuildingMenu();
-                } else { alert("Ouro insuficiente!"); }
-            };
-        }
-
-        if ($('btn-barracks')) {
-            $('btn-barracks').onclick = () => {
-                if (game.gold >= 20) {
-                    let tags = game.leaderData.tags || [];
-                    let pool = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW].filter(b => b.tags && b.tags.some(t => tags.includes(t)) && !b.minLevel);
-                    if (pool.length === 0) pool = BEASTS.LAND;
-                    let b = pool[Math.floor(Math.random() * pool.length)];
-                    let maxL = typeof window.getMaxBoxLimit === 'function' ? window.getMaxBoxLimit() : 6;
-                    let newUnit = new Unit({ q: 0, r: 0, faction: 1, name: b.name, baseName: b.name, emoji: b.e, hp: b.hp, maxHp: b.hp, mp: b.mp, maxMp: b.mp, atk: b.atk, range: b.range, level: 1, abilities: [...b.abilities], isNew: true, filter: b.filter, tags: b.tags || [], fav: b.fav || [] });
-                    
-                    if (deployedRoster.filter(u => !u.isLeader).length >= maxL) {
-                        rosterMemory.push(newUnit); window.showKingdomPopup(`📦 ${b.name} para a Box!`, hex, 'var(--success)');
-                    } else {
-                        deployedRoster.push(newUnit); window.showKingdomPopup(`⛺ ${b.name} Recrutado!`, hex, 'var(--success)');
-                    }
-                    game.gold -= 20;
-                    if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
-                    
-                    kRenderer.animateHex(hex, "build");
-                    autoSave(); renderBuildingMenu();
-                } else { alert("Ouro insuficiente!"); }
-            };
-        }
-
-        if ($('btn-altar-sac')) {
-            $('btn-altar-sac').onclick = async () => {
-                let m = [...rosterMemory, ...deployedRoster].filter(u => !u.isLeader);
-                if (m.length === 0) { alert("Nenhuma fera disponível na Box para o sacrifício!"); return; }
-                let sac = await window.promptSelectUnit("Selecione o Sacrifício Sombrio", m);
-                if (sac) {
-                    if (rosterMemory.includes(sac)) rosterMemory.splice(rosterMemory.indexOf(sac), 1);
-                    if (deployedRoster.includes(sac)) deployedRoster.splice(deployedRoster.indexOf(sac), 1);
-                    game.resources.wood += 5; game.resources.stone += 5; game.resources.scales += 5; game.resources.sand += 5;
-                    
-                    kRenderer.animateHex(hex, "upgrade");
-                    window.showKingdomPopup(`🪦 Sacrificado! +5 Recursos`, hex, 'var(--blood-light)');
-                    
-                    let resObj = game.resources || {};
-                    if($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
-                    if($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
-                    if($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
-                    if($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
-                    autoSave(); renderBuildingMenu();
-                }
-            };
-        }
-        return; 
+        return;
     }
 
-    // === MENU DE CONSTRUÇÃO (Lote Vazio) ===
     let hasOptions = false;
     let tId = 'PLAINS';
     if (hex.terrain) {
@@ -1692,99 +1584,52 @@ function renderBuildingMenu() {
     tId = tId.toUpperCase();
 
     Object.values(BUILDINGS).forEach(b => {
-        if (b.id === 'CASTLE') return; 
-        if (!b.terrains || !b.terrains.includes(tId)) return; 
+        if (b.id === 'CASTLE') return;
+        if (!b.terrains || !b.terrains.includes(tId)) return;
 
         hasOptions = true;
         const canAfford = Object.entries(b.cost).every(([res, amt]) => (game.resources[res] || 0) >= amt);
         const btn = document.createElement('button');
         btn.style.cssText = `display:flex; flex-direction:column; align-items:center; min-width:140px; background:rgba(20,20,30,0.8); border:1px solid ${canAfford ? 'var(--success)' : '#555'}; padding:10px; border-radius:8px; cursor:${canAfford ? 'pointer' : 'not-allowed'};`;
-        
+
         const costHtml = Object.entries(b.cost).map(([res, amt]) => {
-            let icon = res==='wood'?'🌲':res==='stone'?'⛰️':res==='scales'?'🐟':res==='sand'?'⏳':'🩸';
+            let icon = res === 'wood' ? '🌲' : res === 'stone' ? '⛰️' : res === 'scales' ? '🐟' : res === 'sand' ? '⏳' : '🩸';
             let color = (game.resources[res] || 0) >= amt ? '#fff' : 'var(--enemy-color)';
             return `<span style="color:${color}; font-size:11px; font-weight:bold;">${icon}${amt}</span>`;
         }).join(' ');
 
         btn.innerHTML = `<span style="font-size:26px;">${b.icon}</span><span style="font-size:11px; color:var(--gold-light); margin:4px 0; font-weight:bold;">${b.name}</span><div style="display:flex; gap:6px;">${costHtml}</div><span style="font-size:9px; color:#aaa; margin-top:6px; text-align:center;">${b.desc}</span>`;
-        
+
         if (canAfford) {
             btn.onclick = async () => {
                 Object.entries(b.cost).forEach(([res, amt]) => game.resources[res] -= amt);
-                hex.building = b.id; 
-                hex.bLevel = 1; 
-                
+                hex.building = b.id;
+                hex.bLevel = 1;
+
                 if (b.id === 'CHURCH') {
-                    let celestial = new Unit({q:0,r:0,faction:1,isLeader:false,name:"Guardião Celestial",baseName:"Guardião",emoji:"🕊️",hp:45,maxHp:45,mp:4,maxMp:4,atk:12,range:1,level:1,abilities:['leadership'],isNew:true,filter:'none',tags:['CELESTIAL'],fav:['PLAINS']});
+                    let celestial = new Unit({q:0,r:0,faction:1,isLeader:false,name:"Pomba Celestial",baseName:"Pomba",emoji:"🕊️",hp:45,maxHp:45,mp:4,maxMp:4,atk:12,range:1,level:1,abilities:['leadership'],isNew:true,filter:'none',tags:['CELESTIAL'],fav:['PLAINS']});
                     rosterMemory.push(celestial);
-                    await showZeldaPopup("🕊️", "Invocação Celestial!", "O Guardião Celestial foi enviado com sucesso para a Box!");
+                    if(typeof showZeldaPopup === 'function') await showZeldaPopup("🕊️", "Invocação Celestial!", "O Guardião Celestial foi enviado com sucesso para a Box!");
                 }
                 if (b.id === 'FARM') {
                     [...rosterMemory, ...deployedRoster].forEach(u => { u.maxHp += 10; u.hp += 10; });
-                    window.showKingdomPopup("🌾 +10 HP Geral!", hex, '#2ecc71');
+                    showPopup("🌾 +10 HP Geral!", hex, '#2ecc71');
                 }
 
                 let resObj = game.resources || {};
-                if($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
-                if($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
-                if($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
-                if($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
-                if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
-                
-                kRenderer.animateHex(hex, "build"); // Dispara shockwave verde de construção
-                if (b.id !== 'CHURCH') window.showKingdomPopup("✨ Construído!", hex, '#2ecc71');
-                
-                autoSave(); 
-                renderBuildingMenu(); 
+                if ($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
+                if ($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
+                if ($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
+                if ($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
+
+                kRenderer.draw();
+                renderBuildingMenu();
+                autoSave();
+                if (b.id !== 'CHURCH') showPopup("✨ Construído!", hex, '#2ecc71');
             };
         }
         menu.appendChild(btn);
     });
-    
-    if(!hasOptions) menu.innerHTML = '<div style="color:#aaa; padding:10px; font-style:italic;">Nenhuma construção disponível para este tipo de terreno.</div>';
+
+    if (!hasOptions) menu.innerHTML = '<div style="color:#aaa; padding:10px; font-style:italic;">Nenhuma construção disponível para este tipo de terreno.</div>';
 }
-
-// ==========================================
-// SISTEMA: LÍDER GÊNIA - TRÊS DESEJOS
-// ==========================================
-window.triggerGenieWishes = function() {
-    const el = document.createElement('div');
-    el.id = 'genie-wishes-modal';
-    el.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; display:flex; justify-content:center; align-items:center;`;
-    
-    el.innerHTML = `
-        <div style="background:var(--bg-panel); border:2px solid #9b59b6; border-radius:10px; padding:20px; width:90%; max-width:400px; text-align:center;">
-            <div style="font-size:50px; filter:hue-rotate(270deg);">🧞‍♀️</div>
-            <h2 style="font-family:Cinzel,serif; color:#9b59b6; margin-bottom:5px;">Os Três Desejos</h2>
-            <p style="font-size:13px; color:#ccc; margin-bottom:20px;">Faça sua escolha para iniciar a fase atual.</p>
-            
-            <button id="btn-wish-gold" class="btn-warning" style="width:100%; margin-bottom:10px; padding:10px;">💰 Desejo da Riqueza (+30 Ouro)</button>
-            <button id="btn-wish-res" class="btn-success" style="width:100%; margin-bottom:10px; padding:10px;">🌲 Desejo da Construção (+10 Todos Recursos)</button>
-            <button id="btn-wish-item" class="btn-primary" style="width:100%; padding:10px; background:#8e44ad; border-color:#9b59b6; color:#fff;">🎁 Desejo do Poder (Ganhar Item Forjado)</button>
-        </div>
-    `;
-    
-    document.body.appendChild(el);
-
-    const closeWishes = () => { el.remove(); autoSave(); updateUI(); };
-
-    $('btn-wish-gold').onclick = () => {
-        game.gold += 30;
-        showPopup("+30 Ouro!", game.units.find(u=>u.isLeader), 'var(--gold-light)');
-        closeWishes();
-    };
-    
-    $('btn-wish-res').onclick = () => {
-        game.resources.wood += 10; game.resources.stone += 10; game.resources.scales += 10; game.resources.sand += 10;
-        showPopup("+Recursos!", game.units.find(u=>u.isLeader), '#2ecc71');
-        closeWishes();
-    };
-    
-    $('btn-wish-item').onclick = () => {
-        let itP = ['POTION', 'BANDAGE', 'SWORD', 'SHIELD', 'BOOTS', 'BOW', 'MAGIC'];
-        let forged = itP[Math.floor(Math.random() * itP.length)];
-        game.inventory.push({ id: forged, level: 1 });
-        showPopup("Item Adquirido!", game.units.find(u=>u.isLeader), '#9b59b6');
-        closeWishes();
-    };
-};

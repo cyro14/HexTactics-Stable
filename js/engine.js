@@ -30,13 +30,6 @@ class Unit {
         this.abilities = (d.abilities || []).concat(d.ability ? [d.ability] : []).filter(Boolean);
         this.maxXp = 250; this.hitTimer = false;
 
-        this.hexesMovedThisTurn = 0;
-        this.undyingTurns = 0;
-        // Destrutividade do T-Rex
-        if (this.baseName === 'T-Rex') {
-            if (!this.abilities.includes('corte_amplo')) this.abilities.push('corte_amplo');
-        }
-
         this.equipment = (d.equipment || []).map(e => {
             if (typeof e === 'string' && typeof ITEMS !== 'undefined') {
                 let foundId = Object.keys(ITEMS).find(k => ITEMS[k].icon === e);
@@ -301,17 +294,6 @@ class Game {
     async moveUnit(u, tQ, tR) {
         const fr = 12; const sQ = u.q, sR = u.r;
         for (let i = 1; i <= fr; i++) { u.vq = sQ + (tQ - sQ) * (i / fr); u.vr = sR + (tR - sR) * (i / fr); if (renderer) renderer.centerOn(u.vq, u.vr); if (typeof sleep === 'function') await sleep(16); }
-
-        let distMoved = Hex.distance({ q: sQ, r: sR }, { q: tQ, r: tR });
-        u.hexesMovedThisTurn = (u.hexesMovedThisTurn || 0) + distMoved;
-
-        // Passos do T-Rex destroem a natureza
-        if (u.baseName === 'T-Rex') {
-            let h = this.map.get(k);
-            if (h && (h.terrain.id === 'FOREST' || h.terrain.id === 'VILLAGE' || h.terrain.id === 'SNOW')) {
-                h.terrain = TERRAINS.PLAINS;
-            }
-        }
         u.q = tQ; u.r = tR; u.vq = tQ; u.vr = tR; this.checkVillageCapture(u); let k = `${tQ},${tR}`;
 
         if (this.items.has(k)) {
@@ -372,10 +354,8 @@ class Game {
         let lAtk = 0; if (a) Hex.getNeighbors(a.q, a.r).forEach(n => { let al = this.getUnitAt(n.q, n.r); if (al && al.faction === a.faction && al.abilities.includes('leadership') && al !== a) lAtk += 2; });
         if (d) Hex.getNeighbors(d.q, d.r).forEach(n => { let al = this.getUnitAt(n.q, n.r); if (al && al.faction === d.faction && al.abilities.includes('leadership') && al !== d) def += 0.2; });
 
-        let baseAtk = a.getEffectiveAtk(this);
-        if (isFlanking) baseAtk *= 2;
-        if (a.baseName === 'Centauro Espectral') baseAtk = Math.floor(baseAtk * (1 + 0.1 * (a.hexesMovedThisTurn || 0)));
-        if (a.undyingTurns > 0) baseAtk *= 2; // O Bárbaro dobra o ataque quando imortal!        let base = Math.max(1, Math.floor((baseAtk + lAtk) * (0.9 + Math.random() * 0.2) * Math.max(0, 1 - def)));
+        let baseAtk = a.getEffectiveAtk(this); if (isFlanking) baseAtk *= 2;
+        let base = Math.max(1, Math.floor((baseAtk + lAtk) * (0.9 + Math.random() * 0.2) * Math.max(0, 1 - def)));
         if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_shield')) base = Math.floor(base * 0.9);
         let hexA = this.map.get(`${a.q},${a.r}`); if ((hexA && hexA.isCrystal) || (hex && hex.isCrystal)) base = Math.floor(base * 2);
         if (d.abilities.includes('crystal_skin')) base = Math.floor(base * 0.6);
@@ -396,12 +376,7 @@ class Game {
             if (Math.random() < dodgeC) { if (typeof showPopup === 'function') showPopup("💨 Esquivou!", d, '#aaa'); if (typeof addLog === 'function') addLog(`💨 ${d.name} esquivou!`, '#aaa'); a.hasAttacked = true; if (!a.abilities.includes('hit_run') && !(a.tags.includes('SAND') && sysA['SAND'] >= 3)) a.mp = 0; await this.processRevide(a, d); if (typeof sleep === 'function') await sleep(600); return; }
 
             const dmg = this.calcDmg(a, d); d.hp -= dmg; a.hasAttacked = true; if (!a.abilities.includes('hit_run') && !(a.tags.includes('SAND') && sysA['SAND'] >= 3)) a.mp = 0; if (a.faction === 1) a.addXp(15);
-            if (d.hp <= 0 && d.baseName === 'Rei Bárbaro' && (d.undyingTurns === undefined || d.undyingTurns === 0) && !d._hasUsedUndying) {
-                d.hp = 1;
-                d.undyingTurns = 2;
-                d._hasUsedUndying = true;
-                if (typeof showPopup === 'function') showPopup("FÚRIA IMORTAL!", d, '#e74c3c');
-            }
+
             if (renderer) { renderer.centerOn(d.vq, d.vr); d.hitTimer = true; renderer.draw(); if (typeof sleep === 'function') await sleep(150); d.hitTimer = false; renderer.draw(); }
             if (typeof showPopup === 'function') showPopup(`-${dmg}`, d, '#fff'); if (typeof addLog === 'function') addLog(`⚔ ${a.name} atingiu ${d.name} (-${dmg})`, aCol);
 
@@ -548,14 +523,6 @@ class Game {
     }
 
     handleDeath(victim, killer = null) {
-        if (killer && killer.baseName === 'Anubis') {
-            killer.atk += 1;
-            if (typeof showPopup === 'function') showPopup("+1 ATK Perm.", killer, '#8e44ad');
-        }
-        if (killer && killer._isExecuting) { // Reset do Carrasco
-            killer.hasAttacked = false; killer.mp = killer.maxMp;
-            if (typeof showPopup === 'function') showPopup("Turno Extra!", killer, '#c0392b');
-        }
         if (typeof showPopup === 'function') showPopup("☠ Eliminado!", victim, '#e74c3c');
         if (victim.faction === 1 && !victim.isLeader) { this.lastDeadAlly = new Unit({ ...victim }); }
 
@@ -671,23 +638,6 @@ class Game {
         let sys = this.getSynergies(fId);
         if (sys['CELESTIAL'] >= 3) { this.units.filter(u => u.faction === fId && u.tags.includes('CELESTIAL')).forEach(cel => { Hex.getNeighbors(cel.q, cel.r).forEach(n => { let ally = this.getUnitAt(n.q, n.r); if (ally && ally.faction === fId) { let h = Math.min(ally.maxHp - ally.hp, 10); if (h > 0) { ally.hp += h; if (typeof showPopup === 'function') showPopup(`+${h}✨`, ally, '#fffbc2'); } ally.status = null; } }); }); }
         this.units.filter(u => u.faction === fId).forEach(u => {
-            if (u.baseName === 'Troll' && !u.hasAttacked) {
-                const hex = this.map.get(`${u.q},${u.r}`);
-                if (hex && (hex.terrain.id === 'MOUNTAIN' || hex.terrain.id === 'FOREST')) {
-                    let heal = Math.floor(u.maxHp * 0.15);
-                    u.hp = Math.min(u.maxHp, u.hp + heal);
-                    if (typeof showPopup === 'function') showPopup(`+${heal} 💚`, u, '#27ae60');
-                }
-            }
-            if (u.baseName === 'Rei Bárbaro' && u.undyingTurns > 0) {
-                u.undyingTurns--;
-                if (u.undyingTurns === 0) {
-                    if (u.hp <= 1) { this.handleDeath(u); } 
-                    else { if (typeof showPopup === 'function') showPopup("Fúria Terminada", u, '#aaa'); }
-                }
-            }
-            u.hexesMovedThisTurn = 0; // Zera o movimento do Centauro para o próximo turno
-            
             if (u.isLeader && u.name === 'Lord Vampiro' && !u.hasAttacked && this.turnCount > 0) { u.hp -= 15; if (typeof showPopup === 'function') showPopup("-15 Fome", u, '#e74c3c'); if (typeof addLog === 'function') addLog(`🧛 Lord Vampiro perdeu HP por fome!`, '#e74c3c'); if (u.hp <= 0) this.handleDeath(u); }
             const hex = this.map.get(`${u.q},${u.r}`);
             if (hex && hex.terrain.id === 'VILLAGE' && hex.owner === fId) { const heal = Math.min(u.maxHp - u.hp, 15); if (heal > 0) { u.hp += heal; if (typeof showPopup === 'function') showPopup(`+${heal}`, u, '#2ecc71'); } if (u.status === 'poison') { u.status = null; if (typeof showPopup === 'function') showPopup("Curado!", u, '#4a9edd'); } }
