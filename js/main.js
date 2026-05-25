@@ -5,43 +5,44 @@ document.addEventListener("DOMContentLoaded",()=>{
     loadMeta();
     game=new Game();
     renderer=new Renderer($('gameCanvas'),game);
-    let isDragging=false,startX,startY,initOffX,initOffY;
+ let isDragging = false, startX, startY, initOffX, initOffY;
+    let initialPinchDist = null, initialHexSize = null;
+    let lastForecastTarget = null;
+    let lastForecastAttacker = null;
 
-    $('gameCanvas').addEventListener('mousedown',e=>{if(game.currentTurn!==FACTIONS.PLAYER.id||game.gameOver||game.isAnimating)return;isDragging=false;startX=e.clientX;startY=e.clientY;initOffX=renderer.offsetX;initOffY=renderer.offsetY;});
-window.addEventListener('mousemove', e => {
-        if (startX !== undefined) {
-            const dx = e.clientX - startX, dy = e.clientY - startY;
-            if (Math.abs(dx) > 10 || Math.abs(dy) > 10) isDragging = true;
-            if (isDragging) { renderer.offsetX = initOffX + dx; renderer.offsetY = initOffY + dy; renderer.draw(); }
-            $('combat-forecast').style.display = 'none'; // Esconde se estiver arrastando
-            return;
+    function handleCombatForecast(clientX, clientY, isTouch = false) {
+        const fc = $('combat-forecast');
+        if (!game || !game.selectedUnit || game.selectedUnit.faction !== 1 || game.isAnimating || isDragging) {
+            fc.style.display = 'none'; lastForecastTarget = null; return;
         }
 
-        // QOL: Hover para o Combat Forecast
-        if (game.selectedUnit && game.selectedUnit.faction === 1 && !game.isAnimating && !isDragging) {
-            const rect = $('gameCanvas').getBoundingClientRect();
-            let x = e.clientX - rect.left, y = e.clientY - rect.top;
-            let hoveredHex = null, mD = 999;
-            
-            game.map.forEach(h => {
-                const p = renderer.getPos(h.q, h.r);
-                const d = Math.hypot(p.x - x, p.y - y);
-                if (d < mD && d < renderer.hexSize) { mD = d; hoveredHex = h; }
-            });
+        const rect = $('gameCanvas').getBoundingClientRect();
+        let x = clientX - rect.left, y = clientY - rect.top;
+        
+        let hoveredHex = null, mD = 999;
+        game.map.forEach(h => {
+            const p = renderer.getPos(h.q, h.r);
+            const d = Math.hypot(p.x - x, p.y - y);
+            if (d < mD && d < renderer.hexSize) { mD = d; hoveredHex = h; }
+        });
 
-            const fc = $('combat-forecast');
-            if (hoveredHex) {
-                let target = game.getUnitAt(hoveredHex.q, hoveredHex.r);
-                let dist = Hex.distance(game.selectedUnit, hoveredHex);
+        if (hoveredHex) {
+            let target = game.getUnitAt(hoveredHex.q, hoveredHex.r);
+            let dist = Hex.distance(game.selectedUnit, hoveredHex);
+            
+            if (target && target.faction !== 1 && dist <= game.selectedUnit.getEffectiveRange(game) && !game.selectedUnit.hasAttacked) {
                 
-                // Se o mouse estiver sobre um inimigo e dentro do alcance de ataque
-                if (target && target.faction !== 1 && dist <= game.selectedUnit.getEffectiveRange(game) && !game.selectedUnit.hasAttacked) {
-                    
+                if (target !== lastForecastTarget || game.selectedUnit !== lastForecastAttacker) {
                     let dmgDealt = game.calcDmg(game.selectedUnit, target);
-                    let dmgTaken = (target.getEffectiveRange(game) >= dist) ? game.calcDmg(target, game.selectedUnit) : 0;
                     
+                    let dmgTaken = 0;
+                    if (target.getEffectiveRange(game) >= dist) {
+                        dmgTaken = Math.floor(game.calcDmg(target, game.selectedUnit) * 0.6);
+                        if (target.abilities.includes('counter')) dmgTaken = Math.floor(dmgTaken * 1.2);
+                    }
+
                     let dodgeC = target.abilities.includes('dodge') ? 30 : 0;
-                    if (target.baseName === 'Matriarca Harpia') dodgeC += 25;
+                    if (target.abilities.includes('flying')) dodgeC += 25; 
 
                     fc.innerHTML = `
                         <div class="forecast-side">
@@ -54,30 +55,107 @@ window.addEventListener('mousemove', e => {
                             <span class="forecast-emoji" style="filter:${target.filter}">${target.emoji}</span>
                             <span class="forecast-stat">HP: ${target.hp}</span>
                             <span class="forecast-dmg" style="color:#f39c12">🛡️ ${dmgTaken}</span>
-                            <span class="forecast-stat" style="color:#00ffff; margin-top:3px;">Esquiva: ${dodgeC}%</span>
+                            <span class="forecast-stat" style="color:#00ffff; margin-top:3px;">Esq: ${dodgeC}%</span>
                         </div>
                     `;
-                    
-                    fc.style.display = 'flex';
-                    fc.style.left = (e.clientX + 20) + 'px';
-                    fc.style.top = (e.clientY + 20) + 'px';
-                } else {
-                    fc.style.display = 'none';
+                    lastForecastTarget = target;
+                    lastForecastAttacker = game.selectedUnit;
                 }
+                
+                fc.style.display = 'flex';
+                let yOffset = isTouch ? 120 : -20; 
+                let xOffset = isTouch ? 100 : -20;
+                fc.style.left = (clientX - xOffset) + 'px';
+                fc.style.top = (clientY - yOffset) + 'px';
             } else {
-                fc.style.display = 'none';
+                fc.style.display = 'none'; lastForecastTarget = null;
+            }
+        } else {
+            fc.style.display = 'none'; lastForecastTarget = null;
+        }
+    }
+
+    // EVENTOS DE MOUSE (PC)
+    $('gameCanvas').addEventListener('mousedown', e => {
+        if(game.currentTurn !== FACTIONS.PLAYER.id || game.gameOver || game.isAnimating) return;
+        isDragging = false; startX = e.clientX; startY = e.clientY;
+        initOffX = renderer.offsetX; initOffY = renderer.offsetY;
+    });
+
+    window.addEventListener('mousemove', e => {
+        if (startX !== undefined) {
+            const dx = e.clientX - startX, dy = e.clientY - startY;
+            if (Math.abs(dx) > 10 || Math.abs(dy) > 10) isDragging = true;
+            if (isDragging) { renderer.offsetX = initOffX + dx; renderer.offsetY = initOffY + dy; renderer.draw(); }
+            $('combat-forecast').style.display = 'none';
+            return;
+        }
+        handleCombatForecast(e.clientX, e.clientY, false);
+    });
+
+    window.addEventListener('mouseup', e => {
+        if (startX === undefined) return;
+        let wasDragging = isDragging;
+        isDragging = false; 
+        startX = undefined;
+        if (wasDragging) return; 
+        processHexClick(e.clientX, e.clientY);
+    });
+
+    $('gameCanvas').addEventListener('wheel', e => {
+        if(game.currentTurn !== FACTIONS.PLAYER.id || game.gameOver || game.isAnimating) return;
+        e.preventDefault();
+        renderer.hexSize = Math.max(20, Math.min(renderer.hexSize + (e.deltaY > 0 ? -5 : 5), 120));
+        renderer.draw();
+    }, {passive: false});
+
+    // EVENTOS DE TOQUE (MOBILE)
+    $('gameCanvas').addEventListener('touchstart', e => {
+        if(game.currentTurn !== FACTIONS.PLAYER.id || game.gameOver || game.isAnimating) return;
+        if (e.touches.length === 2) {
+            initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            initialHexSize = renderer.hexSize;
+        } else if (e.touches.length === 1) {
+            isDragging = false; startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+            initOffX = renderer.offsetX; initOffY = renderer.offsetY;
+        }
+    }, {passive: false});
+
+    $('gameCanvas').addEventListener('touchmove', e => {
+        if (e.touches.length === 2 && initialPinchDist) {
+            e.preventDefault();
+            const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            renderer.hexSize = Math.max(20, Math.min(initialHexSize * (dist / initialPinchDist), 120));
+            renderer.draw();
+        } else if (e.touches.length === 1 && startX !== undefined) {
+            const dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
+            if (Math.abs(dx) > 15 || Math.abs(dy) > 15) isDragging = true;
+            if (isDragging) {
+                e.preventDefault();
+                renderer.offsetX = initOffX + dx; renderer.offsetY = initOffY + dy; renderer.draw();
+                $('combat-forecast').style.display = 'none';
             }
         }
+        
+        if (e.touches.length === 1 && !isDragging) {
+            handleCombatForecast(e.touches[0].clientX, e.touches[0].clientY, true);
+        }
+    }, {passive: false});
+
+    $('gameCanvas').addEventListener('touchend', e => {
+        if (e.touches.length === 0) initialPinchDist = null;
+        setTimeout(() => { $('combat-forecast').style.display = 'none'; }, 200);
+
+        if (startX === undefined) return;
+        
+        let wasDragging = isDragging;
+        isDragging = false; 
+        startX = undefined;
+        
+        if (!wasDragging && e.changedTouches.length === 1) {
+            processHexClick(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+        }
     });
-    
-    window.addEventListener('mouseup',e=>{if(startX===undefined)return;startX=undefined;if(isDragging)return;processHexClick(e.clientX,e.clientY);});
-    $('gameCanvas').addEventListener('wheel',e=>{if(game.currentTurn!==FACTIONS.PLAYER.id||game.gameOver||game.isAnimating)return;e.preventDefault();renderer.hexSize=Math.max(20,Math.min(renderer.hexSize+(e.deltaY>0?-5:5),120));renderer.draw();},{passive:false});
-
-    let initialPinchDist=null,initialHexSize=null;
-    $('gameCanvas').addEventListener('touchstart',e=>{if(game.currentTurn!==FACTIONS.PLAYER.id||game.gameOver||game.isAnimating)return;if(e.touches.length===2){initialPinchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);initialHexSize=renderer.hexSize;}else if(e.touches.length===1){isDragging=false;startX=e.touches[0].clientX;startY=e.touches[0].clientY;initOffX=renderer.offsetX;initOffY=renderer.offsetY;}},{passive:false});
-    $('gameCanvas').addEventListener('touchmove',e=>{e.preventDefault();if(e.touches.length===2&&initialPinchDist){const dist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);renderer.hexSize=Math.max(20,Math.min(initialHexSize*(dist/initialPinchDist),120));renderer.draw();}else if(e.touches.length===1&&startX!==undefined){const dx=e.touches[0].clientX-startX,dy=e.touches[0].clientY-startY;if(Math.abs(dx)>15||Math.abs(dy)>15)isDragging=true;renderer.offsetX=initOffX+dx;renderer.offsetY=initOffY+dy;renderer.draw();}},{passive:false});
-    $('gameCanvas').addEventListener('touchend',e=>{if(e.touches.length===0)initialPinchDist=null;if(startX===undefined)return;if(!isDragging&&e.changedTouches.length===1)processHexClick(e.changedTouches[0].clientX,e.changedTouches[0].clientY);startX=undefined;});
-
     async function processHexClick(x,y){
         if(game.isAnimating)return;
         const rect=$('gameCanvas').getBoundingClientRect();x-=rect.left;y-=rect.top;

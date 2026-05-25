@@ -362,40 +362,39 @@ class Game {
         const hex = this.map.get(`${d.q},${d.r}`); if (!hex) return 1;
         let sysA = this.getSynergies(a.faction); let sysD = this.getSynergies(d.faction);
         let def = a.abilities.includes('pierce') ? 0 : hex.terrain.def;
-
-        if (d.fav.includes(hex.terrain.id)) def += 0.2;
+        
+        if (d.fav.includes(hex.terrain.id)) def += 0.2; 
         if (d.name === 'Almirante' && hex.terrain.id !== 'WATER') def -= 0.30;
         if (d.tags.includes('ABYSSAL') && hex.terrain.id === 'WATER') def += 0.30;
-
-        if (d.tags.includes('WING') && sysD['WING'] >= 2 && def < 0) def = 0;
+        
+        if (d.tags.includes('WING') && sysD['WING'] >= 2 && def < 0) def = 0; 
         if (d.tags.includes('ROCK') && sysD['ROCK'] >= 3) def = Math.min(0.60, def + 0.30);
         if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_armor')) def += 0.15;
         if (d.status === 'shielded') def = Math.min(0.80, def + 0.30);
-
+        
         let isFlanking = false;
         if (a.tags.includes('STALKER') && sysA['STALKER'] >= 3) { Hex.getNeighbors(d.q, d.r).forEach(n => { let ally = this.getUnitAt(n.q, n.r); if (ally && ally.faction === a.faction && ally !== a && ally.tags.includes('STALKER')) isFlanking = true; }); }
         if (isFlanking) def = 0;
-
+        
         let lAtk = 0; if (a) Hex.getNeighbors(a.q, a.r).forEach(n => { let al = this.getUnitAt(n.q, n.r); if (al && al.faction === a.faction && al.abilities.includes('leadership') && al !== a) lAtk += 2; });
         if (d) Hex.getNeighbors(d.q, d.r).forEach(n => { let al = this.getUnitAt(n.q, n.r); if (al && al.faction === d.faction && al.abilities.includes('leadership') && al !== d) def += 0.2; });
-
-        let baseAtk = a.getEffectiveAtk(this);
+        
+        let baseAtk = a.getEffectiveAtk(this); 
         if (isFlanking) baseAtk *= 2;
-
-        // --- PASSIVAS OFENSIVAS DE LÍDERES ---
-        // 1. Centauro (Velocidade = Dano): ATK Escala multiplicando o MP Base Máximo!
+        
+        // Passivas Ofensivas de Líderes
         if (a.baseName === 'Centauro Espectral') {
-            baseAtk = a.maxMp * 4; // Ex: 6 MP = 24 ATK base. Equipar uma Bota (+1 MP) faz o dano saltar pra 28!
+            baseAtk = a.maxMp * 4; 
         }
-
-        // 2. Bárbaro (Berserker): Dano monstruoso com vida baixa
         if (a.baseName === 'Rei Bárbaro') {
             let hpRatio = a.hp / a.maxHp;
-            if (hpRatio <= 0.30) baseAtk = Math.floor(baseAtk * 2.5); // +150% ATK
-            else if (hpRatio <= 0.60) baseAtk = Math.floor(baseAtk * 1.5); // +50% ATK
+            if (hpRatio <= 0.30) baseAtk = Math.floor(baseAtk * 2.5); 
+            else if (hpRatio <= 0.60) baseAtk = Math.floor(baseAtk * 1.5); 
         }
 
-        let base = Math.max(1, Math.floor((baseAtk + lAtk) * (0.9 + Math.random() * 0.2) * Math.max(0, 1 - def)));
+        // --- CÁLCULO EXATO, SEM DANO ALEATÓRIO (RNG) ---
+        let base = Math.max(1, Math.floor((baseAtk + lAtk) * Math.max(0, 1 - def)));
+        
         if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_shield')) base = Math.floor(base * 0.9);
         let hexA = this.map.get(`${a.q},${a.r}`); if ((hexA && hexA.isCrystal) || (hex && hex.isCrystal)) base = Math.floor(base * 2);
         if (d.abilities.includes('crystal_skin')) base = Math.floor(base * 0.6);
