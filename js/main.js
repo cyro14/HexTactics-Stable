@@ -8,7 +8,68 @@ document.addEventListener("DOMContentLoaded",()=>{
     let isDragging=false,startX,startY,initOffX,initOffY;
 
     $('gameCanvas').addEventListener('mousedown',e=>{if(game.currentTurn!==FACTIONS.PLAYER.id||game.gameOver||game.isAnimating)return;isDragging=false;startX=e.clientX;startY=e.clientY;initOffX=renderer.offsetX;initOffY=renderer.offsetY;});
-    window.addEventListener('mousemove',e=>{if(startX===undefined)return;const dx=e.clientX-startX,dy=e.clientY-startY;if(Math.abs(dx)>10||Math.abs(dy)>10)isDragging=true;if(isDragging){renderer.offsetX=initOffX+dx;renderer.offsetY=initOffY+dy;renderer.draw();}});
+window.addEventListener('mousemove', e => {
+        if (startX !== undefined) {
+            const dx = e.clientX - startX, dy = e.clientY - startY;
+            if (Math.abs(dx) > 10 || Math.abs(dy) > 10) isDragging = true;
+            if (isDragging) { renderer.offsetX = initOffX + dx; renderer.offsetY = initOffY + dy; renderer.draw(); }
+            $('combat-forecast').style.display = 'none'; // Esconde se estiver arrastando
+            return;
+        }
+
+        // QOL: Hover para o Combat Forecast
+        if (game.selectedUnit && game.selectedUnit.faction === 1 && !game.isAnimating && !isDragging) {
+            const rect = $('gameCanvas').getBoundingClientRect();
+            let x = e.clientX - rect.left, y = e.clientY - rect.top;
+            let hoveredHex = null, mD = 999;
+            
+            game.map.forEach(h => {
+                const p = renderer.getPos(h.q, h.r);
+                const d = Math.hypot(p.x - x, p.y - y);
+                if (d < mD && d < renderer.hexSize) { mD = d; hoveredHex = h; }
+            });
+
+            const fc = $('combat-forecast');
+            if (hoveredHex) {
+                let target = game.getUnitAt(hoveredHex.q, hoveredHex.r);
+                let dist = Hex.distance(game.selectedUnit, hoveredHex);
+                
+                // Se o mouse estiver sobre um inimigo e dentro do alcance de ataque
+                if (target && target.faction !== 1 && dist <= game.selectedUnit.getEffectiveRange(game) && !game.selectedUnit.hasAttacked) {
+                    
+                    let dmgDealt = game.calcDmg(game.selectedUnit, target);
+                    let dmgTaken = (target.getEffectiveRange(game) >= dist) ? game.calcDmg(target, game.selectedUnit) : 0;
+                    
+                    let dodgeC = target.abilities.includes('dodge') ? 30 : 0;
+                    if (target.baseName === 'Matriarca Harpia') dodgeC += 25;
+
+                    fc.innerHTML = `
+                        <div class="forecast-side">
+                            <span class="forecast-emoji" style="filter:${game.selectedUnit.filter}">${game.selectedUnit.emoji}</span>
+                            <span class="forecast-stat">HP: ${game.selectedUnit.hp}</span>
+                            <span class="forecast-dmg">⚔️ ${dmgDealt}</span>
+                        </div>
+                        <div class="forecast-vs">VS</div>
+                        <div class="forecast-side">
+                            <span class="forecast-emoji" style="filter:${target.filter}">${target.emoji}</span>
+                            <span class="forecast-stat">HP: ${target.hp}</span>
+                            <span class="forecast-dmg" style="color:#f39c12">🛡️ ${dmgTaken}</span>
+                            <span class="forecast-stat" style="color:#00ffff; margin-top:3px;">Esquiva: ${dodgeC}%</span>
+                        </div>
+                    `;
+                    
+                    fc.style.display = 'flex';
+                    fc.style.left = (e.clientX + 20) + 'px';
+                    fc.style.top = (e.clientY + 20) + 'px';
+                } else {
+                    fc.style.display = 'none';
+                }
+            } else {
+                fc.style.display = 'none';
+            }
+        }
+    });
+    
     window.addEventListener('mouseup',e=>{if(startX===undefined)return;startX=undefined;if(isDragging)return;processHexClick(e.clientX,e.clientY);});
     $('gameCanvas').addEventListener('wheel',e=>{if(game.currentTurn!==FACTIONS.PLAYER.id||game.gameOver||game.isAnimating)return;e.preventDefault();renderer.hexSize=Math.max(20,Math.min(renderer.hexSize+(e.deltaY>0?-5:5),120));renderer.draw();},{passive:false});
 

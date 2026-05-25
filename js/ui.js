@@ -381,7 +381,12 @@ function getTagHTML(t) {
     let tDef = typeof TAGS !== 'undefined' ? TAGS[t] : null;
     let col = tDef ? tDef.col : '#888';
     let name = tDef ? tDef.name : t;
-    return `<span class="tag-badge" style="background:rgba(20,20,30,0.9); border:1px solid ${col}; color:${col}; font-size:9px; padding:2px 6px; border-radius:4px; box-shadow:0 0 5px ${col}40; text-shadow:0 0 2px ${col}80;">${name}</span>`;
+    let desc = tDef ? tDef.desc : 'Sem descrição.';
+    // Envolve a tag na classe qol-tooltip
+    return `<div class="qol-tooltip tag-badge" style="background:rgba(20,20,30,0.9); border:1px solid ${col}; color:${col}; font-size:9px; padding:2px 6px; border-radius:4px; box-shadow:0 0 5px ${col}40; text-shadow:0 0 2px ${col}80;">
+                ${name}
+                <span class="qol-tooltiptext">${desc}</span>
+            </div>`;
 }
 
 window.promptSelectUnit = function (title, unitsToSelectFrom) {
@@ -487,6 +492,12 @@ window.showBeastDetails = function (b, bypassUnlock = false) {
 }
 
 function updateUI() {
+    if (!$('combat-forecast')) {
+        let fc = document.createElement('div');
+        fc.id = 'combat-forecast';
+        document.body.appendChild(fc);
+    }
+    
     // Atualiza os contadores individuais de Ouro e DNA
     const goldDisplay = $('ui-gold');
     if (goldDisplay && game) goldDisplay.innerText = game.gold;

@@ -1285,3 +1285,25 @@ button.btn-success {
     stroke: var(--gold-dark);
     stroke-dasharray: none;
 }
+
+/* ==========================================
+   QOL: TOOLTIPS, FORECAST E DANGER ZONE
+   ========================================== */
+
+/* Tooltips Dinâmicas */
+.qol-tooltip { position: relative; display: inline-block; cursor: help; }
+.qol-tooltip .qol-tooltiptext { visibility: hidden; width: 180px; background-color: rgba(10,12,18,0.98); color: #fff; text-align: center; border: 1px solid var(--gold-dark); border-radius: 6px; padding: 8px; position: absolute; z-index: 3000; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.2s; font-size: 10px; font-family: sans-serif; text-shadow: none; white-space: normal; line-height: 1.4; pointer-events: none; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+.qol-tooltip .qol-tooltiptext::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: var(--gold-dark) transparent transparent transparent; }
+.qol-tooltip:hover .qol-tooltiptext { visibility: visible; opacity: 1; }
+
+/* Previsão de Combate (Combat Forecast) */
+#combat-forecast { position: absolute; background: rgba(15, 15, 20, 0.95); border: 2px solid #c0392b; border-radius: 8px; padding: 10px; color: white; pointer-events: none; z-index: 2000; display: flex; gap: 15px; box-shadow: 0 0 15px rgba(192, 57, 43, 0.5); display: none; font-family: 'Cinzel', serif; }
+.forecast-side { display: flex; flex-direction: column; align-items: center; width: 90px; }
+.forecast-emoji { font-size: 32px; margin-bottom: 5px; }
+.forecast-stat { font-size: 12px; margin: 2px 0; color: #ddd; text-shadow: 1px 1px 2px #000; font-family: sans-serif; }
+.forecast-dmg { font-size: 18px; font-weight: bold; color: #e74c3c; margin-top: 5px; }
+.forecast-vs { display: flex; align-items: center; font-weight: bold; color: var(--gold-light); font-size: 20px; }
+
+/* Botão Danger Zone */
+#btn-danger-zone { position: absolute; right: 20px; top: 180px; background: rgba(30, 10, 10, 0.8); border: 1px solid #e74c3c; color: #e74c3c; border-radius: 50%; width: 45px; height: 45px; font-size: 20px; cursor: pointer; z-index: 100; box-shadow: 0 0 10px rgba(231, 76, 60, 0.3); transition: all 0.2s; }
+#btn-danger-zone:hover, #btn-danger-zone.active { background: rgba(231, 76, 60, 0.3); box-shadow: 0 0 15px rgba(231, 76, 60, 0.8); transform: scale(1.1); }
