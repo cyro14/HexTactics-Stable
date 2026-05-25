@@ -752,22 +752,107 @@ function openTeamView() {
 // 5. TELAS EXTRAS (Seleção, Bestiário, Relicário)
 // ==========================================
 function openLeaderSelection(isRoguelite) {
-    $('mode-screen').classList.add('hidden'); $('leader-selection').classList.remove('hidden');
-    const container = $('leader-list'); container.innerHTML = '';
-    LEADERS.forEach(l => {
-        const btn = document.createElement('button');
-        const grimTags = (LEADER_GRIMOIRE_TAGS[l.id] || l.tags || []).map(t => getTagHTML(t)).join('');
-        btn.innerHTML = `
-            <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-                <span style="font-size:42px; filter:${l.filter || 'none'}; text-shadow: 2px 2px 5px #000;">${l.emoji}</span>
-                <div style="font-size:18px; color:var(--gold-light); font-weight:bold;">${l.name}</div>
-            </div>
-            <div style="font-size:12px; text-transform:none; color:#aaa; font-weight:normal; margin-bottom:8px; line-height:1.4;">${l.desc}</div>
-            <div style="display:flex; flex-wrap:wrap; gap:3px;">${grimTags}</div>
-        `; btn.onclick = () => { $('leader-selection').classList.add('hidden'); startGame(false, isRoguelite, l.id); };
-        container.appendChild(btn);
-    });
-    $('btn-close-leader').onclick = () => { $('leader-selection').classList.add('hidden'); $('mode-screen').classList.remove('hidden'); };
+    $('mode-screen').classList.add('hidden'); 
+    const leaderScreen = $('leader-selection');
+    leaderScreen.classList.remove('hidden');
+    
+    // Remove o filtro antigo se existir
+    let oldFilter = $('leader-filter-container');
+    if (oldFilter) oldFilter.remove();
+
+    // Puxa as tags de todos os líderes
+    let allTags = new Set();
+    LEADERS.forEach(l => { (l.tags || []).forEach(t => allTags.add(t)); });
+    let uniqueTags = Array.from(allTags).sort();
+
+    // Cria a UI dos botões de Tag (Tag Cloud)
+    let filterDiv = document.createElement('div');
+    filterDiv.id = 'leader-filter-container';
+    filterDiv.style.cssText = 'display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-bottom:15px; width: 100%;';
+    
+    const container = $('leader-list'); 
+    leaderScreen.insertBefore(filterDiv, container);
+
+    let activeFilter = 'ALL';
+
+    // Função que redesenha os botões do filtro para mostrar qual está "Aceso"
+    const updateFilterUI = () => {
+        filterDiv.innerHTML = ''; 
+        
+        // Botão "TODOS"
+        let allBtn = document.createElement('div');
+        allBtn.innerHTML = '✦ TODOS';
+        let allIsActive = activeFilter === 'ALL';
+        allBtn.style.cssText = `background:rgba(20,20,30,0.9); border:1px solid var(--gold-light); color:var(--gold-light); font-size:10px; padding:4px 8px; border-radius:4px; cursor:pointer; text-shadow:0 0 2px var(--gold); opacity:${allIsActive ? '1' : '0.4'}; box-shadow:${allIsActive ? '0 0 8px var(--gold-dark)' : 'none'}; transition:all 0.2s ease;`;
+        allBtn.onclick = () => { activeFilter = 'ALL'; renderList(); updateFilterUI(); };
+        filterDiv.appendChild(allBtn);
+
+        // Gera as Tags Estilizadas Dinamicamente
+        uniqueTags.forEach(t => {
+            let tDef = typeof TAGS !== 'undefined' ? TAGS[t] : null;
+            let col = tDef ? tDef.col : '#888';
+            let tName = tDef ? tDef.name : t;
+            let isActive = activeFilter === t;
+            
+            let tagBtn = document.createElement('div');
+            tagBtn.innerHTML = tName;
+            tagBtn.style.cssText = `background:rgba(20,20,30,0.9); border:1px solid ${col}; color:${col}; font-size:10px; padding:4px 8px; border-radius:4px; cursor:pointer; box-shadow:${isActive ? '0 0 10px '+col : '0 0 2px '+col+'40'}; text-shadow:0 0 2px ${col}80; opacity:${isActive ? '1' : '0.4'}; transition:all 0.2s ease;`;
+            
+            tagBtn.onclick = () => { activeFilter = t; renderList(); updateFilterUI(); };
+            filterDiv.appendChild(tagBtn);
+        });
+    };
+
+    // Função que lista os líderes de acordo com o filtro selecionado
+    const renderList = () => {
+        container.innerHTML = '';
+        let filteredLeaders = LEADERS;
+        
+        if (activeFilter !== 'ALL') {
+            filteredLeaders = LEADERS.filter(l => (l.tags || []).includes(activeFilter));
+        }
+
+        filteredLeaders.forEach(l => {
+            const btn = document.createElement('button');
+            let gTags = l.tags || [];
+            if (typeof LEADER_GRIMOIRE_TAGS !== 'undefined' && LEADER_GRIMOIRE_TAGS[l.id]) {
+                gTags = LEADER_GRIMOIRE_TAGS[l.id];
+            }
+            const grimTags = gTags.map(t => getTagHTML(t)).join('');
+            
+            btn.style.cssText = 'display:block; width:100%; text-align:left; background:rgba(20,20,30,0.8); border:1px solid #444; border-radius:8px; padding:12px; margin-bottom:10px; cursor:pointer; transition:border 0.2s, background 0.2s;';
+            btn.onmouseover = () => { btn.style.borderColor = 'var(--gold-light)'; btn.style.background = 'rgba(40,30,10,0.9)'; };
+            btn.onmouseout = () => { btn.style.borderColor = '#444'; btn.style.background = 'rgba(20,20,30,0.8)'; };
+
+            btn.innerHTML = `
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+                    <span style="font-size:42px; filter:${l.filter || 'none'}; text-shadow: 2px 2px 5px #000;">${l.emoji}</span>
+                    <div style="font-size:18px; color:var(--gold-light); font-weight:bold;">${l.name}</div>
+                </div>
+                <div style="font-size:12px; text-transform:none; color:#aaa; font-weight:normal; margin-bottom:8px; line-height:1.4;">${l.desc}</div>
+                <div style="display:flex; flex-wrap:wrap; gap:3px;">${grimTags}</div>
+            `; 
+            
+            btn.onclick = () => { 
+                $('leader-selection').classList.add('hidden'); 
+                startGame(false, isRoguelite, l.id); 
+            };
+            container.appendChild(btn);
+        });
+        
+        if (filteredLeaders.length === 0) {
+            container.innerHTML = '<div style="color:#aaa; text-align:center; padding:20px; font-style:italic;">Nenhum líder encontrado com essa especialidade.</div>';
+        }
+    };
+
+    // Inicia os estados
+    updateFilterUI();
+    renderList();
+
+    $('btn-close-leader').onclick = () => { 
+        $('leader-selection').classList.add('hidden'); 
+        $('mode-screen').classList.remove('hidden'); 
+    };
 }
 
 function openBestiary() {
