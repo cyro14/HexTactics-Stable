@@ -1289,9 +1289,6 @@ function startGame(load, isRoguelite = false, leaderId = null) {
             });
         }   
 
-       // if (sMap[lD.name]) {
-       //     initialSpells = [...sMap[lD.name]];
-       // }
 
         deployedRoster.push(new Unit({
             q: 0, r: 0, 
@@ -1301,7 +1298,7 @@ function startGame(load, isRoguelite = false, leaderId = null) {
             emoji: lD.emoji, 
             hp: lD.hp, 
             maxHp: lD.hp, 
-            // CORREÇÃO: Forçamos o MP aqui para não ser undefined
+            abilities: [...(lD.abilities || [])],
             mp: lD.mp || 3, 
             maxMp: lD.mp || 3, 
             atk: lD.atk, 

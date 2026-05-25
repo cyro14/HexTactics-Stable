@@ -89,7 +89,6 @@ class Unit {
         if (this.tags.includes('ABYSSAL') && sys['ABYSSAL'] >= 3) return 1;
 
         if (this.baseName === 'Almirante' && terrain.id === 'WATER') return 1;
-        if (this.baseName === 'Matriarca Harpia') return 1;
         return terrain.cost;
     }
 
