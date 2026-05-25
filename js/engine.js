@@ -1026,21 +1026,78 @@ window.runWildTurn = async function () {
     for (const w of wilds) {
         if (game.gameOver) break; if (w.mp === 0) continue;
         if (!w.alerted) { w.hp = Math.min(w.maxHp, w.hp + 5); continue; }
-        if (renderer) { renderer.centerOn(w.vq, w.vr); renderer.draw(); } game.selectedUnit = w; if (typeof sleep === 'function') await sleep(250);
-        game.calculateReachable(w); let tgts = game.units.filter(u => u.faction !== 0); if (tgts.length === 0) continue;
+        
+        if (renderer) { renderer.centerOn(w.vq, w.vr); renderer.draw(); } 
+        game.selectedUnit = w; if (typeof sleep === 'function') await sleep(250);
+        game.calculateReachable(w); 
 
-        let cls = null; let minD = 999; tgts.forEach(t => { let d = Hex.distance(w, t); if (d < minD) { minD = d; cls = t; } }); const isS = w.isBoss || w.maxHp >= 50 || w.atk >= 12;
+        // 1. O faro da fera: Procura a isca de carne mais próxima!
+        let nearestLure = null; let minLureD = 999;
+        game.map.forEach(h => {
+            if (h.hasLure) {
+                let d = Hex.distance(w, h);
+                if (d < minLureD) { minLureD = d; nearestLure = h; }
+            }
+        });
+
+        let cls = null; let minD = 999;
+        let targetIsLure = false;
+
+        // Se achar isca a até 6 hexes de distância, a carne vira o alvo absoluto!
+        if (nearestLure && minLureD <= 6) {
+            cls = nearestLure;
+            targetIsLure = true;
+        } else {
+            // Comportamento normal: procurar unidades inimigas
+            let tgts = game.units.filter(u => u.faction !== 0);
+            if (tgts.length === 0) continue;
+            tgts.forEach(t => { let d = Hex.distance(w, t); if (d < minD) { minD = d; cls = t; } });
+        }
+
+        const isS = w.isBoss || w.maxHp >= 50 || w.atk >= 12;
 
         if (cls) {
-            let moves = Array.from(game.reachableHexes.keys()); let bM = { q: w.q, r: w.r }; let bestScore = -9999;
+            let moves = Array.from(game.reachableHexes.keys()); 
+            let bM = { q: w.q, r: w.r }; 
+            let bestScore = -9999;
+            
             moves.forEach(m => {
-                const [mq, mr] = m.split(',').map(Number); if (game.getUnitAt(mq, mr) && (mq !== w.q || mr !== w.r)) return;
-                let distToTarget = Hex.distance({ q: mq, r: mr }, cls); let score = isS ? (-distToTarget * 10) : (distToTarget * 10);
-                if (isS && distToTarget > 0 && distToTarget <= w.range) { score += 1000; score += distToTarget * 5; }
+                const [mq, mr] = m.split(',').map(Number); 
+                // Não pode parar em cima de outra unidade
+                if (game.getUnitAt(mq, mr) && (mq !== w.q || mr !== w.r)) return;
+                
+                let distToTarget = Hex.distance({ q: mq, r: mr }, cls); 
+                let score = 0;
+
+                if (targetIsLure) {
+                    // IA MODO ISCA: Quer parar EXATAMENTE em cima da carne (distância 0)
+                    score = -distToTarget * 50; 
+                    if (distToTarget === 0) score += 5000; // Pote de Ouro
+                } else {
+                    // IA MODO COMBATE ORIGINAL
+                    score = isS ? (-distToTarget * 10) : (distToTarget * 10);
+                    if (isS && distToTarget > 0 && distToTarget <= w.range) { score += 1000; score += distToTarget * 5; }
+                }
+
                 if (score > bestScore) { bestScore = score; bM = { q: mq, r: mr }; }
             });
-            if (bM.q !== w.q || bM.r !== w.r) { w.mp -= (game.reachableHexes.get(`${bM.q},${bM.r}`) || 1); await game.moveUnit(w, bM.q, bM.r); }
-            if (Hex.distance(w, cls) <= w.range) { await game.executeCombat(w, cls); }
+            
+            // Move a fera para o melhor hexágono encontrado
+            if (bM.q !== w.q || bM.r !== w.r) { 
+                w.mp -= (game.reachableHexes.get(`${bM.q},${bM.r}`) || 1); 
+                await game.moveUnit(w, bM.q, bM.r); 
+            }
+            
+            // Lógica pós-movimento (Atacar ou Comer)
+            if (targetIsLure && w.q === cls.q && w.r === cls.r) {
+                // Fera pisou na isca! Fica distraída e não ataca neste turno.
+                if (typeof showPopup === 'function') showPopup("Comendo...", w, '#e67e22');
+                // NOTA: Não removemos o `hasLure` do chão aqui, pois o Herói precisa desse 
+                // bônus ativo no chão para dobrar a chance quando for domar no turno dele!
+            } else if (!targetIsLure && Hex.distance(w, cls) <= w.range) {
+                // Bate no inimigo normalmente
+                await game.executeCombat(w, cls); 
+            }
         }
         if (typeof sleep === 'function') await sleep(200);
     }
