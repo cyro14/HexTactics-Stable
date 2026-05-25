@@ -275,6 +275,10 @@ class Game {
         if (pL2) { if (this.eventFlags.artillery) pL2.knownSpells.push('sl_artillery'); if (this.eventFlags.mines > 0) pL2.knownSpells.push('sl_mine'); if (this.eventFlags.barricades) pL2.knownSpells.push('sl_barricade'); if (this.eventFlags.epicConsumable) { pL2.maxHp += 25; pL2.hp += 25; } }
 
         this.eventFlags = {}; this.activeSynergies = this.getSynergies(1); this.currentTurn = 1; this.gameOver = false; this.selectPlayerLeader();
+        let pL = this.units.find(u => u.isLeader && u.faction === 1);
+        if (pL && pL.baseName === 'Gênia') {
+            setTimeout(() => { if (typeof window.triggerGenieWishes === 'function') window.triggerGenieWishes(); }, 1200);
+        }
     }
 
     checkVillageCapture(u) {
@@ -304,8 +308,8 @@ class Game {
                     if (accepted) {
                         if (iDef.type === 'equip') {
                             let existingEq = u.equipment.find(eq => eq.id === iType);
-                            if (existingEq) { if (iDef.onUnequip) iDef.onUnequip(u, existingEq.level); existingEq.level++; if (iDef.onEquip) iDef.onEquip(u, existingEq.level); if (typeof showPopup === 'function') showPopup(`✨ Fusão Lv${existingEq.level}!`, u, '#c9a227'); }
-                            else { u.equipment.push({ id: iType, level: 1 }); if (iDef.onEquip) iDef.onEquip(u, 1); }
+                            if(existingEq) { if(iDef.onUnequip) iDef.onUnequip(u, existingEq.level); existingEq.level++; if(iDef.onEquip) iDef.onEquip(u, existingEq.level); if(typeof showPopup === 'function') showPopup(`✨ Fusão Lv${existingEq.level}!`, u, '#c9a227'); } 
+                            else { u.equipment.push({ id: iType, level: 1 }); if(iDef.onEquip) iDef.onEquip(u, 1); }
                             this.items.delete(k);
                         } else { let r = await iDef.f(u, this); if (r !== false) this.items.delete(k); }
                         const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true; lastState = null;
@@ -335,22 +339,20 @@ class Game {
         const hex = this.map.get(`${d.q},${d.r}`); if (!hex) return 1;
         let sysA = this.getSynergies(a.faction); let sysD = this.getSynergies(d.faction);
         let def = a.abilities.includes('pierce') ? 0 : hex.terrain.def;
-
-        if (d.fav.includes(hex.terrain.id)) def += 0.2;
+        
+        if (d.fav.includes(hex.terrain.id)) def += 0.2; 
         if (d.name === 'Almirante' && hex.terrain.id !== 'WATER') def -= 0.30;
-
-        // Bônus Abissal na Água
         if (d.tags.includes('ABYSSAL') && hex.terrain.id === 'WATER') def += 0.30;
-
-        if (d.tags.includes('WING') && sysD['WING'] >= 2 && def < 0) def = 0;
+        
+        if (d.tags.includes('WING') && sysD['WING'] >= 2 && def < 0) def = 0; 
         if (d.tags.includes('ROCK') && sysD['ROCK'] >= 3) def = Math.min(0.60, def + 0.30);
         if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_armor')) def += 0.15;
         if (d.status === 'shielded') def = Math.min(0.80, def + 0.30);
-
+        
         let isFlanking = false;
         if (a.tags.includes('STALKER') && sysA['STALKER'] >= 3) { Hex.getNeighbors(d.q, d.r).forEach(n => { let ally = this.getUnitAt(n.q, n.r); if (ally && ally.faction === a.faction && ally !== a && ally.tags.includes('STALKER')) isFlanking = true; }); }
         if (isFlanking) def = 0;
-
+        
         let lAtk = 0; if (a) Hex.getNeighbors(a.q, a.r).forEach(n => { let al = this.getUnitAt(n.q, n.r); if (al && al.faction === a.faction && al.abilities.includes('leadership') && al !== a) lAtk += 2; });
         if (d) Hex.getNeighbors(d.q, d.r).forEach(n => { let al = this.getUnitAt(n.q, n.r); if (al && al.faction === d.faction && al.abilities.includes('leadership') && al !== d) def += 0.2; });
 
@@ -365,7 +367,7 @@ class Game {
     async executeCombat(a, d) {
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true;
         this.isAnimating = true; const aCol = a.faction === 1 ? '#4a9edd' : a.faction === 2 ? '#c0392b' : '#27ae60';
-
+        
         try {
             let sysA = this.getSynergies(a.faction); let sysD = this.getSynergies(d.faction);
 
@@ -379,34 +381,85 @@ class Game {
 
             if (renderer) { renderer.centerOn(d.vq, d.vr); d.hitTimer = true; renderer.draw(); if (typeof sleep === 'function') await sleep(150); d.hitTimer = false; renderer.draw(); }
             if (typeof showPopup === 'function') showPopup(`-${dmg}`, d, '#fff'); if (typeof addLog === 'function') addLog(`⚔ ${a.name} atingiu ${d.name} (-${dmg})`, aCol);
-
+            
             if (a.tags.includes('FIRE') && sysA['FIRE'] >= 3) { let aoe = Math.max(1, Math.floor(dmg * 0.2)); Hex.getNeighbors(d.q, d.r).forEach(n => { let targ = this.getUnitAt(n.q, n.r); if (targ && targ.faction !== a.faction && targ !== d && targ.hp > 0) { targ.hp -= aoe; if (typeof showPopup === 'function') showPopup(`🔥 -${aoe}`, targ, '#e67e22'); if (targ.hp <= 0) this.handleDeath(targ, a); } }); }
 
             if (a.abilities.includes('corte_amplo') && Hex.distance(a, d) === 1) { let aNeighbors = Hex.getNeighbors(a.q, a.r); aNeighbors.forEach(n => { let u = this.getUnitAt(n.q, n.r); if (u && u.faction !== a.faction && u !== d && u.hp > 0 && Hex.distance(u, d) === 1) { let cDmg = Math.floor(this.calcDmg(a, u) * 0.5); u.hp -= cDmg; if (typeof showPopup === 'function') showPopup(`-${cDmg} ⚔️`, u, '#fff'); if (u.hp <= 0) this.handleDeath(u, a); } }); }
 
             let lsPerc = a.abilities.includes('lifesteal') ? 0.8 : (a.isLeader && a.name === 'Necromante' ? 0.25 : 0); if (a.tags.includes('UMBRAL') && sysA['UMBRAL'] >= 3) lsPerc += 0.25; if (a.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_blood')) lsPerc += 0.15;
             if (lsPerc > 0) { const heal = Math.floor(dmg * lsPerc); a.hp = Math.min(a.maxHp, a.hp + heal); if (typeof showPopup === 'function') showPopup(`+${heal}`, a, '#2ecc71'); }
-
+            
             if (a.abilities.includes('freeze') && Math.random() < 0.25) { d.status = 'stun'; d.hp -= 5; if (typeof showPopup === 'function') showPopup("Congelado!", d, '#00ffff'); }
             if (a.tags.includes('ICE') && sysA['ICE'] >= 3) { d.status = 'chilled'; if (typeof showPopup === 'function') showPopup("Congelado!", d, '#00ffff'); }
             if (a.abilities.includes('electric')) { let cT = Hex.getNeighbors(d.q, d.r).map(n => this.getUnitAt(n.q, n.r)).filter(u => u && u.faction !== a.faction && u !== d && u.hp > 0); for (let t of cT) { let cDmg = Math.max(1, Math.floor(dmg * 0.5)); t.hp -= cDmg; if (typeof showPopup === 'function') showPopup(`⚡ -${cDmg}`, t, '#00ffff'); if (t.hp <= 0) this.handleDeath(t, a); } }
             if (a.name.includes("Bode") && Hex.distance(a, d) > 1 && d.hp > 0) { let bH = null; let mD = Hex.distance(a, d); Hex.getNeighbors(a.q, a.r).forEach(n => { if (!this.getUnitAt(n.q, n.r) && this.map.has(`${n.q},${n.r}`)) { let dist = Hex.distance({ q: n.q, r: n.r }, d); if (dist < mD) { mD = dist; bH = n; } } }); if (bH) { await this.moveUnit(a, bH.q, bH.r); } }
-
+            
             if (d.hp > 0) {
                 let pChance = a.abilities.includes('poison') ? 0.3 : 0; if (sysA['VENOM'] >= 2 && a.tags.includes('VENOM')) pChance = 1.0; if (Math.random() < pChance) { d.status = 'poison'; if (typeof showPopup === 'function') showPopup("Envenenado!", d, '#2ecc71'); }
                 let stChance = a.abilities.includes('stun') ? 0.25 : 0; if (a.tags.includes('SILVESTRE') && sysA['SILVESTRE'] >= 3) stChance += 0.15; if (Math.random() < stChance) { d.status = 'stun'; if (typeof showPopup === 'function') showPopup("Enraizado!", d, '#f39c12'); }
                 if (a.abilities.includes('bind')) { d.status = 'bind'; if (typeof showPopup === 'function') showPopup("Preso!", d, '#9b59b6'); }
                 if (a.abilities.includes('burn')) { d.hp -= 10; if (typeof showPopup === 'function') showPopup("-10 🔥", d, '#e67e22'); if (d.hp <= 0) this.handleDeath(d, a); }
             }
-
+            
             if (a.abilities.includes('swift')) { if (typeof showPopup === 'function') showPopup("Rápido!", a, '#f1c40f'); if (d.hp <= 0) { if (a.faction === 1) a.addXp(d.isBoss ? 100 : 30); this.handleDeath(d, a); this.checkWin(); } } else if (d.hp > 0) { await this.processRevide(a, d); } else { if (a.faction === 1) a.addXp(d.isBoss ? 100 : 30); this.handleDeath(d, a); this.checkWin(); }
-
+            
             if (a.hp > 0 && a.tags.includes('MYSTIC') && sysA['MYSTIC'] >= 2 && Math.random() < 0.30) { a.hasAttacked = false; a.mp = a.maxMp; if (typeof showPopup === 'function') showPopup("✨ Ação Extra!", a, '#9b59b6'); if (a.faction === 1) this.selectedUnit = a; }
 
             if (typeof sleep === 'function') await sleep(600);
-        } catch (e) { console.error("ERRO NO COMBATE:", e); } finally { this.isAnimating = false; }
+        } catch(e) { console.error("ERRO NO COMBATE:", e); } finally { this.isAnimating = false; }
     }
 
+    handleDeath(victim, killer = null) {
+        if (killer && killer.baseName === 'Anubis') {
+            killer.atk += 1;
+            if (typeof showPopup === 'function') showPopup("+1 ATK Perm.", killer, '#8e44ad');
+        }
+        if (killer && killer._isExecuting) { 
+            killer.hasAttacked = false; killer.mp = killer.maxMp;
+            if (typeof showPopup === 'function') showPopup("Turno Extra!", killer, '#c0392b');
+        }
+
+        if (typeof showPopup === 'function') showPopup("☠ Eliminado!", victim, '#e74c3c');
+        if (victim.faction === 1 && !victim.isLeader) { this.lastDeadAlly = new Unit({ ...victim }); }
+        
+        if (killer && killer.faction === 1 && victim.faction !== 1) { killer.addXp(victim.isBoss ? 100 : 30); let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : []; if (arts.includes('art_wild_call')) { killer.addXp(10); } }
+
+        if (killer && killer.name === 'Lord Vampiro' && killer.isLeader && victim.faction === 0) {
+            let chance = (victim.baseName === 'Morcego' || victim.name === 'Morcego') ? 1.0 : 0.3; 
+            if (Math.random() <= chance) {
+                victim.hp = victim.maxHp; victim.faction = killer.faction;
+                if (!victim.tags.includes('STALKER')) victim.tags.push('STALKER');
+                victim.alerted = false; let maxL = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) ? (this.leaderData.limit + 1) : (this.leaderData.limit || 6); 
+                let currTeam = this.units.filter(u => u.faction === killer.faction && !u.isLeader).length;
+                if (killer.faction === 1 && currTeam >= maxL) {
+                    this.units = this.units.filter(u => u !== victim); rosterMemory.push(victim);
+                    if (typeof addLog === 'function') addLog(`🧛 ${killer.name} seduziu ${victim.name} (Box)!`, '#8e44ad');
+                } else {
+                    if (typeof addLog === 'function') addLog(`🧛 ${killer.name} seduziu ${victim.name}!`, '#8e44ad');
+                    if (typeof showPopup === 'function') showPopup("🧛 Domado!", victim, '#8e44ad');
+                }
+                if (victim.faction === 1) { 
+                    if (typeof unlockInBestiary === 'function') unlockInBestiary(victim.name); 
+                    const leader = this.units.find(u => u.isLeader && u.faction === 1); 
+                    if (leader) { (victim.tags || []).forEach(t => { if (!leader.grimTags.includes(t)) { leader.grimTags.push(t); } }); } 
+                }
+                this.activeSynergies = this.getSynergies(killer.faction); return;
+            }
+        }
+
+        if (killer && killer.name === 'Necromante' && killer.isLeader && victim.faction !== killer.faction && !victim.isLeader) {
+            victim.hp = Math.floor(victim.maxHp * 0.5); victim.faction = killer.faction; if (!victim.tags.includes('UMBRAL')) victim.tags.push('UMBRAL'); victim.alerted = false; let maxL = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) ? (this.leaderData.limit + 1) : (this.leaderData.limit || 6); let currTeam = this.units.filter(u => u.faction === killer.faction && !u.isLeader).length;
+            if (killer.faction === 1 && currTeam >= maxL) { this.units = this.units.filter(u => u !== victim); rosterMemory.push(victim); if (typeof addLog === 'function') addLog(`💀 ${killer.name} ergueu ${victim.name} (Box)!`, '#8e44ad'); } else { if (typeof addLog === 'function') addLog(`💀 ${killer.name} ergueu ${victim.name}!`, '#8e44ad'); if (typeof showPopup === 'function') showPopup("💀 Sombrio!", victim, '#8e44ad'); }
+            if (victim.faction === 1) { if (typeof unlockInBestiary === 'function') unlockInBestiary(victim.name); const leader = this.units.find(u => u.isLeader && u.faction === 1); if (leader) { (victim.tags || []).forEach(t => { if (!leader.grimTags.includes(t)) { leader.grimTags.push(t); } }); } }
+            this.activeSynergies = this.getSynergies(killer.faction); return;
+        }
+
+        if (killer) { const kCol = killer.faction === 1 ? '#4a9edd' : '#c0392b'; if (typeof addLog === 'function') addLog(`☠ ${killer.name} eliminou ${victim.name}!`, kCol); if (victim.isLeader && victim.faction === 2 && killer.faction === 1) { this.gold += 10; if (typeof addLog === 'function') addLog(`💰 +10 Ouro da Vitória!`, 'var(--gold-light)'); if (typeof updateUI === 'function') updateUI(); } } else { if (typeof addLog === 'function') addLog(`☠ ${victim.name} foi eliminado.`, '#e74c3c'); }
+        if (victim.faction !== 1 && killer && killer.faction === 1) { if (victim.name === "Mercenário Veterano") this.pendingDrop = 'legendary'; else if (victim.isBoss && this.currentRouteType === 'ELITE') this.pendingDrop = 'rare'; }
+
+        this.units = this.units.filter(u => u !== victim); if (this.selectedUnit === victim) this.selectedUnit = null; if (victim.faction === 1) this.activeSynergies = this.getSynergies(1);
+    }
+    
     async processRevide(a, d) {
         if (d.status === 'stun' || d.status === 'bind' || d.status === 'chilled') return;
 
