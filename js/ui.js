@@ -1240,8 +1240,6 @@ function startGame(load, isRoguelite = false, leaderId = null) {
         if (leaderId) game.leaderData = LEADERS.find(l => l.id === leaderId) || LEADERS[0];
 
         generateRouteMap();
-
-        let lD = game.leaderData;
         let initialSpells = [];
         
         // Mapeamento automático de Magias Exclusivas no Turno 0
@@ -1261,7 +1259,7 @@ function startGame(load, isRoguelite = false, leaderId = null) {
             'Necromante': ['sl_erguer_esq'],
             'Arquimago': ['sl_explosao_arcana']
         };
-        
+
         let lD = game.leaderData;
         deployedRoster.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: true, name: lD.name, emoji: lD.emoji, hp: lD.hp, maxHp: lD.hp, mp: lD.mp, maxMp: lD.mp, atk: lD.atk, range: lD.range, isNew: true, tags: lD.tags || [], fav: lD.fav || [], knownSpells: [SPELLS.find(s => s.level === 1 && s.tags.includes(lD.tags[0])).id], grimTags: [...(lD.tags || [])] }));
 

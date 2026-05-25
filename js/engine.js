@@ -305,18 +305,24 @@ class Game {
     async moveUnit(u, tQ, tR) {
         const fr = 12; const sQ = u.q, sR = u.r;
         for (let i = 1; i <= fr; i++) { u.vq = sQ + (tQ - sQ) * (i / fr); u.vr = sR + (tR - sR) * (i / fr); if (renderer) renderer.centerOn(u.vq, u.vr); if (typeof sleep === 'function') await sleep(16); }
+        
+        u.q = tQ; u.r = tR; u.vq = tQ; u.vr = tR; this.checkVillageCapture(u); let k = `${tQ},${tR}`;
 
-        let distMoved = Hex.distance({ q: sQ, r: sR }, { q: tQ, r: tR });
-        u.hexesMovedThisTurn = (u.hexesMovedThisTurn || 0) + distMoved;
-
-        // Passos do T-Rex destroem a natureza
+        // MECÂNICA T-REX: Esmaga o terreno e gera RECURSOS EM DOBRO
         if (u.baseName === 'T-Rex') {
             let h = this.map.get(k);
             if (h && (h.terrain.id === 'FOREST' || h.terrain.id === 'VILLAGE' || h.terrain.id === 'SNOW')) {
+                if (!this.resources) this.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
+                let resGot = "";
+                
+                if (h.terrain.id === 'FOREST') { this.resources.wood += 2; resGot = "+2 🌲"; }
+                if (h.terrain.id === 'SNOW') { this.resources.sand += 2; resGot = "+2 ⏳"; }
+                if (h.terrain.id === 'VILLAGE') { this.gold += 10; resGot = "+10 💰"; }
+                
                 h.terrain = TERRAINS.PLAINS;
+                if (resGot && typeof showPopup === 'function') showPopup(`Esmagado! ${resGot}`, u, '#e74c3c');
             }
         }
-        u.q = tQ; u.r = tR; u.vq = tQ; u.vr = tR; this.checkVillageCapture(u); let k = `${tQ},${tR}`;
 
         if (this.items.has(k)) {
             let iType = this.items.get(k); let iDef = typeof ITEMS !== 'undefined' ? ITEMS[iType] : null;
@@ -373,11 +379,24 @@ class Game {
         
         let lAtk = 0; if (a) Hex.getNeighbors(a.q, a.r).forEach(n => { let al = this.getUnitAt(n.q, n.r); if (al && al.faction === a.faction && al.abilities.includes('leadership') && al !== a) lAtk += 2; });
         if (d) Hex.getNeighbors(d.q, d.r).forEach(n => { let al = this.getUnitAt(n.q, n.r); if (al && al.faction === d.faction && al.abilities.includes('leadership') && al !== d) def += 0.2; });
-
-        let baseAtk = a.getEffectiveAtk(this);
+        
+        let baseAtk = a.getEffectiveAtk(this); 
         if (isFlanking) baseAtk *= 2;
-        if (a.baseName === 'Centauro Espectral') baseAtk = Math.floor(baseAtk * (1 + 0.1 * (a.hexesMovedThisTurn || 0)));
-        if (a.undyingTurns > 0) baseAtk *= 2; // O Bárbaro dobra o ataque quando imortal!        let base = Math.max(1, Math.floor((baseAtk + lAtk) * (0.9 + Math.random() * 0.2) * Math.max(0, 1 - def)));
+        
+        // --- PASSIVAS OFENSIVAS DE LÍDERES ---
+        // 1. Centauro (Velocidade = Dano): ATK Escala multiplicando o MP Base Máximo!
+        if (a.baseName === 'Centauro Espectral') {
+            baseAtk = a.maxMp * 4; // Ex: 6 MP = 24 ATK base. Equipar uma Bota (+1 MP) faz o dano saltar pra 28!
+        }
+        
+        // 2. Bárbaro (Berserker): Dano monstruoso com vida baixa
+        if (a.baseName === 'Rei Bárbaro') {
+            let hpRatio = a.hp / a.maxHp;
+            if (hpRatio <= 0.30) baseAtk = Math.floor(baseAtk * 2.5); // +150% ATK
+            else if (hpRatio <= 0.60) baseAtk = Math.floor(baseAtk * 1.5); // +50% ATK
+        }
+
+        let base = Math.max(1, Math.floor((baseAtk + lAtk) * (0.9 + Math.random() * 0.2) * Math.max(0, 1 - def)));
         if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_shield')) base = Math.floor(base * 0.9);
         let hexA = this.map.get(`${a.q},${a.r}`); if ((hexA && hexA.isCrystal) || (hex && hex.isCrystal)) base = Math.floor(base * 2);
         if (d.abilities.includes('crystal_skin')) base = Math.floor(base * 0.6);
