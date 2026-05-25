@@ -1298,12 +1298,16 @@ button.btn-success {
 
 /* Previsão de Combate (Combat Forecast) */
 #combat-forecast { position: absolute; background: rgba(15, 15, 20, 0.95); border: 2px solid #c0392b; border-radius: 8px; padding: 10px; color: white; pointer-events: none; z-index: 2000; display: flex; gap: 15px; box-shadow: 0 0 15px rgba(192, 57, 43, 0.5); display: none; font-family: 'Cinzel', serif; }
-.forecast-side { display: flex; flex-direction: column; align-items: center; width: 90px; }
+.forecast-side { display: flex; flex-direction: column; align-items: center; width: 90px; width: 75px; }
 .forecast-emoji { font-size: 32px; margin-bottom: 5px; }
-.forecast-stat { font-size: 12px; margin: 2px 0; color: #ddd; text-shadow: 1px 1px 2px #000; font-family: sans-serif; }
-.forecast-dmg { font-size: 18px; font-weight: bold; color: #e74c3c; margin-top: 5px; }
+.forecast-stat { font-size: 10px; margin: 2px 0; color: #ddd; text-shadow: 1px 1px 2px #000; font-family: sans-serif; }
+.forecast-dmg { font-size: 15px; font-weight: bold; color: #e74c3c; margin-top: 2px; }
 .forecast-vs { display: flex; align-items: center; font-weight: bold; color: var(--gold-light); font-size: 20px; }
+.forecast-emoji { font-size: 26px; margin-bottom: 2px; }
 
-/* Botão Danger Zone */
-#btn-danger-zone { position: absolute; right: 20px; top: 180px; background: rgba(30, 10, 10, 0.8); border: 1px solid #e74c3c; color: #e74c3c; border-radius: 50%; width: 45px; height: 45px; font-size: 20px; cursor: pointer; z-index: 100; box-shadow: 0 0 10px rgba(231, 76, 60, 0.3); transition: all 0.2s; }
-#btn-danger-zone:hover, #btn-danger-zone.active { background: rgba(231, 76, 60, 0.3); box-shadow: 0 0 15px rgba(231, 76, 60, 0.8); transform: scale(1.1); }
+#btn-field-items { position: absolute; right: 20px; top: 235px; background: rgba(30, 10, 30, 0.8); border: 1px solid #9b59b6; color: #fff; border-radius: 50%; width: 45px; height: 45px; font-size: 20px; cursor: pointer; z-index: 100; box-shadow: 0 0 10px rgba(155, 89, 182, 0.3); transition: all 0.2s; }
+#btn-field-items:hover { background: rgba(155, 89, 182, 0.3); box-shadow: 0 0 15px #9b59b6; transform: scale(1.1); }
+
+#field-item-menu { position: absolute; right: 75px; top: 235px; background: rgba(15, 15, 20, 0.95); border: 1px solid var(--gold-dark); border-radius: 8px; padding: 10px; z-index: 100; display: flex; flex-direction: column; gap: 8px; }
+.item-slot { background: rgba(30, 30, 40, 0.8); border: 1px solid #444; padding: 8px 12px; border-radius: 4px; color: #ddd; cursor: pointer; font-size: 12px; font-family: sans-serif; display: flex; justify-content: space-between; gap: 15px; }
+.item-slot:hover { background: rgba(50, 50, 60, 0.9); border-color: var(--gold-light); }

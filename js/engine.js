@@ -362,39 +362,39 @@ class Game {
         const hex = this.map.get(`${d.q},${d.r}`); if (!hex) return 1;
         let sysA = this.getSynergies(a.faction); let sysD = this.getSynergies(d.faction);
         let def = a.abilities.includes('pierce') ? 0 : hex.terrain.def;
-        
-        if (d.fav.includes(hex.terrain.id)) def += 0.2; 
+
+        if (d.fav.includes(hex.terrain.id)) def += 0.2;
         if (d.name === 'Almirante' && hex.terrain.id !== 'WATER') def -= 0.30;
         if (d.tags.includes('ABYSSAL') && hex.terrain.id === 'WATER') def += 0.30;
-        
-        if (d.tags.includes('WING') && sysD['WING'] >= 2 && def < 0) def = 0; 
+
+        if (d.tags.includes('WING') && sysD['WING'] >= 2 && def < 0) def = 0;
         if (d.tags.includes('ROCK') && sysD['ROCK'] >= 3) def = Math.min(0.60, def + 0.30);
         if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_armor')) def += 0.15;
         if (d.status === 'shielded') def = Math.min(0.80, def + 0.30);
-        
+
         let isFlanking = false;
         if (a.tags.includes('STALKER') && sysA['STALKER'] >= 3) { Hex.getNeighbors(d.q, d.r).forEach(n => { let ally = this.getUnitAt(n.q, n.r); if (ally && ally.faction === a.faction && ally !== a && ally.tags.includes('STALKER')) isFlanking = true; }); }
         if (isFlanking) def = 0;
-        
+
         let lAtk = 0; if (a) Hex.getNeighbors(a.q, a.r).forEach(n => { let al = this.getUnitAt(n.q, n.r); if (al && al.faction === a.faction && al.abilities.includes('leadership') && al !== a) lAtk += 2; });
         if (d) Hex.getNeighbors(d.q, d.r).forEach(n => { let al = this.getUnitAt(n.q, n.r); if (al && al.faction === d.faction && al.abilities.includes('leadership') && al !== d) def += 0.2; });
-        
-        let baseAtk = a.getEffectiveAtk(this); 
+
+        let baseAtk = a.getEffectiveAtk(this);
         if (isFlanking) baseAtk *= 2;
-        
+
         // Passivas Ofensivas de Líderes
         if (a.baseName === 'Centauro Espectral') {
-            baseAtk = a.maxMp * 4; 
+            baseAtk = a.maxMp * 4;
         }
         if (a.baseName === 'Rei Bárbaro') {
             let hpRatio = a.hp / a.maxHp;
-            if (hpRatio <= 0.30) baseAtk = Math.floor(baseAtk * 2.5); 
-            else if (hpRatio <= 0.60) baseAtk = Math.floor(baseAtk * 1.5); 
+            if (hpRatio <= 0.30) baseAtk = Math.floor(baseAtk * 2.5);
+            else if (hpRatio <= 0.60) baseAtk = Math.floor(baseAtk * 1.5);
         }
 
         // --- CÁLCULO EXATO, SEM DANO ALEATÓRIO (RNG) ---
         let base = Math.max(1, Math.floor((baseAtk + lAtk) * Math.max(0, 1 - def)));
-        
+
         if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_shield')) base = Math.floor(base * 0.9);
         let hexA = this.map.get(`${a.q},${a.r}`); if ((hexA && hexA.isCrystal) || (hex && hex.isCrystal)) base = Math.floor(base * 2);
         if (d.abilities.includes('crystal_skin')) base = Math.floor(base * 0.6);
@@ -561,11 +561,35 @@ class Game {
             if (cC < 0.05) cC = 0.05;
             const tCol = tamer.faction === 1 ? '#4a9edd' : '#c0392b';
 
+            /// 1. SISTEMA DE QUEBRA DE VONTADE
+            let willBreakMod = 1.0;
+            if (['stun', 'bind', 'sleep', 'paralyzed', 'chilled'].includes(wild.status)) {
+                willBreakMod = 1.5; // +50% de chance de doma
+                if (typeof showPopup === 'function') showPopup("Vontade Quebrada!", wild, '#9b59b6');
+            }
+
+            // 2. SISTEMA DE ISCA DE CARNE
+            let lureMod = 1.0;
+            let hexLure = this.map.get(`${wild.q},${wild.r}`);
+            if (hexLure && hexLure.hasLure) {
+                lureMod = 2.0; // Dobra a chance
+                hexLure.hasLure = false; // A fera come a isca
+                if (typeof showPopup === 'function') showPopup("Isca Devorada!", wild, '#e67e22');
+            }
+
+            // Multiplique a sua chance atual (cC) por esses modificadores:
+            cC = cC * willBreakMod * lureMod;
+
             // Rola o dado para ver se domou
             if (Math.random() < cC) {
 
                 this.dna = (this.dna || 0) + 1; // Drop de DNA
                 if (typeof showPopup === 'function') showPopup("+1 🧬", tamer, '#1abc9c');
+
+                // 3. CAPTURA CRÍTICA (BUFF AO DOMAR)
+                let healAmount = 25;
+                tamer.hp = Math.min(tamer.maxHp, tamer.hp + healAmount);
+                if (typeof showPopup === 'function') showPopup(`Captura Perfeita! +${healAmount} HP`, tamer, '#2ecc71');
 
                 // Passiva do Piromante (Adiciona Ígneo)
                 if (tamer.baseName === 'Piromante' && !wild.tags.includes('FIRE')) {
@@ -798,13 +822,19 @@ class Renderer {
     draw() {
         const ctx = this.ctx; const actBgColors = ['#0a0a0e', '#121208', '#050a15', '#100515', '#150505']; const bgColor = actBgColors[this.game.currentLevel - 1] || '#0a0a0e';
         ctx.fillStyle = bgColor; ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); ctx.globalAlpha = 1.0; ctx.shadowBlur = 0;
-
+        
         this.game.map.forEach(hex => {
             const p = this.getPos(hex.q, hex.r); this.hexPath(ctx, p.x, p.y, this.hexSize - 0.5); ctx.fillStyle = hex.terrain.color; ctx.fill();
             if (hex.isCrystal) { this.hexPath(ctx, p.x, p.y, this.hexSize - 1); ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = 'rgba(0,255,255,0.2)'; ctx.fill(); }
             if (this.game.reachableHexes.has(hex.getKey())) { ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3; ctx.stroke(); } else { ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1; ctx.stroke(); }
             if (hex.terrain.icon) { ctx.save(); ctx.globalAlpha = 0.8; ctx.font = `${this.hexSize * 0.7}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(hex.terrain.icon, p.x, p.y); ctx.restore(); }
             if (hex.terrain.id === 'VILLAGE' && hex.owner !== null) { ctx.fillStyle = hex.owner === 1 ? '#4a9edd' : '#c0392b'; ctx.beginPath(); ctx.arc(p.x + this.hexSize * 0.4, p.y - this.hexSize * 0.3, 6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
+            if (hex.hasLure) {
+                ctx.font = `${this.hexSize * 0.7}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText("🍖", p.x, p.y + (this.hexSize * 0.2));
+            }   
         });
 
         this.game.items.forEach((iType, key) => { let [q, r] = key.split(',').map(Number); const p = this.getPos(q, r); ctx.save(); ctx.globalAlpha = 1.0; ctx.beginPath(); ctx.ellipse(p.x, p.y + this.hexSize * 0.35, this.hexSize * 0.4, this.hexSize * 0.2, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(20,20,30,0.9)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#f1c40f'; ctx.stroke(); ctx.font = `${this.hexSize * 0.6}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (typeof ITEMS !== 'undefined' && ITEMS[iType]) { ctx.fillText(ITEMS[iType].icon, p.x, p.y + this.hexSize * 0.25); } ctx.restore(); });

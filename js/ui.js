@@ -542,6 +542,27 @@ function updateUI() {
         hide('unit-portrait'); $('unit-name').innerHTML = '—'; $('unit-info').innerHTML = '<div style="color:var(--text-dim);">Selecione um alvo</div>'; hide('btn-tame');
         $('unit-portrait').onclick = null;
     }
+
+    // INJEÇÃO DA MOCHILA DE ITENS
+    if (!$('btn-field-items') && $('game-container')) {
+        let itemBtn = document.createElement('button');
+        itemBtn.id = 'btn-field-items';
+        itemBtn.innerHTML = '🎒';
+        itemBtn.title = "Ferramentas de Campo";
+        itemBtn.onclick = () => { 
+            const menu = $('field-item-menu');
+            menu.classList.toggle('hidden');
+            if (!menu.classList.contains('hidden')) {
+                renderFieldItemMenu(); // Reconstrói a lista com o que você realmente tem
+            }
+        };
+        $('game-container').appendChild(itemBtn);
+
+        let itemMenu = document.createElement('div');
+        itemMenu.id = 'field-item-menu';
+        itemMenu.className = 'hidden';
+        $('game-container').appendChild(itemMenu);
+    }
 }
 
 // ==========================================
@@ -1949,4 +1970,41 @@ window.triggerGenieWishes = function () {
         showPopup("Item Adquirido!", game.units.find(u => u.isLeader), '#9b59b6');
         closeWishes();
     };
+};
+
+window.renderFieldItemMenu = function() {
+    const menu = $('field-item-menu');
+    if (!menu) return;
+    
+    // Garante que a estrutura exista e cria itens iniciais para teste se estiver vazio
+    if (!game.fieldItems) {
+        game.fieldItems = { isca: 3, rede: 2, potion: 2, bandage: 1, scroll: 1, sphere: 1 }; 
+    }
+    
+    // Dicionário visual de nomes bonitos para a interface
+    const itemDefs = {
+        isca: { name: "🍖 Isca de Carne" },
+        rede: { name: "🕸️ Rede Hexagonal" },
+        potion: { name: "🧪 Poção de Cura" },
+        bandage: { name: "🩹 Atadura Médica" },
+        scroll: { name: "📜 Pergaminho Arcano" },
+        sphere: { name: "🔮 Esfera Elemental" }
+    };
+    
+    let html = '';
+    Object.entries(game.fieldItems).forEach(([id, qtd]) => {
+        if (qtd > 0 && itemDefs[id]) {
+            html += `
+                <div class="item-slot" onclick="useFieldItem('${id}')">
+                    <span>${itemDefs[id].name}</span> 
+                    <span style="color:var(--gold-light)">x<span id="qtd-${id}">${qtd}</span></span>
+                </div>`;
+        }
+    });
+    
+    if (html === '') {
+        html = '<div style="color:#aaa; padding:8px; font-size:11px; text-align:center; font-style:italic;">Mochila Vazia</div>';
+    }
+    
+    menu.innerHTML = html;
 };

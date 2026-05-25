@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function handleCombatForecast(clientX, clientY, isTouch = false, isPinned = false) {
         const fc = $('combat-forecast');
-
+        if (!fc) return;
         // Se já tem um alvo travado pelo clique e essa chamada foi apenas um hover/mouse, ignora.
         if (window.pendingAttackTarget && !isPinned) return;
 
@@ -68,8 +68,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 fc.style.display = 'flex';
-                let yOffset = isTouch ? 120 : -20;
-                let xOffset = isTouch ? 100 : -20;
+                let yOffset = isTouch ? 200 : -20;
+                let xOffset = isTouch ? 80 : -20;
                 fc.style.left = (clientX - xOffset) + 'px';
                 fc.style.top = (clientY - yOffset) + 'px';
             } else {
@@ -79,6 +79,16 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!window.pendingAttackTarget) { fc.style.display = 'none'; lastForecastTarget = null; }
         }
     }
+
+    window.useFieldItem = function(type) {
+    if (game.fieldItems[type] <= 0) {
+        if (typeof showMessage === 'function') showMessage("Item esgotado!", "#e74c3c");
+        return;
+    }
+    game.activeItem = type;
+    $('field-item-menu').classList.add('hidden');
+    if (typeof showMessage === 'function') showMessage(`Selecione o alvo para: ${type.toUpperCase()}`, "#3498db");
+};
 
     // EVENTOS DE MOUSE (PC)
     $('gameCanvas').addEventListener('mousedown', e => {
@@ -172,6 +182,73 @@ document.addEventListener("DOMContentLoaded", () => {
             game.selectedHex = cH;
             const u = game.getUnitAt(cH.q, cH.r);
             const su = game.selectedUnit;
+
+            // --- USO DE ITENS DE CAMPO EXPANDIDO ---
+            if (game.activeItem && su && su.isLeader && game.currentTurn === FACTIONS.PLAYER.id) {
+                let dist = Hex.distance(su, cH);
+                let itemUsed = false;
+                
+                if (game.activeItem === 'isca') {
+                    if (u) { showMessage("Selecione um chão vazio!", "#e74c3c"); return; }
+                    if (dist > 2) { showMessage("Muito longe para jogar a isca!", "#e74c3c"); return; }
+                    cH.hasLure = true;
+                    game.fieldItems.isca--;
+                    showMessage("Isca posicionada!", "#e67e22");
+                    itemUsed = true;
+                    
+                } else if (game.activeItem === 'rede') {
+                    if (!u || u.faction === FACTIONS.PLAYER.id) { showMessage("Selecione uma fera inimiga!", "#e74c3c"); return; }
+                    if (dist > 3) { showMessage("Fora do alcance da rede!", "#e74c3c"); return; }
+                    u.status = 'bind';
+                    game.fieldItems.rede--;
+                    if (typeof showPopup === 'function') showPopup("Preso na Rede!", u, '#9b59b6');
+                    itemUsed = true;
+                    
+                } else if (game.activeItem === 'potion') {
+                    if (!u || u.faction !== FACTIONS.PLAYER.id) { showMessage("Selecione uma unidade aliada!", "#e74c3c"); return; }
+                    if (dist > 2) { showMessage("Muito longe para usar a poção!", "#e74c3c"); return; }
+                    u.hp = Math.min(u.maxHp, u.hp + 30); // Cura fixa de 30 HP
+                    game.fieldItems.potion--;
+                    if (typeof showPopup === 'function') showPopup("+30 HP 🧪", u, '#2ecc71');
+                    itemUsed = true;
+                    
+                } else if (game.activeItem === 'bandage') {
+                    if (!u || u.faction !== FACTIONS.PLAYER.id) { showMessage("Selecione uma unidade aliada!", "#e74c3c"); return; }
+                    if (dist > 2) { showMessage("Muito longe para usar a atadura!", "#e74c3c"); return; }
+                    u.hp = Math.min(u.maxHp, u.hp + 15);
+                    if (u.status === 'poison') u.status = null; // Remove veneno
+                    game.fieldItems.bandage--;
+                    if (typeof showPopup === 'function') showPopup("+15 HP 🩹", u, '#2ecc71');
+                    itemUsed = true;
+                    
+                } else if (game.activeItem === 'scroll') {
+                    if (!u || u.faction === FACTIONS.PLAYER.id) { showMessage("Selecione um inimigo!", "#e74c3c"); return; }
+                    if (dist > 4) { showMessage("Fora de alcance!", "#e74c3c"); return; }
+                    u.hp -= 25; // Dano fixo puro mágico de 25
+                    game.fieldItems.scroll--;
+                    if (typeof showPopup === 'function') showPopup("-25 HP 📜", u, '#9b59b6');
+                    if (u.hp <= 0) game.handleDeath(u, su);
+                    itemUsed = true;
+                    
+                } else if (game.activeItem === 'sphere') {
+                    if (!u || u.faction === FACTIONS.PLAYER.id) { showMessage("Selecione um inimigo!", "#e74c3c"); return; }
+                    if (dist > 3) { showMessage("Fora de alcance!", "#e74c3c"); return; }
+                    // Sorteia um efeito negativo para debilitar o alvo
+                    const statusPool = ['stun', 'bind', 'chilled', 'poison'];
+                    u.status = statusPool[Math.floor(Math.random() * statusPool.length)];
+                    game.fieldItems.sphere--;
+                    if (typeof showPopup === 'function') showPopup("🔮 Caos Elemental!", u, '#00ffff');
+                    itemUsed = true;
+                }
+                
+                if (itemUsed) {
+                    game.activeItem = null;
+                    su.hasAttacked = true; // Gasta a ação do líder
+                    if (typeof renderFieldItemMenu === 'function') renderFieldItemMenu(); // Atualiza a mochila na hora
+                    updateUI(); renderer.draw();
+                }
+                return;
+            }
 
             // Cancela a previsão pendente se clicou em outro lugar
             if (window.pendingAttackTarget && window.pendingAttackTarget !== u) {
