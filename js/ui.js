@@ -1242,6 +1242,27 @@ function startGame(load, isRoguelite = false, leaderId = null) {
         generateRouteMap();
 
         let lD = game.leaderData;
+        let initialSpells = [];
+        
+        // Mapeamento automático de Magias Exclusivas no Turno 0
+        let sMap = {
+            'Metamorfo': ['sl_forma_urso', 'sl_forma_falcao'],
+            'Carrasco': ['sl_execucao'],
+            'Invocador': ['sl_evocar_dragao', 'sl_evocar_lobo', 'sl_evocar_golem'],
+            'Sereia': ['sl_cancao_sereia'],
+            'Bruxa': ['sl_caldeirao'],
+            'Fada': ['sl_turno_extra'],
+            'Lord Vampiro': ['sl_mordida_vamp'],
+            'Paladina': ['sl_bencao_paladina'],
+            'Almirante': ['sl_bombardeio'],
+            'Arqueira': ['sl_tiro_preciso'],
+            'Piromante': ['sl_bola_fogo'],
+            'Chefe Orc': ['sl_grito_orc'],
+            'Necromante': ['sl_erguer_esq'],
+            'Arquimago': ['sl_explosao_arcana']
+        };
+        
+        let lD = game.leaderData;
         deployedRoster.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: true, name: lD.name, emoji: lD.emoji, hp: lD.hp, maxHp: lD.hp, mp: lD.mp, maxMp: lD.mp, atk: lD.atk, range: lD.range, isNew: true, tags: lD.tags || [], fav: lD.fav || [], knownSpells: [SPELLS.find(s => s.level === 1 && s.tags.includes(lD.tags[0])).id], grimTags: [...(lD.tags || [])] }));
 
         renderRouteMap();
