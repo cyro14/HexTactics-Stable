@@ -241,7 +241,7 @@ function updateManaUI() {
 }
 
 function renderSpellBar() {
-    
+
     const bar = $('spell-bar');
     if (!bar) return;
     bar.innerHTML = '';
@@ -468,12 +468,12 @@ window.showBeastDetails = function (b, bypassUnlock = false) {
     Object.values(TERRAINS).forEach(t => {
         let defV = t.def; let costV = t.cost; let isFav = (b.fav || []).includes(t.id);
         if (isFav) { defV += 0.2; costV = 1; }
-        
+
         // NOVO: Ajuste visual para o Almirante na Água (Custo 1)
         if ((b.name === 'Almirante' || b.baseName === 'Almirante') && t.id === 'WATER') {
             costV = 1;
         }
-        
+
         // NOVO: Ajuste visual para criaturas Abissais na Água (+30% de Defesa)
         if ((b.tags && b.tags.includes('ABYSSAL')) && t.id === 'WATER') {
             defV += 0.30;
@@ -524,9 +524,9 @@ function updateUI() {
         const h = game.selectedHex, t = h.terrain; $('unit-portrait').style.cssText = `display:flex;border-color:#555;box-shadow:none;filter:none;`; $('unit-portrait').innerText = t.icon || '⬛';
         let o = h.owner === 1 ? " <span style='color:var(--player-color)'>(Sua)</span>" : h.owner === 2 ? " <span style='color:var(--enemy-color)'>(Inimigo)</span>" : "";
         $('unit-name').innerHTML = `<span style="color:var(--gold-light)">Terreno: ${t.name}${o}</span>`; $('unit-info').innerHTML = `<div style="margin-top:4px;color:var(--text-muted);">Custo Mov: ${t.cost}<br>Defesa Base: ${Math.round(t.def * 100)}%</div>`; hide('btn-tame');
-        
+
         // NOVO: Remove a ação de clique se for apenas um terreno vazio
-        $('unit-portrait').onclick = null; 
+        $('unit-portrait').onclick = null;
     } else {
         hide('unit-portrait'); $('unit-name').innerHTML = '—'; $('unit-info').innerHTML = '<div style="color:var(--text-dim);">Selecione um alvo</div>'; hide('btn-tame');
         $('unit-portrait').onclick = null;
@@ -1104,7 +1104,7 @@ function triggerStageEnd(win) {
             let pStone = window.countKingdomBuildings('MINE') * 3;
             let pScales = window.countKingdomBuildings('FISHINGCAMP') * 3;
             let pSand = window.countKingdomBuildings('SANDPIT') * 3;
-            let pGold = (window.countKingdomBuildings('MINE') * 10)+(window.countKingdomBuildings('PORT') * 5);
+            let pGold = (window.countKingdomBuildings('MINE') * 10) + (window.countKingdomBuildings('PORT') * 5);
 
             if (!game.resources) game.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
             game.resources.wood += pWood; game.resources.stone += pStone;
@@ -1238,8 +1238,10 @@ function startGame(load, isRoguelite = false, leaderId = null) {
         game.generateKingdomMap();
         game.kingdomMap = new Map();
         if (leaderId) game.leaderData = LEADERS.find(l => l.id === leaderId) || LEADERS[0];
-
+        
         generateRouteMap();
+        
+        let lD = game.leaderData;
         let initialSpells = [];
         
         // Mapeamento automático de Magias Exclusivas no Turno 0
@@ -1259,11 +1261,24 @@ function startGame(load, isRoguelite = false, leaderId = null) {
             'Necromante': ['sl_erguer_esq'],
             'Arquimago': ['sl_explosao_arcana']
         };
+        
+        // Aplica o mapeamento ou busca a magia padrão baseada na tag
+        if (sMap[lD.name]) {
+            initialSpells = [...sMap[lD.name]];
+        } else {
+            let s = SPELLS.find(sp => sp.level === 1 && lD.tags && sp.tags.includes(lD.tags[0]));
+            if (s) initialSpells.push(s.id);
+        }
 
-        let lD = game.leaderData;
-        deployedRoster.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: true, name: lD.name, emoji: lD.emoji, hp: lD.hp, maxHp: lD.hp, mp: lD.mp, maxMp: lD.mp, atk: lD.atk, range: lD.range, isNew: true, tags: lD.tags || [], fav: lD.fav || [], knownSpells: [SPELLS.find(s => s.level === 1 && s.tags.includes(lD.tags[0])).id], grimTags: [...(lD.tags || [])] }));
-
-        renderRouteMap();
+        deployedRoster.push(new Unit({
+            q: 0, r: 0, faction: 1, isLeader: true, 
+            name: lD.name, emoji: lD.emoji, hp: lD.hp, maxHp: lD.hp, 
+            mp: lD.mp, maxMp: lD.maxMp, atk: lD.atk, range: lD.range, 
+            isNew: true, tags: lD.tags || [], fav: lD.fav || [], 
+            knownSpells: initialSpells, grimTags: [...(lD.tags || [])]
+        }));
+        
+        renderRouteMap(); 
     }
 
 }
@@ -1280,7 +1295,7 @@ let startKX, startKY, initKOffX, initKOffY;
 let initKPinch = null, initKSize = null;
 
 // Função para popups de recursos flutuantes na tela do Reino
-window.showKingdomPopup = function(txt, hex, col) {
+window.showKingdomPopup = function (txt, hex, col) {
     if (!kRenderer) return;
     const p = kRenderer.getPos(hex.q, hex.r);
     const el = document.createElement('div');
@@ -1300,23 +1315,23 @@ function openKingdom() {
     hide('route-map-screen');
     hide('game-container');
     show('kingdom-screen');
-    
+
     // 1. Gera o mapa do Reino se não existir no save
     if (!game.kingdomMap || game.kingdomMap.size === 0) {
         game.kingdomMap = new Map();
-        const kCols = 13, kRows = 9; 
-        for (let r = 0; r < kRows; r++) { 
-            const off = Math.floor(r / 2); 
-            for (let q = -off; q < kCols - off; q++) { 
-                const rnd = Math.random(); 
-                let t = TERRAINS.PLAINS; 
-                if (rnd > 0.90) t = TERRAINS.MOUNTAIN; 
-                else if (rnd > 0.80) t = TERRAINS.SNOW; 
-                else if (rnd > 0.65) t = TERRAINS.WATER; 
-                else if (rnd > 0.50) t = TERRAINS.FOREST; 
-                else if (rnd > 0.35) t = TERRAINS.DESERT; 
-                game.kingdomMap.set(`${q},${r}`, { q: q, r: r, terrain: t, building: null, bLevel: null }); 
-            } 
+        const kCols = 13, kRows = 9;
+        for (let r = 0; r < kRows; r++) {
+            const off = Math.floor(r / 2);
+            for (let q = -off; q < kCols - off; q++) {
+                const rnd = Math.random();
+                let t = TERRAINS.PLAINS;
+                if (rnd > 0.90) t = TERRAINS.MOUNTAIN;
+                else if (rnd > 0.80) t = TERRAINS.SNOW;
+                else if (rnd > 0.65) t = TERRAINS.WATER;
+                else if (rnd > 0.50) t = TERRAINS.FOREST;
+                else if (rnd > 0.35) t = TERRAINS.DESERT;
+                game.kingdomMap.set(`${q},${r}`, { q: q, r: r, terrain: t, building: null, bLevel: null });
+            }
         }
     }
 
@@ -1328,13 +1343,13 @@ function openKingdom() {
     }
 
     // Atualiza os contadores de recursos na tela
-    let res = game.resources || { wood:0, stone:0, scales:0, sand:0, blood:0 };
-    if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
-    if($('k-res-dna')) $('k-res-dna').innerText = game.dna || 0;
-    if($('k-res-wood')) $('k-res-wood').innerText = res.wood;
-    if($('k-res-stone')) $('k-res-stone').innerText = res.stone;
-    if($('k-res-scales')) $('k-res-scales').innerText = res.scales;
-    if($('k-res-sand')) $('k-res-sand').innerText = res.sand;
+    let res = game.resources || { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
+    if ($('k-res-gold')) $('k-res-gold').innerText = game.gold;
+    if ($('k-res-dna')) $('k-res-dna').innerText = game.dna || 0;
+    if ($('k-res-wood')) $('k-res-wood').innerText = res.wood;
+    if ($('k-res-stone')) $('k-res-stone').innerText = res.stone;
+    if ($('k-res-scales')) $('k-res-scales').innerText = res.scales;
+    if ($('k-res-sand')) $('k-res-sand').innerText = res.sand;
 
     // Inicializa o motor gráfico e os inputs de câmera livre
     setTimeout(() => {
@@ -1343,10 +1358,10 @@ function openKingdom() {
 
         if (!kRenderer) {
             kRenderer = new KingdomRenderer(canvasEl, game);
-            
+
             // --- MOTOR DE PARTÍCULAS E SINALIZADORES VISUAIS ---
             kRenderer.currentEffect = null;
-            kRenderer.animateHex = function(hex, type="build") {
+            kRenderer.animateHex = function (hex, type = "build") {
                 let startTime = Date.now();
                 let duration = 500;
                 let color = type === "build" ? "#2ecc71" : "var(--gold-light)";
@@ -1365,14 +1380,14 @@ function openKingdom() {
 
             // Injeta o renderizador de efeitos sobre o desenho do mapa original
             let originalDraw = kRenderer.draw.bind(kRenderer);
-            kRenderer.draw = function() {
+            kRenderer.draw = function () {
                 originalDraw();
                 if (this.currentEffect) {
                     let eff = this.currentEffect;
                     let p = this.getPos(eff.hex.q, eff.hex.r);
                     let ctx = this.ctx;
                     ctx.save();
-                    
+
                     // Onda de choque externa se expandindo
                     ctx.beginPath();
                     let radius = this.hexSize * (1 + eff.progress * 1.3);
@@ -1381,18 +1396,18 @@ function openKingdom() {
                     ctx.lineWidth = 5 * (1 - eff.progress);
                     ctx.globalAlpha = 1 - eff.progress;
                     ctx.stroke();
-                    
+
                     // Brilho interno implodindo taticamente
                     ctx.beginPath();
                     ctx.arc(p.x, p.y, this.hexSize * (1 - eff.progress), 0, Math.PI * 2);
                     ctx.fillStyle = eff.color;
                     ctx.globalAlpha = (1 - eff.progress) * 0.2;
                     ctx.fill();
-                    
+
                     ctx.restore();
                 }
             };
-            
+
             // --- CONTROLES DE MOUSE (PC) ---
             canvasEl.addEventListener('mousedown', e => {
                 isKDragging = false;
@@ -1484,7 +1499,7 @@ function openKingdom() {
                 renderBuildingMenu();
             }
         }
-        
+
         kRenderer.initCamera();
         kRenderer.draw();
         if ($('building-menu')) hide('building-menu');
@@ -1492,31 +1507,31 @@ function openKingdom() {
 }
 
 // Mecânica Unificada de Trocas Selecionadas do Mercado Global
-window.executeMarketTrade = function(resType, amount, goldChange) {
+window.executeMarketTrade = function (resType, amount, goldChange) {
     if (goldChange < 0 && game.gold < Math.abs(goldChange)) { alert("Ouro insuficiente!"); return; }
     if (amount < 0 && game.resources[resType] < Math.abs(amount)) { alert("Recursos insuficientes!"); return; }
-    
+
     game.resources[resType] += amount;
     game.gold += goldChange;
-    
+
     let hex = kRenderer.selectedHex;
-    let icon = resType==='wood'?'🌲':resType==='stone'?'⛰️':resType==='scales'?'🐟':'⏳';
-    
+    let icon = resType === 'wood' ? '🌲' : resType === 'stone' ? '⛰️' : resType === 'scales' ? '🐟' : '⏳';
+
     // Feedback visual instantâneo por popup flutuante
     if (amount > 0) {
         window.showKingdomPopup(`+${amount} ${icon} / ${goldChange}💰`, hex, 'var(--success)');
     } else {
         window.showKingdomPopup(`${amount} ${icon} / +${goldChange}💰`, hex, 'var(--gold-light)');
     }
-    
+
     // Atualiza contadores numéricos
     let resObj = game.resources || {};
-    if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
-    if($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
-    if($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
-    if($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
-    if($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
-    
+    if ($('k-res-gold')) $('k-res-gold').innerText = game.gold;
+    if ($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
+    if ($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
+    if ($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
+    if ($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
+
     kRenderer.animateHex(hex, "build");
     autoSave();
     renderBuildingMenu();
@@ -1525,31 +1540,31 @@ window.executeMarketTrade = function(resType, amount, goldChange) {
 function renderBuildingMenu() {
     const menu = $('building-menu');
     menu.innerHTML = '';
-    
+
     if (!kRenderer) return;
     const hex = kRenderer.selectedHex;
-    
+
     if (!hex) { menu.innerHTML = '<div style="color:#aaa; padding:10px;">Selecione um lote no mapa para interagir.</div>'; return; }
-    
+
     // === MENU DE UPGRADE (Se o lote já tiver uma construção) ===
     if (hex.building) {
         let bData = BUILDINGS[hex.building];
         if (!bData) { menu.innerHTML = '<div style="color:var(--warning); padding:10px;">Estrutura desconhecida.</div>'; return; }
-        
+
         let bLvl = hex.bLevel || 1;
-        let maxLvl = bData.id === 'CASTLE' ? 1 : 3; 
-        
+        let maxLvl = bData.id === 'CASTLE' ? 1 : 3;
+
         let html = `<div style="display:flex; flex-direction:column; align-items:center; min-width:220px; background:rgba(20,20,30,0.9); border:1px solid var(--gold); padding:10px; border-radius:8px;">
             <span style="font-size:32px;">${bData.icon}</span>
             <span style="font-size:13px; color:var(--gold-light); margin:4px 0; font-weight:bold;">${bData.name} <span style="color:#fff; background:#444; padding:1px 5px; border-radius:8px; font-size:10px;">Nv ${bLvl}</span></span>
             <span style="font-size:10px; color:#aaa; margin-bottom:8px; text-align:center;">${bData.desc}</span>`;
-        
+
         if (bLvl < maxLvl) {
             let nextLvl = bLvl + 1;
             let canAfford = Object.entries(bData.cost).every(([res, amt]) => (game.resources[res] || 0) >= (amt * nextLvl));
-            
+
             let costHtml = Object.entries(bData.cost).map(([res, amt]) => {
-                let icon = res==='wood'?'🌲':res==='stone'?'⛰️':res==='scales'?'🐟':res==='sand'?'⏳':'🩸';
+                let icon = res === 'wood' ? '🌲' : res === 'stone' ? '⛰️' : res === 'scales' ? '🐟' : res === 'sand' ? '⏳' : '🩸';
                 let reqAmt = amt * nextLvl;
                 let color = (game.resources[res] || 0) >= reqAmt ? '#fff' : 'var(--enemy-color)';
                 return `<span style="color:${color}; font-size:11px; font-weight:bold;">${icon}${reqAmt}</span>`;
@@ -1557,11 +1572,11 @@ function renderBuildingMenu() {
 
             html += `<div style="margin-bottom:4px; font-size:9px; color:var(--gold-dark); text-transform:uppercase;">Melhoria para Nv ${nextLvl}:</div>
                      <div style="display:flex; gap:8px; margin-bottom:8px; background:rgba(0,0,0,0.5); padding:4px 8px; border-radius:4px;">${costHtml}</div>
-                     <button id="btn-upgrade-b" class="btn-warning" style="padding:6px 12px; font-size:10px; cursor:${canAfford?'pointer':'not-allowed'}; opacity:${canAfford?'1':'0.5'};">⬆️ Dar Upgrade</button>`;
+                     <button id="btn-upgrade-b" class="btn-warning" style="padding:6px 12px; font-size:10px; cursor:${canAfford ? 'pointer' : 'not-allowed'}; opacity:${canAfford ? '1' : '0.5'};">⬆️ Dar Upgrade</button>`;
         } else {
             html += `<div style="color:var(--success); font-size:11px; font-weight:bold; margin-top:6px; letter-spacing:1px;">NÍVEL MÁXIMO</div>`;
         }
-        
+
         // --- ADIÇÃO DOS PAINÉIS INTERATIVOS REFORMULADOS ---
         let actsHtml = '';
         if (bData.id === 'MARKET') {
@@ -1594,11 +1609,11 @@ function renderBuildingMenu() {
                 actsHtml += `<div style="color:var(--enemy-color); font-size:9px; text-align:center;">Apenas líderes Umbrais possuem este conhecimento obscuro.</div>`;
             }
         }
-        
+
         html += actsHtml;
         html += `</div>`;
         menu.innerHTML = html;
-        
+
         // Atribuição de ouvintes de eventos para botões estáticos pós-injeção
         if (bLvl < maxLvl) {
             const btnU = $('btn-upgrade-b');
@@ -1609,18 +1624,18 @@ function renderBuildingMenu() {
                     if (canAfford) {
                         Object.entries(bData.cost).forEach(([res, amt]) => game.resources[res] -= (amt * nextLvl));
                         hex.bLevel = nextLvl;
-                        
+
                         if (bData.id === 'FARM') {
                             [...rosterMemory, ...deployedRoster].forEach(u => { u.maxHp += 10; u.hp += 10; });
                             window.showKingdomPopup("🌾 Exército +10 HP!", hex, '#2ecc71');
                         }
-                        
+
                         let resObj = game.resources || {};
-                        if($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
-                        if($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
-                        if($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
-                        if($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
-                        if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
+                        if ($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
+                        if ($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
+                        if ($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
+                        if ($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
+                        if ($('k-res-gold')) $('k-res-gold').innerText = game.gold;
 
                         kRenderer.animateHex(hex, "upgrade"); // Dispara o shockwave de melhoria
                         window.showKingdomPopup("⬆️ Nível Expandido!", hex, 'var(--gold-light)');
@@ -1638,10 +1653,10 @@ function renderBuildingMenu() {
                     let gearPool = ['RUSTY_SWORD', 'WOODEN_SHIELD', 'SWORD', 'SHIELD', 'BOOTS', 'BOW'];
                     let forgedId = gearPool[Math.floor(Math.random() * gearPool.length)];
                     let iDef = ITEMS[forgedId];
-                    
+
                     game.inventory.push({ id: forgedId, level: 1 });
                     game.gold -= 25;
-                    if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
+                    if ($('k-res-gold')) $('k-res-gold').innerText = game.gold;
 
                     kRenderer.animateHex(hex, "upgrade");
                     // Feedback grandioso via popup estilo RPG clássico
@@ -1661,15 +1676,15 @@ function renderBuildingMenu() {
                     let b = pool[Math.floor(Math.random() * pool.length)];
                     let maxL = typeof window.getMaxBoxLimit === 'function' ? window.getMaxBoxLimit() : 6;
                     let newUnit = new Unit({ q: 0, r: 0, faction: 1, name: b.name, baseName: b.name, emoji: b.e, hp: b.hp, maxHp: b.hp, mp: b.mp, maxMp: b.mp, atk: b.atk, range: b.range, level: 1, abilities: [...b.abilities], isNew: true, filter: b.filter, tags: b.tags || [], fav: b.fav || [] });
-                    
+
                     if (deployedRoster.filter(u => !u.isLeader).length >= maxL) {
                         rosterMemory.push(newUnit); window.showKingdomPopup(`📦 ${b.name} para a Box!`, hex, 'var(--success)');
                     } else {
                         deployedRoster.push(newUnit); window.showKingdomPopup(`⛺ ${b.name} Recrutado!`, hex, 'var(--success)');
                     }
                     game.gold -= 20;
-                    if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
-                    
+                    if ($('k-res-gold')) $('k-res-gold').innerText = game.gold;
+
                     kRenderer.animateHex(hex, "build");
                     autoSave(); renderBuildingMenu();
                 } else { alert("Ouro insuficiente!"); }
@@ -1685,20 +1700,20 @@ function renderBuildingMenu() {
                     if (rosterMemory.includes(sac)) rosterMemory.splice(rosterMemory.indexOf(sac), 1);
                     if (deployedRoster.includes(sac)) deployedRoster.splice(deployedRoster.indexOf(sac), 1);
                     game.resources.wood += 5; game.resources.stone += 5; game.resources.scales += 5; game.resources.sand += 5;
-                    
+
                     kRenderer.animateHex(hex, "upgrade");
                     window.showKingdomPopup(`🪦 Sacrificado! +5 Recursos`, hex, 'var(--blood-light)');
-                    
+
                     let resObj = game.resources || {};
-                    if($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
-                    if($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
-                    if($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
-                    if($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
+                    if ($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
+                    if ($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
+                    if ($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
+                    if ($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
                     autoSave(); renderBuildingMenu();
                 }
             };
         }
-        return; 
+        return;
     }
 
     // === MENU DE CONSTRUÇÃO (Lote Vazio) ===
@@ -1711,30 +1726,30 @@ function renderBuildingMenu() {
     tId = tId.toUpperCase();
 
     Object.values(BUILDINGS).forEach(b => {
-        if (b.id === 'CASTLE') return; 
-        if (!b.terrains || !b.terrains.includes(tId)) return; 
+        if (b.id === 'CASTLE') return;
+        if (!b.terrains || !b.terrains.includes(tId)) return;
 
         hasOptions = true;
         const canAfford = Object.entries(b.cost).every(([res, amt]) => (game.resources[res] || 0) >= amt);
         const btn = document.createElement('button');
         btn.style.cssText = `display:flex; flex-direction:column; align-items:center; min-width:140px; background:rgba(20,20,30,0.8); border:1px solid ${canAfford ? 'var(--success)' : '#555'}; padding:10px; border-radius:8px; cursor:${canAfford ? 'pointer' : 'not-allowed'};`;
-        
+
         const costHtml = Object.entries(b.cost).map(([res, amt]) => {
-            let icon = res==='wood'?'🌲':res==='stone'?'⛰️':res==='scales'?'🐟':res==='sand'?'⏳':'🩸';
+            let icon = res === 'wood' ? '🌲' : res === 'stone' ? '⛰️' : res === 'scales' ? '🐟' : res === 'sand' ? '⏳' : '🩸';
             let color = (game.resources[res] || 0) >= amt ? '#fff' : 'var(--enemy-color)';
             return `<span style="color:${color}; font-size:11px; font-weight:bold;">${icon}${amt}</span>`;
         }).join(' ');
 
         btn.innerHTML = `<span style="font-size:26px;">${b.icon}</span><span style="font-size:11px; color:var(--gold-light); margin:4px 0; font-weight:bold;">${b.name}</span><div style="display:flex; gap:6px;">${costHtml}</div><span style="font-size:9px; color:#aaa; margin-top:6px; text-align:center;">${b.desc}</span>`;
-        
+
         if (canAfford) {
             btn.onclick = async () => {
                 Object.entries(b.cost).forEach(([res, amt]) => game.resources[res] -= amt);
-                hex.building = b.id; 
-                hex.bLevel = 1; 
-                
+                hex.building = b.id;
+                hex.bLevel = 1;
+
                 if (b.id === 'CHURCH') {
-                    let celestial = new Unit({q:0,r:0,faction:1,isLeader:false,name:"Guardião Celestial",baseName:"Guardião",emoji:"🕊️",hp:45,maxHp:45,mp:4,maxMp:4,atk:12,range:1,level:1,abilities:['leadership'],isNew:true,filter:'none',tags:['CELESTIAL'],fav:['PLAINS']});
+                    let celestial = new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: "Guardião Celestial", baseName: "Guardião", emoji: "🕊️", hp: 45, maxHp: 45, mp: 4, maxMp: 4, atk: 12, range: 1, level: 1, abilities: ['leadership'], isNew: true, filter: 'none', tags: ['CELESTIAL'], fav: ['PLAINS'] });
                     rosterMemory.push(celestial);
                     await showZeldaPopup("🕊️", "Invocação Celestial!", "O Guardião Celestial foi enviado com sucesso para a Box!");
                 }
@@ -1744,33 +1759,33 @@ function renderBuildingMenu() {
                 }
 
                 let resObj = game.resources || {};
-                if($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
-                if($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
-                if($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
-                if($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
-                if($('k-res-gold')) $('k-res-gold').innerText = game.gold;
-                
+                if ($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
+                if ($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
+                if ($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
+                if ($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
+                if ($('k-res-gold')) $('k-res-gold').innerText = game.gold;
+
                 kRenderer.animateHex(hex, "build"); // Dispara shockwave verde de construção
                 if (b.id !== 'CHURCH') window.showKingdomPopup("✨ Construído!", hex, '#2ecc71');
-                
-                autoSave(); 
-                renderBuildingMenu(); 
+
+                autoSave();
+                renderBuildingMenu();
             };
         }
         menu.appendChild(btn);
     });
-    
-    if(!hasOptions) menu.innerHTML = '<div style="color:#aaa; padding:10px; font-style:italic;">Nenhuma construção disponível para este tipo de terreno.</div>';
+
+    if (!hasOptions) menu.innerHTML = '<div style="color:#aaa; padding:10px; font-style:italic;">Nenhuma construção disponível para este tipo de terreno.</div>';
 }
 
 // ==========================================
 // SISTEMA: LÍDER GÊNIA - TRÊS DESEJOS
 // ==========================================
-window.triggerGenieWishes = function() {
+window.triggerGenieWishes = function () {
     const el = document.createElement('div');
     el.id = 'genie-wishes-modal';
     el.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; display:flex; justify-content:center; align-items:center;`;
-    
+
     el.innerHTML = `
         <div style="background:var(--bg-panel); border:2px solid #9b59b6; border-radius:10px; padding:20px; width:90%; max-width:400px; text-align:center;">
             <div style="font-size:50px; filter:hue-rotate(270deg);">🧞‍♀️</div>
@@ -1782,28 +1797,28 @@ window.triggerGenieWishes = function() {
             <button id="btn-wish-item" class="btn-primary" style="width:100%; padding:10px; background:#8e44ad; border-color:#9b59b6; color:#fff;">🎁 Desejo do Poder (Ganhar Item Forjado)</button>
         </div>
     `;
-    
+
     document.body.appendChild(el);
 
     const closeWishes = () => { el.remove(); autoSave(); updateUI(); };
 
     $('btn-wish-gold').onclick = () => {
         game.gold += 30;
-        showPopup("+30 Ouro!", game.units.find(u=>u.isLeader), 'var(--gold-light)');
+        showPopup("+30 Ouro!", game.units.find(u => u.isLeader), 'var(--gold-light)');
         closeWishes();
     };
-    
+
     $('btn-wish-res').onclick = () => {
         game.resources.wood += 10; game.resources.stone += 10; game.resources.scales += 10; game.resources.sand += 10;
-        showPopup("+Recursos!", game.units.find(u=>u.isLeader), '#2ecc71');
+        showPopup("+Recursos!", game.units.find(u => u.isLeader), '#2ecc71');
         closeWishes();
     };
-    
+
     $('btn-wish-item').onclick = () => {
         let itP = ['POTION', 'BANDAGE', 'SWORD', 'SHIELD', 'BOOTS', 'BOW', 'MAGIC'];
         let forged = itP[Math.floor(Math.random() * itP.length)];
         game.inventory.push({ id: forged, level: 1 });
-        showPopup("Item Adquirido!", game.units.find(u=>u.isLeader), '#9b59b6');
+        showPopup("Item Adquirido!", game.units.find(u => u.isLeader), '#9b59b6');
         closeWishes();
     };
 };
