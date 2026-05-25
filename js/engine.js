@@ -334,7 +334,20 @@ class Game {
                             if (existingEq) { if (iDef.onUnequip) iDef.onUnequip(u, existingEq.level); existingEq.level++; if (iDef.onEquip) iDef.onEquip(u, existingEq.level); if (typeof showPopup === 'function') showPopup(`✨ Fusão Lv${existingEq.level}!`, u, '#c9a227'); }
                             else { u.equipment.push({ id: iType, level: 1 }); if (iDef.onEquip) iDef.onEquip(u, 1); }
                             this.items.delete(k);
-                        } else { let r = await iDef.f(u, this); if (r !== false) this.items.delete(k); }
+                        } else {
+                            // SE FOR UM ITEM DE CAMPO, VAI PARA A MOCHILA
+                            const itemMapping = { 'MEAT': 'isca', 'MAGIC': 'sphere', 'POTION': 'potion', 'BANDAGE': 'bandage', 'SCROLL': 'scroll' };
+                            let mappedId = itemMapping[iType];
+
+                            if (mappedId) {
+                                game.fieldItems[mappedId] = (game.fieldItems[mappedId] || 0) + 1;
+                                this.items.delete(k);
+                                if (typeof showPopup === 'function') showPopup(`+1 ${mappedId.toUpperCase()}!`, u, '#f1c40f');
+                            } else {
+                                // Comportamento original para itens que não são de campo
+                                let r = await iDef.f(u, this); if (r !== false) this.items.delete(k);
+                            }
+                        }
                         const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true; lastState = null;
                     }
                 } else { if (iDef.type !== 'equip') { let r = await iDef.f(u, this); if (r !== false) this.items.delete(k); } }
@@ -822,7 +835,7 @@ class Renderer {
     draw() {
         const ctx = this.ctx; const actBgColors = ['#0a0a0e', '#121208', '#050a15', '#100515', '#150505']; const bgColor = actBgColors[this.game.currentLevel - 1] || '#0a0a0e';
         ctx.fillStyle = bgColor; ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); ctx.globalAlpha = 1.0; ctx.shadowBlur = 0;
-        
+
         this.game.map.forEach(hex => {
             const p = this.getPos(hex.q, hex.r); this.hexPath(ctx, p.x, p.y, this.hexSize - 0.5); ctx.fillStyle = hex.terrain.color; ctx.fill();
             if (hex.isCrystal) { this.hexPath(ctx, p.x, p.y, this.hexSize - 1); ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = 'rgba(0,255,255,0.2)'; ctx.fill(); }
@@ -834,7 +847,7 @@ class Renderer {
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText("🍖", p.x, p.y + (this.hexSize * 0.2));
-            }   
+            }
         });
 
         this.game.items.forEach((iType, key) => { let [q, r] = key.split(',').map(Number); const p = this.getPos(q, r); ctx.save(); ctx.globalAlpha = 1.0; ctx.beginPath(); ctx.ellipse(p.x, p.y + this.hexSize * 0.35, this.hexSize * 0.4, this.hexSize * 0.2, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(20,20,30,0.9)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#f1c40f'; ctx.stroke(); ctx.font = `${this.hexSize * 0.6}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (typeof ITEMS !== 'undefined' && ITEMS[iType]) { ctx.fillText(ITEMS[iType].icon, p.x, p.y + this.hexSize * 0.25); } ctx.restore(); });
@@ -1023,13 +1036,24 @@ window.runAITurn = async function () {
 
 window.runWildTurn = async function () {
     const wilds = game.units.filter(u => u.faction === 0);
+    // Feras sentem o cheiro da isca e entram em estado de alerta
+    wilds.forEach(w => {
+        if (!w.alerted) {
+            game.map.forEach(h => {
+                if (h.hasLure && Hex.distance(w, h) <= 5) {
+                    w.alerted = true;
+                    if (typeof showPopup === 'function') showPopup("Farejou Isca!", w, '#e67e22');
+                }
+            });
+        }
+    });
     for (const w of wilds) {
         if (game.gameOver) break; if (w.mp === 0) continue;
         if (!w.alerted) { w.hp = Math.min(w.maxHp, w.hp + 5); continue; }
-        
-        if (renderer) { renderer.centerOn(w.vq, w.vr); renderer.draw(); } 
+
+        if (renderer) { renderer.centerOn(w.vq, w.vr); renderer.draw(); }
         game.selectedUnit = w; if (typeof sleep === 'function') await sleep(250);
-        game.calculateReachable(w); 
+        game.calculateReachable(w);
 
         // 1. O faro da fera: Procura a isca de carne mais próxima!
         let nearestLure = null; let minLureD = 999;
@@ -1057,21 +1081,21 @@ window.runWildTurn = async function () {
         const isS = w.isBoss || w.maxHp >= 50 || w.atk >= 12;
 
         if (cls) {
-            let moves = Array.from(game.reachableHexes.keys()); 
-            let bM = { q: w.q, r: w.r }; 
+            let moves = Array.from(game.reachableHexes.keys());
+            let bM = { q: w.q, r: w.r };
             let bestScore = -9999;
-            
+
             moves.forEach(m => {
-                const [mq, mr] = m.split(',').map(Number); 
+                const [mq, mr] = m.split(',').map(Number);
                 // Não pode parar em cima de outra unidade
                 if (game.getUnitAt(mq, mr) && (mq !== w.q || mr !== w.r)) return;
-                
-                let distToTarget = Hex.distance({ q: mq, r: mr }, cls); 
+
+                let distToTarget = Hex.distance({ q: mq, r: mr }, cls);
                 let score = 0;
 
                 if (targetIsLure) {
                     // IA MODO ISCA: Quer parar EXATAMENTE em cima da carne (distância 0)
-                    score = -distToTarget * 50; 
+                    score = -distToTarget * 50;
                     if (distToTarget === 0) score += 5000; // Pote de Ouro
                 } else {
                     // IA MODO COMBATE ORIGINAL
@@ -1081,13 +1105,13 @@ window.runWildTurn = async function () {
 
                 if (score > bestScore) { bestScore = score; bM = { q: mq, r: mr }; }
             });
-            
+
             // Move a fera para o melhor hexágono encontrado
-            if (bM.q !== w.q || bM.r !== w.r) { 
-                w.mp -= (game.reachableHexes.get(`${bM.q},${bM.r}`) || 1); 
-                await game.moveUnit(w, bM.q, bM.r); 
+            if (bM.q !== w.q || bM.r !== w.r) {
+                w.mp -= (game.reachableHexes.get(`${bM.q},${bM.r}`) || 1);
+                await game.moveUnit(w, bM.q, bM.r);
             }
-            
+
             // Lógica pós-movimento (Atacar ou Comer)
             if (targetIsLure && w.q === cls.q && w.r === cls.r) {
                 // Fera pisou na isca! Fica distraída e não ataca neste turno.
@@ -1096,7 +1120,7 @@ window.runWildTurn = async function () {
                 // bônus ativo no chão para dobrar a chance quando for domar no turno dele!
             } else if (!targetIsLure && Hex.distance(w, cls) <= w.range) {
                 // Bate no inimigo normalmente
-                await game.executeCombat(w, cls); 
+                await game.executeCombat(w, cls);
             }
         }
         if (typeof sleep === 'function') await sleep(200);
