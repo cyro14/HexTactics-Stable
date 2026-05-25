@@ -1244,8 +1244,8 @@ function startGame(load, isRoguelite = false, leaderId = null) {
         let lD = game.leaderData;
         let initialSpells = [];
         
-        // Mapeamento automático de Magias Exclusivas no Turno 0
-        let sMap = {
+        // 1. Mapeamento de Assinaturas (O que é ÚNICO de cada líder)
+        const assinaturas = {
             'Metamorfo': ['sl_forma_urso', 'sl_forma_falcao'],
             'Carrasco': ['sl_execucao'],
             'Invocador': ['sl_evocar_dragao', 'sl_evocar_lobo', 'sl_evocar_golem'],
@@ -1259,16 +1259,39 @@ function startGame(load, isRoguelite = false, leaderId = null) {
             'Piromante': ['sl_bola_fogo'],
             'Chefe Orc': ['sl_grito_orc'],
             'Necromante': ['sl_erguer_esq'],
-            'Arquimago': ['sl_explosao_arcana']
+            'Arquimago': ['sl_explosao_arcana'],
+            'Rainha do Gelo': ['sl_barreira_gelo'],
+            'Matriarca Harpia': ['sl_vendaval']
         };
-        
-        // Aplica o mapeamento ou busca a magia padrão baseada na tag
-        if (sMap[lD.name]) {
-            initialSpells = [...sMap[lD.name]];
-        } else {
-            let s = SPELLS.find(sp => sp.level === 1 && lD.tags && sp.tags.includes(lD.tags[0]));
-            if (s) initialSpells.push(s.id);
+
+        // Criamos uma lista de TODAS as magias assinaturas para garantir que ninguém mais as tenha
+        const todasAssinaturas = Object.values(assinaturas).flat();
+
+        // 2. Adiciona as Assinaturas do Líder escolhido
+        if (assinaturas[lD.name]) {
+            initialSpells = [...assinaturas[lD.name]];
         }
+
+        // 3. Adiciona magias genéricas de Nível 1
+        // REGRAS:
+        // - Tem que ser Nível 1
+        // - Tem que bater com as tags do líder
+        // - NÃO pode ser uma magia de assinatura de outro líder
+        if (lD.tags) {
+            SPELLS.forEach(s => {
+                const ehAssinaturaDeOutro = todasAssinaturas.includes(s.id) && !initialSpells.includes(s.id);
+                
+                if (s.level === 1 && s.tags.some(t => lD.tags.includes(t))) {
+                    if (!initialSpells.includes(s.id) && !ehAssinaturaDeOutro) {
+                        initialSpells.push(s.id);
+                    }
+                }
+            });
+        }   
+
+       // if (sMap[lD.name]) {
+       //     initialSpells = [...sMap[lD.name]];
+       // }
 
         deployedRoster.push(new Unit({
             q: 0, r: 0, 
