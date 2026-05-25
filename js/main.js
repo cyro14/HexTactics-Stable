@@ -39,11 +39,17 @@ document.addEventListener("DOMContentLoaded",()=>{
                         if (spell.type === 'atk' && spRange > 0) {
                             if (!u || u.faction === FACTIONS.PLAYER.id) { showMessage("Selecione um inimigo!", "#e74c3c"); return; }
                         } else if (spell.type === 'def' && spRange > 0) {
-                            if (spell.id === 'sl_resurrection') {
-                                if (u) { showMessage("Escolha um espaço vazio!", "#e74c3c"); return; }
-                            } else {
-                                if (!u || u.faction !== FACTIONS.PLAYER.id) { showMessage("Selecione um aliado!", "#e74c3c"); return; }
-                            }
+                        // REGRA ESPECIAL DO INVOCADOR:
+                        // Se a magia for uma invocação (tags MYSTIC), permite hex vazio adjacente.
+                        // Se for cura/buff, exige aliado.
+                        if (spell.tags.includes('MYSTIC') && spRange === 1) {
+                            if (u) { showMessage("Selecione um espaço vazio!", "#e74c3c"); return; }
+                            if (Hex.distance(su, cH) > 1) { showMessage("Muito longe!", "#e74c3c"); return; }
+                        } else if (spell.id === 'sl_resurrection') {
+                            if (u) { showMessage("Escolha um espaço vazio!", "#e74c3c"); return; }
+                        } else {
+                            if (!u || u.faction !== FACTIONS.PLAYER.id) { showMessage("Selecione um aliado!", "#e74c3c"); return; }
+                        }
                         }
                     }
 

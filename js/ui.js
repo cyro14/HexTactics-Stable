@@ -1271,11 +1271,23 @@ function startGame(load, isRoguelite = false, leaderId = null) {
         }
 
         deployedRoster.push(new Unit({
-            q: 0, r: 0, faction: 1, isLeader: true, 
-            name: lD.name, emoji: lD.emoji, hp: lD.hp, maxHp: lD.hp, 
-            mp: lD.mp, maxMp: lD.maxMp, atk: lD.atk, range: lD.range, 
-            isNew: true, tags: lD.tags || [], fav: lD.fav || [], 
-            knownSpells: initialSpells, grimTags: [...(lD.tags || [])]
+            q: 0, r: 0, 
+            faction: 1, 
+            isLeader: true, 
+            name: lD.name, 
+            emoji: lD.emoji, 
+            hp: lD.hp, 
+            maxHp: lD.hp, 
+            // CORREÇÃO: Forçamos o MP aqui para não ser undefined
+            mp: lD.mp || 3, 
+            maxMp: lD.mp || 3, 
+            atk: lD.atk, 
+            range: lD.range, 
+            isNew: true, 
+            tags: lD.tags || [], 
+            fav: lD.fav || [], 
+            knownSpells: initialSpells, 
+            grimTags: [...(lD.tags || [])]
         }));
         
         renderRouteMap(); 
