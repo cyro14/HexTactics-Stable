@@ -151,6 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
         isDragging = false; startX = undefined;
 
         if (!wasDragging && e.changedTouches.length === 1) {
+            e.preventDefault();
             processHexClick(e.changedTouches[0].clientX, e.changedTouches[0].clientY, true);
         }
     });
