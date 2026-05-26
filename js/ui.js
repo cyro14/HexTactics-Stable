@@ -247,9 +247,9 @@ function renderSpellBar() {
     if (!game || game.currentTurn !== 1) return;
 
     // Se a unidade selecionada tiver magias, mostra a dela. Senão, mostra a do Líder.
-    let caster = game.selectedUnit && game.selectedUnit.faction === 1 && game.selectedUnit.knownSpells && game.selectedUnit.knownSpells.length > 0 
-                 ? game.selectedUnit 
-                 : game.units.find(u => u.isLeader && u.faction === 1);
+    let caster = game.selectedUnit && game.selectedUnit.faction === 1 && game.selectedUnit.knownSpells && game.selectedUnit.knownSpells.length > 0
+        ? game.selectedUnit
+        : game.units.find(u => u.isLeader && u.faction === 1);
 
     if (!caster || !caster.knownSpells || !caster.knownSpells.length) return;
 
@@ -257,17 +257,17 @@ function renderSpellBar() {
         const spell = typeof SPELLS !== 'undefined' ? SPELLS.find(s => s.id === sid) : null;
         if (!spell) return;
         const cd = game.spellCooldowns[sid] || 0;
-        
+
         let can = false;
         if (caster.isLeader) {
             can = canAffordSpell(spell, caster) && !game.isAnimating && cd === 0;
         } else {
             // Feras não gastam mana, apenas a ação de ataque
-            can = !caster.hasAttacked && !game.isAnimating && cd === 0; 
+            can = !caster.hasAttacked && !game.isAnimating && cd === 0;
         }
 
         const isActive = game.activeSpell === sid;
-        
+
         // Exibição visual diferente se for uma fera
         let costHtml = caster.isLeader ? Object.entries(spell.cost).map(([tag, amt]) => {
             const mt = MANA_TYPES[tag]; if (!mt) return '';
@@ -510,7 +510,7 @@ function updateUI() {
         fc.id = 'combat-forecast';
         document.body.appendChild(fc);
     }
-    
+
     // Atualiza os contadores individuais de Ouro e DNA
     const goldDisplay = $('ui-gold');
     if (goldDisplay && game) goldDisplay.innerText = game.gold;
@@ -562,7 +562,7 @@ function updateUI() {
         itemBtn.id = 'btn-field-items';
         itemBtn.innerHTML = '🎒';
         itemBtn.title = "Ferramentas de Campo";
-        itemBtn.onclick = () => { 
+        itemBtn.onclick = () => {
             const menu = $('field-item-menu');
             menu.classList.toggle('hidden');
             if (!menu.classList.contains('hidden')) {
@@ -585,7 +585,7 @@ function generateShopItems() {
     shopItems = []; let arts = getActiveArtifacts();
 
     let bLvl = game && game.currentLevel ? game.currentLevel : 1;
-    
+
     // --- 1. CONTRATOS DE FERAS COMUNS E CHEFES ---
     const rB = BEASTS.LAND[Math.floor(Math.random() * BEASTS.LAND.length)];
     let bName = rB.name;
@@ -605,10 +605,10 @@ function generateShopItems() {
             let rBoss = bossPool[Math.floor(Math.random() * bossPool.length)];
             let bossHp = rBoss.hp + ((bLvl - 1) * 30);
             let bossAtk = rBoss.atk + ((bLvl - 1) * 8);
-            shopItems.push({ 
-                name: `Contrato Épico: ${rBoss.name}`, icon: rBoss.e, desc: `Adiciona um CHEFE Lv${bLvl} à Box.`, 
-                cost: 40 + (bLvl * 5), rarity: 'legendary', color: '#ff00ff', type: 'consumable', filter: rBoss.filter || 'none', 
-                action: async () => { rosterMemory.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: rBoss.name, baseName: rBoss.name, emoji: rBoss.e, hp: bossHp, maxHp: bossHp, mp: rBoss.mp, maxMp: rBoss.mp, atk: bossAtk, range: rBoss.range, level: bLvl, abilities: [...rBoss.abilities], isNew: true, filter: rBoss.filter, tags: rBoss.tags || [], fav: rBoss.fav || [], isBoss: true })); return true; } 
+            shopItems.push({
+                name: `Contrato Épico: ${rBoss.name}`, icon: rBoss.e, desc: `Adiciona um CHEFE Lv${bLvl} à Box.`,
+                cost: 40 + (bLvl * 5), rarity: 'legendary', color: '#ff00ff', type: 'consumable', filter: rBoss.filter || 'none',
+                action: async () => { rosterMemory.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: rBoss.name, baseName: rBoss.name, emoji: rBoss.e, hp: bossHp, maxHp: bossHp, mp: rBoss.mp, maxMp: rBoss.mp, atk: bossAtk, range: rBoss.range, level: bLvl, abilities: [...rBoss.abilities], isNew: true, filter: rBoss.filter, tags: rBoss.tags || [], fav: rBoss.fav || [], isBoss: true })); return true; }
             });
         }
     }
@@ -867,10 +867,10 @@ function openTeamView() {
 // 5. TELAS EXTRAS (Seleção, Bestiário, Relicário)
 // ==========================================
 function openLeaderSelection(isRoguelite) {
-    $('mode-screen').classList.add('hidden'); 
+    $('mode-screen').classList.add('hidden');
     const leaderScreen = $('leader-selection');
     leaderScreen.classList.remove('hidden');
-    
+
     // Remove o filtro antigo se existir
     let oldFilter = $('leader-filter-container');
     if (oldFilter) oldFilter.remove();
@@ -884,16 +884,16 @@ function openLeaderSelection(isRoguelite) {
     let filterDiv = document.createElement('div');
     filterDiv.id = 'leader-filter-container';
     filterDiv.style.cssText = 'display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-bottom:15px; width: 100%;';
-    
-    const container = $('leader-list'); 
+
+    const container = $('leader-list');
     leaderScreen.insertBefore(filterDiv, container);
 
     let activeFilter = 'ALL';
 
     // Função que redesenha os botões do filtro para mostrar qual está "Aceso"
     const updateFilterUI = () => {
-        filterDiv.innerHTML = ''; 
-        
+        filterDiv.innerHTML = '';
+
         // Botão "TODOS"
         let allBtn = document.createElement('div');
         allBtn.innerHTML = '✦ TODOS';
@@ -908,11 +908,11 @@ function openLeaderSelection(isRoguelite) {
             let col = tDef ? tDef.col : '#888';
             let tName = tDef ? tDef.name : t;
             let isActive = activeFilter === t;
-            
+
             let tagBtn = document.createElement('div');
             tagBtn.innerHTML = tName;
-            tagBtn.style.cssText = `background:rgba(20,20,30,0.9); border:1px solid ${col}; color:${col}; font-size:10px; padding:4px 8px; border-radius:4px; cursor:pointer; box-shadow:${isActive ? '0 0 10px '+col : '0 0 2px '+col+'40'}; text-shadow:0 0 2px ${col}80; opacity:${isActive ? '1' : '0.4'}; transition:all 0.2s ease;`;
-            
+            tagBtn.style.cssText = `background:rgba(20,20,30,0.9); border:1px solid ${col}; color:${col}; font-size:10px; padding:4px 8px; border-radius:4px; cursor:pointer; box-shadow:${isActive ? '0 0 10px ' + col : '0 0 2px ' + col + '40'}; text-shadow:0 0 2px ${col}80; opacity:${isActive ? '1' : '0.4'}; transition:all 0.2s ease;`;
+
             tagBtn.onclick = () => { activeFilter = t; renderList(); updateFilterUI(); };
             filterDiv.appendChild(tagBtn);
         });
@@ -922,7 +922,7 @@ function openLeaderSelection(isRoguelite) {
     const renderList = () => {
         container.innerHTML = '';
         let filteredLeaders = LEADERS;
-        
+
         if (activeFilter !== 'ALL') {
             filteredLeaders = LEADERS.filter(l => (l.tags || []).includes(activeFilter));
         }
@@ -934,7 +934,7 @@ function openLeaderSelection(isRoguelite) {
                 gTags = LEADER_GRIMOIRE_TAGS[l.id];
             }
             const grimTags = gTags.map(t => getTagHTML(t)).join('');
-            
+
             btn.style.cssText = 'display:block; width:100%; text-align:left; background:rgba(20,20,30,0.8); border:1px solid #444; border-radius:8px; padding:12px; margin-bottom:10px; cursor:pointer; transition:border 0.2s, background 0.2s;';
             btn.onmouseover = () => { btn.style.borderColor = 'var(--gold-light)'; btn.style.background = 'rgba(40,30,10,0.9)'; };
             btn.onmouseout = () => { btn.style.borderColor = '#444'; btn.style.background = 'rgba(20,20,30,0.8)'; };
@@ -946,15 +946,15 @@ function openLeaderSelection(isRoguelite) {
                 </div>
                 <div style="font-size:12px; text-transform:none; color:#aaa; font-weight:normal; margin-bottom:8px; line-height:1.4;">${l.desc}</div>
                 <div style="display:flex; flex-wrap:wrap; gap:3px;">${grimTags}</div>
-            `; 
-            
-            btn.onclick = () => { 
-                $('leader-selection').classList.add('hidden'); 
-                startGame(false, isRoguelite, l.id); 
+            `;
+
+            btn.onclick = () => {
+                $('leader-selection').classList.add('hidden');
+                startGame(false, isRoguelite, l.id);
             };
             container.appendChild(btn);
         });
-        
+
         if (filteredLeaders.length === 0) {
             container.innerHTML = '<div style="color:#aaa; text-align:center; padding:20px; font-style:italic;">Nenhum líder encontrado com essa especialidade.</div>';
         }
@@ -964,9 +964,9 @@ function openLeaderSelection(isRoguelite) {
     updateFilterUI();
     renderList();
 
-    $('btn-close-leader').onclick = () => { 
-        $('leader-selection').classList.add('hidden'); 
-        $('mode-screen').classList.remove('hidden'); 
+    $('btn-close-leader').onclick = () => {
+        $('leader-selection').classList.add('hidden');
+        $('mode-screen').classList.remove('hidden');
     };
 }
 
@@ -1471,12 +1471,12 @@ function startGame(load, isRoguelite = false, leaderId = null) {
         game.generateKingdomMap();
         game.kingdomMap = new Map();
         if (leaderId) game.leaderData = LEADERS.find(l => l.id === leaderId) || LEADERS[0];
-        
+
         generateRouteMap();
-        
+
         let lD = game.leaderData;
         let initialSpells = [];
-        
+
         // 1. Mapeamento de Assinaturas (O que é ÚNICO de cada líder)
         const assinaturas = {
             'Metamorfo': ['sl_forma_urso', 'sl_forma_falcao'],
@@ -1512,38 +1512,53 @@ function startGame(load, isRoguelite = false, leaderId = null) {
         // - NÃO pode ser uma magia de assinatura de outro líder
         if (lD.tags) {
             SPELLS.forEach(s => {
+                // Filtro: A magia deve ser Nv 1, compartilhar tag E NÃO SER ASSINATURA DE OUTRO LÍDER
+                let ehAssinaturaDeAlguem = false;
+                let donoDaAssinatura = "";
                 const ehAssinaturaDeOutro = todasAssinaturas.includes(s.id) && !initialSpells.includes(s.id);
-                
-                if (s.level === 1 && s.tags.some(t => lD.tags.includes(t))) {
-                    if (!initialSpells.includes(s.id) && !ehAssinaturaDeOutro) {
-                        initialSpells.push(s.id);
+
+                Object.keys(assinaturas).forEach(nomeLider => {
+                    if (assinaturas[nomeLider].includes(s.id)) {
+                        ehAssinaturaDeAlguem = true;
+                        donoDaAssinatura = nomeLider;
                     }
+                });
+
+                // REGRAS DE FILTRO:
+                // - Nível 1
+                // - Tem a tag compatível
+                // - SE for assinatura, SÓ pode ser adicionada se o nome do líder atual for o dono da assinatura
+                const ehCompativel = s.level === 1 && s.tags.some(t => lD.tags.includes(t));
+                const podeAprender = !ehAssinaturaDeAlguem || (donoDaAssinatura === lD.baseName);
+
+                if (ehCompativel && podeAprender && !initialSpells.includes(s.id)) {
+                    initialSpells.push(s.id);
                 }
             });
-        }   
+        }
 
 
         deployedRoster.push(new Unit({
-            q: 0, r: 0, 
-            faction: 1, 
-            isLeader: true, 
-            name: lD.name, 
-            emoji: lD.emoji, 
-            hp: lD.hp, 
-            maxHp: lD.hp, 
+            q: 0, r: 0,
+            faction: 1,
+            isLeader: true,
+            name: lD.name,
+            emoji: lD.emoji,
+            hp: lD.hp,
+            maxHp: lD.hp,
             abilities: [...(lD.abilities || [])],
-            mp: lD.mp || 3, 
-            maxMp: lD.mp || 3, 
-            atk: lD.atk, 
-            range: lD.range, 
-            isNew: true, 
-            tags: lD.tags || [], 
-            fav: lD.fav || [], 
-            knownSpells: initialSpells, 
+            mp: lD.mp || 3,
+            maxMp: lD.mp || 3,
+            atk: lD.atk,
+            range: lD.range,
+            isNew: true,
+            tags: lD.tags || [],
+            fav: lD.fav || [],
+            knownSpells: initialSpells,
             grimTags: [...(lD.tags || [])]
         }));
-        
-        renderRouteMap(); 
+
+        renderRouteMap();
     }
 
 }
@@ -2088,15 +2103,15 @@ window.triggerGenieWishes = function () {
     };
 };
 
-window.renderFieldItemMenu = function() {
+window.renderFieldItemMenu = function () {
     const menu = $('field-item-menu');
     if (!menu) return;
-    
+
     // Garante que a estrutura exista e cria itens iniciais para teste se estiver vazio
     if (!game.fieldItems) {
-        game.fieldItems = { isca: 3, rede: 2, potion: 2, bandage: 1, scroll: 1, sphere: 1 }; 
+        game.fieldItems = { isca: 3, rede: 2, potion: 2, bandage: 1, scroll: 1, sphere: 1 };
     }
-    
+
     // Dicionário visual de nomes bonitos para a interface
     const itemDefs = {
         isca: { name: "🍖 Isca de Carne" },
@@ -2106,7 +2121,7 @@ window.renderFieldItemMenu = function() {
         scroll: { name: "📜 Pergaminho Arcano" },
         sphere: { name: "🔮 Esfera Elemental" }
     };
-    
+
     let html = '';
     Object.entries(game.fieldItems).forEach(([id, qtd]) => {
         if (qtd > 0 && itemDefs[id]) {
@@ -2117,10 +2132,10 @@ window.renderFieldItemMenu = function() {
                 </div>`;
         }
     });
-    
+
     if (html === '') {
         html = '<div style="color:#aaa; padding:8px; font-size:11px; text-align:center; font-style:italic;">Mochila Vazia</div>';
     }
-    
+
     menu.innerHTML = html;
 };
