@@ -587,18 +587,32 @@ function generateShopItems() {
     shopItems.push({ name: "Poção de Exército", icon: "🧪", desc: "Cura 30 HP de todos.", cost: 4, rarity: 'common', color: 'var(--rarity-common)', type: 'consumable', filter: 'none', action: async () => { rosterMemory.forEach(u => u.hp = Math.min(u.maxHp, u.hp + 30)); deployedRoster.forEach(u => u.hp = Math.min(u.maxHp, u.hp + 30)); return true; } });
 
     shopItems.push({ name: `Contrato: ${bName}`, icon: rB.e, desc: `Adiciona fera Lv${bLvl} à Box.`, cost: 10 + (bLvl * 2), rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none', action: async () => { let newAbilities = [...rB.abilities]; if (game && game.leaderData.name === 'Piromante' && !newAbilities.includes('burn')) { newAbilities.push('burn'); } rosterMemory.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: bName, baseName: rB.name, emoji: rB.e, hp: bHp, maxHp: bHp, mp: rB.mp, maxMp: rB.mp, atk: bAtk, range: rB.range, level: bLvl, abilities: newAbilities, isNew: true, filter: rB.filter, tags: rB.tags || [], fav: rB.fav || [] })); return true; } });
-    // Bônus do Estábulo
-    if (typeof countKingdomBuildings === 'function' && window.countKingdomBuildings('STABLE') > 0) {
-        let horse = BEASTS.LAND.find(b => b.name === 'Cavalo');
-        if (horse) {
-            shopItems.push({
-                name: `Contrato: Cavalo (Estábulo)`, icon: horse.e, desc: `Adiciona um Cavalo Nv1 à Box.`,
-                cost: 10, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: 'none',
-                action: async () => {
-                    let u = new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: horse.name, baseName: horse.name, emoji: horse.e, hp: horse.hp, maxHp: horse.hp, mp: horse.mp, maxMp: horse.mp, atk: horse.atk, range: horse.range, level: 1, abilities: [...horse.abilities], isNew: true, filter: horse.filter, tags: horse.tags || [], fav: horse.fav || [] });
-                    rosterMemory.push(u); return true;
+    // Bônus do Estábulo (Escalando com o Nível)
+    if (typeof countKingdomBuildings === 'function') {
+        let stableLvl = window.countKingdomBuildings('STABLE');
+        if (stableLvl > 0) {
+            let horse = BEASTS.LAND.find(b => b.name === 'Cavalo');
+            if (horse) {
+                let hLevel = Math.min(3, stableLvl); // Limita ao Nv3
+                let hHp = horse.hp + ((hLevel - 1) * 20);
+                let hAtk = horse.atk + ((hLevel - 1) * 6);
+                let hName = horse.name;
+                
+                // Evolução de nome se Nv2 ou Nv3
+                if (hLevel >= 2) {
+                    let evArr = EVOS[horse.name] || [horse.name + ' Alfa', horse.name + ' Supremo'];
+                    hName = hLevel === 2 ? evArr[0] : (evArr[1] || evArr[0]);
                 }
-            });
+
+                shopItems.push({
+                    name: `Cavalo do Estábulo (Nv${hLevel})`, icon: horse.e, desc: `Adiciona um ${hName} Nv${hLevel} à Box.`,
+                    cost: 10 + ((hLevel - 1) * 5), rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: 'none',
+                    action: async () => {
+                        let u = new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: hName, baseName: horse.name, emoji: horse.e, hp: hHp, maxHp: hHp, mp: horse.mp, maxMp: horse.mp, atk: hAtk, range: horse.range, level: hLevel, abilities: [...horse.abilities], isNew: true, filter: horse.filter, tags: horse.tags || [], fav: horse.fav || [] });
+                        rosterMemory.push(u); return true;
+                    }
+                });
+            }
         }
     }
 

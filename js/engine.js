@@ -282,6 +282,20 @@ class Game {
 
         this.eventFlags = {}; this.activeSynergies = this.getSynergies(1); this.currentTurn = 1; this.gameOver = false; this.selectPlayerLeader();
         let pL = this.units.find(u => u.isLeader && u.faction === 1);
+
+        // Passiva da Torre de Cristal - Adiciona Mana logo no início do mapa!
+        if (pL && typeof countKingdomBuildings === 'function') {
+            let towerLvl = window.countKingdomBuildings('CRYSTAL_TOWER');
+            if (towerLvl > 0 && pL.tags && pL.tags.length > 0) {
+                let primaryTag = pL.tags[0]; 
+                this.manaPool[primaryTag] = (this.manaPool[primaryTag] || 0) + towerLvl;
+                setTimeout(() => {
+                    if (typeof showPopup === 'function') showPopup(`+${towerLvl} Mana 🔮`, pL, '#9b59b6');
+                    if (typeof updateUI === 'function') updateUI();
+                }, 800);
+            }
+        }
+
         if (pL && pL.baseName === 'Gênia') {
             setTimeout(() => { if (typeof window.triggerGenieWishes === 'function') window.triggerGenieWishes(); }, 1200);
         }
@@ -574,14 +588,14 @@ class Game {
             if (cC < 0.05) cC = 0.05;
             const tCol = tamer.faction === 1 ? '#4a9edd' : '#c0392b';
 
-            /// 1. SISTEMA DE QUEBRA DE VONTADE
+            /// SISTEMA DE QUEBRA DE VONTADE
             let willBreakMod = 1.0;
             if (['stun', 'bind', 'sleep', 'paralyzed', 'chilled'].includes(wild.status)) {
                 willBreakMod = 1.5; // +50% de chance de doma
                 if (typeof showPopup === 'function') showPopup("Vontade Quebrada!", wild, '#9b59b6');
             }
 
-            // 2. SISTEMA DE ISCA DE CARNE
+            // SISTEMA DE ISCA DE CARNE
             let lureMod = 1.0;
             let hexLure = this.map.get(`${wild.q},${wild.r}`);
             if (hexLure && hexLure.hasLure) {
@@ -596,10 +610,12 @@ class Game {
             // Rola o dado para ver se domou
             if (Math.random() < cC) {
 
-                this.dna = (this.dna || 0) + 1; // Drop de DNA
-                if (typeof showPopup === 'function') showPopup("+1 🧬", tamer, '#1abc9c');
+                if (tamer.faction === 1) {
+                    this.dna = (this.dna || 0) + 1; 
+                    if (typeof showPopup === 'function') showPopup("+1 🧬", tamer, '#1abc9c');
+                }
 
-                // 3. CAPTURA CRÍTICA (BUFF AO DOMAR)
+                // CAPTURA CRÍTICA (BUFF AO DOMAR)
                 let healAmount = 25;
                 tamer.hp = Math.min(tamer.maxHp, tamer.hp + healAmount);
                 if (typeof showPopup === 'function') showPopup(`Captura Perfeita! +${healAmount} HP`, tamer, '#2ecc71');
@@ -611,9 +627,8 @@ class Game {
                 wild.faction = tamer.faction;
                 wild.alerted = false;
 
-                // --- NOVO 2.0: LIMITE DA BOX PUXANDO DAS VILAS ---
+                // LIMITE DA BOX PUXANDO DAS VILAS ---
                 let maxL = typeof window.getMaxBoxLimit === 'function' ? window.getMaxBoxLimit() : 6;
-                // -------------------------------------------------
 
                 let currTeam = this.units.filter(u => u.faction === 1 && !u.isLeader).length;
                 if (currTeam >= maxL && tamer.faction === 1) {
@@ -741,18 +756,6 @@ class Game {
                     else if (hex.terrain.id === 'WATER') { this.resources.scales++; resGained = '+1 Escama'; icon = '🐟'; color = '#3498db'; }
                     else if (hex.terrain.id === 'DESERT') { this.resources.sand++; resGained = '+1 Areia'; icon = '⏳'; color = '#f1c40f'; }
 
-                    // Passiva da Torre de Cristal no Turno 1
-                    if (this.turnCount === 0 && typeof countKingdomBuildings === 'function') {
-                        let towerLvl = window.countKingdomBuildings('CRYSTAL_TOWER');
-                        if (towerLvl > 0) {
-                            let pL = this.units.find(u => u.isLeader && u.faction === 1);
-                            if (pL && pL.tags && pL.tags.length > 0) {
-                                let primaryTag = pL.tags[0]; // Pega o primeiro elemento do líder
-                                this.manaPool[primaryTag] = (this.manaPool[primaryTag] || 0) + towerLvl;
-                                if (typeof showPopup === 'function') showPopup(`+${towerLvl} Mana 🔮`, pL, '#9b59b6');
-                            }
-                        }
-                    }
                     if (resGained && typeof showPopup === 'function') {
                         showPopup(`${icon} ${resGained}`, u, color);
                     }
