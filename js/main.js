@@ -36,59 +36,63 @@ document.addEventListener("DOMContentLoaded", () => {
             let dist = Hex.distance(game.selectedUnit, hoveredHex);
 
             if (target && target.faction !== 1 && dist <= game.selectedUnit.getEffectiveRange(game) && !game.selectedUnit.hasAttacked) {
+                
+                // --- PREVISÃO DE CAPTURA (DOMA) ---
                 if (game.tameMode && target.faction === 0) {
-                    let chance = (1.1 - (target.hp / target.maxHp)) * 100;
-                    // Adiciona bônus de Isca e Vontade Quebrada
+                    let cC = (1.1 - (target.hp / target.maxHp)) * 100;
+                    if (target.isBoss) cC -= 35;
+                    
+                    // Ajustes de status (Quebra de Vontade)
+                    if (['stun', 'bind', 'sleep', 'paralyzed', 'chilled'].includes(target.status)) cC += 30;
+                    
+                    // Ajustes de Isca
                     let hexLure = game.map.get(`${target.q},${target.r}`);
-                    if (hexLure && hexLure.hasLure) chance += 50;
-                    if (['stun', 'bind', 'chilled'].includes(target.status)) chance += 30;
-
+                    if (hexLure && hexLure.hasLure) cC += 50;
+                    
                     fc.innerHTML = `
                         <div class="forecast-side" style="width:140px">
-                            <span class="forecast-emoji">${target.emoji}</span>
-                            <span class="forecast-stat">Chance de Doma</span>
-                            <span class="forecast-dmg" style="color:#1abc9c">${Math.min(100, Math.floor(chance))}%</span>
-                        </div>
-                    `;
-                    fc.style.display = 'flex';
-                }
-                if (target !== lastForecastTarget || game.selectedUnit !== lastForecastAttacker) {
-                    let dmgDealt = game.calcDmg(game.selectedUnit, target);
-                    let dmgTaken = 0;
-
-                    if (target.getEffectiveRange(game) >= dist) {
-                        dmgTaken = Math.floor(game.calcDmg(target, game.selectedUnit) * 0.6);
-                        if (target.abilities.includes('counter')) dmgTaken = Math.floor(dmgTaken * 1.2);
-                    }
-
-                    let dodgeC = target.abilities.includes('dodge') ? 30 : 0;
-                    if (target.abilities.includes('flying')) dodgeC += 25;
-
-                    fc.innerHTML = `
-                        <div class="forecast-side">
-                            <span class="forecast-emoji" style="filter:${game.selectedUnit.filter}">${game.selectedUnit.emoji}</span>
-                            <span class="forecast-stat">HP: ${game.selectedUnit.hp}</span>
-                            <span class="forecast-dmg">⚔️ ${dmgDealt}</span>
-                        </div>
-                        <div class="forecast-vs">VS</div>
-                        <div class="forecast-side">
                             <span class="forecast-emoji" style="filter:${target.filter}">${target.emoji}</span>
-                            <span class="forecast-stat">HP: ${target.hp}</span>
-                            <span class="forecast-dmg" style="color:#f39c12">🛡️ ${dmgTaken}</span>
-                            <span class="forecast-stat" style="color:#00ffff; margin-top:3px;">Esq: ${dodgeC}%</span>
+                            <span class="forecast-stat">Chance de Captura</span>
+                            <span class="forecast-dmg" style="color:#1abc9c; font-size: 20px;">${Math.min(100, Math.floor(cC))}%</span>
                         </div>
                     `;
-                    lastForecastTarget = target;
-                    lastForecastAttacker = game.selectedUnit;
-                }
+                } 
+                // --- PREVISÃO DE COMBATE (NORMAL) ---
+                else {
+                    if (target !== lastForecastTarget || game.selectedUnit !== lastForecastAttacker) {
+                        let dmgDealt = game.calcDmg(game.selectedUnit, target);
+                        let dmgTaken = 0;
+                        if (target.getEffectiveRange(game) >= dist) {
+                            dmgTaken = Math.floor(game.calcDmg(target, game.selectedUnit) * 0.6);
+                            if (target.abilities.includes('counter')) dmgTaken = Math.floor(dmgTaken * 1.2);
+                        }
+                        let dodgeC = target.abilities.includes('dodge') ? 30 : 0;
+                        if (target.abilities.includes('flying')) dodgeC += 25;
 
+                        fc.innerHTML = `
+                            <div class="forecast-side">
+                                <span class="forecast-emoji" style="filter:${game.selectedUnit.filter}">${game.selectedUnit.emoji}</span>
+                                <span class="forecast-stat">HP: ${game.selectedUnit.hp}</span>
+                                <span class="forecast-dmg">⚔️ ${dmgDealt}</span>
+                            </div>
+                            <div class="forecast-vs">VS</div>
+                            <div class="forecast-side">
+                                <span class="forecast-emoji" style="filter:${target.filter}">${target.emoji}</span>
+                                <span class="forecast-stat">HP: ${target.hp}</span>
+                                <span class="forecast-dmg" style="color:#f39c12">🛡️ ${dmgTaken}</span>
+                                <span class="forecast-stat" style="color:#00ffff; margin-top:3px;">Esq: ${dodgeC}%</span>
+                            </div>
+                        `;
+                        lastForecastTarget = target;
+                        lastForecastAttacker = game.selectedUnit;
+                    }
+                }
+                
                 fc.style.display = 'flex';
-                let yOffset = isTouch ? 200 : -20;
+                let yOffset = isTouch ? 200 : -20; 
                 let xOffset = isTouch ? 80 : -20;
                 fc.style.left = (clientX - xOffset) + 'px';
                 fc.style.top = (clientY - yOffset) + 'px';
-            } else {
-                if (!window.pendingAttackTarget) { fc.style.display = 'none'; lastForecastTarget = null; }
             }
         } else {
             if (!window.pendingAttackTarget) { fc.style.display = 'none'; lastForecastTarget = null; }
