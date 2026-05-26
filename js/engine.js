@@ -1028,6 +1028,47 @@ window.runAITurn = async function () {
         game.selectedUnit = u; if (typeof sleep === 'function') await sleep(300);
         game.calculateReachable(u); let acted = false; const myM = game.units.filter(x => x.faction === u.faction && !x.isLeader).length; const isSafe = u.hp / u.maxHp > 0.4;
 
+        // --- NOVA IA CONJURADORA DE MAGIAS ---
+        if (u.knownSpells && u.knownSpells.length > 0) {
+            for (let sid of u.knownSpells) {
+                if (game.spellCooldowns[sid] > 0) continue;
+                let sp = typeof SPELLS !== 'undefined' ? SPELLS.find(s => s.id === sid) : null;
+                if (!sp) continue;
+
+                let spRange = sp.range !== undefined ? sp.range : 99;
+                let target = null;
+                let targetHex = null;
+
+                // IA decide o alvo baseado no tipo de magia
+                if (sp.type === 'atk') {
+                    let inRange = game.units.filter(t => t.faction !== u.faction && t.hp > 0 && Hex.distance(u, t) <= spRange);
+                    if (inRange.length > 0) target = inRange[Math.floor(Math.random() * inRange.length)];
+                } else if (sp.type === 'def') {
+                    let inRange = game.units.filter(t => t.faction === u.faction && t.hp > 0 && t.hp < t.maxHp && Hex.distance(u, t) <= spRange);
+                    target = inRange.length > 0 ? inRange[0] : u;
+                }
+
+                if (target) {
+                    targetHex = game.map.get(`${target.q},${target.r}`);
+                    game.isAnimating = true;
+                    try {
+                        let ok = await sp.effect(game, u, target, targetHex);
+                        if (ok) {
+                            if (typeof showPopup === 'function') showPopup(`✨ ${sp.name}!`, u, '#9b59b6');
+                            game.spellCooldowns[sid] = sp.level > 1 ? sp.level : 2; // Coloca um CD para a IA não spammar todo turno
+                            u.hasAttacked = true;
+                            u.mp = 0;
+                            acted = true;
+                            if (typeof sleep === 'function') await sleep(800);
+                            break; // Interrompe para usar apenas 1 magia por turno
+                        }
+                    } catch (e) { console.error("Erro na magia da IA:", e); }
+                    game.isAnimating = false;
+                }
+            }
+        }
+        
+        
         if (u.isLeader && myM < maxL && isSafe) { const n = Hex.getNeighbors(u.q, u.r).map(h => game.getUnitAt(h.q, h.r)).filter(Boolean); const wW = n.filter(e => e.faction === 0 && e.hp / e.maxHp <= 0.3); if (wW.length > 0) { await game.attemptTame(u, wW[0]); acted = true; if (typeof sleep === 'function') await sleep(500); } }
 
         if (!acted && u.mp > 0) {

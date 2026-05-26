@@ -464,7 +464,20 @@ window.showBeastDetails = function (b, bypassUnlock = false) {
     let evArr = EVOS[b.name] || [b.name + ' Alfa', b.name + ' Supremo'];
     let e1 = b.e || b.emoji, n1 = b.name, f1 = b.filter || 'none';
     let e2 = e1, n2 = evArr[0], f2 = f1; let e3 = e1, n3 = evArr[1], f3 = f1;
-    const evs2 = { '🐺': () => { if (f2 === 'none') f2 = 'saturate(200%) hue-rotate(330deg)'; }, '🐗': () => e2 = '🦏', '🐻': () => e2 = '🐼', '🐭': () => e2 = '🐀', '🐇': () => { e2 = '🦘'; n2 = "Canguru Boxeador"; }, '🐢': () => { e2 = '🦕'; n2 = "Dinossauro Escudo"; }, '🐴': () => { e2 = '🦄'; n2 = "Unicórnio Místico"; }, '🐍': () => { e2 = '🐍'; n2 = "Basilisco"; }, '🦂': () => { e2 = '🦂'; n2 = "Imperador do Deserto"; }, '🐒': () => { e2 = '🦍'; n2 = "Gorila Rei"; }, '🦊': () => { e2 = '🦊'; n2 = "Raposa de Nove Caudas"; }, '🐧': () => { e2 = '🦭'; n2 = "Morsa Blindada"; }, '🐸': () => { e2 = '🐸'; n2 = "Sapo-Boi Gigante"; }, '🐦': () => { e2 = '🦅'; n2 = "Fênix"; } };
+    const evs2 = { 
+        '🐺': () => { if (f2 === 'none') f2 = 'saturate(200%) hue-rotate(330deg)'; }, 
+        '🐗': () => e2 = '🦏', 
+        '🐻': () => e2 = '🐼', 
+        '🐭': () => e2 = '🐀', 
+        '🐢': () => { e2 = '🦕'; n2 = "Dinossauro Escudo"; }, 
+        '🐴': () => { e2 = '🦄'; n2 = "Unicórnio Místico"; }, 
+        '🐍': () => { e2 = '🐍'; n2 = "Basilisco"; }, 
+        '🦂': () => { e2 = '🦂'; n2 = "Imperador do Deserto"; }, 
+        '🐒': () => { e2 = '🦍'; n2 = "Gorila Rei"; }, 
+        '🦊': () => { e2 = '🦊'; n2 = "Raposa de Nove Caudas"; }, 
+        '🐸': () => { e2 = '🐸'; n2 = "Sapo-Boi Gigante"; }, 
+        '🐦': () => { e2 = '🦅'; n2 = "Fênix"; } 
+    };
     if (evs2[e1]) evs2[e1]();
 
     let displayEvos = [{ name: n1, e: e1, f: f1 }, { name: n2, e: e2, f: f2 }, { name: n3, e: e3, f: f3 }];
@@ -1479,7 +1492,7 @@ function startGame(load, isRoguelite = false, leaderId = null) {
 
         // 1. Mapeamento de Assinaturas (O que é ÚNICO de cada líder)
         const assinaturas = {
-            'Metamorfo': ['sl_forma_urso', 'sl_forma_falcao'],
+            'Metamorfo': ['sl_forma_urso', 'sl_forma_falcao', 'sl_forma_dragao'],
             'Carrasco': ['sl_execucao'],
             'Invocador': ['sl_evocar_dragao', 'sl_evocar_lobo', 'sl_evocar_golem'],
             'Sereia': ['sl_cancao_sereia'],
@@ -1510,26 +1523,15 @@ function startGame(load, isRoguelite = false, leaderId = null) {
         // - Tem que ser Nível 1
         // - Tem que bater com as tags do líder
         // - NÃO pode ser uma magia de assinatura de outro líder
+        // 3. Adiciona magias genéricas de Nível 1
         if (lD.tags) {
             SPELLS.forEach(s => {
-                // Filtro: A magia deve ser Nv 1, compartilhar tag E NÃO SER ASSINATURA DE OUTRO LÍDER
-                let ehAssinaturaDeAlguem = false;
-                let donoDaAssinatura = "";
-                const ehAssinaturaDeOutro = todasAssinaturas.includes(s.id) && !initialSpells.includes(s.id);
-
-                Object.keys(assinaturas).forEach(nomeLider => {
-                    if (assinaturas[nomeLider].includes(s.id)) {
-                        ehAssinaturaDeAlguem = true;
-                        donoDaAssinatura = nomeLider;
-                    }
-                });
-
-                // REGRAS DE FILTRO:
-                // - Nível 1
-                // - Tem a tag compatível
-                // - SE for assinatura, SÓ pode ser adicionada se o nome do líder atual for o dono da assinatura
-                const ehCompativel = s.level === 1 && s.tags.some(t => lD.tags.includes(t));
-                const podeAprender = !ehAssinaturaDeAlguem || (donoDaAssinatura === lD.baseName);
+                // Descobre quem é o verdadeiro dono dessa magia (se houver)
+                let donoDaAssinatura = Object.keys(assinaturas).find(k => assinaturas[k].includes(s.id));
+                
+                // Filtros rigorosos
+                const ehCompativel = s.level === 1 && s.tags.some(t => lD.tags.includes(t)) && !s.noStart;
+                const podeAprender = !donoDaAssinatura || (donoDaAssinatura === lD.baseName);
 
                 if (ehCompativel && podeAprender && !initialSpells.includes(s.id)) {
                     initialSpells.push(s.id);
