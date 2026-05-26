@@ -1879,7 +1879,7 @@ function renderBuildingMenu() {
                          </div>`;
         } else if (bData.id === 'FORGE') {
             actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
-                         <button id="btn-forge" class="btn-warning" style="width:100%; font-size:10px; padding:6px;">Forjar Equipamento (-25💰)</button>`;
+                         <button id="btn-forge" class="btn-warning" style="width:100%; font-size:10px; padding:6px;">Forjar Equipamento (-10💰)</button>`;
         } else if (bData.id === 'BARRACKS') {
             actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
                          <button id="btn-barracks" class="btn-success" style="width:100%; font-size:10px; padding:6px;">Recrutar Tropa Aliada (-20💰)</button>`;
@@ -1930,14 +1930,14 @@ function renderBuildingMenu() {
 
         if ($('btn-forge')) {
             $('btn-forge').onclick = async () => {
-                if (game.gold >= 25) {
+                if (game.gold >= 10) {
                     // FILTRADO: Só itens de grade de equipamentos táticos, remove consumíveis
                     let gearPool = ['RUSTY_SWORD', 'WOODEN_SHIELD', 'SWORD', 'SHIELD', 'BOOTS', 'BOW'];
                     let forgedId = gearPool[Math.floor(Math.random() * gearPool.length)];
                     let iDef = ITEMS[forgedId];
 
                     game.inventory.push({ id: forgedId, level: 1 });
-                    game.gold -= 25;
+                    game.gold -= 10;
                     if ($('k-res-gold')) $('k-res-gold').innerText = game.gold;
 
                     kRenderer.animateHex(hex, "upgrade");

@@ -303,5 +303,5 @@ const BUILDINGS = {
     BARRACKS: { id: 'BARRACKS', name: 'Quartel', icon: '⛺', cost: { wood: 5, stone: 0 }, desc: 'Recrute feras que compartilham a afinidade do seu Líder.', terrains: ['PLAINS', 'DESERT'] },
     LIBRARY: { id: 'LIBRARY', name: 'Biblioteca', icon: '📚', cost: { wood: 0, sand: 0 }, desc: '[Em Breve] Desbloqueia a Árvore de Habilidades.', terrains: ['PLAINS', 'SNOW'] },
     PORT: { id: 'PORT', name: 'Porto', icon: '⚓', cost: { wood: 0, stone: 0 }, desc: 'Gera +5 Ouro ao vencer batalhas.', terrains: ['WATER'] },
-    TRAP_MAKER: { name: 'Armadilheiro', icon: '🪤', desc: 'Produz Redes e Iscas automaticamente a cada turno.', onTurn: (game) => { game.fieldItems.isca++; game.fieldItems.rede++; } }
+    TRAP_MAKER: { id: 'TRAP_MAKER', name: 'Armadilheiro', icon: '🪤', cost: { wood: 0, scales: 0 }, desc: 'Produz Redes e Iscas automaticamente a cada turno.', onTurn: (game) => { game.fieldItems.isca++; game.fieldItems.rede++; }, terrains: ['PLAINS', 'DESERT']  } 
 };
