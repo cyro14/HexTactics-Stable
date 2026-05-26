@@ -298,15 +298,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 $('combat-forecast').style.display = 'none';
             }
 
-            if (game.activeSpell && su && su.isLeader && game.currentTurn === FACTIONS.PLAYER.id) {
+            if (game.activeSpell && su && game.currentTurn === FACTIONS.PLAYER.id) {
                 const spell = SPELLS.find(s => s.id === game.activeSpell);
-                if (spell && canAffordSpell(spell, su)) {
+                if (spell) {
                     let spRange = spell.range !== undefined ? spell.range : 99;
                     let dist = Hex.distance(su, cH);
                     let isGlobal = ['sl_regen', 'sl_shadow_step', 'sl_primal_rage', 'sl_sandstorm', 'sl_inferno', 'sl_blizzard', 'sl_mass_venom', 'sl_storm_wing', 'sl_meteor', 'sl_tidal_wave', 'sl_apocalypse', 'sl_world_freeze', 'sl_soul_harvest', 'sl_phoenix_rebirth'].includes(spell.id);
 
                     if (!isGlobal) {
-                        if (spRange === 0 && u !== su) { showMessage("Clique no próprio Herói!", "#e74c3c"); return; }
+                        if (spRange === 0 && u !== su) { showMessage("Clique no próprio Conjurador!", "#e74c3c"); return; }
                         if (spRange > 0 && spRange < 99 && dist > spRange) { showMessage("Fora de alcance!", "#e74c3c"); return; }
 
                         if (spell.type === 'atk' && spRange > 0) {
@@ -329,7 +329,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
 
                     let canCast = false;
-                    if (su.baseName === 'Rei Bárbaro') {
+                    
+                    // Lógica de Custo - Feras gastam 0!
+                    if (!su.isLeader) {
+                        canCast = true;
+                    } else if (su.baseName === 'Rei Bárbaro') {
                         let totalMana = Object.values(spell.cost).reduce((a, b) => a + b, 0);
                         let hpCost = totalMana * 10;
                         if (su.hp > hpCost) { su.hp -= hpCost; if (typeof showPopup === 'function') showPopup(`-${hpCost} 🩸`, su, '#e74c3c'); canCast = true; }
@@ -340,16 +344,26 @@ document.addEventListener("DOMContentLoaded", () => {
                         try {
                             const ok = await spell.effect(game, su, u, cH);
                             if (ok) {
-                                su.spellsCast = (su.spellsCast || 0) + 1;
+                                // Aplica a exaustão da ação
+                                if (su.isLeader) {
+                                    su.spellsCast = (su.spellsCast || 0) + 1;
+                                } else {
+                                    su.hasAttacked = true; // Consome o turno da fera
+                                    su.mp = 0;
+                                }
                                 game.spellCooldowns[spell.id] = spell.level > 1 ? spell.level : 0;
                                 lastState = null; const undoBtn = $('btn-undo'); if (undoBtn) undoBtn.disabled = true;
                                 await sleep(800);
                             } else {
-                                Object.entries(spell.cost).forEach(([tag, amt]) => { game.spentMana[tag] = (game.spentMana[tag] || 0) - amt; if (game.spentMana[tag] < 0) game.spentMana[tag] = 0; });
+                                if (su.isLeader && su.baseName !== 'Rei Bárbaro') {
+                                    Object.entries(spell.cost).forEach(([tag, amt]) => { game.spentMana[tag] = (game.spentMana[tag] || 0) - amt; if (game.spentMana[tag] < 0) game.spentMana[tag] = 0; });
+                                }
                             }
                         } catch (err) {
                             console.error("Erro na magia:", err);
-                            Object.entries(spell.cost).forEach(([tag, amt]) => { game.spentMana[tag] = (game.spentMana[tag] || 0) - amt; if (game.spentMana[tag] < 0) game.spentMana[tag] = 0; });
+                            if (su.isLeader && su.baseName !== 'Rei Bárbaro') {
+                                Object.entries(spell.cost).forEach(([tag, amt]) => { game.spentMana[tag] = (game.spentMana[tag] || 0) - amt; if (game.spentMana[tag] < 0) game.spentMana[tag] = 0; });
+                            }
                         }
                         game.isAnimating = false; game.activeSpell = null;
                         if (su && su.mp > 0) game.calculateReachable(su);

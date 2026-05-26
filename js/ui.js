@@ -241,25 +241,38 @@ function updateManaUI() {
 }
 
 function renderSpellBar() {
-
     const bar = $('spell-bar');
     if (!bar) return;
     bar.innerHTML = '';
     if (!game || game.currentTurn !== 1) return;
-    const leader = game.units.find(u => u.isLeader && u.faction === 1);
-    if (!leader || !leader.knownSpells || !leader.knownSpells.length) return;
 
-    leader.knownSpells.forEach(sid => {
-        const spell = SPELLS.find(s => s.id === sid);
+    // Se a unidade selecionada tiver magias, mostra a dela. Senão, mostra a do Líder.
+    let caster = game.selectedUnit && game.selectedUnit.faction === 1 && game.selectedUnit.knownSpells && game.selectedUnit.knownSpells.length > 0 
+                 ? game.selectedUnit 
+                 : game.units.find(u => u.isLeader && u.faction === 1);
+
+    if (!caster || !caster.knownSpells || !caster.knownSpells.length) return;
+
+    caster.knownSpells.forEach(sid => {
+        const spell = typeof SPELLS !== 'undefined' ? SPELLS.find(s => s.id === sid) : null;
         if (!spell) return;
         const cd = game.spellCooldowns[sid] || 0;
-        let can = canAffordSpell(spell, leader) && !game.isAnimating && cd === 0;
+        
+        let can = false;
+        if (caster.isLeader) {
+            can = canAffordSpell(spell, caster) && !game.isAnimating && cd === 0;
+        } else {
+            // Feras não gastam mana, apenas a ação de ataque
+            can = !caster.hasAttacked && !game.isAnimating && cd === 0; 
+        }
 
         const isActive = game.activeSpell === sid;
-        let costHtml = Object.entries(spell.cost).map(([tag, amt]) => {
+        
+        // Exibição visual diferente se for uma fera
+        let costHtml = caster.isLeader ? Object.entries(spell.cost).map(([tag, amt]) => {
             const mt = MANA_TYPES[tag]; if (!mt) return '';
             return `<span style="color:${mt.col};font-size:9px;">${mt.icon}x${amt}</span>`;
-        }).join(' ');
+        }).join(' ') : `<span style="color:#2ecc71;font-size:9px;">Custo: 0 (Ação)</span>`;
 
         let cdText = cd > 0 ? `<span style="color:#f39c12; font-weight:bold;">[CD: ${cd}]</span> ` : '';
         const btn = document.createElement('div');
@@ -276,10 +289,10 @@ function renderSpellBar() {
                     game.activeSpell = null;
                 } else {
                     game.activeSpell = sid;
-                    game.selectedUnit = leader;
-                    game.calculateReachable(leader);
+                    game.selectedUnit = caster; // Crava o conjurador como alvo selecionado
+                    game.calculateReachable(caster);
                     updateUI();
-                    renderer.draw();
+                    if (typeof renderer !== 'undefined') renderer.draw();
                     showMessage(`✨ ${spell.name}: ${spell.desc}`, '#e8c84a');
                 }
                 renderSpellBar();
@@ -572,6 +585,8 @@ function generateShopItems() {
     shopItems = []; let arts = getActiveArtifacts();
 
     let bLvl = game && game.currentLevel ? game.currentLevel : 1;
+    
+    // --- 1. CONTRATOS DE FERAS COMUNS E CHEFES ---
     const rB = BEASTS.LAND[Math.floor(Math.random() * BEASTS.LAND.length)];
     let bName = rB.name;
     let bAtk = rB.atk + (bLvl - 1) * 6;
@@ -581,13 +596,24 @@ function generateShopItems() {
         bName = bLvl === 2 ? evArr[0] : (evArr[1] || evArr[0]);
     }
 
-    shopItems.push({ name: "Fruta da Evolução", icon: "🍎", desc: "+100 XP a uma fera.", cost: 8, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: 'none', action: async () => { let m = [...rosterMemory, ...deployedRoster].filter(u => !u.isLeader); if (m.length === 0) { alert("Nenhuma fera em campo ou na Box!"); return false; } let r = await window.promptSelectUnit("Quem receberá +100 XP?", m); if (r) { r.addXp(100); return true; } return false; } });
-    shopItems.push({ name: "Frasco de Fúria", icon: "🧪", desc: "+5 ATK permanente (fera).", cost: 10, rarity: 'rare', color: 'var(--rarity-rare)', type: 'consumable', filter: 'hue-rotate(90deg)', action: async () => { let m = [...rosterMemory, ...deployedRoster].filter(u => !u.isLeader); if (m.length === 0) { alert("Nenhuma fera!"); return false; } let r = await window.promptSelectUnit("Quem receberá +5 ATK?", m); if (r) { r.atk += 5; return true; } return false; } });
-    shopItems.push({ name: "Grimório de Táticas", icon: "📘", desc: "+200 XP para o Herói Líder.", cost: 15, rarity: 'epic', color: 'var(--rarity-epic)', type: 'consumable', filter: 'none', action: async () => { let l = deployedRoster.find(u => u.isLeader); if (l) { l.addXp(200); return true; } return false; } });
-    shopItems.push({ name: "Poção de Exército", icon: "🧪", desc: "Cura 30 HP de todos.", cost: 4, rarity: 'common', color: 'var(--rarity-common)', type: 'consumable', filter: 'none', action: async () => { rosterMemory.forEach(u => u.hp = Math.min(u.maxHp, u.hp + 30)); deployedRoster.forEach(u => u.hp = Math.min(u.maxHp, u.hp + 30)); return true; } });
-
     shopItems.push({ name: `Contrato: ${bName}`, icon: rB.e, desc: `Adiciona fera Lv${bLvl} à Box.`, cost: 10 + (bLvl * 2), rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none', action: async () => { let newAbilities = [...rB.abilities]; if (game && game.leaderData.name === 'Piromante' && !newAbilities.includes('burn')) { newAbilities.push('burn'); } rosterMemory.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: bName, baseName: rB.name, emoji: rB.e, hp: bHp, maxHp: bHp, mp: rB.mp, maxMp: rB.mp, atk: bAtk, range: rB.range, level: bLvl, abilities: newAbilities, isNew: true, filter: rB.filter, tags: rB.tags || [], fav: rB.fav || [] })); return true; } });
-    // Bônus do Estábulo (Escalando com o Nível)
+
+    // Contrato Épico (Chefe) - 15% de chance de aparecer na loja!
+    if (Math.random() < 0.15) {
+        let bossPool = BEASTS.BOSSES.filter(b => !b.minLevel || bLvl >= b.minLevel);
+        if (bossPool.length > 0) {
+            let rBoss = bossPool[Math.floor(Math.random() * bossPool.length)];
+            let bossHp = rBoss.hp + ((bLvl - 1) * 30);
+            let bossAtk = rBoss.atk + ((bLvl - 1) * 8);
+            shopItems.push({ 
+                name: `Contrato Épico: ${rBoss.name}`, icon: rBoss.e, desc: `Adiciona um CHEFE Lv${bLvl} à Box.`, 
+                cost: 40 + (bLvl * 5), rarity: 'legendary', color: '#ff00ff', type: 'consumable', filter: rBoss.filter || 'none', 
+                action: async () => { rosterMemory.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: rBoss.name, baseName: rBoss.name, emoji: rBoss.e, hp: bossHp, maxHp: bossHp, mp: rBoss.mp, maxMp: rBoss.mp, atk: bossAtk, range: rBoss.range, level: bLvl, abilities: [...rBoss.abilities], isNew: true, filter: rBoss.filter, tags: rBoss.tags || [], fav: rBoss.fav || [], isBoss: true })); return true; } 
+            });
+        }
+    }
+
+    // Bônus do Estábulo
     if (typeof countKingdomBuildings === 'function') {
         let stableLvl = window.countKingdomBuildings('STABLE');
         if (stableLvl > 0) {
@@ -597,13 +623,10 @@ function generateShopItems() {
                 let hHp = horse.hp + ((hLevel - 1) * 20);
                 let hAtk = horse.atk + ((hLevel - 1) * 6);
                 let hName = horse.name;
-                
-                // Evolução de nome se Nv2 ou Nv3
                 if (hLevel >= 2) {
                     let evArr = EVOS[horse.name] || [horse.name + ' Alfa', horse.name + ' Supremo'];
                     hName = hLevel === 2 ? evArr[0] : (evArr[1] || evArr[0]);
                 }
-
                 shopItems.push({
                     name: `Cavalo do Estábulo (Nv${hLevel})`, icon: horse.e, desc: `Adiciona um ${hName} Nv${hLevel} à Box.`,
                     cost: 10 + ((hLevel - 1) * 5), rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: 'none',
@@ -616,6 +639,52 @@ function generateShopItems() {
         }
     }
 
+    // --- 2. CONSUMÍVEIS DE STATUS (Embaralha e pega 2 aleatórios por loja) ---
+    let consumablesPool = [
+        { name: "Fruta da Evolução", icon: "🍎", desc: "+100 XP a uma fera.", cost: 8, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: 'none', action: async () => { let m = [...rosterMemory, ...deployedRoster].filter(u => !u.isLeader); if (m.length === 0) { alert("Nenhuma fera em campo ou na Box!"); return false; } let r = await window.promptSelectUnit("Quem receberá +100 XP?", m); if (r) { r.addXp(100); return true; } return false; } },
+        { name: "Frasco de Fúria", icon: "🧪", desc: "+5 ATK permanente (fera).", cost: 10, rarity: 'rare', color: 'var(--rarity-rare)', type: 'consumable', filter: 'hue-rotate(90deg)', action: async () => { let m = [...rosterMemory, ...deployedRoster].filter(u => !u.isLeader); if (m.length === 0) { alert("Nenhuma fera!"); return false; } let r = await window.promptSelectUnit("Quem receberá +5 ATK?", m); if (r) { r.atk += 5; return true; } return false; } },
+        { name: "Grimório de Táticas", icon: "📘", desc: "+200 XP para o Herói Líder.", cost: 15, rarity: 'epic', color: 'var(--rarity-epic)', type: 'consumable', filter: 'none', action: async () => { let l = deployedRoster.find(u => u.isLeader); if (l) { l.addXp(200); return true; } return false; } },
+        { name: "Poção de Exército", icon: "🧪", desc: "Cura 30 HP de todos.", cost: 4, rarity: 'common', color: 'var(--rarity-common)', type: 'consumable', filter: 'none', action: async () => { rosterMemory.forEach(u => u.hp = Math.min(u.maxHp, u.hp + 30)); deployedRoster.forEach(u => u.hp = Math.min(u.maxHp, u.hp + 30)); return true; } }
+    ];
+    consumablesPool.sort(() => Math.random() - 0.5).slice(0, 2).forEach(item => shopItems.push(item));
+
+    // --- 3. ITENS DE CAMPO PARA MOCHILA (Embaralha e pega 2 aleatórios por loja) ---
+    let fieldItemsPool = [
+        { id: 'isca', name: 'Isca de Carne', icon: '🍖', desc: 'Atrai feras e dobra a chance de doma.', cost: 5, rarity: 'common', color: 'var(--rarity-common)' },
+        { id: 'rede', name: 'Rede Hexagonal', icon: '🕸️', desc: 'Prende uma fera, quebrando sua vontade.', cost: 6, rarity: 'uncommon', color: 'var(--rarity-uncommon)' },
+        { id: 'potion', name: 'Poção de Cura', icon: '🧪', desc: 'Cura 30 HP de um aliado no campo.', cost: 4, rarity: 'common', color: 'var(--rarity-common)' },
+        { id: 'bandage', name: 'Atadura Médica', icon: '🩹', desc: 'Cura 15 HP e remove Veneno.', cost: 3, rarity: 'common', color: 'var(--rarity-common)' },
+        { id: 'scroll', name: 'Pergaminho Arcano', icon: '📜', desc: 'Causa 25 de dano mágico.', cost: 8, rarity: 'rare', color: 'var(--rarity-rare)' },
+        { id: 'sphere', name: 'Esfera Elemental', icon: '🔮', desc: 'Aplica status negativo num inimigo.', cost: 7, rarity: 'rare', color: 'var(--rarity-rare)' }
+    ];
+    fieldItemsPool.sort(() => Math.random() - 0.5).slice(0, 2).forEach(fi => {
+        shopItems.push({
+            name: fi.name, icon: fi.icon, desc: fi.desc, cost: fi.cost, rarity: fi.rarity, color: fi.color, type: 'consumable', filter: 'none',
+            action: async () => {
+                if (!game.fieldItems) game.fieldItems = { isca: 0, rede: 0, potion: 0, bandage: 0, scroll: 0, sphere: 0 };
+                game.fieldItems[fi.id] = (game.fieldItems[fi.id] || 0) + 1;
+                return true;
+            }
+        });
+    });
+
+    // --- 4. EQUIPAMENTOS (Embaralha e pega 2 para irem direto para o Inventário) ---
+    let gearPool = ['RUSTY_SWORD', 'WOODEN_SHIELD', 'SWORD', 'SHIELD', 'BOOTS', 'BOW'];
+    let randomGear = gearPool.sort(() => Math.random() - 0.5).slice(0, 2);
+    randomGear.forEach(gId => {
+        let iDef = typeof ITEMS !== 'undefined' ? ITEMS[gId] : null;
+        if (iDef) {
+            shopItems.push({
+                name: iDef.name, icon: iDef.icon, desc: iDef.desc, cost: 12, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'equip', filter: 'none',
+                action: async () => {
+                    game.inventory.push({ id: gId, level: 1 });
+                    return true;
+                }
+            });
+        }
+    });
+
+    // --- 5. ARTEFATOS (Apenas 1 por loja, sem repetir) ---
     let aA = ARTIFACTS.filter(a => !arts.includes(a.id) && a.id !== 'art_omega').sort(() => Math.random() - 0.5);
     for (let i = 0; i < 1; i++) {
         if (aA[i]) {
@@ -962,10 +1031,43 @@ async function openLaboratory() {
         base.hp = base.maxHp;
         base.atk += Math.floor(sac.atk * 0.5);
 
+        let unlockMsg = "";
+
+        // --- SISTEMA DE COMBINAÇÃO AVANÇADA (SKILL TREE) ---
+        let pTag = (base.tags && base.tags.length > 0) ? base.tags[0] : null;
+
+        if (base.starLevel === 2 && pTag) {
+            if (!base.knownSpells) base.knownSpells = [];
+            let sp1 = SPELLS.filter(s => s.level === 1 && s.tags.includes(pTag));
+            sp1.forEach(s => { if (!base.knownSpells.includes(s.id)) base.knownSpells.push(s.id); });
+            unlockMsg = "\n✨ Magias Nv1 Liberadas (Custo: 0)!";
+        }
+        else if (base.starLevel === 3 && pTag) {
+            let tagAbilities = {
+                'FIRE': 'burn', 'ICE': 'freeze', 'VENOM': 'poison', 'ROCK': 'counter', 'SAND': 'dodge',
+                'CARAPACE': 'counter', 'WING': 'swift', 'SILVESTRE': 'swift', 'UMBRAL': 'lifesteal',
+                'CELESTIAL': 'leadership', 'PRIMAL': 'corte_amplo', 'STALKER': 'hit_run', 'ABYSSAL': 'dodge'
+            };
+            let newAb = tagAbilities[pTag] || 'pierce';
+            if (!base.abilities.includes(newAb)) base.abilities.push(newAb);
+            unlockMsg = `\n🧬 Nova Passiva de Elite Adquirida!`;
+        }
+        else if (base.starLevel >= 4 && pTag && base.starLevel === 4) {
+            if (!base.knownSpells) base.knownSpells = [];
+            let tagUltimates = {
+                'FIRE': 'sl_meteor', 'ICE': 'sl_world_freeze', 'VENOM': 'sl_mass_venom', 'ROCK': 'sl_sandstorm', 'SAND': 'sl_sandstorm',
+                'CARAPACE': 'sl_primal_rage', 'WING': 'sl_storm_wing', 'SILVESTRE': 'sl_regen', 'UMBRAL': 'sl_apocalypse',
+                'CELESTIAL': 'sl_resurrection', 'PRIMAL': 'sl_primal_rage', 'STALKER': 'sl_shadow_step', 'ABYSSAL': 'sl_tidal_wave'
+            };
+            let newUlt = tagUltimates[pTag] || 'sl_meteor';
+            if (!base.knownSpells.includes(newUlt)) base.knownSpells.push(newUlt);
+            unlockMsg = `\n🔥 Magia ULTIMATE Liberada!`;
+        }
+
         if (rosterMemory.includes(sac)) rosterMemory.splice(rosterMemory.indexOf(sac), 1);
         if (deployedRoster.includes(sac)) deployedRoster.splice(deployedRoster.indexOf(sac), 1);
 
-        alert(`Sucesso! ${base.name} alcançou Estrela ${base.starLevel}!`);
+        alert(`Sucesso! ${base.name} alcançou Estrela ${base.starLevel}!${unlockMsg}`);
         openLaboratory();
     };
     opts.appendChild(btnComb);

@@ -287,7 +287,7 @@ class Game {
         if (pL && typeof countKingdomBuildings === 'function') {
             let towerLvl = window.countKingdomBuildings('CRYSTAL_TOWER');
             if (towerLvl > 0 && pL.tags && pL.tags.length > 0) {
-                let primaryTag = pL.tags[0]; 
+                let primaryTag = pL.tags[0];
                 this.manaPool[primaryTag] = (this.manaPool[primaryTag] || 0) + towerLvl;
                 setTimeout(() => {
                     if (typeof showPopup === 'function') showPopup(`+${towerLvl} Mana 🔮`, pL, '#9b59b6');
@@ -354,7 +354,12 @@ class Game {
                             let mappedId = itemMapping[iType];
 
                             if (mappedId) {
-                                game.fieldItems[mappedId] = (game.fieldItems[mappedId] || 0) + 1;
+                                // PROTEÇÃO: Cria a mochila na hora se ela não existir
+                                if (!this.fieldItems) {
+                                    this.fieldItems = { isca: 0, rede: 0, potion: 0, bandage: 0, scroll: 0, sphere: 0 };
+                                }
+
+                                this.fieldItems[mappedId] = (this.fieldItems[mappedId] || 0) + 1;
                                 this.items.delete(k);
                                 if (typeof showPopup === 'function') showPopup(`+1 ${mappedId.toUpperCase()}!`, u, '#f1c40f');
                             } else {
@@ -611,7 +616,7 @@ class Game {
             if (Math.random() < cC) {
 
                 if (tamer.faction === 1) {
-                    this.dna = (this.dna || 0) + 1; 
+                    this.dna = (this.dna || 0) + 1;
                     if (typeof showPopup === 'function') showPopup("+1 🧬", tamer, '#1abc9c');
                 }
 
@@ -851,13 +856,13 @@ class Renderer {
                 ctx.fillText("🍖", p.x, p.y + (this.hexSize * 0.2));
             }
             if (hex.terrain.id === 'VILLAGE' && hex.owner !== null) { ctx.fillStyle = hex.owner === 1 ? '#4a9edd' : '#c0392b'; ctx.beginPath(); ctx.arc(p.x + this.hexSize * 0.4, p.y - this.hexSize * 0.3, 6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
-            
+
         });
 
         this.game.items.forEach((iType, key) => { let [q, r] = key.split(',').map(Number); const p = this.getPos(q, r); ctx.save(); ctx.globalAlpha = 1.0; ctx.beginPath(); ctx.ellipse(p.x, p.y + this.hexSize * 0.35, this.hexSize * 0.4, this.hexSize * 0.2, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(20,20,30,0.9)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#f1c40f'; ctx.stroke(); ctx.font = `${this.hexSize * 0.6}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (typeof ITEMS !== 'undefined' && ITEMS[iType]) { ctx.fillText(ITEMS[iType].icon, p.x, p.y + this.hexSize * 0.25); } ctx.restore(); });
 
         const su = this.game.selectedUnit;
-        if (this.game.activeSpell && su && su.isLeader && this.game.currentTurn === 1) {
+        if (this.game.activeSpell && su && this.game.currentTurn === 1) {
             const spell = typeof SPELLS !== 'undefined' ? SPELLS.find(s => s.id === this.game.activeSpell) : null;
             if (spell) {
                 let spRange = spell.range !== undefined ? spell.range : 99; let isGlobal = ['sl_regen', 'sl_shadow_step', 'sl_primal_rage', 'sl_sandstorm', 'sl_inferno', 'sl_blizzard', 'sl_mass_venom', 'sl_storm_wing', 'sl_meteor', 'sl_tidal_wave', 'sl_apocalypse', 'sl_world_freeze', 'sl_soul_harvest', 'sl_phoenix_rebirth'].includes(spell.id); let targets = [];
@@ -898,8 +903,7 @@ class Renderer {
 
             if (u.isLeader) { ctx.font = `${this.hexSize * 0.55}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'center'; ctx.fillText('👑', p.x, p.y - r + 2); }
             if (u.faction === 0 && u.alerted) { ctx.font = `bold ${this.hexSize * 0.45}px Arial`; ctx.fillStyle = '#e74c3c'; ctx.textAlign = 'center'; ctx.fillText('⚠️', p.x + r - 5, p.y - r + 5); }
-            if (u.isLeader && u.faction === 1 && (u.knownSpells || []).length > 0) { ctx.font = `${this.hexSize * 0.35}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'right'; ctx.fillText('✨', p.x + r - 2, p.y - r + 8); }
-
+            if (u.faction === 1 && (u.knownSpells || []).length > 0) { ctx.font = `${this.hexSize * 0.35}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'right'; ctx.fillText('✨', p.x + r - 2, p.y - r + 8); }
             const hw = Math.min(50, Math.max(16, 16 + (u.maxHp / 5))); const barY = p.y - r - 8; const hpRatio = u.hp / u.maxHp;
             ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.beginPath(); ctx.roundRect(p.x - hw / 2, barY, hw, 5, 2); ctx.fill();
             const hpColor = hpRatio > 0.5 ? '#2ecc71' : hpRatio > 0.25 ? '#f39c12' : '#e74c3c'; ctx.fillStyle = hpColor; ctx.beginPath(); ctx.roundRect(p.x - hw / 2, barY, hw * hpRatio, 5, 2); ctx.fill();
