@@ -568,62 +568,60 @@ class Game {
         }
     }
 
+    calculateTameChance(tamer, wild) {
+        let cC = 1.1 - (wild.hp / wild.maxHp);
+        if (wild.isBoss) cC -= 0.35;
+        let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
+        if (tamer.faction === 1 && arts.includes('art_tame')) cC += 0.20;
+
+        if (tamer.baseName === 'Almirante' && wild.tags.includes('ABYSSAL')) cC += 0.40;
+        if (tamer.baseName === 'Arqueira' && wild.tags.includes('SILVESTRE')) cC += 0.40;
+
+        if (tamer.faction === 1 && typeof countKingdomBuildings === 'function') {
+            if (wild.level === 1 && wild.hp === wild.maxHp && window.countKingdomBuildings('PARK') > 0) cC += 0.40;
+            cC += (window.countKingdomBuildings('BESTIARY') * 0.15);
+        }
+        if (cC < 0.05) cC = 0.05;
+
+        let willBreakMod = 1.0;
+        if (['stun', 'bind', 'sleep', 'paralyzed', 'chilled'].includes(wild.status)) willBreakMod = 1.5;
+        
+        let lureMod = 1.0;
+        let hexLure = this.map.get(`${wild.q},${wild.r}`);
+        if (hexLure && hexLure.hasLure) lureMod = 2.0;
+
+        return cC * willBreakMod * lureMod;
+    }
+
     async attemptTame(tamer, wild) {
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true; this.isAnimating = true; let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
         try {
             tamer.hasAttacked = true; tamer.mp = 0;
-            let cC = 1.1 - (wild.hp / wild.maxHp);
-            if (wild.isBoss) cC -= 0.35;
-            if (tamer.faction === 1 && arts.includes('art_tame')) cC += 0.20;
-
-            // Bônus Específicos de Líder para Domar
-            if (tamer.baseName === 'Almirante' && wild.tags.includes('ABYSSAL')) cC += 0.40;
-            if (tamer.baseName === 'Arqueira' && wild.tags.includes('SILVESTRE')) cC += 0.40;
-
-            // BUFF DO PARQUE ---
-            // Se o alvo for Nível 1, tiver HP cheio e você tiver o Parque, ganha +40% de chance!
-            if (tamer.faction === 1 && wild.level === 1 && wild.hp === wild.maxHp && typeof countKingdomBuildings === 'function') {
-                if (window.countKingdomBuildings('PARK') > 0) cC += 0.40;
-            }
-
-            if (tamer.faction === 1 && typeof countKingdomBuildings === 'function') {
-                cC += (window.countKingdomBuildings('BESTIARY') * 0.15);
-            }
-
-            if (cC < 0.05) cC = 0.05;
+            
+            // Puxa a chance real exata
+            let cC = this.calculateTameChance(tamer, wild);
             const tCol = tamer.faction === 1 ? '#4a9edd' : '#c0392b';
 
-            /// SISTEMA DE QUEBRA DE VONTADE
-            let willBreakMod = 1.0;
             if (['stun', 'bind', 'sleep', 'paralyzed', 'chilled'].includes(wild.status)) {
-                willBreakMod = 1.5; // +50% de chance de doma
                 if (typeof showPopup === 'function') showPopup("Vontade Quebrada!", wild, '#9b59b6');
             }
-
-            // SISTEMA DE ISCA DE CARNE
-            let lureMod = 1.0;
             let hexLure = this.map.get(`${wild.q},${wild.r}`);
             if (hexLure && hexLure.hasLure) {
-                lureMod = 2.0; // Dobra a chance
                 hexLure.hasLure = false; // A fera come a isca
                 if (typeof showPopup === 'function') showPopup("Isca Devorada!", wild, '#e67e22');
             }
 
-            // Multiplique a sua chance atual (cC) por esses modificadores:
-            cC = cC * willBreakMod * lureMod;
-
             // Rola o dado para ver se domou
             if (Math.random() < cC) {
+                this.dna = (this.dna || 0) + 1; // Drop de DNA
+                if (typeof showPopup === 'function') showPopup("+1 🧬", tamer, '#1abc9c');
 
-                if (tamer.faction === 1) {
-                    this.dna = (this.dna || 0) + 1;
-                    if (typeof showPopup === 'function') showPopup("+1 🧬", tamer, '#1abc9c');
+                // 3. CAPTURA CRÍTICA (BUFF AO DOMAR): Somente se chance >= 100% e cura a Fera!
+                if (cC >= 1.0) {
+                    let healAmount = 25;
+                    wild.hp = Math.min(wild.maxHp, wild.hp + healAmount);
+                    if (typeof showPopup === 'function') showPopup(`Captura Perfeita! +${healAmount} HP`, wild, '#2ecc71');
                 }
-
-                // CAPTURA CRÍTICA (BUFF AO DOMAR)
-                let healAmount = 25;
-                tamer.hp = Math.min(tamer.maxHp, tamer.hp + healAmount);
-                if (typeof showPopup === 'function') showPopup(`Captura Perfeita! +${healAmount} HP`, tamer, '#2ecc71');
 
                 // Passiva do Piromante (Adiciona Ígneo)
                 if (tamer.baseName === 'Piromante' && !wild.tags.includes('FIRE')) {
@@ -632,9 +630,7 @@ class Game {
                 wild.faction = tamer.faction;
                 wild.alerted = false;
 
-                // LIMITE DA BOX PUXANDO DAS VILAS ---
                 let maxL = typeof window.getMaxBoxLimit === 'function' ? window.getMaxBoxLimit() : 6;
-
                 let currTeam = this.units.filter(u => u.faction === 1 && !u.isLeader).length;
                 if (currTeam >= maxL && tamer.faction === 1) {
                     this.units = this.units.filter(u => u !== wild);
@@ -1068,7 +1064,7 @@ window.runAITurn = async function () {
             }
         }
         
-        
+
         if (u.isLeader && myM < maxL && isSafe) { const n = Hex.getNeighbors(u.q, u.r).map(h => game.getUnitAt(h.q, h.r)).filter(Boolean); const wW = n.filter(e => e.faction === 0 && e.hp / e.maxHp <= 0.3); if (wW.length > 0) { await game.attemptTame(u, wW[0]); acted = true; if (typeof sleep === 'function') await sleep(500); } }
 
         if (!acted && u.mp > 0) {

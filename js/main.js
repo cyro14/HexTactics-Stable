@@ -39,25 +39,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 // --- PREVISÃO DE CAPTURA (DOMA) ---
                 if (game.tameMode && target.faction === 0) {
-                    let cC = (1.1 - (target.hp / target.maxHp)) * 100;
-                    if (target.isBoss) cC -= 35;
-                    
-                    // Ajustes de status (Quebra de Vontade)
-                    if (['stun', 'bind', 'sleep', 'paralyzed', 'chilled'].includes(target.status)) cC += 30;
-                    
-                    // Ajustes de Isca
-                    let hexLure = game.map.get(`${target.q},${target.r}`);
-                    if (hexLure && hexLure.hasLure) cC += 50;
+                    // Consulta a matemática real e exata do motor do jogo
+                    let chance = game.calculateTameChance(game.selectedUnit, target) * 100;
                     
                     fc.innerHTML = `
                         <div class="forecast-side" style="width:140px">
-                            <span class="forecast-emoji" style="filter:${target.filter}">${target.emoji}</span>
+                            <span class="forecast-emoji">${target.emoji}</span>
                             <span class="forecast-stat">Chance de Captura</span>
-                            <span class="forecast-dmg" style="color:#1abc9c; font-size: 20px;">${Math.min(100, Math.floor(cC))}%</span>
+                            <span class="forecast-dmg" style="color:#1abc9c">${Math.min(100, Math.floor(chance))}%</span>
                         </div>
                     `;
-                } 
-                // --- PREVISÃO DE COMBATE (NORMAL) ---
+                    fc.style.display = 'flex';
+                }
+                // --- PREVISÃO DE COMBATE ---
                 else {
                     if (target !== lastForecastTarget || game.selectedUnit !== lastForecastAttacker) {
                         let dmgDealt = game.calcDmg(game.selectedUnit, target);
@@ -284,8 +278,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 if (itemUsed) {
+                    let usedType = game.activeItem; // Salva qual foi o item usado
                     game.activeItem = null;
-                    su.hasAttacked = true; // Gasta a ação do líder
+                    
+                    // Rede e Isca agora são Ações Livres! Não gastam o ataque.
+                    if (usedType !== 'rede' && usedType !== 'isca') {
+                        su.hasAttacked = true; 
+                    } else {
+                        if (typeof showMessage === 'function') showMessage("Ação Rápida (Turno não consumido)!", "#2ecc71");
+                    }
+                    
                     if (typeof renderFieldItemMenu === 'function') renderFieldItemMenu(); // Atualiza a mochila na hora
                     updateUI(); renderer.draw();
                 }
