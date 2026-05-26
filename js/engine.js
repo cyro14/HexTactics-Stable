@@ -841,13 +841,14 @@ class Renderer {
             if (hex.isCrystal) { this.hexPath(ctx, p.x, p.y, this.hexSize - 1); ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = 'rgba(0,255,255,0.2)'; ctx.fill(); }
             if (this.game.reachableHexes.has(hex.getKey())) { ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3; ctx.stroke(); } else { ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1; ctx.stroke(); }
             if (hex.terrain.icon) { ctx.save(); ctx.globalAlpha = 0.8; ctx.font = `${this.hexSize * 0.7}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(hex.terrain.icon, p.x, p.y); ctx.restore(); }
-            if (hex.terrain.id === 'VILLAGE' && hex.owner !== null) { ctx.fillStyle = hex.owner === 1 ? '#4a9edd' : '#c0392b'; ctx.beginPath(); ctx.arc(p.x + this.hexSize * 0.4, p.y - this.hexSize * 0.3, 6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
             if (hex.hasLure) {
                 ctx.font = `${this.hexSize * 0.7}px sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText("🍖", p.x, p.y + (this.hexSize * 0.2));
             }
+            if (hex.terrain.id === 'VILLAGE' && hex.owner !== null) { ctx.fillStyle = hex.owner === 1 ? '#4a9edd' : '#c0392b'; ctx.beginPath(); ctx.arc(p.x + this.hexSize * 0.4, p.y - this.hexSize * 0.3, 6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
+            
         });
 
         this.game.items.forEach((iType, key) => { let [q, r] = key.split(',').map(Number); const p = this.getPos(q, r); ctx.save(); ctx.globalAlpha = 1.0; ctx.beginPath(); ctx.ellipse(p.x, p.y + this.hexSize * 0.35, this.hexSize * 0.4, this.hexSize * 0.2, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(20,20,30,0.9)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#f1c40f'; ctx.stroke(); ctx.font = `${this.hexSize * 0.6}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (typeof ITEMS !== 'undefined' && ITEMS[iType]) { ctx.fillText(ITEMS[iType].icon, p.x, p.y + this.hexSize * 0.25); } ctx.restore(); });
@@ -862,6 +863,17 @@ class Renderer {
             }
         }
 
+        if (this.game.activeItem && su && su.isLeader) {
+            let range = this.game.itemRange;
+            this.game.map.forEach(hex => {
+                if (Hex.distance(su, hex) <= range) {
+                    const p = this.getPos(hex.q, hex.r);
+                    this.hexPath(ctx, p.x, p.y, this.hexSize - 1);
+                    ctx.fillStyle = 'rgba(80, 82, 255, 0.9)'; // Cor especial para Itens
+                    ctx.fill(); ctx.strokeStyle = 'rgba(155,89,182,0.8)'; ctx.lineWidth = 2; ctx.stroke();
+                }
+            });
+        }
         if (su && this.game.currentTurn === 1 && !this.game.activeSpell) {
             this.game.units.forEach(tg => {
                 if (tg.faction !== 1 && Hex.distance(su, tg) <= su.getEffectiveRange(game) && !su.hasAttacked) { const isTame = this.game.tameMode && tg.faction === 0 && Hex.distance(su, tg) === 1; const p = this.getPos(tg.vq, tg.vr); this.hexPath(ctx, p.x, p.y, this.hexSize - 1); ctx.fillStyle = isTame ? 'rgba(155,89,182,0.35)' : 'rgba(192,57,43,0.35)'; ctx.fill(); ctx.strokeStyle = isTame ? 'rgba(155,89,182,0.9)' : 'rgba(231,76,60,0.85)'; ctx.lineWidth = 2; ctx.stroke(); }

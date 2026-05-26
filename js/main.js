@@ -36,7 +36,22 @@ document.addEventListener("DOMContentLoaded", () => {
             let dist = Hex.distance(game.selectedUnit, hoveredHex);
 
             if (target && target.faction !== 1 && dist <= game.selectedUnit.getEffectiveRange(game) && !game.selectedUnit.hasAttacked) {
+                if (game.tameMode && target.faction === 0) {
+                    let chance = (1.1 - (target.hp / target.maxHp)) * 100;
+                    // Adiciona bônus de Isca e Vontade Quebrada
+                    let hexLure = game.map.get(`${target.q},${target.r}`);
+                    if (hexLure && hexLure.hasLure) chance += 50;
+                    if (['stun', 'bind', 'chilled'].includes(target.status)) chance += 30;
 
+                    fc.innerHTML = `
+                        <div class="forecast-side" style="width:140px">
+                            <span class="forecast-emoji">${target.emoji}</span>
+                            <span class="forecast-stat">Chance de Doma</span>
+                            <span class="forecast-dmg" style="color:#1abc9c">${Math.min(100, Math.floor(chance))}%</span>
+                        </div>
+                    `;
+                    fc.style.display = 'flex';
+                }
                 if (target !== lastForecastTarget || game.selectedUnit !== lastForecastAttacker) {
                     let dmgDealt = game.calcDmg(game.selectedUnit, target);
                     let dmgTaken = 0;
@@ -80,15 +95,21 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    window.useFieldItem = function(type) {
-    if (game.fieldItems[type] <= 0) {
-        if (typeof showMessage === 'function') showMessage("Item esgotado!", "#e74c3c");
-        return;
-    }
-    game.activeItem = type;
-    $('field-item-menu').classList.add('hidden');
-    if (typeof showMessage === 'function') showMessage(`Selecione o alvo para: ${type.toUpperCase()}`, "#3498db");
-};
+    window.useFieldItem = function (type) {
+        if (game.fieldItems[type] <= 0) return;
+
+        // Trava o modo item
+        game.activeItem = type;
+        game.activeSpell = null; // Garante que não tenha magia ativa
+
+        // Define o alcance baseado no item
+        const ranges = { isca: 2, rede: 3, potion: 2, bandage: 2, scroll: 4, sphere: 3 };
+        game.itemRange = ranges[type];
+
+        showMessage(`Selecione o alvo para: ${type.toUpperCase()}`, "#3498db");
+        updateUI();
+        renderer.draw();
+    };
 
     // EVENTOS DE MOUSE (PC)
     $('gameCanvas').addEventListener('mousedown', e => {
@@ -172,11 +193,28 @@ document.addEventListener("DOMContentLoaded", () => {
         let x = clientX - rect.left, y = clientY - rect.top;
 
         let cH = null, mD = 999;
+
+        // 1. PRIMEIRO o jogo calcula onde você clicou
         game.map.forEach(h => {
             const p = renderer.getPos(h.q, h.r);
             const d = Math.hypot(p.x - x, p.y - y);
             if (d < mD && d < renderer.hexSize) { mD = d; cH = h; }
         });
+
+        // 2. SE clicou fora do mapa (no escuro), cancela tudo (Magias, Itens, Seleções)
+        if (!cH) {
+            game.selectedHex = null;
+            game.selectedUnit = null;
+            game.activeSpell = null;
+            game.activeItem = null; 
+            updateUI(); renderer.draw();
+            return;
+        }
+
+        // 3. SE clicou em um hexágono válido, continua o jogo normalmente
+        game.selectedHex = cH;
+        const u = game.getUnitAt(cH.q, cH.r);
+        const su = game.selectedUnit;
 
         if (cH) {
             game.selectedHex = cH;
@@ -187,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (game.activeItem && su && su.isLeader && game.currentTurn === FACTIONS.PLAYER.id) {
                 let dist = Hex.distance(su, cH);
                 let itemUsed = false;
-                
+
                 if (game.activeItem === 'isca') {
                     if (u) { showMessage("Selecione um chão vazio!", "#e74c3c"); return; }
                     if (dist > 2) { showMessage("Muito longe para jogar a isca!", "#e74c3c"); return; }
@@ -195,7 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     game.fieldItems.isca--;
                     showMessage("Isca posicionada!", "#e67e22");
                     itemUsed = true;
-                    
+
                 } else if (game.activeItem === 'rede') {
                     if (!u || u.faction === FACTIONS.PLAYER.id) { showMessage("Selecione uma fera inimiga!", "#e74c3c"); return; }
                     if (dist > 3) { showMessage("Fora do alcance da rede!", "#e74c3c"); return; }
@@ -203,7 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     game.fieldItems.rede--;
                     if (typeof showPopup === 'function') showPopup("Preso na Rede!", u, '#9b59b6');
                     itemUsed = true;
-                    
+
                 } else if (game.activeItem === 'potion') {
                     if (!u || u.faction !== FACTIONS.PLAYER.id) { showMessage("Selecione uma unidade aliada!", "#e74c3c"); return; }
                     if (dist > 2) { showMessage("Muito longe para usar a poção!", "#e74c3c"); return; }
@@ -211,7 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     game.fieldItems.potion--;
                     if (typeof showPopup === 'function') showPopup("+30 HP 🧪", u, '#2ecc71');
                     itemUsed = true;
-                    
+
                 } else if (game.activeItem === 'bandage') {
                     if (!u || u.faction !== FACTIONS.PLAYER.id) { showMessage("Selecione uma unidade aliada!", "#e74c3c"); return; }
                     if (dist > 2) { showMessage("Muito longe para usar a atadura!", "#e74c3c"); return; }
@@ -220,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     game.fieldItems.bandage--;
                     if (typeof showPopup === 'function') showPopup("+15 HP 🩹", u, '#2ecc71');
                     itemUsed = true;
-                    
+
                 } else if (game.activeItem === 'scroll') {
                     if (!u || u.faction === FACTIONS.PLAYER.id) { showMessage("Selecione um inimigo!", "#e74c3c"); return; }
                     if (dist > 4) { showMessage("Fora de alcance!", "#e74c3c"); return; }
@@ -229,7 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (typeof showPopup === 'function') showPopup("-25 HP 📜", u, '#9b59b6');
                     if (u.hp <= 0) game.handleDeath(u, su);
                     itemUsed = true;
-                    
+
                 } else if (game.activeItem === 'sphere') {
                     if (!u || u.faction === FACTIONS.PLAYER.id) { showMessage("Selecione um inimigo!", "#e74c3c"); return; }
                     if (dist > 3) { showMessage("Fora de alcance!", "#e74c3c"); return; }
@@ -240,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (typeof showPopup === 'function') showPopup("🔮 Caos Elemental!", u, '#00ffff');
                     itemUsed = true;
                 }
-                
+
                 if (itemUsed) {
                     game.activeItem = null;
                     su.hasAttacked = true; // Gasta a ação do líder
@@ -327,7 +365,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         window.pendingAttackTarget = u;
                         handleCombatForecast(clientX, clientY, true, true);
                         if (typeof showMessage === 'function') showMessage("Toque novamente para Atacar!", "#f1c40f");
-                        return; 
+                        return;
                     }
 
                     // Segundo Clique: Executa o Combate!

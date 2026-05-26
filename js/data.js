@@ -130,7 +130,7 @@ const LEADERS = [
     { id: 'L_BARBARIAN', name: 'Rei Bárbaro', emoji: '🤴', hp: 80, maxHp: 80, mp: 4, maxMp: 4, atk: 16, range: 1, tags: ['PRIMAL', 'ICE'], fav: ['SNOW'], desc: 'Fúria Imortal: Quanto mais HP perder, mais forte ele fica.' },
     { id: 'L_TREX', name: 'T-Rex', emoji: '🦖', hp: 150, maxHp: 150, mp: 3, maxMp: 2, atk: 25, range: 1, tags: ['PRIMAL'], fav: ['DIRT'], desc: 'Kaiju. Bate em todos à frente. A cada passo, esmaga florestas e vilas, tornando-as planícies.' },
     { id: 'L_ICE_QUEEN', name: 'Rainha do Gelo', emoji: '👸🏼', hp: 75, maxHp: 75, mp: 3, maxMp: 3, atk: 12, range: 2, tags: ['ICE'], fav: ['SNOW'], filter: 'hue-rotate(180deg)', abilities: ['frost_armor', 'freeze'], desc: 'Magia glacial. Inimigos que a atacam corpo-a-corpo sofrem Congelamento (Chilled) instantâneo.' },
-    { id: 'L_HARPY', name: 'Matriarca Harpia', emoji: '🦅', hp: 65, maxHp: 65, mp: 5, maxMp: 5, atk: 14, range: 1, tags: ['WING'], fav: ['MOUNTAIN'], filter: 'saturate(150%)' , abilities: ['flying','dodge'], desc: 'Senhora dos ventos. Ignora custos de terreno pesado (sempre move por 1 MP) e possui esquiva natural alta.'}
+    { id: 'L_HARPY', name: 'Matriarca Harpia', emoji: '🦅', hp: 65, maxHp: 65, mp: 5, maxMp: 5, atk: 14, range: 1, tags: ['WING'], fav: ['MOUNTAIN'], filter: 'saturate(150%)', abilities: ['flying', 'dodge'], desc: 'Senhora dos ventos. Ignora custos de terreno pesado (sempre move por 1 MP) e possui esquiva natural alta.' }
 ];
 
 const FACTIONS = { WILD: { id: 0 }, PLAYER: { id: 1 }, AI: { id: 2 } };
@@ -253,4 +253,5 @@ const BUILDINGS = {
     BARRACKS: { id: 'BARRACKS', name: 'Quartel', icon: '⛺', cost: { wood: 5, stone: 0 }, desc: 'Recrute feras que compartilham a afinidade do seu Líder.', terrains: ['PLAINS', 'DESERT'] },
     LIBRARY: { id: 'LIBRARY', name: 'Biblioteca', icon: '📚', cost: { wood: 0, sand: 0 }, desc: '[Em Breve] Desbloqueia a Árvore de Habilidades.', terrains: ['PLAINS', 'SNOW'] },
     PORT: { id: 'PORT', name: 'Porto', icon: '⚓', cost: { wood: 0, stone: 0 }, desc: 'Gera +5 Ouro ao vencer batalhas.', terrains: ['WATER'] },
+    TRAP_MAKER: {name: 'Armadilheiro', icon: '🪤', desc: 'Produz Redes e Iscas automaticamente a cada turno.', onTurn: (game) => { game.fieldItems.isca++; game.fieldItems.rede++; }}
 };
