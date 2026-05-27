@@ -280,6 +280,24 @@ class Game {
         let pL2 = this.units.find(u => u.isLeader && u.faction === 1);
         if (pL2) { if (this.eventFlags.artillery) pL2.knownSpells.push('sl_artillery'); if (this.eventFlags.mines > 0) pL2.knownSpells.push('sl_mine'); if (this.eventFlags.barricades) pL2.knownSpells.push('sl_barricade'); if (this.eventFlags.epicConsumable) { pL2.maxHp += 25; pL2.hp += 25; } }
 
+        // Bônus Colheita Profana (Fazenda + Altar)
+        if (typeof checkAdjacency === 'function' && checkAdjacency('FARM', 'SHADOW_ALTAR')) {
+            this.units.filter(u => u.faction !== 1 && !u.isLeader).forEach(u => u.status = 'poison');
+        }
+
+        // Bônus das Residências (Curar 10% do HP perdido na Box e no Campo)
+        if (typeof countKingdomBuildings === 'function') {
+            let resCount = window.countKingdomBuildings('RESIDENCE');
+            if (resCount > 0) {
+                this.units.filter(u => u.faction === 1).forEach(u => {
+                    let lostHp = u.maxHp - u.hp;
+                    if (lostHp > 0) {
+                        u.hp = Math.min(u.maxHp, Math.floor(u.hp + (lostHp * 0.10 * resCount)));
+                    }
+                });
+            }
+        }
+
         this.eventFlags = {}; this.activeSynergies = this.getSynergies(1); this.currentTurn = 1; this.gameOver = false; this.selectPlayerLeader();
         let pL = this.units.find(u => u.isLeader && u.faction === 1);
 

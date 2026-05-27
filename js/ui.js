@@ -3,6 +3,23 @@
 // ==========================================
 let selectedInventoryIndex = null;
 
+window.checkAdjacency = function (id1, id2) {
+    if (!game || !game.kingdomMap) return false;
+    let found = false;
+    game.kingdomMap.forEach(h1 => {
+        if (h1.building === id1 || h1.building === id2) {
+            let neighbors = Hex.getNeighbors(h1.q, h1.r);
+            neighbors.forEach(n => {
+                let h2 = game.kingdomMap.get(`${n.q},${n.r}`);
+                if (h2 && ((h1.building === id1 && h2.building === id2) || (h1.building === id2 && h2.building === id1))) {
+                    found = true;
+                }
+            });
+        }
+    });
+    return found;
+};
+
 window.countKingdomBuildings = function (buildingId) {
     if (!game || !game.kingdomMap) return 0;
     let count = 0;
@@ -14,7 +31,7 @@ window.getMaxBoxLimit = function () {
     if (!game || !game.leaderData) return 6;
     let base = game.leaderData.limit || 6;
     if (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) base += 1;
-    base += (window.countKingdomBuildings('TOWN') + 1); // Bônus da Vila
+    base += window.countKingdomBuildings('VILLAGE'); // Bônus da Vila
     return base;
 };
 
@@ -464,19 +481,19 @@ window.showBeastDetails = function (b, bypassUnlock = false) {
     let evArr = EVOS[b.name] || [b.name + ' Alfa', b.name + ' Supremo'];
     let e1 = b.e || b.emoji, n1 = b.name, f1 = b.filter || 'none';
     let e2 = e1, n2 = evArr[0], f2 = f1; let e3 = e1, n3 = evArr[1], f3 = f1;
-    const evs2 = { 
-        '🐺': () => { if (f2 === 'none') f2 = 'saturate(200%) hue-rotate(330deg)'; }, 
-        '🐗': () => e2 = '🦏', 
-        '🐻': () => e2 = '🐼', 
-        '🐭': () => e2 = '🐀', 
-        '🐢': () => { e2 = '🦕'; n2 = "Dinossauro Escudo"; }, 
-        '🐴': () => { e2 = '🦄'; n2 = "Unicórnio Místico"; }, 
-        '🐍': () => { e2 = '🐍'; n2 = "Basilisco"; }, 
-        '🦂': () => { e2 = '🦂'; n2 = "Imperador do Deserto"; }, 
-        '🐒': () => { e2 = '🦍'; n2 = "Gorila Rei"; }, 
-        '🦊': () => { e2 = '🦊'; n2 = "Raposa de Nove Caudas"; }, 
-        '🐸': () => { e2 = '🐸'; n2 = "Sapo-Boi Gigante"; }, 
-        '🐦': () => { e2 = '🦅'; n2 = "Fênix"; } 
+    const evs2 = {
+        '🐺': () => { if (f2 === 'none') f2 = 'saturate(200%) hue-rotate(330deg)'; },
+        '🐗': () => e2 = '🦏',
+        '🐻': () => e2 = '🐼',
+        '🐭': () => e2 = '🐀',
+        '🐢': () => { e2 = '🦕'; n2 = "Dinossauro Escudo"; },
+        '🐴': () => { e2 = '🦄'; n2 = "Unicórnio Místico"; },
+        '🐍': () => { e2 = '🐍'; n2 = "Basilisco"; },
+        '🦂': () => { e2 = '🦂'; n2 = "Imperador do Deserto"; },
+        '🐒': () => { e2 = '🦍'; n2 = "Gorila Rei"; },
+        '🦊': () => { e2 = '🦊'; n2 = "Raposa de Nove Caudas"; },
+        '🐸': () => { e2 = '🐸'; n2 = "Sapo-Boi Gigante"; },
+        '🐦': () => { e2 = '🦅'; n2 = "Fênix"; }
     };
     if (evs2[e1]) evs2[e1]();
 
@@ -650,6 +667,7 @@ function generateShopItems() {
                 });
             }
         }
+
     }
 
     // --- 2. CONSUMÍVEIS DE STATUS (Embaralha e pega 2 aleatórios por loja) ---
@@ -717,6 +735,14 @@ function generateShopItems() {
                 }
             });
         }
+    }
+
+    // Centro Comercial: 2 Mercados adjacentes = 30% OFF em tudo!
+    if (typeof checkAdjacency === 'function' && checkAdjacency('MARKET', 'MARKET')) {
+        shopItems.forEach(item => {
+            item.cost = Math.max(1, Math.floor(item.cost * 0.7));
+            item.name += " (Promoção)";
+        });
     }
 }
 
@@ -1528,7 +1554,7 @@ function startGame(load, isRoguelite = false, leaderId = null) {
             SPELLS.forEach(s => {
                 // Descobre quem é o verdadeiro dono dessa magia (se houver)
                 let donoDaAssinatura = Object.keys(assinaturas).find(k => assinaturas[k].includes(s.id));
-                
+
                 // Filtros rigorosos
                 const ehCompativel = s.level === 1 && s.tags.some(t => lD.tags.includes(t)) && !s.noStart;
                 const podeAprender = !donoDaAssinatura || (donoDaAssinatura === lD.baseName);
@@ -1878,12 +1904,15 @@ function renderBuildingMenu() {
                              <button onclick="executeMarketTrade('sand', 2, -10)" class="btn-warning" style="flex:1; padding:4px 0; font-size:11px;">⏳</button>
                          </div>`;
         } else if (bData.id === 'FORGE') {
-            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
-                         <button id="btn-forge" class="btn-warning" style="width:100%; font-size:10px; padding:6px;">Forjar Equipamento (-10💰)</button>`;
+            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">`;
+            let fCost = checkAdjacency('FORGE', 'MINE') ? 15 : 25;
+            let fTxt = fCost === 15 ? "Forjar Equipamento (-15💰) [Bônus da Mina]" : "Forjar Equipamento (-25💰)";
+            actsHtml += `<button id="btn-forge" data-cost="${fCost}" class="btn-warning" style="width:100%; font-size:10px; padding:6px;">${fTxt}</button>`;
+
         } else if (bData.id === 'BARRACKS') {
-            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
-                         <button id="btn-barracks" class="btn-success" style="width:100%; font-size:10px; padding:6px;">Recrutar Tropa Aliada (-20💰)</button>`;
-        } else if (bData.id === 'SHADOW_ALTAR') {
+            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">`;
+            let extraTxt = checkAdjacency('BARRACKS', 'FORGE') ? " + Equip" : "";
+            actsHtml += `<button id="btn-barracks" class="btn-success" style="width:100%; font-size:10px; padding:6px;">Recrutar Tropa Aliada (-20💰)${extraTxt}</button>`;
             actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">`;
             if (game.leaderData && game.leaderData.tags && game.leaderData.tags.includes('UMBRAL')) {
                 actsHtml += `<button id="btn-altar-sac" class="btn-danger" style="width:100%; font-size:10px; padding:6px;">Sacrificar Fera (Gerar Recursos)</button>`;
@@ -1930,21 +1959,17 @@ function renderBuildingMenu() {
 
         if ($('btn-forge')) {
             $('btn-forge').onclick = async () => {
-                if (game.gold >= 10) {
-                    // FILTRADO: Só itens de grade de equipamentos táticos, remove consumíveis
+                let cost = parseInt($('btn-forge').getAttribute('data-cost'));
+                if (game.gold >= cost) {
                     let gearPool = ['RUSTY_SWORD', 'WOODEN_SHIELD', 'SWORD', 'SHIELD', 'BOOTS', 'BOW'];
                     let forgedId = gearPool[Math.floor(Math.random() * gearPool.length)];
-                    let iDef = ITEMS[forgedId];
-
+                    let iDef = typeof ITEMS !== 'undefined' ? ITEMS[forgedId] : { icon: '🗡️', name: 'Arma', desc: 'Item.' };
                     game.inventory.push({ id: forgedId, level: 1 });
-                    game.gold -= 10;
+                    game.gold -= cost;
                     if ($('k-res-gold')) $('k-res-gold').innerText = game.gold;
-
                     kRenderer.animateHex(hex, "upgrade");
-                    // Feedback grandioso via popup estilo RPG clássico
-                    await showZeldaPopup(iDef.icon, "Equipamento Forjado!", `Você forjou: ${iDef.name}\n${iDef.desc}`);
-                    autoSave();
-                    renderBuildingMenu();
+                    if (typeof showZeldaPopup === 'function') await showZeldaPopup(iDef.icon, "Equipamento Forjado!", `Você forjou: ${iDef.name}\n${iDef.desc}`);
+                    autoSave(); renderBuildingMenu();
                 } else { alert("Ouro insuficiente!"); }
             };
         }
@@ -1953,11 +1978,28 @@ function renderBuildingMenu() {
             $('btn-barracks').onclick = () => {
                 if (game.gold >= 20) {
                     let tags = game.leaderData.tags || [];
-                    let pool = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW].filter(b => b.tags && b.tags.some(t => tags.includes(t)) && !b.minLevel);
+                    let masterPool = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW];
+                    let pool = masterPool.filter(b => b.tags && b.tags.some(t => tags.includes(t)) && !b.minLevel);
+                    
+                    // Sinergias Absurdas do Quartel!
+                    if (checkAdjacency('BARRACKS', 'CRYSTAL_TOWER')) pool.push(...masterPool.filter(b => b.tags && b.tags.includes('MYSTIC') && !b.minLevel));
+                    if (checkAdjacency('BARRACKS', 'PORT')) pool.push(...masterPool.filter(b => b.tags && b.tags.includes('WATER') && !b.minLevel));
+                    if (checkAdjacency('BARRACKS', 'TRAP_MAKER')) pool.push(...masterPool.filter(b => b.tags && b.tags.includes('STALKER') && !b.minLevel));
+                    if (checkAdjacency('BARRACKS', 'FORGE')) pool.push(...masterPool.filter(b => b.tags && (b.tags.includes('ROCK') || b.tags.includes('CARAPACE')) && !b.minLevel));
+                    if (checkAdjacency('BARRACKS', 'SHADOW_ALTAR')) pool.push(...masterPool.filter(b => b.tags && b.tags.includes('UMBRAL') && !b.minLevel));
+
                     if (pool.length === 0) pool = BEASTS.LAND;
                     let b = pool[Math.floor(Math.random() * pool.length)];
                     let maxL = typeof window.getMaxBoxLimit === 'function' ? window.getMaxBoxLimit() : 6;
                     let newUnit = new Unit({ q: 0, r: 0, faction: 1, name: b.name, baseName: b.name, emoji: b.e, hp: b.hp, maxHp: b.hp, mp: b.mp, maxMp: b.mp, atk: b.atk, range: b.range, level: 1, abilities: [...b.abilities], isNew: true, filter: b.filter, tags: b.tags || [], fav: b.fav || [] });
+
+                    // Equipamento Grátis! (Forja + Quartel)
+                    if (checkAdjacency('BARRACKS', 'FORGE')) {
+                        let gearPool = ['RUSTY_SWORD', 'WOODEN_SHIELD', 'SWORD', 'SHIELD', 'BOOTS', 'BOW'];
+                        let forgedId = gearPool[Math.floor(Math.random() * gearPool.length)];
+                        newUnit.equipment.push({ id: forgedId, level: 1 });
+                        if (typeof ITEMS !== 'undefined' && ITEMS[forgedId] && ITEMS[forgedId].onEquip) ITEMS[forgedId].onEquip(newUnit, 1);
+                    }
 
                     if (deployedRoster.filter(u => !u.isLeader).length >= maxL) {
                         rosterMemory.push(newUnit); window.showKingdomPopup(`📦 ${b.name} para a Box!`, hex, 'var(--success)');
@@ -2007,57 +2049,99 @@ function renderBuildingMenu() {
     }
     tId = tId.toUpperCase();
 
-    Object.values(BUILDINGS).forEach(b => {
-        if (b.id === 'CASTLE') return;
-        if (!b.terrains || !b.terrains.includes(tId)) return;
+    // 1. Filtra as permitidas, Checa Unicidade e Ordena
+    let availableBuildings = Object.values(BUILDINGS).filter(b => b.id !== 'CASTLE' && b.terrains && b.terrains.includes(tId));
+    const nonUnique = ['MINE', 'LUMBERMILL', 'FISHINGCAMP', 'SANDPIT', 'FARM', 'RESIDENCE', 'MARKET', 'VILLAGE'];
 
+    let bOpts = availableBuildings.map(b => {
+        let isUnique = !nonUnique.includes(b.id);
+        let alreadyHas = isUnique && Array.from(game.kingdomMap.values()).some(h => h.building === b.id);
+        let canAfford = Object.entries(b.cost).every(([res, amt]) => (game.resources[res] || 0) >= amt);
+        return { b, isUnique, alreadyHas, canAfford };
+    });
+
+    // 2. Ordena (Pode Comprar > Sem Recurso > Já Construído (Bloqueado))
+    bOpts.sort((x, y) => {
+        if (x.alreadyHas !== y.alreadyHas) return x.alreadyHas ? 1 : -1;
+        if (x.canAfford !== y.canAfford) return x.canAfford ? -1 : 1;
+        return 0;
+    });
+
+    bOpts.forEach(opt => {
+        let b = opt.b;
         hasOptions = true;
-        const canAfford = Object.entries(b.cost).every(([res, amt]) => (game.resources[res] || 0) >= amt);
         const btn = document.createElement('button');
-        btn.style.cssText = `display:flex; flex-direction:column; align-items:center; min-width:140px; background:rgba(20,20,30,0.8); border:1px solid ${canAfford ? 'var(--success)' : '#555'}; padding:10px; border-radius:8px; cursor:${canAfford ? 'pointer' : 'not-allowed'};`;
 
-        const costHtml = Object.entries(b.cost).map(([res, amt]) => {
-            let icon = res === 'wood' ? '🌲' : res === 'stone' ? '⛰️' : res === 'scales' ? '🐟' : res === 'sand' ? '⏳' : '🩸';
-            let color = (game.resources[res] || 0) >= amt ? '#fff' : 'var(--enemy-color)';
-            return `<span style="color:${color}; font-size:11px; font-weight:bold;">${icon}${amt}</span>`;
-        }).join(' ');
+        let btnStyle = opt.canAfford ? 'var(--success)' : '#555';
+        let cursor = opt.canAfford ? 'pointer' : 'not-allowed';
+        let opacity = 1;
+        if (opt.alreadyHas) { btnStyle = '#e74c3c'; cursor = 'not-allowed'; opacity = 0.5; }
+
+        btn.style.cssText = `display:flex; flex-direction:column; align-items:center; min-width:140px; background:rgba(20,20,30,0.8); border:1px solid ${btnStyle}; padding:10px; border-radius:8px; cursor:${cursor}; opacity:${opacity};`;
+
+        let costHtml = opt.alreadyHas
+            ? `<span style="color:#e74c3c; font-size:10px; font-weight:bold;">LIMITE ÚNICO ATINGIDO</span>`
+            : Object.entries(b.cost).map(([res, amt]) => {
+                let icon = res === 'wood' ? '🌲' : res === 'stone' ? '⛰️' : res === 'scales' ? '🐟' : res === 'sand' ? '⏳' : '🩸';
+                let color = (game.resources[res] || 0) >= amt ? '#fff' : 'var(--enemy-color)';
+                return `<span style="color:${color}; font-size:11px; font-weight:bold;">${icon}${amt}</span>`;
+            }).join(' ');
 
         btn.innerHTML = `<span style="font-size:26px;">${b.icon}</span><span style="font-size:11px; color:var(--gold-light); margin:4px 0; font-weight:bold;">${b.name}</span><div style="display:flex; gap:6px;">${costHtml}</div><span style="font-size:9px; color:#aaa; margin-top:6px; text-align:center;">${b.desc}</span>`;
 
-        if (canAfford) {
+        if (opt.canAfford && !opt.alreadyHas) {
             btn.onclick = async () => {
                 Object.entries(b.cost).forEach(([res, amt]) => game.resources[res] -= amt);
-                hex.building = b.id;
-                hex.bLevel = 1;
+
+                // 3. Mecânica de Fusão de Residências -> VILA
+                if (b.id === 'RESIDENCE') {
+                    let neighbors = Hex.getNeighbors(hex.q, hex.r);
+                    let merged = false;
+                    for (let n of neighbors) {
+                        let adj = game.kingdomMap.get(`${n.q},${n.r}`);
+                        if (adj && adj.building === 'RESIDENCE') {
+                            adj.building = null; adj.bLevel = null; // Apaga a antiga
+                            hex.building = 'VILLAGE'; hex.bLevel = 1; // Transforma o lote atual
+                            merged = true;
+                            if (typeof showZeldaPopup === 'function') await showZeldaPopup('🏘️', 'Vila Fundada!', 'Duas residências se uniram para formar uma Vila!\n+1 Limite de Exército!');
+                            break;
+                        }
+                    }
+                    if (!merged) { hex.building = 'RESIDENCE'; hex.bLevel = 1; }
+                } else {
+                    hex.building = b.id; hex.bLevel = 1;
+                }
+
+                // 4. Igreja Sombria (Corvo Sombrio)
+                if ((b.id === 'CHURCH' || b.id === 'SHADOW_ALTAR') && checkAdjacency('CHURCH', 'SHADOW_ALTAR') && (!game.eventFlags || !game.eventFlags.hasDarkCrow)) {
+                    if (!game.eventFlags) game.eventFlags = {};
+                    game.eventFlags.hasDarkCrow = true;
+                    let crow = new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: "Corvo Sombrio", baseName: "Corvo", emoji: "🐦‍⬛", hp: 40, maxHp: 40, mp: 5, maxMp: 5, atk: 14, range: 1, level: 1, abilities: ['flying', 'lifesteal'], isNew: true, filter: 'none', tags: ['UMBRAL', 'WING'], fav: ['FOREST'] });
+                    rosterMemory.push(crow);
+                    if (typeof showZeldaPopup === 'function') await showZeldaPopup("🐦‍⬛", "Igreja Sombria!", "A combinação profana atraiu o Corvo Sombrio para a sua Box!");
+                }
 
                 if (b.id === 'CHURCH') {
                     let celestial = new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: "Guardião Celestial", baseName: "Guardião", emoji: "🕊️", hp: 45, maxHp: 45, mp: 4, maxMp: 4, atk: 12, range: 1, level: 1, abilities: ['leadership'], isNew: true, filter: 'none', tags: ['CELESTIAL'], fav: ['PLAINS'] });
                     rosterMemory.push(celestial);
-                    await showZeldaPopup("🕊️", "Invocação Celestial!", "O Guardião Celestial foi enviado com sucesso para a Box!");
-                }
-                if (b.id === 'FARM') {
-                    [...rosterMemory, ...deployedRoster].forEach(u => { u.maxHp += 10; u.hp += 10; });
-                    window.showKingdomPopup("🌾 +10 HP Geral!", hex, '#2ecc71');
+                    if (typeof showZeldaPopup === 'function') await showZeldaPopup("🕊️", "Invocação Celestial!", "O Guardião Celestial foi enviado com sucesso para a Box!");
                 }
 
+                // Atualiza UI Geral
                 let resObj = game.resources || {};
                 if ($('k-res-wood')) $('k-res-wood').innerText = resObj.wood || 0;
                 if ($('k-res-stone')) $('k-res-stone').innerText = resObj.stone || 0;
                 if ($('k-res-scales')) $('k-res-scales').innerText = resObj.scales || 0;
                 if ($('k-res-sand')) $('k-res-sand').innerText = resObj.sand || 0;
-                if ($('k-res-gold')) $('k-res-gold').innerText = game.gold;
-
-                kRenderer.animateHex(hex, "build"); // Dispara shockwave verde de construção
-                if (b.id !== 'CHURCH') window.showKingdomPopup("✨ Construído!", hex, '#2ecc71');
-
-                autoSave();
-                renderBuildingMenu();
+                kRenderer.animateHex(hex, "build");
+                if (b.id !== 'CHURCH' && b.id !== 'RESIDENCE') window.showKingdomPopup("✨ Construído!", hex, '#2ecc71');
+                autoSave(); renderBuildingMenu();
             };
         }
         menu.appendChild(btn);
     });
 
-    if (!hasOptions) menu.innerHTML = '<div style="color:#aaa; padding:10px; font-style:italic;">Nenhuma construção disponível para este tipo de terreno.</div>';
+    if (!hasOptions) menu.innerHTML = '<div style="color:#aaa; padding:10px; font-style:italic;">Nenhuma construção disponível.</div>';
 }
 
 // ==========================================
