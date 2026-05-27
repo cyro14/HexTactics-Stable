@@ -31,10 +31,27 @@ const TAGS = {
     VENOM: { name: 'Venenoso', col: '#9b59b6', req: 2, desc: '(2) Veneno tira 10 HP e 100% de chance.' },
     STALKER: { name: 'Rastreador', col: '#d35400', req: 3, desc: '(3) Flanquear inimigo ignora def e dobra dano.' },
     CARAPACE: { name: 'Carapaça', col: '#7f8c8d', req: 2, desc: '(2) Refletem 10% do dano recebido.' },
-    MYSTIC: { name: 'Místico', col: '#9b59b6', req: 2, desc: '(2) 30% chance de resetar MP (Ação Extra).' }
+    MYSTIC: { name: 'Místico', col: '#9b59b6', req: 2, desc: '(2) 30% chance de resetar MP (Ação Extra).' },
+    ELECTRIC: { name: 'Elétrico', col: '#f1c40f', req: 2, desc: 'Especialistas em correntes elétricas.' }
 };
 
-const MANA_TYPES = { FIRE: { icon: '🔥', col: '#e67e22', name: 'Fogo' }, SILVESTRE: { icon: '🌿', col: '#27ae60', name: 'Vida' }, ABYSSAL: { icon: '💧', col: '#3498db', name: 'Abissal' }, ROCK: { icon: '⛏️', col: '#95a5a6', name: 'Terra' }, SAND: { icon: '🌪️', col: '#f1c40f', name: 'Areia' }, ICE: { icon: '❄️', col: '#00ffff', name: 'Gelo' }, UMBRAL: { icon: '🌑', col: '#8e44ad', name: 'Umbra' }, CELESTIAL: { icon: '✨', col: '#fffbc2', name: 'Luz' }, PRIMAL: { icon: '🦴', col: '#e74c3c', name: 'Primal' }, WING: { icon: '🪶', col: '#ecf0f1', name: 'Vento' }, VENOM: { icon: '☠️', col: '#9b59b6', name: 'Veneno' }, STALKER: { icon: '👁️', col: '#d35400', name: 'Sombra' }, CARAPACE: { icon: '🛡️', col: '#7f8c8d', name: 'Pedra' }, MYSTIC: { icon: '🔮', col: '#9b59b6', name: 'Arcano' } };
+const MANA_TYPES = {
+    FIRE: { icon: '🔥', col: '#e67e22', name: 'Fogo' },
+    SILVESTRE: { icon: '🌿', col: '#27ae60', name: 'Vida' },
+    ABYSSAL: { icon: '💧', col: '#3498db', name: 'Abissal' },
+    ROCK: { icon: '⛏️', col: '#95a5a6', name: 'Terra' },
+    SAND: { icon: '🌪️', col: '#f1c40f', name: 'Areia' },
+    ICE: { icon: '❄️', col: '#00ffff', name: 'Gelo' },
+    UMBRAL: { icon: '🌑', col: '#8e44ad', name: 'Umbra' },
+    CELESTIAL: { icon: '✨', col: '#fffbc2', name: 'Luz' },
+    PRIMAL: { icon: '🦴', col: '#e74c3c', name: 'Primal' },
+    WING: { icon: '🪶', col: '#ecf0f1', name: 'Vento' },
+    VENOM: { icon: '☠️', col: '#9b59b6', name: 'Veneno' },
+    STALKER: { icon: '👁️', col: '#d35400', name: 'Sombra' },
+    CARAPACE: { icon: '🛡️', col: '#7f8c8d', name: 'Pedra' },
+    MYSTIC: { icon: '🔮', col: '#9b59b6', name: 'Arcano' },
+    ELECTRIC: { icon: '⚡', col: '#f1c40f', id: 'ELECTRIC', name: 'Energia' }
+};
 
 const SPELLS = [
     { id: 'sl_ember', name: 'Centelha', icon: '🔥', level: 1, tags: ['FIRE'], type: 'atk', range: 2, cost: { FIRE: 1 }, desc: 'Causa 10 de dano de fogo.', effect: async (g, c, t) => { t.hp -= 10; showPopup("🔥 -10", t, '#e67e22'); addLog(`🔥 ${c.name} lançou Centelha em ${t.name}!`, '#e67e22'); if (t.hp <= 0) g.handleDeath(t, c); g.checkWin(); return true; } },
@@ -99,7 +116,36 @@ const SPELLS = [
     { id: 'sl_turno_extra', name: 'Pó de Fada', icon: '✨', cost: { 'MYSTIC': 3 }, level: 2, type: 'def', range: 2, tags: ['SILVESTRE'], desc: 'Zera o cooldown de um aliado, permitindo que ele ande e ataque novamente.', effect: async (game, caster, target) => { if (!target || target === caster || target.faction !== 1) return false; target.hasAttacked = false; target.mp = target.maxMp; showPopup("Turno Extra!", target, '#f1c40f'); return true; } },
     { id: 'sl_caldeirao', name: 'Caldeirão Sombrio', icon: '🍲', cost: { 'UMBRAL': 2 }, level: 2, type: 'def', range: 1, tags: ['VENOM'], desc: 'Sacrifica um aliado adjacente para curar todo o exército em 30 HP.', effect: async (game, caster, target) => { if (!target || target.faction !== 1 || target.isLeader) return false; game.handleDeath(target, caster); game.units.filter(u => u.faction === 1).forEach(u => { u.hp = Math.min(u.maxHp, u.hp + 30); showPopup("+30 HP", u, '#2ecc71'); }); return true; } },
     { id: 'sl_barreira_gelo', name: 'Barreira de Gelo', icon: '🧊', cost: { 'ICE': 3 }, level: 1, type: 'def', range: 0, tags: ['ICE'], desc: 'Cria uma armadura gélida: ganha escudo imediato e cura 15 HP.', effect: async (game, caster) => { caster.status = 'shielded'; caster.hp = Math.min(caster.maxHp, caster.hp + 15); showPopup("Barreira Ativa!", caster, '#00ffff'); return true; } },
-    { id: 'sl_vendaval', name: 'Vendaval Rasante', icon: '🌪️', cost: { 'WING': 3 }, level: 1, type: 'atk', range: 2, tags: ['WING'], desc: 'Causa 20 de dano a um alvo e zera o próprio custo de movimento para fugir (Hit & Run).', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 20; caster.hasAttacked = false; caster.mp = caster.maxMp; showPopup("-20 🌪️", target, '#aaa'); showPopup("Vento a Favor!", caster, '#f1c40f'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } }
+    { id: 'sl_vendaval', name: 'Vendaval Rasante', icon: '🌪️', cost: { 'WING': 3 }, level: 1, type: 'atk', range: 2, tags: ['WING'], desc: 'Causa 20 de dano a um alvo e zera o próprio custo de movimento para fugir (Hit & Run).', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 20; caster.hasAttacked = false; caster.mp = caster.maxMp; showPopup("-20 🌪️", target, '#aaa'); showPopup("Vento a Favor!", caster, '#f1c40f'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
+    {
+        id: 'sl_furia_tempestade',
+        name: 'Fúria da Tempestade',
+        icon: '🌩️',
+        desc: 'Lança um raio colossal que causa 25 de Dano. Todos os inimigos adjacentes ao alvo também recebem o dano e ficam Atordoados!',
+        level: 1,
+        type: 'atk',
+        range: 3,
+        tags: ['ELECTRIC'],
+        cost: { 'ELECTRIC': 2 },
+        effect: async (game, caster, target, targetHex) => {
+            target.hp -= 25;
+            if (typeof showPopup === 'function') showPopup("-25 ⚡", target, '#f1c40f');
+            if (target.hp <= 0) game.handleDeath(target, caster);
+
+            // Dano em Cadeia
+            let neighbors = Hex.getNeighbors(target.q, target.r);
+            for (let n of neighbors) {
+                let u = game.getUnitAt(n.q, n.r);
+                if (u && u.faction !== caster.faction && u !== target && u.hp > 0) {
+                    u.hp -= 25;
+                    u.status = 'stun';
+                    if (typeof showPopup === 'function') showPopup("Zzz ⚡", u, '#f1c40f');
+                    if (u.hp <= 0) game.handleDeath(u, caster);
+                }
+            }
+            return true;
+        }
+    }
 ];
 
 const LEADER_GRIMOIRE_TAGS = {
@@ -149,7 +195,8 @@ const LEADERS = [
     { id: 'L_BARBARIAN', name: 'Rei Bárbaro', emoji: '🤴', hp: 80, maxHp: 80, mp: 4, maxMp: 4, atk: 12, range: 1, tags: ['PRIMAL', 'ICE'], fav: ['SNOW'], desc: 'Fúria Imortal: Quanto mais HP perder, mais forte ele fica.' },
     { id: 'L_TREX', name: 'T-Rex', emoji: '🦖', hp: 150, maxHp: 150, mp: 3, maxMp: 2, atk: 25, range: 1, tags: ['PRIMAL', 'ROCK', 'STALKER'], fav: ['DIRT'], desc: 'Kaiju. Bate em todos à frente. A cada passo, esmaga florestas e vilas, tornando-as planícies.' },
     { id: 'L_ICE_QUEEN', name: 'Rainha do Gelo', emoji: '👸🏼', hp: 75, maxHp: 75, mp: 3, maxMp: 3, atk: 12, range: 2, tags: ['ICE'], fav: ['SNOW'], filter: 'hue-rotate(180deg)', abilities: ['frost_armor', 'freeze'], desc: 'Magia glacial. Inimigos que a atacam corpo-a-corpo sofrem Congelamento (Chilled) instantâneo.' },
-    { id: 'L_HARPY', name: 'Matriarca Harpia', emoji: '🦅', hp: 65, maxHp: 65, mp: 5, maxMp: 5, atk: 14, range: 1, tags: ['WING', 'STALKER'], fav: ['MOUNTAIN'], filter: 'saturate(150%)', abilities: ['flying', 'dodge'], desc: 'Senhora dos ventos. Ignora custos de terreno pesado (sempre move por 1 MP) e possui esquiva natural alta.' }
+    { id: 'L_HARPY', name: 'Matriarca Harpia', emoji: '🦅', hp: 65, maxHp: 65, mp: 5, maxMp: 5, atk: 14, range: 1, tags: ['WING', 'STALKER'], fav: ['MOUNTAIN'], filter: 'saturate(150%)', abilities: ['flying', 'dodge'], desc: 'Senhora dos ventos. Ignora custos de terreno pesado (sempre move por 1 MP) e possui esquiva natural alta.' },
+    { id: 'shaman', name: 'Xamã da Tempestade', emoji: '🧙‍♂️', desc: 'Mestre dos raios. Seus feitiços ricocheteiam e causam caos nas fileiras inimigas.', hp: 75, mp: 4, atk: 12, range: 2, limit: 6, tags: ['ELECTRIC', 'MYSTIC'], fav: ['MOUNTAIN'], filter: 'hue-rotate(45deg) saturate(200%)' }
 ];
 
 const FACTIONS = { WILD: { id: 0 }, PLAYER: { id: 1 }, AI: { id: 2 } };
@@ -197,6 +244,8 @@ const EVOS = {
     'Leão': ['Leão Dourado', 'Leão Celestial'],
     'Coruja': ['Coruja Sábia', 'Coruja Oráculo'],
     'Morcego': ['Morcego Gigante', 'Vampiro Sombrio'],
+    'Enguia Elétrica': ['Enguia Chocante', 'Leviatã das Tormentas'],
+    'Pássaro Trovão': ['Águia Tempestade', 'Ziz Trovejante'],
 };
 
 const BEASTS = {
@@ -224,13 +273,15 @@ const BEASTS = {
         { e: '🦎', name: 'Salamandra', hp: 40, mp: 3, atk: 14, range: 1, abilities: ['burn'], filter: 'hue-rotate(-50deg) saturate(200%)', tags: ['FIRE', 'CARAPACE'], fav: ['MOUNTAIN', 'DESERT'] },
         { e: '🐕‍🦺', name: 'Cão Infernal', hp: 50, mp: 4, atk: 16, range: 1, abilities: ['swift'], filter: 'brightness(70%) sepia(100%) hue-rotate(330deg) saturate(300%)', tags: ['FIRE', 'UMBRAL'], fav: ['MOUNTAIN'] },
         { e: '🦉', name: 'Coruja', hp: 30, mp: 5, atk: 12, range: 2, abilities: ['flying', 'pierce'], filter: 'none', tags: ['UMBRAL', 'WING'], fav: ['FOREST'] },
+        { e: '🦅', name: 'Pássaro Trovão', hp: 45, mp: 6, atk: 18, range: 2, abilities: ['flying', 'electric'], filter: 'hue-rotate(200deg) saturate(300%) drop-shadow(0 0 5px yellow)', tags: ['WING', 'ELECTRIC'], fav: ['MOUNTAIN'] }
     ],
     WATER: [
         { e: '🐊', name: 'Crocodilo', hp: 55, atk: 14, mp: 3, range: 1, abilities: [], minLevel: 2, filter: 'none', tags: ['PRIMAL', 'ABYSSAL'], fav: ['WATER'] },
         { e: '🦈', name: 'Tubarão', hp: 45, atk: 18, mp: 4, range: 1, abilities: ['lifesteal'], minLevel: 2, filter: 'none', tags: ['STALKER', 'ABYSSAL'], fav: ['WATER'] },
         { e: '🦑', name: 'Kraken', hp: 75, atk: 12, mp: 2, range: 1, abilities: ['bind'], minLevel: 3, filter: 'none', tags: ['MYSTIC', 'ABYSSAL'], fav: ['WATER'] },
         { e: '🦀', name: 'Caranguejo Blindado', hp: 65, atk: 12, mp: 2, range: 1, abilities: ['counter'], minLevel: 2, filter: 'none', tags: ['CARAPACE', 'ABYSSAL'], fav: ['WATER'] },
-        { e: '🐍', name: 'Enguia Elétrica', hp: 35, atk: 15, mp: 4, range: 1, abilities: ['electric'], minLevel: 3, filter: 'hue-rotate(200deg)', tags: ['MYSTIC', 'ABYSSAL'], fav: ['WATER'] }, { e: '🐸', name: 'Sapo', hp: 25, atk: 9, mp: 3, range: 1, abilities: ['poison'], minLevel: 1, filter: 'none', tags: ['VENOM', 'ABYSSAL'], fav: ['WATER'] },
+        { e: '🐍', name: 'Enguia Elétrica', hp: 35, atk: 15, mp: 4, range: 1, abilities: ['electric'], minLevel: 3, filter: 'hue-rotate(200deg)', tags: ['ELECTRIC', 'ABYSSAL'], fav: ['WATER'] },
+        { e: '🐸', name: 'Sapo', hp: 25, atk: 9, mp: 3, range: 1, abilities: ['poison'], minLevel: 1, filter: 'none', tags: ['VENOM', 'ABYSSAL'], fav: ['WATER'] },
         { e: '🦭', name: 'Morsa', hp: 60, mp: 2, atk: 14, range: 1, abilities: ['crystal_skin'], filter: 'none', tags: ['ICE', 'ABYSSAL'], fav: ['WATER', 'SNOW'] }],
 
     SNOW: [
@@ -239,7 +290,12 @@ const BEASTS = {
         { e: '🐺', name: 'Lobo do Inverno', hp: 50, atk: 14, mp: 4, range: 1, abilities: ['freeze'], minLevel: 3, filter: 'brightness(200%) grayscale(100%)', tags: ['STALKER', 'ICE'], fav: ['SNOW'] },
         { e: '🐧', name: 'Pinguim', hp: 30, atk: 8, mp: 4, range: 1, abilities: [], minLevel: 1, filter: 'none', tags: ['ABYSSAL', 'ICE'], fav: ['WATER', 'SNOW'] }],
 
-    BOSSES: [{ e: '🦁', name: 'Rei Leão', hp: 80, atk: 18, mp: 4, range: 1, abilities: ['leadership'], minLevel: 1, maxLevel: 1, filter: 'none', tags: ['CELESTIAL', 'SAND'], fav: ['DESERT'] }, { e: '🦍', name: 'Gorila Rei', hp: 120, atk: 22, mp: 3, range: 1, abilities: ['stun'], minLevel: 2, maxLevel: 2, filter: 'none', tags: ['PRIMAL', 'SILVESTRE'], fav: ['FOREST'] }, { e: '🦣', name: 'Mamute Obelisco', hp: 180, atk: 30, mp: 2, range: 1, abilities: [], minLevel: 3, maxLevel: 3, filter: 'none', tags: ['PRIMAL', 'ICE'], fav: ['SNOW'] }, { e: '🦅', name: 'Quimera', hp: 140, atk: 25, mp: 5, range: 2, abilities: ['burn'], minLevel: 4, maxLevel: 5, filter: 'hue-rotate(45deg) saturate(200%)', tags: ['WING', 'FIRE'], fav: ['PLAINS'] }, { e: '👹', name: 'Titã de Gelo', hp: 200, atk: 28, mp: 2, range: 1, abilities: ['freeze'], minLevel: 6, maxLevel: 99, filter: 'hue-rotate(180deg) brightness(120%)', tags: ['PRIMAL', 'ICE'], fav: ['SNOW'] }]
+    BOSSES: [
+        { e: '🦁', name: 'Rei Leão', hp: 80, atk: 18, mp: 4, range: 1, abilities: ['leadership'], minLevel: 1, maxLevel: 1, filter: 'none', tags: ['CELESTIAL', 'SAND'], fav: ['DESERT'] },
+        { e: '🦍', name: 'Gorila Rei', hp: 120, atk: 22, mp: 3, range: 1, abilities: ['stun'], minLevel: 2, maxLevel: 2, filter: 'none', tags: ['PRIMAL', 'SILVESTRE'], fav: ['FOREST'] },
+        { e: '🦣', name: 'Mamute Obelisco', hp: 180, atk: 30, mp: 2, range: 1, abilities: [], minLevel: 3, maxLevel: 3, filter: 'none', tags: ['PRIMAL', 'ICE'], fav: ['SNOW'] },
+        { e: '🦅', name: 'Quimera', hp: 140, atk: 25, mp: 5, range: 2, abilities: ['burn'], minLevel: 4, maxLevel: 5, filter: 'hue-rotate(45deg) saturate(200%)', tags: ['WING', 'FIRE'], fav: ['PLAINS'] },
+        { e: '👹', name: 'Titã de Gelo', hp: 200, atk: 28, mp: 2, range: 1, abilities: ['freeze'], minLevel: 6, maxLevel: 99, filter: 'hue-rotate(180deg) brightness(120%)', tags: ['PRIMAL', 'ICE'], fav: ['SNOW'] }]
 };
 const ALL_BEASTS = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW, ...BEASTS.BOSSES];
 
@@ -323,6 +379,6 @@ const BUILDINGS = {
     SHADOW_ALTAR: { id: 'SHADOW_ALTAR', name: 'Altar das Sombras', icon: '🪦', cost: { stone: 0, scales: 0 }, desc: 'Sacrifica feras por recursos (Apenas Líderes Umbrais).', terrains: ['MOUNTAIN', 'DESERT', 'FOREST'] },
     FORGE: { id: 'FORGE', name: 'Forja', icon: '⚒️', cost: { wood: 0, stone: 0 }, desc: 'Forje itens e consumíveis direto para a sua mochila.', terrains: ['MOUNTAIN', 'PLAINS'] },
     BARRACKS: { id: 'BARRACKS', name: 'Quartel', icon: '⛺', cost: { wood: 0, stone: 0 }, desc: 'Recrute feras que compartilham a afinidade do seu Líder.', terrains: ['PLAINS', 'DESERT'] },
-    LIBRARY: { id: 'LIBRARY', name: 'Biblioteca', icon: '📚', desc: 'Gera 1 DNA 🧬 ao final de cada combate vencido.', terrains: ['PLAINS', 'SNOW'], cost: { wood: 0, stone: 0 } },    PORT: { id: 'PORT', name: 'Porto', icon: '⚓', cost: { wood: 0, stone: 0 }, desc: 'Gera +5 Ouro ao vencer batalhas.', terrains: ['WATER'] },
-    TRAP_MAKER: { id: 'TRAP_MAKER', name: 'Armadilheiro', icon: '🕸️', desc: 'Produz Iscas e Redes por batalha.', terrains: ['FOREST', 'PLAINS'], cost: { wood: 0, stone: 0 } },    RESIDENCE: { id: 'RESIDENCE', name: 'Residência', icon: '🏠', desc: 'Recupera 10% do HP perdido das feras a cada fase. Duas juntas formam uma Vila.', terrains: ['PLAINS', 'FOREST', 'SNOW', 'DESERT'], cost: { wood: 0, stone: 0 } },
+    LIBRARY: { id: 'LIBRARY', name: 'Biblioteca', icon: '📚', desc: 'Gera 1 DNA 🧬 ao final de cada combate vencido.', terrains: ['PLAINS', 'SNOW'], cost: { wood: 0, stone: 0 } }, PORT: { id: 'PORT', name: 'Porto', icon: '⚓', cost: { wood: 0, stone: 0 }, desc: 'Gera +5 Ouro ao vencer batalhas.', terrains: ['WATER'] },
+    TRAP_MAKER: { id: 'TRAP_MAKER', name: 'Armadilheiro', icon: '🕸️', desc: 'Produz Iscas e Redes por batalha.', terrains: ['FOREST', 'PLAINS'], cost: { wood: 0, stone: 0 } }, RESIDENCE: { id: 'RESIDENCE', name: 'Residência', icon: '🏠', desc: 'Recupera 10% do HP perdido das feras a cada fase. Duas juntas formam uma Vila.', terrains: ['PLAINS', 'FOREST', 'SNOW', 'DESERT'], cost: { wood: 0, stone: 0 } },
 };

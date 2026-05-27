@@ -104,13 +104,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const ranges = { isca: 2, rede: 3, potion: 2, bandage: 2, scroll: 4, sphere: 3 };
         game.itemRange = ranges[type];
 
-        // --- NOVO: SELECIONA O LÍDER AUTOMATICAMENTE ---
+        // SELECIONA O LÍDER AUTOMATICAMENTE
         const leader = game.units.find(u => u.isLeader && u.faction === 1);
         if (leader) {
             game.selectedUnit = leader;
             game.calculateReachable(leader);
         }
-        // -----------------------------------------------
 
         showMessage(`Selecione o alvo para: ${type.toUpperCase()}`, "#3498db");
         updateUI();

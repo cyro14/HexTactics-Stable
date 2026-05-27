@@ -613,6 +613,37 @@ function updateUI() {
         itemMenu.className = 'hidden';
         $('game-container').appendChild(itemMenu);
     }
+
+    // INJEÇÃO DO BOTÃO UNIVERSAL DE CANCELAR
+    let cancelBtn = $('btn-cancel-action');
+    if (!cancelBtn && $('game-container')) {
+        cancelBtn = document.createElement('button');
+        cancelBtn.id = 'btn-cancel-action';
+        cancelBtn.className = 'btn-danger hidden';
+        cancelBtn.innerHTML = '❌ Cancelar Ação';
+        cancelBtn.style.cssText = 'position:absolute; bottom: 85px; left: 50%; transform: translateX(-50%); z-index: 100; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 0 10px rgba(231,76,60,0.5); cursor: pointer;';
+        
+        cancelBtn.onclick = () => {
+            if (game) {
+                game.activeSpell = null;
+                game.activeItem = null;
+            }
+            if (typeof renderSpellBar === 'function') renderSpellBar();
+            updateUI(); 
+            if (typeof renderer !== 'undefined') renderer.draw();
+        };
+        $('game-container').appendChild(cancelBtn);
+    }
+    
+    // Mostra o botão apenas se algo estiver ativo para mirar
+    if (cancelBtn && game) {
+        if (game.activeSpell || game.activeItem) {
+            cancelBtn.classList.remove('hidden');
+        } else {
+            cancelBtn.classList.add('hidden');
+        }
+    }
+
 }
 
 // ==========================================
@@ -1563,7 +1594,8 @@ function startGame(load, isRoguelite = false, leaderId = null) {
             'Necromante': ['sl_erguer_esq'],
             'Arquimago': ['sl_explosao_arcana'],
             'Rainha do Gelo': ['sl_barreira_gelo'],
-            'Matriarca Harpia': ['sl_vendaval']
+            'Matriarca Harpia': ['sl_vendaval'],
+            'Xamã da Tempestade': ['sl_furia_tempestade']
         };
 
         // Criamos uma lista de TODAS as magias assinaturas para garantir que ninguém mais as tenha
