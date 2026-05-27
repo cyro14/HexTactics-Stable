@@ -231,7 +231,7 @@ const BEASTS = {
         { e: '🦑', name: 'Kraken', hp: 75, atk: 12, mp: 2, range: 1, abilities: ['bind'], minLevel: 3, filter: 'none', tags: ['MYSTIC', 'ABYSSAL'], fav: ['WATER'] },
         { e: '🦀', name: 'Caranguejo Blindado', hp: 65, atk: 12, mp: 2, range: 1, abilities: ['counter'], minLevel: 2, filter: 'none', tags: ['CARAPACE', 'ABYSSAL'], fav: ['WATER'] },
         { e: '🐍', name: 'Enguia Elétrica', hp: 35, atk: 15, mp: 4, range: 1, abilities: ['electric'], minLevel: 3, filter: 'hue-rotate(200deg)', tags: ['MYSTIC', 'ABYSSAL'], fav: ['WATER'] }, { e: '🐸', name: 'Sapo', hp: 25, atk: 9, mp: 3, range: 1, abilities: ['poison'], minLevel: 1, filter: 'none', tags: ['VENOM', 'ABYSSAL'], fav: ['WATER'] },
-        { e: '🦭', name: 'Morsa', hp: 60, mp: 2, atk: 14, range: 1, abilities: ['crystal_skin'], filter: 'none', tags: ['ICE', 'WATER'], fav: ['WATER', 'SNOW'] }],
+        { e: '🦭', name: 'Morsa', hp: 60, mp: 2, atk: 14, range: 1, abilities: ['crystal_skin'], filter: 'none', tags: ['ICE', 'ABYSSAL'], fav: ['WATER', 'SNOW'] }],
 
     SNOW: [
         { e: '🐐', name: 'Bode da Neve', hp: 40, atk: 9, mp: 4, range: 2, abilities: [], minLevel: 1, filter: 'none', tags: ['ROCK', 'ICE'], fav: ['MOUNTAIN', 'SNOW'] },

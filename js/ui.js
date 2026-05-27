@@ -567,8 +567,15 @@ function updateUI() {
 
         updateManaUI();
 
-        let sH = u.status === 'poison' ? `<span style="color:var(--success)">Envenenado</span>` : u.status === 'stun' ? `<span style="color:var(--warning)">Atordoado</span>` : u.status === 'bind' ? `<span style="color:#9b59b6">Preso</span>` : u.status === 'chilled' ? `<span style="color:#00ffff">Congelado</span>` : u.status === 'shielded' ? `<span style="color:#95a5a6">Escudado</span>` : u.faction === 0 && u.alerted ? `<span style="color:var(--enemy-color)">⚠️ Alerta!</span>` : '';
-        let ab = u.abilities.filter(x => x && ABILITY_DESCRIPTIONS[x]).map(ab => `<div class="btn-ability-link" onclick="window.showAbility('${ab}','${u.emoji}','${u.name}','${u.filter}')">📖 ${ABILITY_DESCRIPTIONS[ab].split(':')[0]}</div>`).join('');
+        const getStatusHTML = (id, name, desc, col) => `<div class="qol-tooltip tag-badge" style="background:rgba(20,20,30,0.9); border:1px solid ${col}; color:${col}; font-size:9px; padding:2px 6px; border-radius:4px; box-shadow:0 0 5px ${col}40; text-shadow:0 0 2px ${col}80;">${name}<span class="qol-tooltiptext">${desc}</span></div>`;
+
+        let sH = '';
+        if (u.status === 'poison') sH = getStatusHTML('poison', 'Envenenado', 'Perde HP a cada turno.', 'var(--success)');
+        else if (u.status === 'stun') sH = getStatusHTML('stun', 'Atordoado', 'Perde o turno atual.', 'var(--warning)');
+        else if (u.status === 'bind') sH = getStatusHTML('bind', 'Preso', 'Movimento reduzido a 0.', '#9b59b6');
+        else if (u.status === 'chilled') sH = getStatusHTML('chilled', 'Congelado', 'Movimento reduzido em 2.', '#00ffff');
+        else if (u.status === 'shielded') sH = getStatusHTML('shielded', 'Escudado', 'Recebe menos dano.', '#95a5a6');
+        else if (u.faction === 0 && u.alerted) sH = getStatusHTML('alerted', '⚠️ Alerta!', 'Em estado de agressão.', 'var(--enemy-color)'); let ab = u.abilities.filter(x => x && ABILITY_DESCRIPTIONS[x]).map(ab => `<div class="btn-ability-link" onclick="window.showAbility('${ab}','${u.emoji}','${u.name}','${u.filter}')">📖 ${ABILITY_DESCRIPTIONS[ab].split(':')[0]}</div>`).join('');
         let tI = ''; const uH = game.map.get(`${u.q},${u.r}`); if (uH) { let defV = uH.terrain.def; if (u.fav.includes(uH.terrain.id)) defV += 0.2; tI = `<span style="color:#888;"> | 📍 ${uH.terrain.icon} ${uH.terrain.name} (${Math.round(defV * 100)}% Def)</span>`; }
         let tagsHtml = (u.tags || []).map(t => getTagHTML(t)).join('');
 
@@ -639,6 +646,13 @@ function generateShopItems() {
                 name: `Contrato Épico: ${rBoss.name}`, icon: rBoss.e, desc: `Adiciona um CHEFE Lv${bLvl} à Box.`,
                 cost: 40 + (bLvl * 5), rarity: 'legendary', color: '#ff00ff', type: 'consumable', filter: rBoss.filter || 'none',
                 action: async () => { rosterMemory.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: rBoss.name, baseName: rBoss.name, emoji: rBoss.e, hp: bossHp, maxHp: bossHp, mp: rBoss.mp, maxMp: rBoss.mp, atk: bossAtk, range: rBoss.range, level: bLvl, abilities: [...rBoss.abilities], isNew: true, filter: rBoss.filter, tags: rBoss.tags || [], fav: rBoss.fav || [], isBoss: true })); return true; }
+            });
+        }
+        // Centro Comercial: 2 Mercados adjacentes = 30% OFF em tudo!
+        if (typeof checkAdjacency === 'function' && checkAdjacency('MARKET', 'MARKET')) {
+            shopItems.forEach(item => {
+                item.cost = Math.max(1, Math.floor(item.cost * 0.7));
+                item.name += " (Promoção)";
             });
         }
     }
@@ -1377,7 +1391,7 @@ function triggerStageEnd(win) {
             let pScales = window.countKingdomBuildings('FISHINGCAMP') * 3;
             let pSand = window.countKingdomBuildings('SANDPIT') * 3;
             let pGold = (window.countKingdomBuildings('MINE') * 10) + (window.countKingdomBuildings('PORT') * 5);
-            
+
             // --- NOVO: COLETA DA BIBLIOTECA E ARMADILHEIRO ---
             let pDna = window.countKingdomBuildings('LIBRARY') * 1;
             let pTraps = window.countKingdomBuildings('TRAP_MAKER') * 1;
@@ -1386,9 +1400,9 @@ function triggerStageEnd(win) {
             game.resources.wood += pWood; game.resources.stone += pStone;
             game.resources.scales += pScales; game.resources.sand += pSand;
             game.gold += pGold;
-            
+
             game.dna = (game.dna || 0) + pDna;
-            
+
             let extraMsg = "";
             if (pDna > 0) extraMsg += ` | +${pDna} 🧬`;
             if (pTraps > 0) {
@@ -1402,7 +1416,7 @@ function triggerStageEnd(win) {
                 setTimeout(() => showMessage(`Reino: ${pWood}🌲 ${pStone}⛰️ ${pScales}🐟 ${pSand}⏳ ${pGold}💰${extraMsg}`, '#2ecc71'), 1500);
             }
         }
-        
+
         if (game.pendingDrop) {
             if (typeof window.giveRandomArtifact === 'function') window.giveRandomArtifact(game.pendingDrop);
             game.pendingDrop = null;
@@ -1927,7 +1941,7 @@ function renderBuildingMenu() {
 
         } else if (bData.id === 'BARRACKS') {
             actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">`;
-            
+
             // --- MOSTRAR SINERGIAS ATIVAS ---
             let syns = [];
             if (checkAdjacency('BARRACKS', 'FORGE')) syns.push("🛡️ Pedra/Carapaça (Forja)");
@@ -2000,13 +2014,12 @@ function renderBuildingMenu() {
         }
 
         if ($('btn-barracks')) {
-            $('btn-barracks').onclick = () => {
+            $('btn-barracks').onclick = async () => { // Adicionado o async aqui!
                 if (game.gold >= 20) {
                     let tags = game.leaderData.tags || [];
                     let masterPool = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW];
                     let pool = masterPool.filter(b => b.tags && b.tags.some(t => tags.includes(t)) && !b.minLevel);
-                    
-                    // Sinergias Absurdas do Quartel!
+
                     if (checkAdjacency('BARRACKS', 'CRYSTAL_TOWER')) pool.push(...masterPool.filter(b => b.tags && b.tags.includes('MYSTIC') && !b.minLevel));
                     if (checkAdjacency('BARRACKS', 'PORT')) pool.push(...masterPool.filter(b => b.tags && b.tags.includes('WATER') && !b.minLevel));
                     if (checkAdjacency('BARRACKS', 'TRAP_MAKER')) pool.push(...masterPool.filter(b => b.tags && b.tags.includes('STALKER') && !b.minLevel));
@@ -2018,18 +2031,12 @@ function renderBuildingMenu() {
                     let maxL = typeof window.getMaxBoxLimit === 'function' ? window.getMaxBoxLimit() : 6;
                     let newUnit = new Unit({ q: 0, r: 0, faction: 1, name: b.name, baseName: b.name, emoji: b.e, hp: b.hp, maxHp: b.hp, mp: b.mp, maxMp: b.mp, atk: b.atk, range: b.range, level: 1, abilities: [...b.abilities], isNew: true, filter: b.filter, tags: b.tags || [], fav: b.fav || [] });
 
-                    // Equipamento Grátis! (Forja + Quartel)
-                    if (checkAdjacency('BARRACKS', 'FORGE')) {
-                        let gearPool = ['RUSTY_SWORD', 'WOODEN_SHIELD', 'SWORD', 'SHIELD', 'BOOTS', 'BOW'];
-                        let forgedId = gearPool[Math.floor(Math.random() * gearPool.length)];
-                        newUnit.equipment.push({ id: forgedId, level: 1 });
-                        if (typeof ITEMS !== 'undefined' && ITEMS[forgedId] && ITEMS[forgedId].onEquip) ITEMS[forgedId].onEquip(newUnit, 1);
-                    }
-
                     if (deployedRoster.filter(u => !u.isLeader).length >= maxL) {
-                        rosterMemory.push(newUnit); window.showKingdomPopup(`📦 ${b.name} para a Box!`, hex, 'var(--success)');
+                        rosterMemory.push(newUnit);
+                        if (typeof showZeldaPopup === 'function') await showZeldaPopup(b.e, 'Tropa na Box!', `O ${b.name} foi enviado para a sua Box porque o exército está cheio!`);
                     } else {
-                        deployedRoster.push(newUnit); window.showKingdomPopup(`⛺ ${b.name} Recrutado!`, hex, 'var(--success)');
+                        deployedRoster.push(newUnit);
+                        if (typeof showZeldaPopup === 'function') await showZeldaPopup(b.e, 'Tropa Recrutada!', `O ${b.name} juntou-se ao seu exército em campo!`);
                     }
                     game.gold -= 20;
                     if ($('k-res-gold')) $('k-res-gold').innerText = game.gold;
@@ -2040,13 +2047,12 @@ function renderBuildingMenu() {
             };
         }
 
-
         if ($('btn-barracks-pool')) {
             $('btn-barracks-pool').onclick = async () => {
                 let tags = game.leaderData.tags || [];
                 let masterPool = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW];
                 let pool = masterPool.filter(b => b.tags && b.tags.some(t => tags.includes(t)) && !b.minLevel);
-                
+
                 if (checkAdjacency('BARRACKS', 'CRYSTAL_TOWER')) pool.push(...masterPool.filter(b => b.tags && b.tags.includes('MYSTIC') && !b.minLevel));
                 if (checkAdjacency('BARRACKS', 'PORT')) pool.push(...masterPool.filter(b => b.tags && b.tags.includes('WATER') && !b.minLevel));
                 if (checkAdjacency('BARRACKS', 'TRAP_MAKER')) pool.push(...masterPool.filter(b => b.tags && b.tags.includes('STALKER') && !b.minLevel));
@@ -2067,7 +2073,7 @@ function renderBuildingMenu() {
                 }
             };
         }
-        
+
         if ($('btn-altar-sac')) {
             $('btn-altar-sac').onclick = async () => {
                 let m = [...rosterMemory, ...deployedRoster].filter(u => !u.isLeader);

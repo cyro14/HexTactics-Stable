@@ -603,7 +603,7 @@ class Game {
 
         let willBreakMod = 1.0;
         if (['stun', 'bind', 'sleep', 'paralyzed', 'chilled'].includes(wild.status)) willBreakMod = 1.5;
-        
+
         let lureMod = 1.0;
         let hexLure = this.map.get(`${wild.q},${wild.r}`);
         if (hexLure && hexLure.hasLure) lureMod = 2.0;
@@ -615,7 +615,7 @@ class Game {
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true; this.isAnimating = true; let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
         try {
             tamer.hasAttacked = true; tamer.mp = 0;
-            
+
             // Puxa a chance real exata
             let cC = this.calculateTameChance(tamer, wild);
             const tCol = tamer.faction === 1 ? '#4a9edd' : '#c0392b';
@@ -825,9 +825,23 @@ class Game {
             if (sys['SILVESTRE'] >= 3 && u.tags.includes('SILVESTRE')) { let sHeal = Math.min(u.maxHp - u.hp, 5); if (sHeal > 0) { u.hp += sHeal; if (typeof showPopup === 'function') showPopup(`+${sHeal}🌳`, u, '#27ae60'); } }
             if (sys['PRIMAL'] >= 2 && u.tags.includes('PRIMAL')) { u.furyAtk = (u.furyAtk || 0) + 1; if (typeof showPopup === 'function') showPopup(`+1 ATK 🦖`, u, '#e74c3c'); }
             let pDmg = (sys['VENOM'] >= 2) ? 10 : 5; if (u.status === 'poison') { u.hp -= pDmg; if (typeof showPopup === 'function') showPopup(`-${pDmg} ☠`, u, '#27ae60'); if (u.hp <= 0) this.handleDeath(u); }
-            if (u.status === 'stun') { u.mp = 0; u.hasAttacked = true; u.status = null; if (typeof showPopup === 'function') showPopup("Zzz", u, '#f39c12'); } else { u.resetTurn(); }
-            if (u.status === 'bind') { u.mp = 0; u.status = null; }
-            if (u.status === 'chilled') { u.mp = Math.max(0, u.mp - 2); u.status = null; if (typeof showPopup === 'function') showPopup("-2 Mov ❄️", u, '#00ffff'); }
+            
+            if (u.status === 'stun') {
+                if (u.statusHandled) { u.status = null; u.statusHandled = false; u.resetTurn(); }
+                else { u.mp = 0; u.hasAttacked = true; u.statusHandled = true; if (typeof showPopup === 'function') showPopup("Zzz", u, '#f39c12'); }
+            } else {
+                u.resetTurn();
+            }
+
+            if (u.status === 'bind') {
+                if (u.statusHandled) { u.status = null; u.statusHandled = false; }
+                else { u.mp = 0; u.statusHandled = true; }
+            }
+
+            if (u.status === 'chilled') {
+                if (u.statusHandled) { u.status = null; u.statusHandled = false; }
+                else { u.mp = Math.max(0, u.mp - 2); u.statusHandled = true; if (typeof showPopup === 'function') showPopup("-2 Mov ❄️", u, '#00ffff'); }
+            }
         });
         this.checkWin();
     }
@@ -1081,7 +1095,7 @@ window.runAITurn = async function () {
                 }
             }
         }
-        
+
 
         if (u.isLeader && myM < maxL && isSafe) { const n = Hex.getNeighbors(u.q, u.r).map(h => game.getUnitAt(h.q, h.r)).filter(Boolean); const wW = n.filter(e => e.faction === 0 && e.hp / e.maxHp <= 0.3); if (wW.length > 0) { await game.attemptTame(u, wW[0]); acted = true; if (typeof sleep === 'function') await sleep(500); } }
 

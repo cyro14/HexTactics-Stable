@@ -98,11 +98,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Trava o modo item
         game.activeItem = type;
-        game.activeSpell = null; // Garante que não tenha magia ativa
+        game.activeSpell = null; 
 
         // Define o alcance baseado no item
         const ranges = { isca: 2, rede: 3, potion: 2, bandage: 2, scroll: 4, sphere: 3 };
         game.itemRange = ranges[type];
+
+        // --- NOVO: SELECIONA O LÍDER AUTOMATICAMENTE ---
+        const leader = game.units.find(u => u.isLeader && u.faction === 1);
+        if (leader) {
+            game.selectedUnit = leader;
+            game.calculateReachable(leader);
+        }
+        // -----------------------------------------------
 
         showMessage(`Selecione o alvo para: ${type.toUpperCase()}`, "#3498db");
         updateUI();
@@ -317,9 +325,11 @@ document.addEventListener("DOMContentLoaded", () => {
                             if (spell.tags.includes('MYSTIC') && spRange === 1) {
                                 if (u) { showMessage("Selecione um espaço vazio!", "#e74c3c"); return; }
                                 if (Hex.distance(su, cH) > 1) { showMessage("Muito longe!", "#e74c3c"); return; }
-                            } else if (spell.id === 'sl_resurrection') {
+                            } else if (spell.id === 'sl_resurrection'||spell.id === 'sl_erguer_esq') {
                                 if (u) { showMessage("Escolha um espaço vazio!", "#e74c3c"); return; }
-                            } else {
+                            }
+                            
+                            else {
                                 if (!u || u.faction !== FACTIONS.PLAYER.id) { showMessage("Selecione um aliado!", "#e74c3c"); return; }
                             }
                         }
