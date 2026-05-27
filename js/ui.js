@@ -1377,16 +1377,32 @@ function triggerStageEnd(win) {
             let pScales = window.countKingdomBuildings('FISHINGCAMP') * 3;
             let pSand = window.countKingdomBuildings('SANDPIT') * 3;
             let pGold = (window.countKingdomBuildings('MINE') * 10) + (window.countKingdomBuildings('PORT') * 5);
+            
+            // --- NOVO: COLETA DA BIBLIOTECA E ARMADILHEIRO ---
+            let pDna = window.countKingdomBuildings('LIBRARY') * 1;
+            let pTraps = window.countKingdomBuildings('TRAP_MAKER') * 1;
 
             if (!game.resources) game.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
             game.resources.wood += pWood; game.resources.stone += pStone;
             game.resources.scales += pScales; game.resources.sand += pSand;
             game.gold += pGold;
+            
+            game.dna = (game.dna || 0) + pDna;
+            
+            let extraMsg = "";
+            if (pDna > 0) extraMsg += ` | +${pDna} 🧬`;
+            if (pTraps > 0) {
+                if (!game.fieldItems) game.fieldItems = { isca: 0, rede: 0, potion: 0, bandage: 0, scroll: 0, sphere: 0 };
+                game.fieldItems.isca += pTraps;
+                game.fieldItems.rede += pTraps;
+                extraMsg += ` | +${pTraps}🍖/🕸️`;
+            }
 
-            if (pWood || pStone || pScales || pSand || pGold) {
-                setTimeout(() => showMessage(`Reino gerou: ${pWood}🌲 ${pStone}⛰️ ${pScales}🐟 ${pSand}⏳ ${pGold}💰`, '#2ecc71'), 1500);
+            if (pWood || pStone || pScales || pSand || pGold || pDna || pTraps) {
+                setTimeout(() => showMessage(`Reino: ${pWood}🌲 ${pStone}⛰️ ${pScales}🐟 ${pSand}⏳ ${pGold}💰${extraMsg}`, '#2ecc71'), 1500);
             }
         }
+        
         if (game.pendingDrop) {
             if (typeof window.giveRandomArtifact === 'function') window.giveRandomArtifact(game.pendingDrop);
             game.pendingDrop = null;
@@ -1911,14 +1927,23 @@ function renderBuildingMenu() {
 
         } else if (bData.id === 'BARRACKS') {
             actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">`;
-            let extraTxt = checkAdjacency('BARRACKS', 'FORGE') ? " + Equip" : "";
-            actsHtml += `<button id="btn-barracks" class="btn-success" style="width:100%; font-size:10px; padding:6px;">Recrutar Tropa Aliada (-20💰)${extraTxt}</button>`;
-            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">`;
-            if (game.leaderData && game.leaderData.tags && game.leaderData.tags.includes('UMBRAL')) {
-                actsHtml += `<button id="btn-altar-sac" class="btn-danger" style="width:100%; font-size:10px; padding:6px;">Sacrificar Fera (Gerar Recursos)</button>`;
-            } else {
-                actsHtml += `<div style="color:var(--enemy-color); font-size:9px; text-align:center;">Apenas líderes Umbrais possuem este conhecimento obscuro.</div>`;
+            
+            // --- MOSTRAR SINERGIAS ATIVAS ---
+            let syns = [];
+            if (checkAdjacency('BARRACKS', 'FORGE')) syns.push("🛡️ Pedra/Carapaça (Forja)");
+            if (checkAdjacency('BARRACKS', 'CRYSTAL_TOWER')) syns.push("🔮 Místicas (Torre)");
+            if (checkAdjacency('BARRACKS', 'PORT')) syns.push("🌊 Aquáticas (Porto)");
+            if (checkAdjacency('BARRACKS', 'TRAP_MAKER')) syns.push("🗡️ Stalkers (Armadilha)");
+            if (checkAdjacency('BARRACKS', 'SHADOW_ALTAR')) syns.push("🦇 Umbrais (Altar)");
+
+            if (syns.length > 0) {
+                actsHtml += `<div style="font-size:9px; color:#3498db; margin-bottom:6px; text-align:center; line-height:1.4;">Sinergias Ativas:<br><span style="color:#fff;">${syns.join(' | ')}</span></div>`;
             }
+
+            actsHtml += `<div style="display:flex; gap:4px; width:100%;">
+                             <button id="btn-barracks" class="btn-success" style="flex:2; font-size:10px; padding:6px;">Recrutar (-20💰)</button>
+                             <button id="btn-barracks-pool" class="btn-primary" style="flex:1; font-size:10px; padding:6px; background:#2980b9;">Ver Tropas</button>
+                         </div>`;
         }
 
         html += actsHtml;
@@ -2015,6 +2040,34 @@ function renderBuildingMenu() {
             };
         }
 
+
+        if ($('btn-barracks-pool')) {
+            $('btn-barracks-pool').onclick = async () => {
+                let tags = game.leaderData.tags || [];
+                let masterPool = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW];
+                let pool = masterPool.filter(b => b.tags && b.tags.some(t => tags.includes(t)) && !b.minLevel);
+                
+                if (checkAdjacency('BARRACKS', 'CRYSTAL_TOWER')) pool.push(...masterPool.filter(b => b.tags && b.tags.includes('MYSTIC') && !b.minLevel));
+                if (checkAdjacency('BARRACKS', 'PORT')) pool.push(...masterPool.filter(b => b.tags && b.tags.includes('WATER') && !b.minLevel));
+                if (checkAdjacency('BARRACKS', 'TRAP_MAKER')) pool.push(...masterPool.filter(b => b.tags && b.tags.includes('STALKER') && !b.minLevel));
+                if (checkAdjacency('BARRACKS', 'FORGE')) pool.push(...masterPool.filter(b => b.tags && (b.tags.includes('ROCK') || b.tags.includes('CARAPACE')) && !b.minLevel));
+                if (checkAdjacency('BARRACKS', 'SHADOW_ALTAR')) pool.push(...masterPool.filter(b => b.tags && b.tags.includes('UMBRAL') && !b.minLevel));
+
+                if (pool.length === 0) pool = BEASTS.LAND;
+
+                // Extrai apenas nomes e ícones únicos
+                let uniqueNames = [];
+                pool.forEach(b => {
+                    let str = `${b.e} ${b.name}`;
+                    if (!uniqueNames.includes(str)) uniqueNames.push(str);
+                });
+
+                if (typeof showZeldaPopup === 'function') {
+                    await showZeldaPopup('⛺', 'Tropas do Quartel', 'Feras baseadas nas tags do líder e nas sinergias adjacentes:\n\n' + uniqueNames.join(' | '));
+                }
+            };
+        }
+        
         if ($('btn-altar-sac')) {
             $('btn-altar-sac').onclick = async () => {
                 let m = [...rosterMemory, ...deployedRoster].filter(u => !u.isLeader);
