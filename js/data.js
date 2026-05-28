@@ -15,7 +15,19 @@ const getActiveArtifacts = () => { return (game && game.isRoguelite) ? activeArt
 // ==========================================
 // DADOS DO JOGO (TERRENOS, TAGS E MAGIAS)
 // ==========================================
-const TERRAINS = { PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#3a5a2a', icon: '' }, FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#23411b', icon: '🌲' }, MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#4a554a', icon: '⛰️' }, WATER: { id: 'WATER', name: 'Água', cost: 2, def: -0.15, color: '#1c4568', icon: '🌊' }, SNOW: { id: 'SNOW', name: 'Neve', cost: 2, def: -0.15, color: '#b8cad4', icon: '❄️' }, DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#d2b48c', icon: '🏜️' }, VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#8a753c', icon: '🏘️' }, CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#505860', icon: '🏰' } };
+const TERRAINS = {
+    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#3a5a2a', icon: '' },
+    FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#23411b', icon: '🌲' },
+    MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#4a554a', icon: '⛰️' },
+    WATER: { id: 'WATER', name: 'Água', cost: 2, def: -0.15, color: '#1c4568', icon: '🌊' },
+    SNOW: { id: 'SNOW', name: 'Neve', cost: 2, def: -0.15, color: '#b8cad4', icon: '❄️' },
+    DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#d2b48c', icon: '🏜️' },
+    VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#8a753c', icon: '🏘️' },
+    CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#505860', icon: '🏰' },
+    ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada', col: '#f1c40f', moveCost: 2 },
+    BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas', col: '#e74c3c', moveCost: 1 },
+    ASHES: { id: 'ASHES', name: 'Cinzas', col: '#555555', moveCost: 1 }
+};
 
 const TAGS = {
     FIRE: { name: 'Ígneo', col: '#e67e22', req: 3, desc: '(3) Causa 20% de dano em área.' },
@@ -95,7 +107,35 @@ const SPELLS = [
     { id: 'sl_phoenix_rebirth', name: 'Renascimento Fênix', icon: '🔱', level: 5, tags: ['CELESTIAL', 'FIRE'], type: 'def', range: 99, cost: { CELESTIAL: 3, FIRE: 2 }, desc: 'Cura TODOS os aliados para HP Máx.', effect: async (g, c, t) => { g.units.filter(u => u.faction === c.faction).forEach(u => { u.hp = u.maxHp; u.status = null; showPopup("🔱 PLENO", u, '#fffbc2'); }); return true; } },
     { id: 'sl_world_freeze', name: 'Congelamento Mundial', icon: '🧊', level: 5, tags: ['ICE'], type: 'atk', range: 99, cost: { ICE: 4 }, desc: 'Atordoa TODOS os inimigos por 1 turno e causa 15 dano.', effect: async (g, c, t) => { g.units.filter(u => u.faction !== c.faction).forEach(u => { u.status = 'stun'; u.hp -= 15; showPopup("🧊 CONGELADO", u, '#00ffff'); if (u.hp <= 0) g.handleDeath(u, c); }); g.checkWin(); return true; } },
     { id: 'sl_soul_harvest', name: 'Colheita de Almas', icon: '⚡', level: 5, tags: ['UMBRAL', 'VENOM'], type: 'atk', range: 99, cost: { UMBRAL: 3, VENOM: 2 }, desc: 'Drena 25% do HP atual de TODOS inimigos.', effect: async (g, c, t) => { let total = 0; g.units.filter(u => u.faction !== c.faction && u.hp > 0).forEach(u => { let d = Math.floor(u.hp * 0.25); u.hp -= d; total += d; showPopup(`⚡ -${d}`, u, '#8e44ad'); if (u.hp <= 0) g.handleDeath(u, c); }); c.hp = Math.min(c.maxHp, c.hp + total); showPopup(`⚡ +${total}`, c, '#8e44ad'); g.checkWin(); return true; } },
-
+    
+    //SPELLS DE TERRENO
+    {
+        id: 'sl_combustao', name: 'Combustão', icon: '🔥',
+        desc: 'Causa 15 de dano. Incendeia florestas ou derrete o gelo do alvo.',
+        level: 1, type: 'atk', range: 3, tags: ['FIRE', 'MYSTIC'], cost: { 'FIRE': 2 },
+        effect: async (game, caster, target, targetHex) => {
+            if (target) { target.hp -= 15; if (typeof showPopup === 'function') showPopup("-15 🔥", target, '#e74c3c'); if (target.hp <= 0) game.handleDeath(target, caster); }
+            return true;
+        }
+    },
+    {
+        id: 'sl_zero_absoluto', name: 'Zero Absoluto', icon: '❄️',
+        desc: 'Causa 15 de dano. Congela a água sob o alvo, espalhando para águas adjacentes.',
+        level: 1, type: 'atk', range: 3, tags: ['ICE', 'WATER'], cost: { 'WATER': 2 },
+        effect: async (game, caster, target, targetHex) => {
+            if (target) { target.hp -= 15; if (typeof showPopup === 'function') showPopup("-15 ❄️", target, '#00ffff'); if (target.hp <= 0) game.handleDeath(target, caster); }
+            return true;
+        }
+    },
+    {
+        id: 'sl_curto_circuito', name: 'Curto-Circuito', icon: '⚡',
+        desc: 'Causa 15 de dano. Se atingir a água, espalha eletricidade e atordoa todos os ocupantes.',
+        level: 1, type: 'atk', range: 3, tags: ['ELECTRIC', 'MYSTIC'], cost: { 'ELECTRIC': 2 },
+        effect: async (game, caster, target, targetHex) => {
+            if (target) { target.hp -= 15; if (typeof showPopup === 'function') showPopup("-15 ⚡", target, '#f1c40f'); if (target.hp <= 0) game.handleDeath(target, caster); }
+            return true;
+        }
+    },
     //Spells de Líder
     { id: 'sl_mordida_vamp', name: 'Mordida Vampírica', icon: '🦇', cost: { 'UMBRAL': 2 }, level: 1, type: 'atk', range: 1, tags: ['UMBRAL'], desc: 'Causa dano e cura o Lord Vampiro.', effect: async (game, caster, target) => { if (!target) return false; let dmg = 20; target.hp -= dmg; caster.hp = Math.min(caster.maxHp, caster.hp + dmg); showPopup("-20 HP", target, '#fff'); showPopup("+20 HP", caster, '#2ecc71'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
     { id: 'sl_bencao_paladina', name: 'Bênção Divina', icon: '✨', cost: { 'CELESTIAL': 2 }, level: 1, type: 'def', range: 2, tags: ['CELESTIAL'], desc: 'Cura um aliado em 40 HP e remove debuffs.', effect: async (game, caster, target) => { if (!target || target.faction !== 1) return false; target.hp = Math.min(target.maxHp, target.hp + 40); target.status = null; showPopup("+40 HP", target, '#f1c40f'); return true; } },
@@ -330,13 +370,13 @@ const ITEMS = {
     'RUSTY_SWORD': { icon: '🗡️', name: 'Espada Enferrujada', desc: '+1 ATK.', type: 'equip', onEquip: (u, lvl) => { u.atk += 1 * lvl; }, onUnequip: (u, lvl) => { u.atk -= 1 * lvl; } },
     'WOODEN_SHIELD': { icon: '🛡️', name: 'Escudo de Madeira', desc: '+5 HP Máx.', type: 'equip', onEquip: (u, lvl) => { u.maxHp += 5 * lvl; u.hp += 5 * lvl; }, onUnequip: (u, lvl) => { u.maxHp -= 5 * lvl; u.hp = Math.min(u.hp, u.maxHp); } },
     'BANDAGE': { icon: '🩹', name: 'Bandagem', desc: 'Cura 15 HP.', type: 'instant', f: async (u, g) => { u.hp = Math.min(u.maxHp, u.hp + 15); return true; } },
-    'MEAT': { icon: '🍖', name: 'Carne Curada', desc: 'Cura 25 HP.', type: 'instant', f: async (u, g) => { u.hp = Math.min(u.maxHp, u.hp + 25); return true; } },
+    'MEAT': { icon: '🍖', name: 'Isca', desc: 'Ajuda a atrair inimigos', type: 'instant', f: async (u, g) => { u.hp = Math.min(u.maxHp, u.hp + 25); return true; } },
     'MAGIC': { icon: '🔮', name: 'Pedra Mágica', desc: 'Aprende habilidade aleatória.', type: 'instant', f: async (u, g) => { let k = Object.keys(ABILITY_DESCRIPTIONS); let res = await window.learnAbility(u, k[Math.floor(Math.random() * k.length)]); return res; } },
     'SCROLL': { icon: '📜', name: 'Pergaminho', desc: 'Ganha +100 XP.', type: 'instant', f: async (u, g) => { u.addXp(100); return true; } },
     'COIN': { icon: '🪙', name: 'Moedas', desc: 'Você encontrou 2 de Ouro!', type: 'instant', f: async (u, g) => { if (u.faction === 1) { g.gold += 2; return true; } return false; } },
-    'GEM': { icon: '💎', name: 'Gema', desc: 'Você encontrou 5 de Ouro!', type: 'instant', f: async (u, g) => { if (u.faction === 1) { g.gold += 5; return true; } return false; } },
+    'GEM': { icon: '💎', name: 'Gema', desc: 'Você encontrou 8 de Ouro!', type: 'instant', f: async (u, g) => { if (u.faction === 1) { g.gold += 8; return true; } return false; } },
     'KEY': { icon: '🗝️', name: 'Chave', desc: 'Abre Baús.', type: 'instant', f: async (u, g) => { if (u.faction === 1) { g.hasKey = true; return true; } return false; } },
-    'CHEST': { icon: '🪎', name: 'Baú', desc: 'Encontrou +8 Ouro.', type: 'instant', f: async (u, g) => { if (u.faction === 1 && g.hasKey) { g.hasKey = false; g.gold += 8; return true; } return false; } },
+    'CHEST': { icon: '🪎', name: 'Baú', desc: 'Encontrou +15 Ouro.', type: 'instant', f: async (u, g) => { if (u.faction === 1 && g.hasKey) { g.hasKey = false; g.gold += 15; return true; } return false; } },
     'EGG': { icon: '🪺', name: 'Ovo', desc: 'Ovo de Monstro.', type: 'instant', f: async (u, g) => { if (u.faction === 1) { g.hasEgg = true; return true; } return false; } },
     'POTION': { icon: '🧪', name: 'Poção Menor', desc: 'Cura 30 HP.', type: 'instant', f: async (u, g) => { u.hp = Math.min(u.maxHp, u.hp + 30); return true; } }
 };

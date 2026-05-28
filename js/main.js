@@ -361,6 +361,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         try {
                             const ok = await spell.effect(game, su, u, cH);
                             if (ok) {
+                                // --- CHAMA A REAÇÃO ELEMENTAL AUTOMÁTICA ---
+                                if (spell.tags) await game.triggerElementalReaction(cH, spell.tags);
                                 // Aplica a exaustão da ação
                                 if (su.isLeader) {
                                     su.spellsCast = (su.spellsCast || 0) + 1;

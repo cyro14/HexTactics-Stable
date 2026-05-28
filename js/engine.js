@@ -748,6 +748,77 @@ class Game {
         } finally { this.isAnimating = false; }
     }
 
+    // Busca todos os hexágonos vizinhos conectados que sejam do mesmo tipo (Efeito cascata da Água)
+    getContiguousHexes(startHex, validIds) {
+        let visited = new Set();
+        let queue = [startHex];
+        let result = [];
+        visited.add(`${startHex.q},${startHex.r}`);
+
+        while (queue.length > 0) {
+            let curr = queue.shift();
+            result.push(curr);
+            let neighbors = Hex.getNeighbors(curr.q, curr.r);
+            for (let n of neighbors) {
+                let key = `${n.q},${n.r}`;
+                if (!visited.has(key)) {
+                    let h = this.map.get(key);
+                    if (h && validIds.includes(h.terrain.id)) {
+                        visited.add(key);
+                        queue.push(h);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    // Processa a Reação de acordo com o elemento
+    async triggerElementalReaction(targetHex, tags) {
+        if (!targetHex || !tags) return;
+
+        // 1. ELETRICIDADE NA ÁGUA (Condutividade)
+        if (tags.includes('ELECTRIC') && (targetHex.terrain.id === 'WATER' || targetHex.terrain.id === 'ELECTRIC_WATER')) {
+            let waterHexes = this.getContiguousHexes(targetHex, ['WATER', 'ELECTRIC_WATER']);
+            for (let h of waterHexes) {
+                h.terrain = typeof TERRAINS !== 'undefined' ? TERRAINS['ELECTRIC_WATER'] : { id: 'ELECTRIC_WATER' };
+                h.timer = 2; // A eletricidade dura 1 rodada completa
+                
+                let u = this.getUnitAt(h.q, h.r);
+                if (u && u.status !== 'stun') {
+                    u.status = 'stun';
+                    if (typeof showPopup === 'function') showPopup("Zzz ⚡", u, '#f1c40f');
+                }
+            }
+            if (typeof showMessage === 'function') showMessage("A água conduziu a eletricidade!", "#f1c40f");
+            if (typeof sleep === 'function') await sleep(400);
+        }
+        
+        // 2. FOGO NA FLORESTA OU GELO
+        if (tags.includes('FIRE')) {
+            if (targetHex.terrain.id === 'FOREST') {
+                targetHex.terrain = typeof TERRAINS !== 'undefined' ? TERRAINS['BURNING_FOREST'] : { id: 'BURNING_FOREST' };
+                targetHex.timer = 4; // Queima por 2 rodadas
+                if (typeof showMessage === 'function') showMessage("A floresta começou a queimar!", "#e74c3c");
+            } else if (targetHex.terrain.id === 'SNOW') {
+                targetHex.terrain = typeof TERRAINS !== 'undefined' ? TERRAINS['WATER'] : { id: 'WATER' };
+                if (typeof showMessage === 'function') showMessage("O gelo derreteu!", "#3498db");
+            }
+        }
+        
+        // 3. GELO NA ÁGUA (Congelamento)
+        if (tags.includes('ICE') || tags.includes('FROST')) {
+            if (targetHex.terrain.id === 'WATER' || targetHex.terrain.id === 'ELECTRIC_WATER') {
+                let waterHexes = this.getContiguousHexes(targetHex, ['WATER', 'ELECTRIC_WATER']);
+                for (let h of waterHexes) {
+                    h.terrain = typeof TERRAINS !== 'undefined' ? TERRAINS['SNOW'] : { id: 'SNOW' };
+                }
+                if (typeof showMessage === 'function') showMessage("A água congelou!", "#00ffff");
+                if (typeof sleep === 'function') await sleep(400);
+            }
+        }
+    }
+
     handleDeath(victim, killer = null) {
         if (killer && killer.baseName === 'Anubis') {
             killer.atk += 1;
@@ -824,7 +895,28 @@ class Game {
                     }
                 });
             }
-            if (!this.resources) this.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
+
+            // --- PROCESSAMENTO DE TERRENOS ELEMENTAIS (HAZARDS) ---
+        this.map.forEach(h => {
+            // Relógio de duração dos terrenos
+            if (h.timer) {
+                h.timer--;
+                if (h.timer <= 0) {
+                    if (h.terrain.id === 'ELECTRIC_WATER') h.terrain = TERRAINS.WATER; // Descarrega
+                    else if (h.terrain.id === 'BURNING_FOREST') h.terrain = TERRAINS.ASHES; // Vira cinzas
+                }
+            }
+            
+            // Dano passivo de quem estiver em chamas no início da rodada
+            let unitOnHex = this.getUnitAt(h.q, h.r);
+            if (unitOnHex && unitOnHex.hp > 0 && h.terrain.id === 'BURNING_FOREST') {
+                unitOnHex.hp -= 15;
+                if (typeof showPopup === 'function') showPopup("-15 🔥", unitOnHex, '#e74c3c');
+                if (unitOnHex.hp <= 0) this.handleDeath(unitOnHex, { name: 'As Chamas', faction: -1 });
+            }
+        });
+
+        if (!this.resources) this.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
             this.units.filter(u => u.faction === 1).forEach(u => {
                 const hex = this.map.get(`${u.q},${u.r}`);
                 if (hex) {
@@ -1214,6 +1306,8 @@ window.runAITurn = async function () {
                     try {
                         let ok = await sp.effect(game, u, target, targetHex);
                         if (ok) {
+                            // --- CHAMA A REAÇÃO ELEMENTAL AUTOMÁTICA ---
+                            if (sp.tags) await game.triggerElementalReaction(targetHex, sp.tags);
                             if (typeof showPopup === 'function') showPopup(`✨ ${sp.name}!`, u, '#9b59b6');
                             game.spellCooldowns[sid] = sp.level > 1 ? sp.level : 2;
                             
