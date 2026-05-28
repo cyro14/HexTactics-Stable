@@ -986,15 +986,13 @@ function openLeaderSelection(isRoguelite, isDuel = false, pickingOpponentFor = n
     const leaderScreen = $('leader-selection');
     leaderScreen.classList.remove('hidden');
 
-    // Altera o título dinamicamente
-    let titleEl = $('leader-selection-title');
+    // Busca o título existente ou cria um novo corretamente
+    let titleEl = leaderScreen.querySelector('h2');
     if (!titleEl) {
         titleEl = document.createElement('h2');
-        titleEl.id = 'leader-selection-title';
-        titleEl.style.cssText = 'text-align:center; color:var(--gold); font-family:Cinzel,serif; margin-bottom:10px;';
         leaderScreen.insertBefore(titleEl, leaderScreen.firstChild);
     }
-
+    titleEl.style.cssText = 'text-align:center; color:var(--gold); font-family:Cinzel,serif; margin-bottom:10px;';
     titleEl.innerText = pickingOpponentFor ? "Selecione o Líder Adversário" : "Selecione seu Líder";
 
     // Remove o filtro antigo se existir
@@ -1462,6 +1460,35 @@ async function activateNode(node) {
 // 7. FLUXO DE JOGO E FINAIS DOS ATOS
 // ==========================================
 function triggerStageEnd(win) {
+
+    // --- LÓGICA EXCLUSIVA DE DUELO ---
+    if (game && game.isDuel) {
+        let history = JSON.parse(localStorage.getItem('ht_duel_history') || '[]');
+        let pL = game.units.find(u => u.isLeader && u.faction === 1) || { name: 'Player', emoji: '👑' };
+        let eL = game.units.find(u => u.isLeader && u.faction === 2) || { name: 'CPU', emoji: '💀' };
+        
+        history.unshift({
+            date: new Date().toLocaleString(),
+            win: win,
+            pName: pL.name, pEmoji: pL.emoji,
+            eName: eL.name, eEmoji: eL.emoji
+        });
+        if (history.length > 20) history.pop(); // Guarda apenas as últimas 20 partidas
+        localStorage.setItem('ht_duel_history', JSON.stringify(history));
+
+        show('result-screen'); hide('rs-menu-win'); hide('rs-menu-lose');
+        $('rs-title').innerText = win ? "Vitória no Duelo!" : "Derrota no Duelo"; 
+        $('rs-title').style.color = win ? '#4a9edd' : '#c0392b';
+        $('rs-desc').innerText = win ? "Você esmagou o adversário com maestria tática na Arena!" : "Sua equipe foi superada. Estude uma nova formação.";
+        show('rs-menu-win');
+        
+        let btn = $('btn-go-shop');
+        btn.innerText = "Voltar ao Menu Principal";
+        btn.onclick = () => location.reload();
+        return;
+    }
+    // --- FIM DA LÓGICA DE DUELO ---
+
     show('result-screen'); hide('rs-menu-win'); hide('rs-menu-lose');
     if (win) {
         if (typeof countKingdomBuildings === 'function' && game.kingdomMap) {
@@ -1706,14 +1733,28 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
         if (isDuel) {
             // Vai direto pro Mercador!
             openShop();
-            const btnL = $('btn-leave-shop');
+            const btnL = document.getElementById('btn-leave-shop');
             btnL.innerText = "⚔️ Ir para a Arena";
             btnL.onclick = () => {
+                // 1. AUTO-DEPLOY: Pega tudo que você comprou na Box e joga para o Campo automaticamente
+                rosterMemory.forEach(u => {
+                    if (!deployedRoster.includes(u)) {
+                        deployedRoster.push(u);
+                    }
+                });
+                rosterMemory = []; // Esvazia a box para o duelo iniciar limpo
+
                 hide('shop-screen');
-                show('game-container');
-                game.generateDuelMap();
-                renderer.initCamera(true);
-                updateUI();
+                
+                // 2. GERA O MAPA PRIMEIRO: Popula as unidades do jogador e da IA em game.units
+                game.generateDuelMap(); 
+                
+                // 3. TELA VERSUS
+                window.showVersusScreen(() => {
+                    show('game-container');
+                    renderer.initCamera(true);
+                    updateUI();
+                });
             };
         } else {
             renderRouteMap();
@@ -2384,4 +2425,75 @@ window.renderFieldItemMenu = function () {
     }
 
     menu.innerHTML = html;
+};
+
+window.showVersusScreen = function(callback) {
+    const el = document.createElement('div');
+    el.id = 'versus-screen';
+    el.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg, #050505 0%, #1a1a2e 100%); z-index:10000; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#fff; font-family:Cinzel,serif;`;
+    
+    let pTeam = game.units.filter(u => u.faction === 1);
+    let eTeam = game.units.filter(u => u.faction === 2);
+    
+    let pL = pTeam.find(u => u.isLeader) || { name:'Player', emoji:'👑', filter:'none' };
+    let eL = eTeam.find(u => u.isLeader) || { name:'CPU', emoji:'💀', filter:'none' };
+
+    let renderTeam = (team) => team.filter(u => !u.isLeader).map(u => `<span style="font-size:22px; filter:${u.filter}; margin:2px;">${u.emoji}</span>`).join('');
+
+    el.innerHTML = `
+        <div style="font-size:30px; color:var(--gold); margin-bottom:30px; letter-spacing:3px; text-shadow:0 0 10px var(--gold);">DUELO DE LENDAS</div>
+        <div style="display:flex; width:100%; max-width:700px; justify-content:space-between; align-items:flex-start; padding: 0 20px;">
+            <div style="text-align:center; flex:1;">
+                <div style="font-size:70px; filter:${pL.filter}; drop-shadow(0 0 15px #4a9edd);">${pL.emoji}</div>
+                <div style="color:#4a9edd; font-size:18px; margin-top:10px; font-weight:bold;">${pL.name}</div>
+                <div style="margin-top:15px; display:flex; justify-content:center; flex-wrap:wrap; max-width:200px; margin-left:auto; margin-right:auto; background:rgba(0,0,0,0.5); padding:10px; border-radius:8px; border:1px solid #4a9edd40;">${renderTeam(pTeam) || '<span style="font-size:12px;color:#888;">Solo</span>'}</div>
+            </div>
+            <div style="font-size:40px; font-weight:bold; color:var(--warning); font-style:italic; text-shadow:0 0 10px red; margin-top:30px;">VS</div>
+            <div style="text-align:center; flex:1;">
+                <div style="font-size:70px; filter:${eL.filter}; drop-shadow(0 0 15px #c0392b);">${eL.emoji}</div>
+                <div style="color:#c0392b; font-size:18px; margin-top:10px; font-weight:bold;">${eL.name}</div>
+                <div style="margin-top:15px; display:flex; justify-content:center; flex-wrap:wrap; max-width:200px; margin-left:auto; margin-right:auto; background:rgba(0,0,0,0.5); padding:10px; border-radius:8px; border:1px solid #c0392b40;">${renderTeam(eTeam) || '<span style="font-size:12px;color:#888;">Solo</span>'}</div>
+            </div>
+        </div>
+        <div style="margin-top:50px; font-size:16px; color:#aaa; animation: pulse 1.5s infinite; cursor:pointer; padding:15px; border:1px solid #aaa; border-radius:30px;">[ ⚔️Clique para Iniciar a Batalha⚔️ ]</div>
+    `;
+    
+    document.body.appendChild(el);
+    el.onclick = () => { el.remove(); callback(); };
+};
+
+window.openDuelHistory = function() {
+    let el = $('duel-history-modal');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'duel-history-modal';
+        el.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; display:flex; justify-content:center; align-items:center; flex-direction:column;`;
+        document.body.appendChild(el);
+    }
+    
+    let history = JSON.parse(localStorage.getItem('ht_duel_history') || '[]');
+    let html = `<div style="background:var(--bg-panel); border:2px solid var(--gold); border-radius:10px; width:90%; max-width:500px; max-height:80vh; overflow-y:auto; padding:20px; text-align:center;">
+        <h2 style="font-family:Cinzel,serif; color:var(--gold); margin-bottom:20px;">📜 Histórico de Duelos</h2>`;
+    
+    if (history.length === 0) {
+        html += `<div style="color:#aaa; padding:20px;">Nenhum duelo registrado na Arena ainda.</div>`;
+    } else {
+        history.forEach(h => {
+            let col = h.win ? '#4a9edd' : '#c0392b';
+            let resTxt = h.win ? 'VITÓRIA' : 'DERROTA';
+            html += `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.5); border-left:4px solid ${col}; padding:10px; margin-bottom:10px; border-radius:4px;">
+                    <div style="flex:1; text-align:left;">
+                        <div style="font-size:20px;">${h.pEmoji} <span style="font-size:12px;color:#aaa;">vs</span> ${h.eEmoji}</div>
+                        <div style="font-size:10px; color:#888; margin-top:4px;">${h.date}</div>
+                    </div>
+                    <div style="font-size:14px; font-weight:bold; color:${col};">${resTxt}</div>
+                </div>
+            `;
+        });
+    }
+    
+    html += `<button class="btn-danger" style="margin-top:15px; width:100%; padding:10px; font-weight:bold;" onclick="document.getElementById('duel-history-modal').style.display='none'">Fechar Aba</button></div>`;
+    el.innerHTML = html;
+    el.style.display = 'flex';
 };

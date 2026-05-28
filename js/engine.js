@@ -1189,10 +1189,13 @@ window.runAITurn = async function () {
                             hasCast = true;
                             acted = true;
                             if (typeof sleep === 'function') await sleep(800);
-                            break; // Se lançou uma magia, para a iteração e ignora os outros feitiços
                         }
                     } catch (e) { console.error("Erro magia IA:", e); }
-                    game.isAnimating = false;
+                    
+                    // CORREÇÃO CIRÚRGICA: Libera a tela SEMPRE, aconteça o que acontecer!
+                    game.isAnimating = false; 
+                    
+                    if (hasCast) break; // Só encerra a busca depois da tela estar liberada
                 }
             }
         }

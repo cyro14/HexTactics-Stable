@@ -522,16 +522,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     $('btn-campaign').addEventListener('click', () => { if (localStorage.getItem('ht_save_camp')) { if (!confirm("Existe um jogo salvo. Deseja iniciar uma nova campanha e perder o progresso?")) return; } openLeaderSelection(false); });
     $('btn-roguelite').addEventListener('click', () => { if (localStorage.getItem('ht_save_rogue')) { if (!confirm("Existe uma Run salva. Deseja iniciar uma nova e perder o progresso atual?")) return; } openLeaderSelection(true); });
-    $('btn-duel').addEventListener('click', () => { 
-        if (confirm("Iniciar Modo Duelo (Fase de Compra + Arena Simétrica)?")) {
-            // Chama a seleção de líder repassando: isRoguelite = false, isDuel = true
-            openLeaderSelection(false, true); 
-        }
-    });
-    $('btn-load-campaign').addEventListener('click', () => { startGame(true, false); });
-    $('btn-load-roguelite').addEventListener('click', () => { startGame(true, true); });
-    $('btn-load-duel').addEventListener('click', () => { startGame(true, false, true); });
+    const btnDuel = $('btn-duel');
+    if (btnDuel) {btnDuel.addEventListener('click', () => { if (localStorage.getItem('ht_save_duel')) { if (!confirm("Existe um duelo salvo. Deseja iniciar um novo e perder o progresso atual?")) return; } openLeaderSelection(true, false, true); });}
 
+    const btnDuelHistory = 
+    $('btn-duel-history'); if (btnDuelHistory) {btnDuelHistory.addEventListener('click', openDuelHistory);}
+    $('btn-load-campaign')?.addEventListener('click', () => { startGame(true, false); });
+    $('btn-load-roguelite')?.addEventListener('click', () => { startGame(true, true); });
+    $('btn-load-duel')?.addEventListener('click', () => { startGame(true, false, true); });
+    
     $('btn-toggle-build').addEventListener('click', () => {
         const menu = $('building-menu');
         if (menu.classList.contains('hidden')) {
@@ -556,31 +555,32 @@ document.addEventListener("DOMContentLoaded", () => {
         if (game.currentTurn !== FACTIONS.PLAYER.id || game.isAnimating) { showMessage("Salve no seu turno livre!", '#f39c12'); return; }
         autoSave(); $('pause-menu').classList.add('hidden'); loadMeta(); showMessage("Progresso Salvo!", '#c9a227'); setTimeout(() => location.reload(), 1500);
     });
-
-    $('btn-open-bestiary').addEventListener('click', openBestiary);
-    $('btn-open-bestiary-pause').addEventListener('click', () => { $('pause-menu').classList.add('hidden'); openBestiary(); });
-    $('btn-close-bestiary').addEventListener('click', () => { $('bestiary-screen').classList.add('hidden'); if (!$('game-container').classList.contains('hidden')) $('pause-menu').classList.remove('hidden'); else $('main-menu').classList.remove('hidden'); });
-    $('btn-close-evo').addEventListener('click', () => $('evo-modal').classList.add('hidden'));
-    $('btn-close-beast-details').addEventListener('click', () => { $('beast-details-modal').classList.add('hidden'); });
-
-    $('btn-open-reliquary').addEventListener('click', () => openReliquary(false));
-    $('btn-open-reliquary-pause').addEventListener('click', () => { $('pause-menu').classList.add('hidden'); openReliquary(true); });
-    $('btn-close-reliquary').addEventListener('click', () => { $('reliquary-screen').classList.add('hidden'); if (!$('game-container').classList.contains('hidden')) $('pause-menu').classList.remove('hidden'); else $('main-menu').classList.remove('hidden'); });
-    $('btn-toggle-reliquary').addEventListener('click', () => { reliquaryViewMode = reliquaryViewMode === 'camp' ? 'rogue' : 'camp'; openReliquary(false); });
-
-    $('btn-refresh-shop').addEventListener('click', () => { if (game.gold >= 2) { game.gold -= 2; $('shop-gold-display').innerText = game.gold; generateShopItems(); renderShop(); } else { alert("Ouro insuficiente!"); } });
-
-    $('btn-grimoire').addEventListener('click', () => { openGrimoire(); });
-    $('btn-close-grimoire').addEventListener('click', () => { $('grimoire-screen').classList.add('hidden'); });
-
-    // Alternar visualização do menu de magias em combate (Estilo Reino)
-    $('btn-toggle-spells').addEventListener('click', () => {
+  // --- BOTÕES FINAIS PROTEGIDOS COM OPTIONAL CHAINING (?.) ---
+    $('btn-open-bestiary')?.addEventListener('click', openBestiary);
+    $('btn-open-bestiary-pause')?.addEventListener('click', () => { $('pause-menu').classList.add('hidden'); openBestiary(); });
+    $('btn-close-bestiary')?.addEventListener('click', () => { $('bestiary-screen').classList.add('hidden'); if (!$('game-container').classList.contains('hidden')) $('pause-menu').classList.remove('hidden'); else $('main-menu').classList.remove('hidden'); });
+    $('btn-close-evo')?.addEventListener('click', () => $('evo-modal').classList.add('hidden'));
+    $('btn-close-beast-details')?.addEventListener('click', () => { $('beast-details-modal').classList.add('hidden'); });
+    $('btn-open-reliquary')?.addEventListener('click', () => openReliquary(false));
+    $('btn-open-reliquary-pause')?.addEventListener('click', () => { $('pause-menu').classList.add('hidden'); openReliquary(true); });
+    $('btn-close-reliquary')?.addEventListener('click', () => { $('reliquary-screen').classList.add('hidden'); if (!$('game-container').classList.contains('hidden')) $('pause-menu').classList.remove('hidden'); else $('main-menu').classList.remove('hidden'); });
+    $('btn-toggle-reliquary')?.addEventListener('click', () => { reliquaryViewMode = reliquaryViewMode === 'camp' ? 'rogue' : 'camp'; openReliquary(false); });
+    $('btn-refresh-shop')?.addEventListener('click', () => { if (game.gold >= 2) { game.gold -= 2; $('shop-gold-display').innerText = game.gold; generateShopItems(); renderShop(); } else { alert("Ouro insuficiente!"); } });
+    $('btn-grimoire')?.addEventListener('click', () => { openGrimoire(); });
+    $('btn-close-grimoire')?.addEventListener('click', () => { $('grimoire-screen').classList.add('hidden'); });
+    $('btn-toggle-spells')?.addEventListener('click', () => {
         const bar = $('spell-bar');
         if (bar.classList.contains('hidden')) {
             bar.classList.remove('hidden');
-            renderSpellBar(); // Renderiza as magias disponíveis atualizadas
+            renderSpellBar(); 
         } else {
             bar.classList.add('hidden');
         }
     });
+    $('btn-duel')?.addEventListener('click', () => { 
+        if (confirm("Iniciar Modo Duelo (Fase de Compra + Arena Simétrica)?")) {
+            openLeaderSelection(false, true); 
+        }
+    });
+    $('btn-duel-history')?.addEventListener('click', openDuelHistory);
 });
