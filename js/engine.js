@@ -227,9 +227,14 @@ class Game {
         let aiPool = [{ name: "Lord Vampiro", emoji: '🧛🏻‍♂️', hp: 65, mp: 6, atk: 16, range: 1, tags: ['UMBRAL'], fav: ['CASTLE'] }];
         LEADERS.forEach(l => { if (l.id !== this.leaderData.id) { aiPool.push({ name: l.name, emoji: l.emoji, hp: l.hp, mp: l.mp, atk: l.atk, range: l.range, tags: l.tags || [], fav: l.fav || [] }); } });
         aiPool.sort(() => Math.random() - 0.5); let chosenAI = aiPool[0]; let vHp = Math.floor(chosenAI.hp * sFac) + 20; let vAtk = Math.floor(chosenAI.atk * sFac) + 4;
-        this.units.push(new Unit({ q: aS.q, r: aS.r, faction: 2, isLeader: true, name: chosenAI.name, baseName: chosenAI.name, emoji: chosenAI.emoji, hp: vHp, maxHp: vHp, mp: chosenAI.mp, maxMp: chosenAI.mp, atk: vAtk, range: chosenAI.range, isBoss: true, level: act, tags: chosenAI.tags, fav: chosenAI.fav }));
-
-        let maxL = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) ? (this.leaderData.limit + 1) : (this.leaderData.limit || 6);
+        // Constrói o Grimório da IA baseado nas tags dela
+        let aiSpells = [];
+        if (typeof SPELLS !== 'undefined') {
+            SPELLS.forEach(s => {
+                if (s.level <= act && s.tags.some(t => chosenAI.tags.includes(t))) aiSpells.push(s.id);
+            });
+        }
+        this.units.push(new Unit({ q: aS.q, r: aS.r, faction: 2, isLeader: true, name: chosenAI.name, baseName: chosenAI.name, emoji: chosenAI.emoji, hp: vHp, maxHp: vHp, mp: chosenAI.mp, maxMp: chosenAI.mp, atk: vAtk, range: chosenAI.range, isBoss: true, level: act, tags: chosenAI.tags, fav: chosenAI.fav, knownSpells: aiSpells })); let maxL = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) ? (this.leaderData.limit + 1) : (this.leaderData.limit || 6);
         const numAI = Math.min(maxL + 2, act + Math.floor(depth / 2));
         const aN = Hex.getNeighbors(aS.q, aS.r); let lP = BEASTS.LAND.filter(b => !b.minLevel || act >= b.minLevel);
         for (let i = 0; i < numAI; i++) { const b = lP[Math.floor(Math.random() * lP.length)]; const hn = aN[i]; let uLvl = this.getUnitLvl(b); let fFac = 1 + (uLvl - 1) * 0.2; if (hn && this.map.has(`${hn.q},${hn.r}`)) { this.units.push(new Unit({ q: hn.q, r: hn.r, faction: 2, name: b.name, baseName: b.name, emoji: b.e, hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac), mp: b.mp, maxMp: b.mp, atk: Math.floor(b.atk * fFac), range: b.range, abilities: [...b.abilities], filter: b.filter, tags: b.tags || [], fav: b.fav || [], level: uLvl })); } }
@@ -317,6 +322,61 @@ class Game {
         if (pL && pL.baseName === 'Gênia') {
             setTimeout(() => { if (typeof window.triggerGenieWishes === 'function') window.triggerGenieWishes(); }, 1200);
         }
+    }
+
+    generateDuelMap() {
+        this.map.clear(); this.units = []; this.items.clear();
+        this.cols = 15; this.rows = 11;
+        this.manaPool = {}; this.spentMana = {}; this.spellCooldowns = {};
+
+        // 1. Gera a Arena (O Espelho)
+        for (let r = 0; r < this.rows; r++) {
+            const off = Math.floor(r / 2);
+            for (let q = -off; q < this.cols - off; q++) {
+                let t = TERRAINS.PLAINS;
+                // Cria um rio central para dividir a arena
+                if (q === Math.floor(this.cols / 2) - off) t = TERRAINS.WATER;
+                // Coloca montanhas simétricas para estratégia
+                if ((r === 2 || r === 8) && (q === 2 - off || q === this.cols - 3 - off)) t = TERRAINS.MOUNTAIN;
+                this.map.set(`${q},${r}`, new Hex(q, r, t));
+            }
+        }
+
+        const mR = Math.floor(this.rows / 2);
+        const pS = { q: -Math.floor(mR / 2) + 1, r: mR };
+        const aS = { q: this.cols - 2 - Math.floor(mR / 2), r: mR };
+
+        this.map.set(`${pS.q},${pS.r}`, new Hex(pS.q, pS.r, TERRAINS.CASTLE, 1));
+        this.map.set(`${aS.q},${aS.r}`, new Hex(aS.q, aS.r, TERRAINS.CASTLE, 2));
+
+        // 2. Posiciona o Jogador (Com as compras feitas no Mercador)
+        deployedRoster.forEach((u, i) => {
+            let hq = pS.q, hr = pS.r;
+            if (i > 0) { hq += (i % 2 === 0 ? 1 : -1); hr += (i % 2 === 0 ? 0 : 1); }
+            this.units.push(new Unit({ ...u, q: hq, r: hr, mp: u.maxMp, hasAttacked: false, isNew: false }));
+        });
+
+        // 3. IA Oponente e sua Tropa Mímica!
+        let chosenAI = typeof LEADERS !== 'undefined' ? LEADERS.find(l => l.id === this.opponentId) : null;
+        if (!chosenAI) chosenAI = LEADERS[0]; // Prevenção de erro
+
+        let aiSpells = [];
+        if (typeof SPELLS !== 'undefined') SPELLS.forEach(s => { if (s.level <= 2 && s.tags.some(t => chosenAI.tags.includes(t))) aiSpells.push(s.id); });
+
+        this.units.push(new Unit({ q: aS.q, r: aS.r, faction: 2, isLeader: true, name: chosenAI.name, baseName: chosenAI.name, emoji: chosenAI.emoji, hp: chosenAI.hp, maxHp: chosenAI.hp, mp: chosenAI.mp, maxMp: chosenAI.mp, atk: chosenAI.atk, range: chosenAI.range, isBoss: true, level: 2, tags: chosenAI.tags, fav: chosenAI.fav, knownSpells: aiSpells }));
+        
+        // A IA compra feras equivalentes à quantidade que VOCÊ comprou
+        let beastPool = BEASTS.LAND.filter(b => b.tags && b.tags.some(t => chosenAI.tags.includes(t)));
+        if (beastPool.length === 0) beastPool = BEASTS.LAND;
+
+        for (let i = 0; i < deployedRoster.length - 1; i++) {
+            const b = beastPool[Math.floor(Math.random() * beastPool.length)];
+            let hq = aS.q, hr = aS.r;
+            if (i >= 0) { hq += (i % 2 === 0 ? -1 : 1); hr += (i % 2 === 0 ? 0 : -1); } // Oposto de direção
+            this.units.push(new Unit({ q: hq, r: hr, faction: 2, name: b.name, baseName: b.name, emoji: b.e, hp: b.hp, maxHp: b.hp, mp: b.mp, maxMp: b.mp, atk: b.atk, range: b.range, abilities: [...b.abilities], filter: b.filter, tags: b.tags || [], fav: b.fav || [], level: 2 }));
+        }
+
+        this.currentTurn = 1; this.gameOver = false; this.selectPlayerLeader();
     }
 
     checkVillageCapture(u) {
@@ -825,7 +885,7 @@ class Game {
             if (sys['SILVESTRE'] >= 3 && u.tags.includes('SILVESTRE')) { let sHeal = Math.min(u.maxHp - u.hp, 5); if (sHeal > 0) { u.hp += sHeal; if (typeof showPopup === 'function') showPopup(`+${sHeal}🌳`, u, '#27ae60'); } }
             if (sys['PRIMAL'] >= 2 && u.tags.includes('PRIMAL')) { u.furyAtk = (u.furyAtk || 0) + 1; if (typeof showPopup === 'function') showPopup(`+1 ATK 🦖`, u, '#e74c3c'); }
             let pDmg = (sys['VENOM'] >= 2) ? 10 : 5; if (u.status === 'poison') { u.hp -= pDmg; if (typeof showPopup === 'function') showPopup(`-${pDmg} ☠`, u, '#27ae60'); if (u.hp <= 0) this.handleDeath(u); }
-            
+
             if (u.status === 'stun') {
                 if (u.statusHandled) { u.status = null; u.statusHandled = false; u.resetTurn(); }
                 else { u.mp = 0; u.hasAttacked = true; u.statusHandled = true; if (typeof showPopup === 'function') showPopup("Zzz", u, '#f39c12'); }
@@ -1054,9 +1114,49 @@ window.runAITurn = async function () {
         if (game.gameOver) return; if (u.mp === 0) continue;
         if (renderer) { renderer.centerOn(u.vq, u.vr); renderer.draw(); }
         game.selectedUnit = u; if (typeof sleep === 'function') await sleep(300);
-        game.calculateReachable(u); let acted = false; const myM = game.units.filter(x => x.faction === u.faction && !x.isLeader).length; const isSafe = u.hp / u.maxHp > 0.4;
+        game.calculateReachable(u); 
+        
+        let acted = false; 
+        const myM = game.units.filter(x => x.faction === u.faction && !x.isLeader).length; 
+        const isSafe = u.hp / u.maxHp > 0.4;
 
-        // --- NOVA IA CONJURADORA DE MAGIAS ---
+        // 1. ANÁLISE DE MOVIMENTAÇÃO (Anda antes de agir)
+        let tgts = game.units.filter(t => t.faction === 1); 
+        if (u.isLeader && myM < maxL) tgts = tgts.concat(game.units.filter(t => t.faction === 0)); 
+        let cls = null; let minD = 999;
+        tgts.forEach(t => { 
+            let d = Hex.distance(u, t); 
+            if (u.isLeader && t.faction === 0) { 
+                if (isSafe) { d -= 3; if (t.hp / t.maxHp <= 0.3) d -= 5; } 
+                else { d += 10; } 
+            } 
+            if (!u.isLeader && t.faction === 1) d -= 2; 
+            if (d < minD) { minD = d; cls = t; } 
+        });
+
+        if (cls) {
+            const moves = Array.from(game.reachableHexes.keys()); 
+            let bM = { q: u.q, r: u.r }; let bestScore = -9999;
+            moves.forEach(m => {
+                const [mq, mr] = m.split(',').map(Number); 
+                if (game.getUnitAt(mq, mr) && (mq !== u.q || mr !== u.r)) return;
+                let distToTarget = Hex.distance({ q: mq, r: mr }, cls); 
+                let score = -distToTarget * 10;
+                if (distToTarget > 0 && distToTarget <= u.getEffectiveRange(game)) { score += 1000; score += distToTarget * 5; }
+                let hMap = game.map.get(m); if (hMap && hMap.terrain.id === 'VILLAGE' && hMap.owner !== 2) score += 20;
+                if (!isSafe && hMap && hMap.terrain.id === 'VILLAGE') score += 80;
+                if (score > bestScore) { bestScore = score; bM = { q: mq, r: mr }; }
+            });
+
+            // A IA Caminha primeiro!
+            if (bM.q !== u.q || bM.r !== u.r) { 
+                u.mp -= (game.reachableHexes.get(`${bM.q},${bM.r}`) || 1); 
+                await game.moveUnit(u, bM.q, bM.r); 
+            }
+        }
+
+        // 2. DECISÃO DE MAGIA (Após mover e reavaliar alvos)
+        let hasCast = false;
         if (u.knownSpells && u.knownSpells.length > 0) {
             for (let sid of u.knownSpells) {
                 if (game.spellCooldowns[sid] > 0) continue;
@@ -1067,13 +1167,13 @@ window.runAITurn = async function () {
                 let target = null;
                 let targetHex = null;
 
-                // IA decide o alvo baseado no tipo de magia
                 if (sp.type === 'atk') {
                     let inRange = game.units.filter(t => t.faction !== u.faction && t.hp > 0 && Hex.distance(u, t) <= spRange);
                     if (inRange.length > 0) target = inRange[Math.floor(Math.random() * inRange.length)];
                 } else if (sp.type === 'def') {
+                    // CÉREBRO CORRIGIDO: Só busca aliados que estão com vida INFERIOR ao máximo
                     let inRange = game.units.filter(t => t.faction === u.faction && t.hp > 0 && t.hp < t.maxHp && Hex.distance(u, t) <= spRange);
-                    target = inRange.length > 0 ? inRange[0] : u;
+                    if (inRange.length > 0) target = inRange[Math.floor(Math.random() * inRange.length)];
                 }
 
                 if (target) {
@@ -1083,43 +1183,40 @@ window.runAITurn = async function () {
                         let ok = await sp.effect(game, u, target, targetHex);
                         if (ok) {
                             if (typeof showPopup === 'function') showPopup(`✨ ${sp.name}!`, u, '#9b59b6');
-                            game.spellCooldowns[sid] = sp.level > 1 ? sp.level : 2; // Coloca um CD para a IA não spammar todo turno
+                            game.spellCooldowns[sid] = sp.level > 1 ? sp.level : 2;
                             u.hasAttacked = true;
                             u.mp = 0;
+                            hasCast = true;
                             acted = true;
                             if (typeof sleep === 'function') await sleep(800);
-                            break; // Interrompe para usar apenas 1 magia por turno
+                            break; // Se lançou uma magia, para a iteração e ignora os outros feitiços
                         }
-                    } catch (e) { console.error("Erro na magia da IA:", e); }
+                    } catch (e) { console.error("Erro magia IA:", e); }
                     game.isAnimating = false;
                 }
             }
         }
 
-
-        if (u.isLeader && myM < maxL && isSafe) { const n = Hex.getNeighbors(u.q, u.r).map(h => game.getUnitAt(h.q, h.r)).filter(Boolean); const wW = n.filter(e => e.faction === 0 && e.hp / e.maxHp <= 0.3); if (wW.length > 0) { await game.attemptTame(u, wW[0]); acted = true; if (typeof sleep === 'function') await sleep(500); } }
-
-        if (!acted && u.mp > 0) {
-            let tgts = game.units.filter(t => t.faction === 1); if (u.isLeader && myM < maxL) tgts = tgts.concat(game.units.filter(t => t.faction === 0)); let cls = null; let minD = 999;
-            tgts.forEach(t => { let d = Hex.distance(u, t); if (u.isLeader && t.faction === 0) { if (isSafe) { d -= 3; if (t.hp / t.maxHp <= 0.3) d -= 5; } else { d += 10; } } if (!u.isLeader && t.faction === 1) d -= 2; if (d < minD) { minD = d; cls = t; } });
-
-            if (cls) {
-                const moves = Array.from(game.reachableHexes.keys()); let bM = { q: u.q, r: u.r }; let bestScore = -9999;
-                moves.forEach(m => {
-                    const [mq, mr] = m.split(',').map(Number); if (game.getUnitAt(mq, mr) && (mq !== u.q || mr !== u.r)) return;
-                    let distToTarget = Hex.distance({ q: mq, r: mr }, cls); let score = -distToTarget * 10;
-                    if (distToTarget > 0 && distToTarget <= u.getEffectiveRange(game)) { score += 1000; score += distToTarget * 5; }
-                    let hMap = game.map.get(m); if (hMap && hMap.terrain.id === 'VILLAGE' && hMap.owner !== 2) score += 20;
-                    if (!isSafe && hMap && hMap.terrain.id === 'VILLAGE') score += 80;
-                    if (score > bestScore) { bestScore = score; bM = { q: mq, r: mr }; }
-                });
-
-                if (bM.q !== u.q || bM.r !== u.r) { u.mp -= (game.reachableHexes.get(`${bM.q},${bM.r}`) || 1); await game.moveUnit(u, bM.q, bM.r); }
-                if (Hex.distance(u, cls) <= u.range && !u.hasAttacked) { if (u.isLeader && cls.faction === 0 && Hex.distance(u, cls) === 1 && cls.hp / cls.maxHp <= 0.3 && myM < maxL) { await game.attemptTame(u, cls); } else { let risk = false; if (u.isLeader) { let cDmg = Math.floor(game.calcDmg(cls, u) * 0.6); if (cls.abilities.includes('counter')) cDmg = Math.floor(cDmg * 1.2); if (u.hp <= cDmg) risk = true; } if (!risk) await game.executeCombat(u, cls); } }
+        // 3. DECISÃO BÁSICA (Ataque ou Doma)
+        if (!hasCast && cls) {
+            if (Hex.distance(u, cls) <= u.range && !u.hasAttacked) { 
+                if (u.isLeader && cls.faction === 0 && Hex.distance(u, cls) === 1 && cls.hp / cls.maxHp <= 0.3 && myM < maxL) { 
+                    await game.attemptTame(u, cls); 
+                } else { 
+                    let risk = false; 
+                    if (u.isLeader) { 
+                        let cDmg = Math.floor(game.calcDmg(cls, u) * 0.6); 
+                        if (cls.abilities.includes('counter')) cDmg = Math.floor(cDmg * 1.2); 
+                        if (u.hp <= cDmg) risk = true; 
+                    } 
+                    if (!risk) await game.executeCombat(u, cls); 
+                } 
             }
         }
+        
         if (typeof sleep === 'function') await sleep(200);
     }
+    game.selectedUnit = null;
 };
 
 window.runWildTurn = async function () {
@@ -1133,8 +1230,18 @@ window.runWildTurn = async function () {
                     if (typeof showPopup === 'function') showPopup("Farejou Isca!", w, '#e67e22');
                 }
             });
+            // O Boss detecta quem chega a 5 hexágonos de distância!
+            if (w.isBoss && !w.alerted) {
+                game.units.forEach(u => {
+                    if (u.faction !== 0 && Hex.distance(w, u) <= 5) {
+                        w.alerted = true;
+                        if (typeof showPopup === 'function') showPopup("Invasores!", w, '#e74c3c');
+                    }
+                });
+            }
         }
     });
+
     for (const w of wilds) {
         if (game.gameOver) break; if (w.mp === 0) continue;
         if (!w.alerted) { w.hp = Math.min(w.maxHp, w.hp + 5); continue; }

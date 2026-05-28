@@ -311,6 +311,7 @@ function renderSpellBar() {
                     updateUI();
                     if (typeof renderer !== 'undefined') renderer.draw();
                     showMessage(`✨ ${spell.name}: ${spell.desc}`, '#e8c84a');
+                    const bar = $('spell-bar');
                 }
                 renderSpellBar();
             });
@@ -622,19 +623,19 @@ function updateUI() {
         cancelBtn.className = 'btn-danger hidden';
         cancelBtn.innerHTML = '❌ Cancelar Ação';
         cancelBtn.style.cssText = 'position:absolute; bottom: 85px; left: 50%; transform: translateX(-50%); z-index: 100; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 0 10px rgba(231,76,60,0.5); cursor: pointer;';
-        
+
         cancelBtn.onclick = () => {
             if (game) {
                 game.activeSpell = null;
                 game.activeItem = null;
             }
             if (typeof renderSpellBar === 'function') renderSpellBar();
-            updateUI(); 
+            updateUI();
             if (typeof renderer !== 'undefined') renderer.draw();
         };
         $('game-container').appendChild(cancelBtn);
     }
-    
+
     // Mostra o botão apenas se algo estiver ativo para mirar
     if (cancelBtn && game) {
         if (game.activeSpell || game.activeItem) {
@@ -653,6 +654,36 @@ function generateShopItems() {
     shopItems = []; let arts = getActiveArtifacts();
 
     let bLvl = game && game.currentLevel ? game.currentLevel : 1;
+
+    // --- LOJA EXCLUSIVA DO MODO DUELO ---
+    if (game && game.isDuel) {
+        let tags = game.leaderData.tags || [];
+        let pool = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW].filter(b => b.tags && b.tags.some(t => tags.includes(t)) && !b.minLevel);
+        if (pool.length === 0) pool = BEASTS.LAND;
+
+        // Gera 6 Contratos Exclusivos da Tag do Líder
+        for (let i = 0; i < 6; i++) {
+            let rB = pool[Math.floor(Math.random() * pool.length)];
+            shopItems.push({
+                name: `Contrato: ${rB.name}`, icon: rB.e, desc: `Adiciona ${rB.name} à Box.`, cost: 10, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none', action: async () => {
+                    rosterMemory.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: rB.name, baseName: rB.name, emoji: rB.e, hp: rB.hp, maxHp: rB.hp, mp: rB.mp, maxMp: rB.mp, atk: rB.atk, range: rB.range, level: 1, abilities: [...rB.abilities], isNew: true, filter: rB.filter, tags: rB.tags || [], fav: rB.fav || [] })); return true;
+                }
+            });
+        }
+        // Consumíveis e Equipamentos Fixos de Duelo
+        //shopItems.push({ name: "Poção de Exército", icon: "🧪", desc: "Cura 30 HP de todos.", cost: 4, rarity: 'common', color: 'var(--rarity-common)', type: 'consumable', filter: 'none', action: async () => { rosterMemory.forEach(u => u.hp = Math.min(u.maxHp, u.hp + 30)); deployedRoster.forEach(u => u.hp = Math.min(u.maxHp, u.hp + 30)); return true; } });
+        shopItems.push({ name: "Fruta da Evolução", icon: "🍎", desc: "+100 XP a uma fera.", cost: 8, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: 'none', action: async () => { let m = [...rosterMemory, ...deployedRoster].filter(u => !u.isLeader); if (m.length === 0) { alert("Nenhuma fera!"); return false; } let r = await window.promptSelectUnit("Quem receberá XP?", m); if (r) { r.addXp(100); return true; } return false; } });
+
+        let gearPool = ['SWORD', 'SHIELD', 'BOOTS', 'BOW'];
+        let randomGear = gearPool.sort(() => Math.random() - 0.5).slice(0, 2);
+        randomGear.forEach(gId => {
+            let iDef = typeof ITEMS !== 'undefined' ? ITEMS[gId] : null;
+            if (iDef) shopItems.push({ name: iDef.name, icon: iDef.icon, desc: iDef.desc, cost: 12, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'equip', filter: 'none', action: async () => { game.inventory.push({ id: gId, level: 1 }); return true; } });
+        });
+
+        return; // ENCERRA A FUNÇÃO AQUI SE FOR DUELO
+    }
+    // --- FIM DA LOJA DE DUELO ---
 
     // --- 1. CONTRATOS DE FERAS COMUNS E CHEFES ---
     const rB = BEASTS.LAND[Math.floor(Math.random() * BEASTS.LAND.length)];
@@ -950,10 +981,21 @@ function openTeamView() {
 // ==========================================
 // 5. TELAS EXTRAS (Seleção, Bestiário, Relicário)
 // ==========================================
-function openLeaderSelection(isRoguelite) {
+function openLeaderSelection(isRoguelite, isDuel = false, pickingOpponentFor = null) {
     $('mode-screen').classList.add('hidden');
     const leaderScreen = $('leader-selection');
     leaderScreen.classList.remove('hidden');
+
+    // Altera o título dinamicamente
+    let titleEl = $('leader-selection-title');
+    if (!titleEl) {
+        titleEl = document.createElement('h2');
+        titleEl.id = 'leader-selection-title';
+        titleEl.style.cssText = 'text-align:center; color:var(--gold); font-family:Cinzel,serif; margin-bottom:10px;';
+        leaderScreen.insertBefore(titleEl, leaderScreen.firstChild);
+    }
+
+    titleEl.innerText = pickingOpponentFor ? "Selecione o Líder Adversário" : "Selecione seu Líder";
 
     // Remove o filtro antigo se existir
     let oldFilter = $('leader-filter-container');
@@ -1033,8 +1075,14 @@ function openLeaderSelection(isRoguelite) {
             `;
 
             btn.onclick = () => {
-                $('leader-selection').classList.add('hidden');
-                startGame(false, isRoguelite, l.id);
+                if (isDuel && !pickingOpponentFor) {
+                    // Selecionou o Jogador, agora reabre para escolher o Inimigo!
+                    openLeaderSelection(false, true, l.id);
+                } else {
+                    $('leader-selection').classList.add('hidden');
+                    // Se for duelo, passa o jogador e o oponente.
+                    startGame(false, isRoguelite, pickingOpponentFor || l.id, isDuel, pickingOpponentFor ? l.id : null);
+                }
             };
             container.appendChild(btn);
         });
@@ -1529,12 +1577,15 @@ function advanceCampaign() {
 }
 
 
-function startGame(load, isRoguelite = false, leaderId = null) {
+function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, opponentId = null) {
+    game.isDuel = isDuel; 
+    game.opponentId = opponentId;
     hide('mode-screen'); hide('main-menu'); hide('result-screen');
     const sk = isRoguelite ? 'ht_save_rogue' : 'ht_save_camp';
     game.isAnimating = false; const tb = $('turn-blocker'); if (tb) tb.style.display = 'none';
     lastState = null; const undoBtn = $('btn-undo'); if (undoBtn) undoBtn.disabled = true;
     game.manaPool = {}; game.spentMana = {}; game.spellCooldowns = {}; game.activeSpell = null; game.lastDeadAlly = null; game.turnCount = 0;
+    game.isDuel = isDuel;
 
     if (!ARTIFACTS.find(a => a.id === 'art_omega')) {
         ARTIFACTS.push({ id: 'art_omega', name: 'Coração do Infinito', icon: '🌌', desc: '+20 HP, +5 ATK e +1 Limite de Exército.', cost: 999, rarity: 'legendary', color: '#ff00ff', type: 'equip', onEquip: (u, lvl) => { u.maxHp += 20 * lvl; u.hp += 20 * lvl; u.atk += 5 * lvl; }, onUnequip: (u, lvl) => { u.maxHp -= 20 * lvl; u.atk -= 5 * lvl; u.hp = Math.min(u.hp, u.maxHp); } });
@@ -1567,6 +1618,10 @@ function startGame(load, isRoguelite = false, leaderId = null) {
     } else {
         if (localStorage.getItem(sk)) localStorage.removeItem(sk);
         game.currentLevel = 1; game.gold = 0; game.dna = 0; game.isRoguelite = isRoguelite; rosterMemory = []; deployedRoster = []; game.inventory = [];
+
+        // SE FOR DUELO, COMEÇA COM 50 DE OURO
+        game.gold = isDuel ? 50 : 0;
+
         game.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
         game.generateKingdomMap();
         game.kingdomMap = new Map();
@@ -1648,7 +1703,21 @@ function startGame(load, isRoguelite = false, leaderId = null) {
             grimTags: [...(lD.tags || [])]
         }));
 
-        renderRouteMap();
+        if (isDuel) {
+            // Vai direto pro Mercador!
+            openShop();
+            const btnL = $('btn-leave-shop');
+            btnL.innerText = "⚔️ Ir para a Arena";
+            btnL.onclick = () => {
+                hide('shop-screen');
+                show('game-container');
+                game.generateDuelMap();
+                renderer.initCamera(true);
+                updateUI();
+            };
+        } else {
+            renderRouteMap();
+        }
     }
 
 }

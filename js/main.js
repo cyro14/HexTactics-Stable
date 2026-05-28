@@ -36,12 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
             let dist = Hex.distance(game.selectedUnit, hoveredHex);
 
             if (target && target.faction !== 1 && dist <= game.selectedUnit.getEffectiveRange(game) && !game.selectedUnit.hasAttacked) {
-                
+
                 // --- PREVISÃO DE CAPTURA (DOMA) ---
                 if (game.tameMode && target.faction === 0) {
                     // Consulta a matemática real e exata do motor do jogo
                     let chance = game.calculateTameChance(game.selectedUnit, target) * 100;
-                    
+
                     fc.innerHTML = `
                         <div class="forecast-side" style="width:140px">
                             <span class="forecast-emoji">${target.emoji}</span>
@@ -81,9 +81,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         lastForecastAttacker = game.selectedUnit;
                     }
                 }
-                
+
                 fc.style.display = 'flex';
-                let yOffset = isTouch ? 200 : -20; 
+                let yOffset = isTouch ? 200 : -20;
                 let xOffset = isTouch ? 80 : -20;
                 fc.style.left = (clientX - xOffset) + 'px';
                 fc.style.top = (clientY - yOffset) + 'px';
@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Trava o modo item
         game.activeItem = type;
-        game.activeSpell = null; 
+        game.activeSpell = null;
 
         // Define o alcance baseado no item
         const ranges = { isca: 2, rede: 3, potion: 2, bandage: 2, scroll: 4, sphere: 3 };
@@ -110,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
             game.selectedUnit = leader;
             game.calculateReachable(leader);
         }
-
+        const menu = $('field-item-menu');
         showMessage(`Selecione o alvo para: ${type.toUpperCase()}`, "#3498db");
         updateUI();
         renderer.draw();
@@ -211,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
             game.selectedHex = null;
             game.selectedUnit = null;
             game.activeSpell = null;
-            game.activeItem = null; 
+            game.activeItem = null;
             updateUI(); renderer.draw();
             return;
         }
@@ -287,14 +287,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (itemUsed) {
                     let usedType = game.activeItem; // Salva qual foi o item usado
                     game.activeItem = null;
-                    
+
                     // Rede e Isca agora são Ações Livres! Não gastam o ataque.
                     if (usedType !== 'rede' && usedType !== 'isca') {
-                        su.hasAttacked = true; 
+                        su.hasAttacked = true;
                     } else {
                         if (typeof showMessage === 'function') showMessage("Ação Rápida (Turno não consumido)!", "#2ecc71");
                     }
-                    
+
                     if (typeof renderFieldItemMenu === 'function') renderFieldItemMenu(); // Atualiza a mochila na hora
                     updateUI(); renderer.draw();
                 }
@@ -324,10 +324,10 @@ document.addEventListener("DOMContentLoaded", () => {
                             if (spell.tags.includes('MYSTIC') && spRange === 1) {
                                 if (u) { showMessage("Selecione um espaço vazio!", "#e74c3c"); return; }
                                 if (Hex.distance(su, cH) > 1) { showMessage("Muito longe!", "#e74c3c"); return; }
-                            } else if (spell.id === 'sl_resurrection'||spell.id === 'sl_erguer_esq') {
+                            } else if (spell.id === 'sl_resurrection' || spell.id === 'sl_erguer_esq') {
                                 if (u) { showMessage("Escolha um espaço vazio!", "#e74c3c"); return; }
                             }
-                            
+
                             else {
                                 if (!u || u.faction !== FACTIONS.PLAYER.id) { showMessage("Selecione um aliado!", "#e74c3c"); return; }
                             }
@@ -340,7 +340,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
 
                     let canCast = false;
-                    
+
                     // Lógica de Custo - Feras gastam 0!
                     if (!su.isLeader) {
                         canCast = true;
@@ -456,7 +456,13 @@ document.addEventListener("DOMContentLoaded", () => {
         game.selectedUnit = nU; game.calculateReachable(nU); renderer.centerOn(nU.vq, nU.vr); updateUI(); renderer.draw();
     });
 
-    $('btn-end-turn').addEventListener('click', () => { if (!game.isAnimating) game.startNextTurn(); });
+    $('btn-end-turn').addEventListener('click', () => {
+        if (!game.isAnimating) {
+            if (typeof autoSave === 'function') autoSave();
+            game.startNextTurn();
+        }
+    });
+
     $('btn-tame').addEventListener('click', () => { game.tameMode = !game.tameMode; updateUI(); renderer.draw(); });
 
     // Botões de Pausa e Popups
@@ -516,8 +522,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     $('btn-campaign').addEventListener('click', () => { if (localStorage.getItem('ht_save_camp')) { if (!confirm("Existe um jogo salvo. Deseja iniciar uma nova campanha e perder o progresso?")) return; } openLeaderSelection(false); });
     $('btn-roguelite').addEventListener('click', () => { if (localStorage.getItem('ht_save_rogue')) { if (!confirm("Existe uma Run salva. Deseja iniciar uma nova e perder o progresso atual?")) return; } openLeaderSelection(true); });
+    $('btn-duel').addEventListener('click', () => { 
+        if (confirm("Iniciar Modo Duelo (Fase de Compra + Arena Simétrica)?")) {
+            // Chama a seleção de líder repassando: isRoguelite = false, isDuel = true
+            openLeaderSelection(false, true); 
+        }
+    });
     $('btn-load-campaign').addEventListener('click', () => { startGame(true, false); });
     $('btn-load-roguelite').addEventListener('click', () => { startGame(true, true); });
+    $('btn-load-duel').addEventListener('click', () => { startGame(true, false, true); });
 
     $('btn-toggle-build').addEventListener('click', () => {
         const menu = $('building-menu');
