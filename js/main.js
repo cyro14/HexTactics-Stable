@@ -12,62 +12,204 @@ document.addEventListener("DOMContentLoaded", () => {
     window.pendingAttackTarget = null; // Guarda o alvo do primeiro clique
 
     // ==========================================
-    // SISTEMA DE REAÇÕES ELEMENTAIS (GLOBAL)
+    // SISTEMA AVANÇADO DE ELEMENTOS E FURTIVIDADE
     // ==========================================
 
-    // 1. INJEÇÃO GLOBAL: Clona os terrenos originais para herdar 'cost' e 'def' perfeitamente
     if (typeof TERRAINS !== 'undefined') {
-        // Clona a Água e só muda o ID e Nome
-        if (TERRAINS.WATER) {
-            TERRAINS.ELECTRIC_WATER = { ...TERRAINS.WATER, id: 'ELECTRIC_WATER', name: 'Água Eletrizada' };
-        }
-        
-        // Clona a Floresta e muda a Cor, ID e Nome
-        if (TERRAINS.FOREST) {
-            TERRAINS.BURNING_FOREST = { ...TERRAINS.FOREST, id: 'BURNING_FOREST', name: 'Floresta em Chamas', col: '#d35400' };
-        }
-        
-        // Pega qualquer terreno base (como LAND) para servir de molde para as Cinzas
+        if (TERRAINS.WATER) TERRAINS.ELECTRIC_WATER = { ...TERRAINS.WATER, id: 'ELECTRIC_WATER', name: 'Água Eletrizada' };
+        if (TERRAINS.FOREST) TERRAINS.BURNING_FOREST = { ...TERRAINS.FOREST, id: 'BURNING_FOREST', name: 'Floresta em Chamas', col: '#d35400' };
         let baseLand = TERRAINS.LAND || TERRAINS.PLAINS || Object.values(TERRAINS)[0];
-        TERRAINS.ASHES = { ...baseLand, id: 'ASHES', name: 'Cinzas', col: '#555555' };
+        if (!TERRAINS.ASHES) TERRAINS.ASHES = { ...baseLand, id: 'ASHES', name: 'Cinzas', col: '#555555' };
     }
 
-    // 2. PATCH VISUAL: Desenha apenas os Emojis (a cor agora vem nativa do motor)
+    // 1. Ocultar unidades do Clique do Jogador
+    const originalGetUnitAt = Game.prototype.getUnitAt;
+    Game.prototype.getUnitAt = function(q, r) {
+        let u = originalGetUnitAt.call(this, q, r);
+        if (u && u.isHidden && u.faction !== 1) return null; 
+        return u;
+    };
+
+    // 2. MÁGICA DO PATHFINDER: Remove fisicamente as unidades do array por 1 milissegundo!
+    const originalCalcReachable = Game.prototype.calculateReachable;
+    Game.prototype.calculateReachable = function(unit) {
+        let allUnitsBackup = [...this.units]; // Salva todas as unidades originais
+        // Filtra as ocultas para fora da existência!
+        this.units = this.units.filter(u => !(u.isHidden && u.faction !== 1));
+        
+        originalCalcReachable.call(this, unit); // O motor calcula a rota no mapa vazio
+        
+        this.units = allUnitsBackup; // Traz as tropas de volta da dimensão fantasma!
+    };
+
+    // 3. Bônus de Dano da Marca do Caçador
+    const originalCalcDmg = Game.prototype.calcDmg;
+    Game.prototype.calcDmg = function(attacker, defender) {
+        let dmg = originalCalcDmg.call(this, attacker, defender);
+        if (defender.status === 'marked' && attacker.tags && attacker.tags.includes('STALKER')) dmg = Math.floor(dmg * 2); 
+        return dmg;
+    };
+
+    // 4. Virada de Turno: Camuflagem Passiva e Espalhamento de Fogo
+    const originalStartNextTurn = Game.prototype.startNextTurn;
+    Game.prototype.startNextTurn = function() {
+        let restedUnits = this.units.filter(u => u.mp === u.maxMp);
+        originalStartNextTurn.call(this);
+
+        this.units.forEach(u => {
+            if (u.hp <= 0 || !u.abilities) return;
+            let hex = this.map.get(`${u.q},${u.r}`);
+            if (!hex) return;
+            
+            let isDive = u.abilities.includes('dive') && hex.terrain.id === 'WATER';
+            let isCamo = u.abilities.includes('camouflage') && hex.terrain.id === 'FOREST';
+            
+            let enemiesAdj = false;
+            Hex.getNeighbors(u.q, u.r).forEach(n => {
+                let tU = this.units.find(x => x.q === n.q && x.r === n.r && x.hp > 0 && !x.isHidden);
+                if (tU && tU.faction !== u.faction) enemiesAdj = true;
+            });
+
+            if (!enemiesAdj) {
+                if (isDive || (isCamo && restedUnits.includes(u))) {
+                    u.isHidden = true;
+                    if (u.faction === 1) u.filter = 'opacity(0.5) sepia(100%)';
+                }
+            } else if (u.status !== 'digging') {
+                u.isHidden = false; u.filter = 'none';
+            }
+        });
+
+        let newFires = [];
+        this.map.forEach(h => {
+            if (h.terrain && h.terrain.id === 'BURNING_FOREST') {
+                Hex.getNeighbors(h.q, h.r).forEach(n => {
+                    let nH = this.map.get(`${n.q},${n.r}`);
+                    if (nH && nH.terrain && nH.terrain.id === 'FOREST' && Math.random() < 0.3) newFires.push(nH);
+                });
+            }
+        });
+        newFires.forEach(nH => { nH.terrain = TERRAINS.BURNING_FOREST; nH.timer = 4; });
+    };
+
+    // 5. MÁGICA DA RENDERIZAÇÃO: Remove o desenho absoluto!
     const originalDraw = Renderer.prototype.draw;
     Renderer.prototype.draw = function() {
-        originalDraw.call(this); // Desenha o mapa perfeitamente com as cores do dicionário
-        
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
+        if (!game || !game.units) return originalDraw.call(this);
+
+        if (game.turnCount <= 1 && !game._stealthInit) {
+            game._stealthInit = true;
+            game.units.forEach(u => {
+                if (!u.abilities) return;
+                let hex = game.map.get(`${u.q},${u.r}`);
+                if ((u.abilities.includes('dive') && hex?.terrain.id === 'WATER') || (u.abilities.includes('camouflage') && hex?.terrain.id === 'FOREST')) {
+                    u.isHidden = true;
+                    if (u.faction === 1) u.filter = 'opacity(0.5) sepia(100%)';
+                }
+            });
+        }
+
+        // Tira fisicamente as unidades inimigas do array ANTES de desenhar
+        let allUnitsBackup = [...game.units];
+        game.units = game.units.filter(u => !(u.isHidden && u.faction !== 1));
+
+        originalDraw.call(this); // A tela é pintada com perfeição
+
+        game.units = allUnitsBackup; // Retorna as unidades após a pintura
+
+        this.ctx.textAlign = 'center'; this.ctx.textBaseline = 'middle';
         game.map.forEach(h => {
             const pos = this.getPos(h.q, h.r);
-            if (h.terrain.id === 'ELECTRIC_WATER') {
-                this.ctx.font = `${this.hexSize * 0.9}px Arial`; this.ctx.fillText('⚡', pos.x, pos.y + 4);
-            } else if (h.terrain.id === 'BURNING_FOREST') {
-                this.ctx.font = `${this.hexSize * 0.9}px Arial`; this.ctx.fillText('🔥', pos.x, pos.y + 4);
-            } else if (h.terrain.id === 'ASHES') {
-                this.ctx.font = `${this.hexSize * 0.7}px Arial`; this.ctx.fillText('💨', pos.x, pos.y + 4);
-            }
+            if (h.terrain.id === 'ELECTRIC_WATER') { this.ctx.font = `${this.hexSize * 0.9}px Arial`; this.ctx.fillText('⚡', pos.x, pos.y + 4); }
+            else if (h.terrain.id === 'BURNING_FOREST') { this.ctx.font = `${this.hexSize * 0.9}px Arial`; this.ctx.fillText('🔥', pos.x, pos.y + 4); }
+            else if (h.terrain.id === 'ASHES') { this.ctx.font = `${this.hexSize * 0.7}px Arial`; this.ctx.fillText('💨', pos.x, pos.y + 4); }
         });
     };
 
-    // 3. PATCH ARMADILHA: Dano e Stun ao caminhar
+    // 6. Armadilhas e Emboscadas Perfeitas (Com registro no LOG!)
     const originalMoveUnit = Game.prototype.moveUnit;
     Game.prototype.moveUnit = async function(unit, targetQ, targetR) {
-        await originalMoveUnit.call(this, unit, targetQ, targetR);
-        let hex = this.map.get(`${targetQ},${targetR}`);
-        if (hex && unit.hp > 0) {
-            if (hex.terrain.id === 'ELECTRIC_WATER') {
-                unit.status = 'stun'; unit.mp = 0;
-                if (typeof showPopup === 'function') showPopup("Zzz ⚡", unit, '#f1c40f');
-            } else if (hex.terrain.id === 'BURNING_FOREST') {
-                unit.hp -= 10;
-                if (typeof showPopup === 'function') showPopup("-10 🔥", unit, '#e74c3c');
-                if (unit.hp <= 0) this.handleDeath(unit, { name: 'As Chamas', faction: -1 });
+        let isFlying = unit.abilities && unit.abilities.includes('flying');
+        let finalQ = targetQ; let finalR = targetR;
+
+        if (!isFlying && this.reachableHexes && this.reachableHexes.has(`${targetQ},${targetR}`)) {
+            let path = []; let curr = `${targetQ},${targetR}`; let start = `${unit.q},${unit.r}`; let maxIter = 0;
+            while(curr !== start && maxIter < 100) {
+                path.unshift(curr);
+                let [cq, cr] = curr.split(',').map(Number);
+                let neighbors = typeof Hex !== 'undefined' && Hex.getNeighbors ? Hex.getNeighbors(cq, cr) : [{q: cq+1, r: cr}, {q: cq+1, r: cr-1}, {q: cq, r: cr-1}, {q: cq-1, r: cr}, {q: cq-1, r: cr+1}, {q: cq, r: cr+1}];
+                let bestN = null; let minCost = Infinity;
+                for (let n of neighbors) {
+                    let nKey = `${n.q},${n.r}`;
+                    if (nKey === start) { bestN = nKey; minCost = -1; break; }
+                    if (this.reachableHexes.has(nKey)) {
+                        let cost = this.reachableHexes.get(nKey);
+                        if (cost < minCost) { minCost = cost; bestN = nKey; }
+                    }
+                }
+                if (!bestN) break; curr = bestN; maxIter++;
+            }
+
+            for (let step of path) {
+                let [sq, sr] = step.split(',').map(Number);
+                
+                let ambusher = this.units.find(u => u.isHidden && u.faction !== unit.faction && Hex.distance({q: sq, r: sr}, u) <= 1 && u.status !== 'digging');
+                if (ambusher) {
+                    if (sq === ambusher.q && sr === ambusher.r) {
+                        if (step === path[0]) { finalQ = unit.q; finalR = unit.r; } 
+                        else { let [pq, pr] = path[path.indexOf(step)-1].split(',').map(Number); finalQ = pq; finalR = pr; }
+                    } else {
+                        finalQ = sq; finalR = sr; 
+                    }
+                    
+                    ambusher.isHidden = false; ambusher.filter = 'none'; 
+                    if (typeof showPopup === 'function') showPopup("Emboscada! ⚠️", ambusher, '#e74c3c');
+                    
+                    let dmg = Math.floor(this.calcDmg(ambusher, unit) * 1.5); 
+                    unit.hp -= dmg; unit.status = 'stun'; unit.mp = 0;
+                    if (typeof showPopup === 'function') showPopup(`-${dmg} ⚔️`, unit, '#e74c3c');
+                    
+                    // --- REGISTRO DE COMBATE NO LOG ---
+                    let log = document.getElementById('combat-log');
+                    if (log) {
+                        let entry = document.createElement('div');
+                        entry.style.marginBottom = '4px';
+                        entry.innerHTML = `<span style="color:#e74c3c;font-weight:bold;">[EMBOSCADA]</span> ${ambusher.emoji} ${ambusher.name} surpreendeu ${unit.emoji} ${unit.name} causando ${dmg} de dano!`;
+                        log.appendChild(entry);
+                        log.scrollTop = log.scrollHeight;
+                    }
+                    
+                    if (unit.hp <= 0) this.handleDeath(unit, ambusher);
+                    break;
+                }
+
+                let h = this.map.get(step);
+                if (h && h.terrain.id === 'ELECTRIC_WATER') { finalQ = sq; finalR = sr; break; }
             }
         }
-    };
 
+        await originalMoveUnit.call(this, unit, finalQ, finalR);
+
+        let destHex = this.map.get(`${finalQ},${finalR}`);
+        if (unit.isHidden && unit.status !== 'digging') {
+            if (!(unit.abilities && unit.abilities.includes('dive') && destHex && destHex.terrain.id === 'WATER')) {
+                unit.isHidden = false; unit.filter = 'none';
+            }
+        } else if (!unit.isHidden && unit.abilities && unit.abilities.includes('dive') && destHex && destHex.terrain.id === 'WATER') {
+            let enemiesAdj = false;
+            Hex.getNeighbors(finalQ, finalR).forEach(n => {
+                let tU = this.units.find(x => x.q === n.q && x.r === n.r && x.hp > 0 && !x.isHidden);
+                if (tU && tU.faction !== unit.faction) enemiesAdj = true;
+            });
+            if (!enemiesAdj) { unit.isHidden = true; if(unit.faction===1) unit.filter = 'opacity(0.5) sepia(100%)'; }
+        }
+
+        if (destHex && unit.hp > 0) {
+            if (destHex.terrain.id === 'ELECTRIC_WATER' && !isFlying) { unit.status = 'stun'; unit.mp = 0; if (typeof showPopup === 'function') showPopup("Zzz ⚡", unit, '#f1c40f'); } 
+            else if (destHex.terrain.id === 'BURNING_FOREST') { unit.hp -= 15; if (typeof showPopup === 'function') showPopup("-15 🔥", unit, '#e74c3c'); if (unit.hp <= 0) this.handleDeath(unit, { name: 'As Chamas', faction: -1 }); }
+        }
+    };
+    
     function handleCombatForecast(clientX, clientY, isTouch = false, isPinned = false) {
         const fc = $('combat-forecast');
         if (!fc) return;
@@ -456,6 +598,35 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (su && su.faction === FACTIONS.PLAYER.id && su.status !== 'stun' && su.status !== 'bind') {
+
+                // --- MECÂNICA DE EMERGIR (ESCAVAR) ---
+                if (su.status === 'digging') {
+                    if (Hex.distance(su, cH) <= su.maxMp) {
+                        su.status = null; su.isHidden = false; su.filter = 'none';
+                        let targetU = game.units.find(x => x.q === cH.q && x.r === cH.r && x.hp > 0);
+                        
+                        // Teleporta para o buraco de saída
+                        su.q = cH.q; su.r = cH.r;
+                        if (typeof showPopup === 'function') showPopup("Emergiu! 💥", su, '#e67e22');
+
+                        // Se tiver alguém lá, toma dano e voa pra longe!
+                        if (targetU && targetU !== su) {
+                            let pushNeighbors = Hex.getNeighbors(cH.q, cH.r);
+                            let emptyN = pushNeighbors.find(n => !game.units.find(x => x.q === n.q && x.r === n.r) && game.map.get(`${n.q},${n.r}`));
+                            if (emptyN) { targetU.q = emptyN.q; targetU.r = emptyN.r; } // Empurra!
+                            targetU.status = 'stun';
+                            targetU.hp -= 20;
+                            if (typeof showPopup === 'function') showPopup("-20 💥", targetU, '#e74c3c');
+                            if (targetU.hp <= 0) game.handleDeath(targetU, su);
+                        }
+                        
+                        su.hasAttacked = true; su.mp = 0; game.selectedUnit = null; 
+                        game.reachableHexes.clear(); updateUI(); renderer.draw(); return;
+                    } else {
+                        showMessage("Muito longe para emergir!", "#e74c3c"); return;
+                    }
+                }
+
                 const dist = u ? Hex.distance(su, u) : 0;
 
                 if (u && u.faction !== FACTIONS.PLAYER.id && dist <= su.getEffectiveRange(game) && !su.hasAttacked) {
