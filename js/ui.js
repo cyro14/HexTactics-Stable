@@ -263,10 +263,10 @@ function renderSpellBar() {
     bar.innerHTML = '';
     if (!game || game.currentTurn !== 1) return;
 
-    // Se a unidade selecionada tiver magias, mostra a dela. Senão, mostra a do Líder.
-    let caster = game.selectedUnit && game.selectedUnit.faction === 1 && game.selectedUnit.knownSpells && game.selectedUnit.knownSpells.length > 0
-        ? game.selectedUnit
-        : game.units.find(u => u.isLeader && u.faction === 1);
+    // Define quem está conjurando (Fera ou Líder)
+    let caster = game.selectedUnit && game.selectedUnit.faction === 1 && game.selectedUnit.knownSpells && game.selectedUnit.knownSpells.length > 0 
+                 ? game.selectedUnit 
+                 : game.units.find(u => u.isLeader && u.faction === 1);
 
     if (!caster || !caster.knownSpells || !caster.knownSpells.length) return;
 
@@ -274,18 +274,17 @@ function renderSpellBar() {
         const spell = typeof SPELLS !== 'undefined' ? SPELLS.find(s => s.id === sid) : null;
         if (!spell) return;
         const cd = game.spellCooldowns[sid] || 0;
-
+        
         let can = false;
         if (caster.isLeader) {
             can = canAffordSpell(spell, caster) && !game.isAnimating && cd === 0;
         } else {
-            // Feras não gastam mana, apenas a ação de ataque
-            can = !caster.hasAttacked && !game.isAnimating && cd === 0;
+            // Feras não gastam mana
+            can = !caster.hasAttacked && !game.isAnimating && cd === 0; 
         }
 
         const isActive = game.activeSpell === sid;
-
-        // Exibição visual diferente se for uma fera
+        
         let costHtml = caster.isLeader ? Object.entries(spell.cost).map(([tag, amt]) => {
             const mt = MANA_TYPES[tag]; if (!mt) return '';
             return `<span style="color:${mt.col};font-size:9px;">${mt.icon}x${amt}</span>`;
@@ -302,6 +301,7 @@ function renderSpellBar() {
         if (can) {
             btn.addEventListener('click', () => {
                 if (game.isAnimating) return;
+                
                 if (game.activeSpell === sid) {
                     game.activeSpell = null;
                 } else {
@@ -311,7 +311,12 @@ function renderSpellBar() {
                     updateUI();
                     if (typeof renderer !== 'undefined') renderer.draw();
                     showMessage(`✨ ${spell.name}: ${spell.desc}`, '#e8c84a');
-                    const bar = $('spell-bar');
+                    
+                    // BLINDAGEM: Força o fechamento da barra com delay de segurança!
+                    setTimeout(() => {
+                        const b = $('spell-bar');
+                        if (b) b.classList.add('hidden');
+                    }, 50);
                 }
                 renderSpellBar();
             });

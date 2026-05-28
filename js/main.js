@@ -98,24 +98,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Trava o modo item
         game.activeItem = type;
-        game.activeSpell = null;
+        game.activeSpell = null; 
 
         // Define o alcance baseado no item
         const ranges = { isca: 2, rede: 3, potion: 2, bandage: 2, scroll: 4, sphere: 3 };
         game.itemRange = ranges[type];
 
-        // SELECIONA O LÍDER AUTOMATICAMENTE
+        // Seleciona o Líder automaticamente
         const leader = game.units.find(u => u.isLeader && u.faction === 1);
         if (leader) {
             game.selectedUnit = leader;
             game.calculateReachable(leader);
         }
-        const menu = $('field-item-menu');
+
         showMessage(`Selecione o alvo para: ${type.toUpperCase()}`, "#3498db");
+        
         updateUI();
         renderer.draw();
-    };
 
+        // BLINDAGEM: Esconde a bandeja de itens na hora, sem interrupções!
+        setTimeout(() => {
+            const menu = $('field-item-menu');
+            if (menu) menu.classList.add('hidden');
+        }, 50);
+    };
     // EVENTOS DE MOUSE (PC)
     $('gameCanvas').addEventListener('mousedown', e => {
         if (game.currentTurn !== FACTIONS.PLAYER.id || game.gameOver || game.isAnimating) return;
@@ -530,7 +536,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $('btn-load-campaign')?.addEventListener('click', () => { startGame(true, false); });
     $('btn-load-roguelite')?.addEventListener('click', () => { startGame(true, true); });
     $('btn-load-duel')?.addEventListener('click', () => { startGame(true, false, true); });
-    
+
     $('btn-toggle-build').addEventListener('click', () => {
         const menu = $('building-menu');
         if (menu.classList.contains('hidden')) {
