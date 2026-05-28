@@ -76,15 +76,19 @@ function showZeldaPopup(icon, title, desc, showCancel = false) {
 
 function autoSave() {
     if (game && !game.gameOver) {
-        const sk = game.isRoguelite ? 'ht_save_rogue' : 'ht_save_camp';
+        // CORREÇÃO: Chave única e isolada para cada modo de jogo
+        const sk = game.isDuel ? 'ht_save_duel' : (game.isRoguelite ? 'ht_save_rogue' : 'ht_save_camp');
         const sv = {
             resources: game.resources,
             kingdomMap: Array.from(game.kingdomMap.entries()),
             level: game.currentLevel, cols: game.cols, rows: game.rows, gold: game.gold,
-            dna: game.dna || 0, // NOVO: Salva o DNA
-            isRoguelite: game.isRoguelite, hasKey: game.hasKey, hasEgg: game.hasEgg,
+            dna: game.dna || 0,
+            isRoguelite: game.isRoguelite,
+            isDuel: game.isDuel, // Salva o estado do modo de jogo
+            hasKey: game.hasKey, hasEgg: game.hasEgg,
             leaderId: game.leaderData.id,
-            map: Array.from(game.map.values()).map(h => ({ q: h.q, r: h.r, tId: h.terrain.id, owner: h.owner })),
+            opponentId: game.opponentId || null,
+            map: Array.from(game.map.values()).map(h => ({ q: h.q, r: h.r, tId: h.terrain.id, owner: h.owner, hasLure: h.hasLure })),
             items: Array.from(game.items.entries()),
             units: game.units.map(u => ({ ...u })),
             rosterMemory: rosterMemory.map(u => ({ ...u })),
@@ -264,9 +268,9 @@ function renderSpellBar() {
     if (!game || game.currentTurn !== 1) return;
 
     // Define quem está conjurando (Fera ou Líder)
-    let caster = game.selectedUnit && game.selectedUnit.faction === 1 && game.selectedUnit.knownSpells && game.selectedUnit.knownSpells.length > 0 
-                 ? game.selectedUnit 
-                 : game.units.find(u => u.isLeader && u.faction === 1);
+    let caster = game.selectedUnit && game.selectedUnit.faction === 1 && game.selectedUnit.knownSpells && game.selectedUnit.knownSpells.length > 0
+        ? game.selectedUnit
+        : game.units.find(u => u.isLeader && u.faction === 1);
 
     if (!caster || !caster.knownSpells || !caster.knownSpells.length) return;
 
@@ -274,17 +278,17 @@ function renderSpellBar() {
         const spell = typeof SPELLS !== 'undefined' ? SPELLS.find(s => s.id === sid) : null;
         if (!spell) return;
         const cd = game.spellCooldowns[sid] || 0;
-        
+
         let can = false;
         if (caster.isLeader) {
             can = canAffordSpell(spell, caster) && !game.isAnimating && cd === 0;
         } else {
             // Feras não gastam mana
-            can = !caster.hasAttacked && !game.isAnimating && cd === 0; 
+            can = !caster.hasAttacked && !game.isAnimating && cd === 0;
         }
 
         const isActive = game.activeSpell === sid;
-        
+
         let costHtml = caster.isLeader ? Object.entries(spell.cost).map(([tag, amt]) => {
             const mt = MANA_TYPES[tag]; if (!mt) return '';
             return `<span style="color:${mt.col};font-size:9px;">${mt.icon}x${amt}</span>`;
@@ -301,7 +305,7 @@ function renderSpellBar() {
         if (can) {
             btn.addEventListener('click', () => {
                 if (game.isAnimating) return;
-                
+
                 if (game.activeSpell === sid) {
                     game.activeSpell = null;
                 } else {
@@ -311,7 +315,7 @@ function renderSpellBar() {
                     updateUI();
                     if (typeof renderer !== 'undefined') renderer.draw();
                     showMessage(`✨ ${spell.name}: ${spell.desc}`, '#e8c84a');
-                    
+
                     // BLINDAGEM: Força o fechamento da barra com delay de segurança!
                     setTimeout(() => {
                         const b = $('spell-bar');
@@ -1465,37 +1469,71 @@ async function activateNode(node) {
 // 7. FLUXO DE JOGO E FINAIS DOS ATOS
 // ==========================================
 function triggerStageEnd(win) {
+    let pL = game.units.find(u => u.isLeader && u.faction === 1) || { name: game.leaderData?.name || 'Líder', emoji: game.leaderData?.emoji || '👑', level: game.leaderData?.level || 1 };
 
-    // --- LÓGICA EXCLUSIVA DE DUELO ---
+    // --- 1. REGISTRO DE HISTÓRICO PARA TODOS OS MODOS ---
     if (game && game.isDuel) {
         let history = JSON.parse(localStorage.getItem('ht_duel_history') || '[]');
-        let pL = game.units.find(u => u.isLeader && u.faction === 1) || { name: 'Player', emoji: '👑' };
         let eL = game.units.find(u => u.isLeader && u.faction === 2) || { name: 'CPU', emoji: '💀' };
-        
-        history.unshift({
-            date: new Date().toLocaleString(),
-            win: win,
-            pName: pL.name, pEmoji: pL.emoji,
-            eName: eL.name, eEmoji: eL.emoji
-        });
-        if (history.length > 20) history.pop(); // Guarda apenas as últimas 20 partidas
+        history.unshift({ date: new Date().toLocaleString(), win: win, pName: pL.name, pEmoji: pL.emoji, eName: eL.name, eEmoji: eL.emoji });
+        if (history.length > 20) history.pop();
         localStorage.setItem('ht_duel_history', JSON.stringify(history));
 
+        // APAGA O SAVE DO DUELO IMEDIATAMENTE APÓS TERMINAR!
+        localStorage.removeItem('ht_save_duel');
+
         show('result-screen'); hide('rs-menu-win'); hide('rs-menu-lose');
-        $('rs-title').innerText = win ? "Vitória no Duelo!" : "Derrota no Duelo"; 
+        $('rs-title').innerText = win ? "Vitória no Duelo!" : "Derrota no Duelo";
         $('rs-title').style.color = win ? '#4a9edd' : '#c0392b';
         $('rs-desc').innerText = win ? "Você esmagou o adversário com maestria tática na Arena!" : "Sua equipe foi superada. Estude uma nova formação.";
         show('rs-menu-win');
-        
+
         let btn = $('btn-go-shop');
         btn.innerText = "Voltar ao Menu Principal";
         btn.onclick = () => location.reload();
         return;
+    } else {
+        // Registro de histórico de Campanha / Roguelite (Igual ao sistema do Duelo)
+        let hKey = game.isRoguelite ? 'ht_rogue_history' : 'ht_camp_history';
+        let history = JSON.parse(localStorage.getItem(hKey) || '[]');
+        history.unshift({
+            date: new Date().toLocaleString(),
+            win: win,
+            level: game.currentLevel,
+            floor: game.currentFloor + 1,
+            pName: pL.name,
+            pEmoji: pL.emoji
+        });
+        if (history.length > 20) history.pop();
+        localStorage.setItem(hKey, JSON.stringify(history));
     }
-    // --- FIM DA LÓGICA DE DUELO ---
 
     show('result-screen'); hide('rs-menu-win'); hide('rs-menu-lose');
     if (win) {
+        // --- 2. VERIFICAÇÃO DE VITÓRIA TOTAL NO JOGO (ATO 5 CHEFE) ---
+        if (game.isBossStage && game.currentLevel >= 5) {
+            let hof = JSON.parse(localStorage.getItem('ht_hall_of_fame') || '[]');
+
+            // Grava os detalhes riquíssimos das feras implantadas no mapa da vitória
+            hof.unshift({
+                date: new Date().toLocaleString(),
+                mode: game.isRoguelite ? 'Roguelite' : 'Campanha',
+                leader: { name: pL.name, emoji: pL.emoji, level: pL.level },
+                team: game.units.filter(u => u.faction === 1 && !u.isLeader).map(u => ({
+                    name: u.name,
+                    emoji: u.emoji,
+                    level: u.level,
+                    starLevel: u.starLevel || 1,
+                    filter: u.filter || 'none',
+                    equipment: (u.equipment || []).map(eq => ({ id: eq.id, level: eq.level }))
+                }))
+            });
+            localStorage.setItem('ht_hall_of_fame', JSON.stringify(hof));
+
+            // Limpa o save do modo correspondente por concluir com sucesso
+            localStorage.removeItem(game.isRoguelite ? 'ht_save_rogue' : 'ht_save_camp');
+        }
+
         if (typeof countKingdomBuildings === 'function' && game.kingdomMap) {
             let pWood = window.countKingdomBuildings('LUMBERMILL') * 3;
             let pStone = window.countKingdomBuildings('MINE') * 3;
@@ -1610,11 +1648,10 @@ function advanceCampaign() {
 
 
 function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, opponentId = null) {
-    game.isDuel = isDuel; 
+    game.isDuel = isDuel;
     game.opponentId = opponentId;
     hide('mode-screen'); hide('main-menu'); hide('result-screen');
-    const sk = isRoguelite ? 'ht_save_rogue' : 'ht_save_camp';
-    game.isAnimating = false; const tb = $('turn-blocker'); if (tb) tb.style.display = 'none';
+    const sk = isDuel ? 'ht_save_duel' : (isRoguelite ? 'ht_save_rogue' : 'ht_save_camp'); game.isAnimating = false; const tb = $('turn-blocker'); if (tb) tb.style.display = 'none';
     lastState = null; const undoBtn = $('btn-undo'); if (undoBtn) undoBtn.disabled = true;
     game.manaPool = {}; game.spentMana = {}; game.spellCooldowns = {}; game.activeSpell = null; game.lastDeadAlly = null; game.turnCount = 0;
     game.isDuel = isDuel;
@@ -1750,10 +1787,10 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
                 rosterMemory = []; // Esvazia a box para o duelo iniciar limpo
 
                 hide('shop-screen');
-                
+
                 // 2. GERA O MAPA PRIMEIRO: Popula as unidades do jogador e da IA em game.units
-                game.generateDuelMap(); 
-                
+                game.generateDuelMap();
+
                 // 3. TELA VERSUS
                 window.showVersusScreen(() => {
                     show('game-container');
@@ -2432,16 +2469,16 @@ window.renderFieldItemMenu = function () {
     menu.innerHTML = html;
 };
 
-window.showVersusScreen = function(callback) {
+window.showVersusScreen = function (callback) {
     const el = document.createElement('div');
     el.id = 'versus-screen';
     el.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg, #050505 0%, #1a1a2e 100%); z-index:10000; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#fff; font-family:Cinzel,serif;`;
-    
+
     let pTeam = game.units.filter(u => u.faction === 1);
     let eTeam = game.units.filter(u => u.faction === 2);
-    
-    let pL = pTeam.find(u => u.isLeader) || { name:'Player', emoji:'👑', filter:'none' };
-    let eL = eTeam.find(u => u.isLeader) || { name:'CPU', emoji:'💀', filter:'none' };
+
+    let pL = pTeam.find(u => u.isLeader) || { name: 'Player', emoji: '👑', filter: 'none' };
+    let eL = eTeam.find(u => u.isLeader) || { name: 'CPU', emoji: '💀', filter: 'none' };
 
     let renderTeam = (team) => team.filter(u => !u.isLeader).map(u => `<span style="font-size:22px; filter:${u.filter}; margin:2px;">${u.emoji}</span>`).join('');
 
@@ -2462,12 +2499,12 @@ window.showVersusScreen = function(callback) {
         </div>
         <div style="margin-top:50px; font-size:16px; color:#aaa; animation: pulse 1.5s infinite; cursor:pointer; padding:15px; border:1px solid #aaa; border-radius:30px;">[ ⚔️Clique para Iniciar a Batalha⚔️ ]</div>
     `;
-    
+
     document.body.appendChild(el);
     el.onclick = () => { el.remove(); callback(); };
 };
 
-window.openDuelHistory = function() {
+window.openDuelHistory = function () {
     let el = $('duel-history-modal');
     if (!el) {
         el = document.createElement('div');
@@ -2475,11 +2512,11 @@ window.openDuelHistory = function() {
         el.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; display:flex; justify-content:center; align-items:center; flex-direction:column;`;
         document.body.appendChild(el);
     }
-    
+
     let history = JSON.parse(localStorage.getItem('ht_duel_history') || '[]');
     let html = `<div style="background:var(--bg-panel); border:2px solid var(--gold); border-radius:10px; width:90%; max-width:500px; max-height:80vh; overflow-y:auto; padding:20px; text-align:center;">
         <h2 style="font-family:Cinzel,serif; color:var(--gold); margin-bottom:20px;">📜 Histórico de Duelos</h2>`;
-    
+
     if (history.length === 0) {
         html += `<div style="color:#aaa; padding:20px;">Nenhum duelo registrado na Arena ainda.</div>`;
     } else {
@@ -2497,8 +2534,68 @@ window.openDuelHistory = function() {
             `;
         });
     }
-    
+
     html += `<button class="btn-danger" style="margin-top:15px; width:100%; padding:10px; font-weight:bold;" onclick="document.getElementById('duel-history-modal').style.display='none'">Fechar Aba</button></div>`;
+    el.innerHTML = html;
+    el.style.display = 'flex';
+};
+
+window.openHallOfFame = function () {
+    let el = $('hall-fame-modal');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'hall-fame-modal';
+        el.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(8,8,12,0.98); z-index:10000; display:flex; justify-content:center; align-items:center; flex-direction:column; color:#fff; font-family:Cinzel,serif;`;
+        document.body.appendChild(el);
+    }
+
+    let hof = JSON.parse(localStorage.getItem('ht_hall_of_fame') || '[]');
+    let html = `<div style="background:var(--bg-panel); border:2px solid var(--gold); border-radius:10px; width:95%; max-width:680px; max-height:85vh; overflow-y:auto; padding:25px; text-align:center; box-shadow:0 0 25px rgba(212,175,55,0.25);">
+        <h2 style="color:var(--gold); font-size:26px; margin-bottom:2px; text-shadow:0 0 10px rgba(212,175,55,0.4); letter-spacing:1px;">🏛️ HALL DA FAMA</h2>
+        <p style="font-size:10px; color:#aaa; margin-bottom:25px; text-transform:uppercase; letter-spacing:1px;">Esquadrões Eternizados na Arena Suprema</p>`;
+
+    if (hof.length === 0) {
+        html += `<div style="color:#888; padding:50px 20px; font-style:italic; font-size:13px; border:1px dashed #444; border-radius:6px; background:rgba(0,0,0,0.3);">Nenhum esquadrão alcançou a glória eterna ainda.<br>Derrote o Chefe do Ato V na Campanha ou Roguelite!</div>`;
+    } else {
+        hof.forEach((h) => {
+            let teamHtml = h.team.map(u => {
+                let starIcon = u.starLevel === 2 ? '🥉' : u.starLevel === 3 ? '🥈' : u.starLevel >= 4 ? '🌟' : '';
+                let equips = (u.equipment || []).map(eq => {
+                    let itemDef = typeof ITEMS !== 'undefined' ? ITEMS[eq.id] : { icon: '🗡️' };
+                    return `<span class="qol-tooltip" style="position:relative; background:rgba(0,0,0,0.6); padding:2px 4px; border-radius:3px; border:1px solid var(--gold-dark); font-size:10px; margin:0 2px;">${itemDef.icon}<span style="color:var(--gold); font-size:7px; font-weight:bold;">L${eq.level}</span></span>`;
+                }).join('');
+
+                return `
+                    <div style="background:rgba(20,20,30,0.8); border:1px solid rgba(255,255,255,0.08); padding:8px 4px; border-radius:6px; width:105px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:between; box-shadow:0 2px 5px rgba(0,0,0,0.5);">
+                        <div style="font-size:28px; filter:${u.filter || 'none'}; margin-bottom:4px;">${u.emoji}</div>
+                        <div style="font-size:10px; font-weight:bold; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:95px;">${u.name}</div>
+                        <div style="font-size:9px; color:var(--gold-light); margin:2px 0;">Lv ${u.level} ${starIcon}</div>
+                        <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:2px; margin-top:4px; min-height:16px;">${equips || '<span style="font-size:8px;color:#555;font-style:italic;">Sem Itens</span>'}</div>
+                    </div>
+                `;
+            }).join('');
+
+            html += `
+                <div style="background:rgba(15,15,22,0.8); border:1px solid var(--gold); padding:15px; margin-bottom:20px; border-radius:8px; text-align:left; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(212,175,55,0.25); padding-bottom:8px; margin-bottom:12px;">
+                        <div>
+                            <span style="font-size:18px; color:var(--gold); font-weight:bold; text-shadow:0 0 5px rgba(212,175,55,0.2);">${h.leader.emoji} ${h.leader.name}</span>
+                            <span style="font-size:9px; background:rgba(212,175,55,0.15); color:var(--gold-light); border:1px solid var(--gold-dark); padding:1px 6px; border-radius:10px; margin-left:8px; font-weight:bold;">NÍVEL ${h.leader.level}</span>
+                        </div>
+                        <div style="text-align:right; font-size:10px; color:#999; font-family:sans-serif;">
+                            <div style="font-family:Cinzel; color:#fff; font-size:11px; font-weight:bold; margin-bottom:2px;">${h.mode.toUpperCase()}</div>
+                            <div>${h.date}</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:start;">
+                        ${teamHtml}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    html += `<button class="btn-danger" style="margin-top:15px; width:100%; padding:12px; font-weight:bold; font-size:14px; letter-spacing:1px; box-shadow:0 4px 10px rgba(231,76,60,0.3);" onclick="document.getElementById('hall-fame-modal').style.display='none'">Fechar Galeria</button></div>`;
     el.innerHTML = html;
     el.style.display = 'flex';
 };

@@ -588,5 +588,8 @@ document.addEventListener("DOMContentLoaded", () => {
             openLeaderSelection(false, true); 
         }
     });
+
     $('btn-duel-history')?.addEventListener('click', openDuelHistory);
+    $('btn-hall-fame')?.addEventListener('click', openHallOfFame);
+
 });
