@@ -794,8 +794,8 @@ class Game {
             if (typeof sleep === 'function') await sleep(400);
         }
         
-        // 2. FOGO NA FLORESTA OU GELO
-        if (tags.includes('FIRE')) {
+        // 2. FOGO E RAIO NA FLORESTA OU NEVE
+        if (tags.includes('FIRE') || tags.includes('ELECTRIC')) {
             if (targetHex.terrain.id === 'FOREST') {
                 targetHex.terrain = typeof TERRAINS !== 'undefined' ? TERRAINS['BURNING_FOREST'] : { id: 'BURNING_FOREST' };
                 targetHex.timer = 4; // Queima por 2 rodadas

@@ -16,7 +16,7 @@ const getActiveArtifacts = () => { return (game && game.isRoguelite) ? activeArt
 // DADOS DO JOGO (TERRENOS, TAGS E MAGIAS)
 // ==========================================
 const TERRAINS = {
-    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#3a5a2a', icon: '' },
+    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#3a5a2a', icon: '🟩' },
     FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#23411b', icon: '🌲' },
     MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#4a554a', icon: '⛰️' },
     WATER: { id: 'WATER', name: 'Água', cost: 2, def: -0.15, color: '#1c4568', icon: '🌊' },
@@ -24,8 +24,8 @@ const TERRAINS = {
     DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#d2b48c', icon: '🏜️' },
     VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#8a753c', icon: '🏘️' },
     CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#505860', icon: '🏰' },
-    ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada', col: '#f1c40f', moveCost: 2 },
-    BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas', col: '#e74c3c', moveCost: 1 },
+    ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada', col: '#3498db', moveCost: 2, icon: '⚡' },
+    BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas', col: '#d35400', moveCost: 1, icon: '🔥' }, 
     ASHES: { id: 'ASHES', name: 'Cinzas', col: '#555555', moveCost: 1 }
 };
 
@@ -66,7 +66,7 @@ const MANA_TYPES = {
 };
 
 const SPELLS = [
-    { id: 'sl_ember', name: 'Centelha', icon: '🔥', level: 1, tags: ['FIRE'], type: 'atk', range: 2, cost: { FIRE: 1 }, desc: 'Causa 10 de dano de fogo.', effect: async (g, c, t) => { t.hp -= 10; showPopup("🔥 -10", t, '#e67e22'); addLog(`🔥 ${c.name} lançou Centelha em ${t.name}!`, '#e67e22'); if (t.hp <= 0) g.handleDeath(t, c); g.checkWin(); return true; } },
+    { id: 'sl_ember', name: 'Centelha', icon: '🔥', level: 1, tags: ['FIRE'], type: 'atk', range: 2, cost: { FIRE: 1 }, targetTerrain: true, desc: 'Causa 10 de dano de fogo.', effect: async (g, c, t) => { t.hp -= 10; showPopup("🔥 -10", t, '#e67e22'); addLog(`🔥 ${c.name} lançou Centelha em ${t.name}!`, '#e67e22'); if (t.hp <= 0) g.handleDeath(t, c); g.checkWin(); return true; } },
     { id: 'sl_heal', name: 'Cura Menor', icon: '💚', level: 1, tags: ['SILVESTRE'], type: 'def', range: 3, cost: { SILVESTRE: 1 }, desc: 'Cura 20 HP de um aliado.', effect: async (g, c, t) => { let h = Math.min(t.maxHp - t.hp, 20); t.hp += h; showPopup(`+${h}`, t, '#2ecc71'); addLog(`💚 ${c.name} curou ${t.name}!`, '#27ae60'); return true; } },
     { id: 'sl_tidal', name: 'Onda Menor', icon: '💧', level: 1, tags: ['ABYSSAL'], type: 'atk', range: 0, cost: { ABYSSAL: 1 }, desc: 'Causa 3 de dano em inimigos adjacentes.', effect: async (g, c, t) => { let n = Hex.getNeighbors(c.q, c.r); let hit = 0; for (let nb of n) { let u = g.getUnitAt(nb.q, nb.r); if (u && u.faction !== c.faction) { u.hp -= 3; showPopup("💧 -3", u, '#3498db'); hit++; if (u.hp <= 0) g.handleDeath(u, c); } } addLog(`💧 ${c.name} lançou Onda Menor!`, '#3498db'); g.checkWin(); return hit > 0 || true; } },
     { id: 'sl_rock_wall', name: 'Pele de Pedra', icon: '🪨', level: 1, tags: ['ROCK', 'CARAPACE'], type: 'def', range: 3, cost: { ROCK: 1 }, desc: 'Um aliado ganha +30% Defesa base por 1 turno.', effect: async (g, c, t) => { t.status = 'shielded'; showPopup("🪨 Escudo", t, '#95a5a6'); addLog(`🪨 ${t.name} ganhou Pele de Pedra!`, '#95a5a6'); return true; } },
@@ -85,7 +85,7 @@ const SPELLS = [
     { id: 'sl_thorn_armor', name: 'Armadura de Espinhos', icon: '🌵', level: 2, tags: ['CARAPACE'], type: 'def', range: 3, cost: { CARAPACE: 2 }, desc: 'Dá Carapaça (+Def e Reflete Dano) a um aliado.', effect: async (g, c, t) => { if (!t.abilities.includes('carapace')) t.abilities.push('carapace'); t.status = 'shielded'; showPopup("🌵 Espinhos", t, '#7f8c8d'); return true; } },
     { id: 'sl_assassinate', name: 'Ataque Furtivo', icon: '🗡️', level: 2, tags: ['STALKER'], type: 'atk', range: 4, cost: { STALKER: 2 }, desc: 'Causa 22 de dano massivo num inimigo.', effect: async (g, c, t) => { t.hp -= 22; showPopup("🗡️ -22", t, '#d35400'); if (t.hp <= 0) g.handleDeath(t, c); g.checkWin(); return true; } },
     { id: 'sl_quicksand', name: 'Dunas Movediças', icon: '🏜️', level: 3, tags: ['SAND'], type: 'atk', range: 99, cost: { SAND: 3 }, desc: 'Prende (Amarrar) TODOS os inimigos e causa 8 dano.', effect: async (g, c, t) => { g.units.filter(u => u.faction !== c.faction).forEach(u => { u.status = 'bind'; u.hp -= 8; showPopup("🏜️ Preso!", u, '#f1c40f'); if (u.hp <= 0) g.handleDeath(u, c); }); g.checkWin(); return true; } },
-    { id: 'sl_fireball', name: 'Bola de Fogo', icon: '🌋', level: 2, tags: ['FIRE'], type: 'atk', range: 3, cost: { FIRE: 2 }, desc: 'Causa 18 de dano de fogo.', effect: async (g, c, t) => { t.hp -= 18; showPopup("🌋 -18", t, '#e67e22'); if (t.hp <= 0) g.handleDeath(t, c); g.checkWin(); return true; } },
+    { id: 'sl_fireball', name: 'Bola de Fogo', icon: '🌋', level: 2, tags: ['FIRE'], type: 'atk', range: 3, cost: { FIRE: 2 }, targetTerrain: true, desc: 'Causa 18 de dano de fogo.', effect: async (g, c, t) => { t.hp -= 18; showPopup("🌋 -18", t, '#e67e22'); if (t.hp <= 0) g.handleDeath(t, c); g.checkWin(); return true; } },
     { id: 'sl_regen', name: 'Regeneração', icon: '🌿', level: 2, tags: ['SILVESTRE'], type: 'def', range: 99, cost: { SILVESTRE: 2 }, desc: 'Cura 15 HP de todas as unidades aliadas.', effect: async (g, c, t) => { g.units.filter(u => u.faction === c.faction).forEach(u => { let h = Math.min(u.maxHp - u.hp, 15); u.hp += h; if (h > 0) showPopup(`+${h}`, u, '#27ae60'); }); return true; } },
     { id: 'sl_freeze', name: 'Toque Glacial', icon: '❄️', level: 2, tags: ['ICE'], type: 'atk', range: 2, cost: { ICE: 2 }, desc: 'Atordoa 1 inimigo por 1 turno completo.', effect: async (g, c, t) => { t.status = 'stun'; showPopup("❄️ Congelado", t, '#00ffff'); return true; } },
     { id: 'sl_shadow_step', name: 'Passo Sombrio', icon: '🌑', level: 2, tags: ['UMBRAL', 'STALKER'], type: 'atk', range: 99, cost: { UMBRAL: 2 }, desc: 'Teleporta o Líder para perto de um alvo fraco.', effect: async (g, c, t) => { let ws = g.units.filter(u => u.faction !== c.faction && u.hp <= u.maxHp * 0.5).sort((a, b) => a.hp - b.hp); if (!ws.length) { showMessage("Nenhum alvo fraco!", "#8e44ad"); return false; } let tgt = ws[0]; let nb = Hex.getNeighbors(tgt.q, tgt.r).find(n => g.map.has(`${n.q},${n.r}`) && !g.getUnitAt(n.q, n.r)); if (!nb) { showMessage("Sem espaço!", "#8e44ad"); return false; } c.q = nb.q; c.r = nb.r; c.vq = nb.q; c.vr = nb.r; renderer.centerOn(nb.q, nb.r); showPopup("🌑 Teleporte", c, '#8e44ad'); return true; } },
@@ -94,7 +94,7 @@ const SPELLS = [
     { id: 'sl_sandstorm', name: 'Tempestade de Areia', icon: '🌪️', level: 2, tags: ['SAND'], type: 'atk', range: 99, cost: { SAND: 2 }, desc: 'Reduz MP de todos os inimigos em 2.', effect: async (g, c, t) => { g.units.filter(u => u.faction !== c.faction).forEach(u => { u.mp = Math.max(0, u.mp - 2); showPopup("-2 MP", u, '#f1c40f'); }); return true; } },
     { id: 'sl_inferno', name: 'Inferno', icon: '☄️', level: 3, tags: ['FIRE'], type: 'atk', range: 99, cost: { FIRE: 3 }, desc: 'Causa 12 de dano a TODOS os inimigos.', effect: async (g, c, t) => { let enemies = g.units.filter(u => u.faction !== c.faction); enemies.forEach(u => { u.hp -= 12; showPopup("☄️ -12", u, '#e67e22'); if (u.hp <= 0) g.handleDeath(u, c); }); g.checkWin(); return true; } },
     { id: 'sl_nature_shield', name: 'Escudo Natural', icon: '🍃', level: 3, tags: ['SILVESTRE'], type: 'def', range: 0, cost: { SILVESTRE: 3 }, desc: 'Cura 30 HP do Líder e remove todos debuffs.', effect: async (g, c, t) => { let h = Math.min(c.maxHp - c.hp, 30); c.hp += h; c.status = null; showPopup(`🍃+${h}`, c, '#27ae60'); return true; } },
-    { id: 'sl_blizzard', name: 'Nevasca', icon: '🌨️', level: 3, tags: ['ICE'], type: 'atk', range: 99, cost: { ICE: 3 }, desc: 'Causa 10 de dano e Atrasa 2 MP.', effect: async (g, c, t) => { g.units.filter(u => u.faction !== c.faction).forEach(u => { u.hp -= 10; u.mp = Math.max(0, u.mp - 2); showPopup("🌨️ -10", u, '#00ffff'); if (u.hp <= 0) g.handleDeath(u, c); }); g.checkWin(); return true; } },
+    { id: 'sl_blizzard', name: 'Nevasca', icon: '🌨️', level: 3, tags: ['ICE'], type: 'atk', range: 99, cost: { ICE: 3 }, targetTerrain: true, desc: 'Causa 10 de dano e Atrasa 2 MP.', effect: async (g, c, t) => { g.units.filter(u => u.faction !== c.faction).forEach(u => { u.hp -= 10; u.mp = Math.max(0, u.mp - 2); showPopup("🌨️ -10", u, '#00ffff'); if (u.hp <= 0) g.handleDeath(u, c); }); g.checkWin(); return true; } },
     { id: 'sl_void_drain', name: 'Drenagem do Vazio', icon: '🌀', level: 3, tags: ['UMBRAL'], type: 'atk', range: 3, cost: { UMBRAL: 3 }, desc: 'Drena 15 HP de um alvo.', effect: async (g, c, t) => { t.hp -= 15; c.hp = Math.min(c.maxHp, c.hp + 15); showPopup("🌀 -15", t, '#8e44ad'); showPopup("🌀 +15", c, '#8e44ad'); if (t.hp <= 0) g.handleDeath(t, c); g.checkWin(); return true; } },
     { id: 'sl_stone_rain', name: 'Chuva de Pedras', icon: '🪨', level: 3, tags: ['ROCK', 'CARAPACE'], type: 'atk', range: 0, cost: { ROCK: 3 }, desc: 'Causa 8 de dano a inimigos adjacentes.', effect: async (g, c, t) => { let hit = false; Hex.getNeighbors(c.q, c.r).forEach(n => { let u = g.getUnitAt(n.q, n.r); if (u && u.faction !== c.faction) { u.hp -= 8; showPopup("🪨 -8", u, '#95a5a6'); hit = true; if (u.hp <= 0) g.handleDeath(u, c); } }); g.checkWin(); return true; } },
     { id: 'sl_mass_venom', name: 'Praga', icon: '💀', level: 3, tags: ['VENOM'], type: 'atk', range: 99, cost: { VENOM: 3 }, desc: 'Envenena TODOS os inimigos.', effect: async (g, c, t) => { g.units.filter(u => u.faction !== c.faction).forEach(u => { u.status = 'poison'; showPopup("💀 Praga", u, '#9b59b6'); }); return true; } },
@@ -107,12 +107,12 @@ const SPELLS = [
     { id: 'sl_phoenix_rebirth', name: 'Renascimento Fênix', icon: '🔱', level: 5, tags: ['CELESTIAL', 'FIRE'], type: 'def', range: 99, cost: { CELESTIAL: 3, FIRE: 2 }, desc: 'Cura TODOS os aliados para HP Máx.', effect: async (g, c, t) => { g.units.filter(u => u.faction === c.faction).forEach(u => { u.hp = u.maxHp; u.status = null; showPopup("🔱 PLENO", u, '#fffbc2'); }); return true; } },
     { id: 'sl_world_freeze', name: 'Congelamento Mundial', icon: '🧊', level: 5, tags: ['ICE'], type: 'atk', range: 99, cost: { ICE: 4 }, desc: 'Atordoa TODOS os inimigos por 1 turno e causa 15 dano.', effect: async (g, c, t) => { g.units.filter(u => u.faction !== c.faction).forEach(u => { u.status = 'stun'; u.hp -= 15; showPopup("🧊 CONGELADO", u, '#00ffff'); if (u.hp <= 0) g.handleDeath(u, c); }); g.checkWin(); return true; } },
     { id: 'sl_soul_harvest', name: 'Colheita de Almas', icon: '⚡', level: 5, tags: ['UMBRAL', 'VENOM'], type: 'atk', range: 99, cost: { UMBRAL: 3, VENOM: 2 }, desc: 'Drena 25% do HP atual de TODOS inimigos.', effect: async (g, c, t) => { let total = 0; g.units.filter(u => u.faction !== c.faction && u.hp > 0).forEach(u => { let d = Math.floor(u.hp * 0.25); u.hp -= d; total += d; showPopup(`⚡ -${d}`, u, '#8e44ad'); if (u.hp <= 0) g.handleDeath(u, c); }); c.hp = Math.min(c.maxHp, c.hp + total); showPopup(`⚡ +${total}`, c, '#8e44ad'); g.checkWin(); return true; } },
-    
+
     //SPELLS DE TERRENO
     {
         id: 'sl_combustao', name: 'Combustão', icon: '🔥',
         desc: 'Causa 15 de dano. Incendeia florestas ou derrete o gelo do alvo.',
-        level: 1, type: 'atk', range: 3, tags: ['FIRE', 'MYSTIC'], cost: { 'FIRE': 2 },
+        level: 1, type: 'atk', range: 3, tags: ['FIRE', 'MYSTIC'], cost: { 'FIRE': 2 }, targetTerrain: true,
         effect: async (game, caster, target, targetHex) => {
             if (target) { target.hp -= 15; if (typeof showPopup === 'function') showPopup("-15 🔥", target, '#e74c3c'); if (target.hp <= 0) game.handleDeath(target, caster); }
             return true;
@@ -121,7 +121,7 @@ const SPELLS = [
     {
         id: 'sl_zero_absoluto', name: 'Zero Absoluto', icon: '❄️',
         desc: 'Causa 15 de dano. Congela a água sob o alvo, espalhando para águas adjacentes.',
-        level: 1, type: 'atk', range: 3, tags: ['ICE', 'WATER'], cost: { 'WATER': 2 },
+        level: 1, type: 'atk', range: 3, tags: ['ICE', 'WATER'], cost: { 'WATER': 2 }, targetTerrain: true,
         effect: async (game, caster, target, targetHex) => {
             if (target) { target.hp -= 15; if (typeof showPopup === 'function') showPopup("-15 ❄️", target, '#00ffff'); if (target.hp <= 0) game.handleDeath(target, caster); }
             return true;
@@ -129,8 +129,8 @@ const SPELLS = [
     },
     {
         id: 'sl_curto_circuito', name: 'Curto-Circuito', icon: '⚡',
-        desc: 'Causa 15 de dano. Se atingir a água, espalha eletricidade e atordoa todos os ocupantes.',
-        level: 1, type: 'atk', range: 3, tags: ['ELECTRIC', 'MYSTIC'], cost: { 'ELECTRIC': 2 },
+        desc: 'Causa 15 de dano. Se atingir a água, espalha eletricidade.',
+        level: 1, type: 'atk', range: 3, tags: ['ELECTRIC', 'MYSTIC'], cost: { 'ELECTRIC': 2 }, targetTerrain: true,
         effect: async (game, caster, target, targetHex) => {
             if (target) { target.hp -= 15; if (typeof showPopup === 'function') showPopup("-15 ⚡", target, '#f1c40f'); if (target.hp <= 0) game.handleDeath(target, caster); }
             return true;
@@ -141,7 +141,7 @@ const SPELLS = [
     { id: 'sl_bencao_paladina', name: 'Bênção Divina', icon: '✨', cost: { 'CELESTIAL': 2 }, level: 1, type: 'def', range: 2, tags: ['CELESTIAL'], desc: 'Cura um aliado em 40 HP e remove debuffs.', effect: async (game, caster, target) => { if (!target || target.faction !== 1) return false; target.hp = Math.min(target.maxHp, target.hp + 40); target.status = null; showPopup("+40 HP", target, '#f1c40f'); return true; } },
     { id: 'sl_bombardeio', name: 'Bombardeio Naval', icon: '💣', cost: { 'ABYSSAL': 3 }, level: 1, type: 'atk', range: 3, tags: ['ABYSSAL'], desc: 'Causa 25 de dano a um inimigo distante.', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 25; showPopup("-25 💣", target, '#e74c3c'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
     { id: 'sl_tiro_preciso', name: 'Tiro Preciso', icon: '🏹', cost: { 'STALKER': 2 }, level: 1, type: 'atk', range: 4, tags: ['STALKER'], desc: 'Causa 30 de dano perfurante de longa distância.', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 30; showPopup("-30 🏹", target, '#e74c3c'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
-    { id: 'sl_bola_fogo', name: 'Bola de Fogo', icon: '🔥', cost: { 'FIRE': 2 }, level: 1, type: 'atk', range: 2, tags: ['FIRE'], desc: 'Causa 25 de dano e queima o inimigo.', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 25; target.status = 'burn'; showPopup("-25 🔥", target, '#e67e22'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
+    { id: 'sl_bola_fogo', name: 'Bola de Fogo', icon: '🔥', cost: { 'FIRE': 2 }, level: 1, type: 'atk', range: 2, tags: ['FIRE'], targetTerrain: true, desc: 'Causa 25 de dano e queima o inimigo.', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 25; target.status = 'burn'; showPopup("-25 🔥", target, '#e67e22'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
     { id: 'sl_grito_orc', name: 'Grito de Guerra', icon: '📯', cost: { 'PRIMAL': 2 }, level: 1, type: 'def', range: 0, tags: ['PRIMAL'], desc: 'Concede Ação Extra para o Chefe Orc.', effect: async (game, caster) => { caster.hasAttacked = false; caster.mp = caster.maxMp; showPopup("Ação Extra!", caster, '#e74c3c'); return true; } },
     { id: 'sl_erguer_esq', name: 'Erguer Esqueleto', icon: '💀', cost: { 'UMBRAL': 2 }, level: 1, type: 'def', range: 1, tags: ['UMBRAL'], desc: 'Invoca um Esqueleto para lutar por você.', effect: async (game, caster, target, targetHex) => { if (target) return false; let d = new Unit({ q: targetHex.q, r: targetHex.r, faction: 1, name: "Esqueleto", emoji: "💀", hp: 25, maxHp: 25, mp: 3, maxMp: 3, atk: 8, range: 1, abilities: [], tags: ['UMBRAL', 'MYSTIC'], isNew: false }); game.units.push(d); showPopup("Erguido!", d, '#8e44ad'); return true; } },
     { id: 'sl_explosao_arcana', name: 'Explosão Arcana', icon: '🎇', cost: { 'MYSTIC': 2 }, level: 1, type: 'atk', range: 2, tags: ['MYSTIC'], desc: 'Dano mágico alto no alvo (35 Dano).', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 35; showPopup("-35 🎇", target, '#9b59b6'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
@@ -164,6 +164,7 @@ const SPELLS = [
         desc: 'Lança um raio colossal que causa 25 de Dano. Todos os inimigos adjacentes ao alvo também recebem o dano e ficam Atordoados!',
         level: 1,
         type: 'atk',
+        targetTerrain: true,
         range: 3,
         tags: ['ELECTRIC'],
         cost: { 'ELECTRIC': 2 },

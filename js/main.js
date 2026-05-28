@@ -4,6 +4,28 @@
 document.addEventListener("DOMContentLoaded", () => {
     loadMeta();
     game = new Game();
+    // --- PATCH VISUAL PARA TERRENOS ELEMENTAIS ---
+    const originalDraw = Renderer.prototype.draw;
+    Renderer.prototype.draw = function() {
+        originalDraw.call(this);
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        
+        game.map.forEach(h => {
+            const pos = this.getPos(h.q, h.r);
+            if (h.terrain.id === 'ELECTRIC_WATER') {
+                this.ctx.font = `${this.hexSize * 0.9}px Arial`;
+                this.ctx.fillText('⚡', pos.x, pos.y + 4);
+            } else if (h.terrain.id === 'BURNING_FOREST') {
+                this.ctx.font = `${this.hexSize * 0.9}px Arial`;
+                this.ctx.fillText('🔥', pos.x, pos.y + 4);
+            } else if (h.terrain.id === 'ASHES') {
+                this.ctx.font = `${this.hexSize * 0.7}px Arial`;
+                this.ctx.fillText('💨', pos.x, pos.y + 4);
+            }
+        });
+    };
+    
     renderer = new Renderer($('gameCanvas'), game);
     let isDragging = false, startX, startY, initOffX, initOffY;
     let initialPinchDist = null, initialHexSize = null;
@@ -98,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Trava o modo item
         game.activeItem = type;
-        game.activeSpell = null; 
+        game.activeSpell = null;
 
         // Define o alcance baseado no item
         const ranges = { isca: 2, rede: 3, potion: 2, bandage: 2, scroll: 4, sphere: 3 };
@@ -112,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         showMessage(`Selecione o alvo para: ${type.toUpperCase()}`, "#3498db");
-        
+
         updateUI();
         renderer.draw();
 
@@ -325,7 +347,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (spRange > 0 && spRange < 99 && dist > spRange) { showMessage("Fora de alcance!", "#e74c3c"); return; }
 
                         if (spell.type === 'atk' && spRange > 0) {
-                            if (!u || u.faction === FACTIONS.PLAYER.id) { showMessage("Selecione um inimigo!", "#e74c3c"); return; }
+                            // SE A MAGIA PODE MIRAR NO CHÃO:
+                            if (spell.targetTerrain) {
+                                if (u && u.faction === FACTIONS.PLAYER.id) { showMessage("Mire no inimigo ou chão vazio!", "#e74c3c"); return; }
+                            } else {
+                            // MAGIAS COMUNS (Obrigam a mirar num inimigo):
+                                if (!u || u.faction === FACTIONS.PLAYER.id) { showMessage("Selecione um inimigo!", "#e74c3c"); return; }
+                            }
                         } else if (spell.type === 'def' && spRange > 0) {
                             if (spell.tags.includes('MYSTIC') && spRange === 1) {
                                 if (u) { showMessage("Selecione um espaço vazio!", "#e74c3c"); return; }
@@ -531,10 +559,10 @@ document.addEventListener("DOMContentLoaded", () => {
     $('btn-campaign').addEventListener('click', () => { if (localStorage.getItem('ht_save_camp')) { if (!confirm("Existe um jogo salvo. Deseja iniciar uma nova campanha e perder o progresso?")) return; } openLeaderSelection(false); });
     $('btn-roguelite').addEventListener('click', () => { if (localStorage.getItem('ht_save_rogue')) { if (!confirm("Existe uma Run salva. Deseja iniciar uma nova e perder o progresso atual?")) return; } openLeaderSelection(true); });
     const btnDuel = $('btn-duel');
-    if (btnDuel) {btnDuel.addEventListener('click', () => { if (localStorage.getItem('ht_save_duel')) { if (!confirm("Existe um duelo salvo. Deseja iniciar um novo e perder o progresso atual?")) return; } openLeaderSelection(true, false, true); });}
+    if (btnDuel) { btnDuel.addEventListener('click', () => { if (localStorage.getItem('ht_save_duel')) { if (!confirm("Existe um duelo salvo. Deseja iniciar um novo e perder o progresso atual?")) return; } openLeaderSelection(true, false, true); }); }
 
-    const btnDuelHistory = 
-    $('btn-duel-history'); if (btnDuelHistory) {btnDuelHistory.addEventListener('click', openDuelHistory);}
+    const btnDuelHistory =
+        $('btn-duel-history'); if (btnDuelHistory) { btnDuelHistory.addEventListener('click', openDuelHistory); }
     $('btn-load-campaign')?.addEventListener('click', () => { startGame(true, false); });
     $('btn-load-roguelite')?.addEventListener('click', () => { startGame(true, true); });
     $('btn-load-duel')?.addEventListener('click', () => { startGame(true, false, true); });
@@ -563,7 +591,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (game.currentTurn !== FACTIONS.PLAYER.id || game.isAnimating) { showMessage("Salve no seu turno livre!", '#f39c12'); return; }
         autoSave(); $('pause-menu').classList.add('hidden'); loadMeta(); showMessage("Progresso Salvo!", '#c9a227'); setTimeout(() => location.reload(), 1500);
     });
-  // --- BOTÕES FINAIS PROTEGIDOS COM OPTIONAL CHAINING (?.) ---
+    // --- BOTÕES FINAIS PROTEGIDOS COM OPTIONAL CHAINING (?.) ---
     $('btn-open-bestiary')?.addEventListener('click', openBestiary);
     $('btn-open-bestiary-pause')?.addEventListener('click', () => { $('pause-menu').classList.add('hidden'); openBestiary(); });
     $('btn-close-bestiary')?.addEventListener('click', () => { $('bestiary-screen').classList.add('hidden'); if (!$('game-container').classList.contains('hidden')) $('pause-menu').classList.remove('hidden'); else $('main-menu').classList.remove('hidden'); });
@@ -580,14 +608,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const bar = $('spell-bar');
         if (bar.classList.contains('hidden')) {
             bar.classList.remove('hidden');
-            renderSpellBar(); 
+            renderSpellBar();
         } else {
             bar.classList.add('hidden');
         }
     });
-    $('btn-duel')?.addEventListener('click', () => { 
+    $('btn-duel')?.addEventListener('click', () => {
         if (confirm("Iniciar Modo Duelo (Fase de Compra + Arena Simétrica)?")) {
-            openLeaderSelection(false, true); 
+            openLeaderSelection(false, true);
         }
     });
 
