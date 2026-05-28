@@ -364,7 +364,7 @@ class Game {
         if (typeof SPELLS !== 'undefined') SPELLS.forEach(s => { if (s.level <= 2 && s.tags.some(t => chosenAI.tags.includes(t))) aiSpells.push(s.id); });
 
         this.units.push(new Unit({ q: aS.q, r: aS.r, faction: 2, isLeader: true, name: chosenAI.name, baseName: chosenAI.name, emoji: chosenAI.emoji, hp: chosenAI.hp, maxHp: chosenAI.hp, mp: chosenAI.mp, maxMp: chosenAI.mp, atk: chosenAI.atk, range: chosenAI.range, isBoss: true, level: 2, tags: chosenAI.tags, fav: chosenAI.fav, knownSpells: aiSpells }));
-        
+
         // A IA compra feras equivalentes à quantidade que VOCÊ comprou
         let beastPool = BEASTS.LAND.filter(b => b.tags && b.tags.some(t => chosenAI.tags.includes(t)));
         if (beastPool.length === 0) beastPool = BEASTS.LAND;
@@ -773,17 +773,16 @@ class Game {
         return result;
     }
 
-    // Processa a Reação de acordo com o elemento
     async triggerElementalReaction(targetHex, tags) {
-        if (!targetHex || !tags) return;
+        if (!targetHex || !tags || typeof TERRAINS === 'undefined') return;
 
-        // 1. ELETRICIDADE NA ÁGUA (Condutividade)
+        // 1. ELETRICIDADE NA ÁGUA
         if (tags.includes('ELECTRIC') && (targetHex.terrain.id === 'WATER' || targetHex.terrain.id === 'ELECTRIC_WATER')) {
             let waterHexes = this.getContiguousHexes(targetHex, ['WATER', 'ELECTRIC_WATER']);
             for (let h of waterHexes) {
-                h.terrain = typeof TERRAINS !== 'undefined' ? TERRAINS['ELECTRIC_WATER'] : { id: 'ELECTRIC_WATER' };
-                h.timer = 2; // A eletricidade dura 1 rodada completa
-                
+                h.terrain = TERRAINS.ELECTRIC_WATER; // Usa o dicionário oficial!
+                h.timer = 2;
+
                 let u = this.getUnitAt(h.q, h.r);
                 if (u && u.status !== 'stun') {
                     u.status = 'stun';
@@ -793,25 +792,27 @@ class Game {
             if (typeof showMessage === 'function') showMessage("A água conduziu a eletricidade!", "#f1c40f");
             if (typeof sleep === 'function') await sleep(400);
         }
-        
-        // 2. FOGO E RAIO NA FLORESTA OU NEVE
+
+        // 2. FOGO E RAIO NA FLORESTA OU GELO
         if (tags.includes('FIRE') || tags.includes('ELECTRIC')) {
             if (targetHex.terrain.id === 'FOREST') {
-                targetHex.terrain = typeof TERRAINS !== 'undefined' ? TERRAINS['BURNING_FOREST'] : { id: 'BURNING_FOREST' };
-                targetHex.timer = 4; // Queima por 2 rodadas
+                targetHex.terrain = TERRAINS.BURNING_FOREST; // Usa o dicionário oficial!
+                targetHex.timer = 4;
                 if (typeof showMessage === 'function') showMessage("A floresta começou a queimar!", "#e74c3c");
-            } else if (targetHex.terrain.id === 'SNOW') {
-                targetHex.terrain = typeof TERRAINS !== 'undefined' ? TERRAINS['WATER'] : { id: 'WATER' };
-                if (typeof showMessage === 'function') showMessage("O gelo derreteu!", "#3498db");
             }
         }
-        
-        // 3. GELO NA ÁGUA (Congelamento)
+
+        if (tags.includes('FIRE') && targetHex.terrain.id === 'SNOW') {
+            targetHex.terrain = TERRAINS.WATER; // Derrete
+            if (typeof showMessage === 'function') showMessage("O gelo derreteu!", "#3498db");
+        }
+
+        // 3. GELO NA ÁGUA
         if (tags.includes('ICE') || tags.includes('FROST')) {
             if (targetHex.terrain.id === 'WATER' || targetHex.terrain.id === 'ELECTRIC_WATER') {
                 let waterHexes = this.getContiguousHexes(targetHex, ['WATER', 'ELECTRIC_WATER']);
                 for (let h of waterHexes) {
-                    h.terrain = typeof TERRAINS !== 'undefined' ? TERRAINS['SNOW'] : { id: 'SNOW' };
+                    h.terrain = TERRAINS.SNOW; // Congela
                 }
                 if (typeof showMessage === 'function') showMessage("A água congelou!", "#00ffff");
                 if (typeof sleep === 'function') await sleep(400);
@@ -897,26 +898,26 @@ class Game {
             }
 
             // --- PROCESSAMENTO DE TERRENOS ELEMENTAIS (HAZARDS) ---
-        this.map.forEach(h => {
-            // Relógio de duração dos terrenos
-            if (h.timer) {
-                h.timer--;
-                if (h.timer <= 0) {
-                    if (h.terrain.id === 'ELECTRIC_WATER') h.terrain = TERRAINS.WATER; // Descarrega
-                    else if (h.terrain.id === 'BURNING_FOREST') h.terrain = TERRAINS.ASHES; // Vira cinzas
+            this.map.forEach(h => {
+                if (h.timer) {
+                    h.timer--;
+                    if (h.timer <= 0) {
+                        // Volta para o dicionário original!
+                        if (h.terrain.id === 'ELECTRIC_WATER') h.terrain = TERRAINS.WATER;
+                        else if (h.terrain.id === 'BURNING_FOREST') h.terrain = TERRAINS.ASHES;
+                    }
                 }
-            }
-            
-            // Dano passivo de quem estiver em chamas no início da rodada
-            let unitOnHex = this.getUnitAt(h.q, h.r);
-            if (unitOnHex && unitOnHex.hp > 0 && h.terrain.id === 'BURNING_FOREST') {
-                unitOnHex.hp -= 15;
-                if (typeof showPopup === 'function') showPopup("-15 🔥", unitOnHex, '#e74c3c');
-                if (unitOnHex.hp <= 0) this.handleDeath(unitOnHex, { name: 'As Chamas', faction: -1 });
-            }
-        });
 
-        if (!this.resources) this.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
+                // Dano passivo de quem estiver em chamas no início da rodada
+                let unitOnHex = this.getUnitAt(h.q, h.r);
+                if (unitOnHex && unitOnHex.hp > 0 && h.terrain.id === 'BURNING_FOREST') {
+                    unitOnHex.hp -= 15;
+                    if (typeof showPopup === 'function') showPopup("-15 🔥", unitOnHex, '#e74c3c');
+                    if (unitOnHex.hp <= 0) this.handleDeath(unitOnHex, { name: 'As Chamas', faction: -1 });
+                }
+            });
+
+            if (!this.resources) this.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
             this.units.filter(u => u.faction === 1).forEach(u => {
                 const hex = this.map.get(`${u.q},${u.r}`);
                 if (hex) {
@@ -1203,9 +1204,9 @@ window.runAITurn = async function () {
     let maxL = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) ? (game.leaderData.limit + 1) : (game.leaderData.limit || 6);
 
     for (const u of units) {
-        if (game.gameOver) return; 
-        if (u.mp === 0 && u.hasAttacked) continue; 
-        
+        if (game.gameOver) return;
+        if (u.mp === 0 && u.hasAttacked) continue;
+
         if (renderer) { renderer.centerOn(u.vq, u.vr); renderer.draw(); }
         game.selectedUnit = u; if (typeof sleep === 'function') await sleep(300);
         game.calculateReachable(u);
@@ -1216,7 +1217,7 @@ window.runAITurn = async function () {
         // --- 1. DEFINIÇÃO DE PRIORIDADE DE ALVO ---
         let pUnits = game.units.filter(t => t.faction === 1);
         let wUnits = game.units.filter(t => t.faction === 0);
-        
+
         // Prioridade Suprema: Jogador quase morto (<= 35% HP ou letalidade direta)
         let priorityTarget = pUnits.find(p => (p.hp / p.maxHp <= 0.35) || (p.hp <= u.atk));
         let intent = priorityTarget ? 'attack' : 'none';
@@ -1263,12 +1264,12 @@ window.runAITurn = async function () {
                 if (game.getUnitAt(mq, mr) && (mq !== u.q || mr !== u.r)) return;
                 let distToTarget = Hex.distance({ q: mq, r: mr }, cls);
                 let score = -distToTarget * 10;
-                
+
                 // Se o alvo for alcançável de onde parou, a posição ganha pontuação extrema!
-                if (distToTarget > 0 && distToTarget <= u.getEffectiveRange(game)) { 
-                    score += 1000; score += distToTarget * 5; 
+                if (distToTarget > 0 && distToTarget <= u.getEffectiveRange(game)) {
+                    score += 1000; score += distToTarget * 5;
                 }
-                let hMap = game.map.get(m); 
+                let hMap = game.map.get(m);
                 if (hMap && hMap.terrain.id === 'VILLAGE' && hMap.owner !== 2) score += 20;
                 if (score > bestScore) { bestScore = score; bM = { q: mq, r: mr }; }
             });
@@ -1310,7 +1311,7 @@ window.runAITurn = async function () {
                             if (sp.tags) await game.triggerElementalReaction(targetHex, sp.tags);
                             if (typeof showPopup === 'function') showPopup(`✨ ${sp.name}!`, u, '#9b59b6');
                             game.spellCooldowns[sid] = sp.level > 1 ? sp.level : 2;
-                            
+
                             // A CORREÇÃO: O líder adversário agora registra a magia mas não perde a ação física!
                             if (u.isLeader) {
                                 u.spellsCast = (u.spellsCast || 0) + 1;
@@ -1321,9 +1322,9 @@ window.runAITurn = async function () {
                             if (typeof sleep === 'function') await sleep(800);
                         }
                     } catch (e) { console.error("Erro magia IA:", e); }
-                    
+
                     game.isAnimating = false;
-                    break; 
+                    break;
                 }
             }
         }
@@ -1332,7 +1333,7 @@ window.runAITurn = async function () {
         if (!u.hasAttacked && cls && Hex.distance(u, cls) <= u.getEffectiveRange(game)) {
             if (u.isLeader && cls.faction === 0 && Hex.distance(u, cls) === 1) {
                 let chance = typeof game.calculateTameChance === 'function' ? game.calculateTameChance(u, cls) : 0;
-                
+
                 // Tenta domar baseado na intenção primária definida no passo 1
                 if (intent === 'tame' || chance >= 0.7 || (cls.hp / cls.maxHp <= 0.3 && myM < maxL)) {
                     await game.attemptTame(u, cls);
@@ -1350,7 +1351,7 @@ window.runAITurn = async function () {
                 if (!risk) await game.executeCombat(u, cls);
             }
         }
-        
+
         if (typeof sleep === 'function') await sleep(200);
     }
     game.selectedUnit = null;

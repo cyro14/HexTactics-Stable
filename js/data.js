@@ -16,7 +16,7 @@ const getActiveArtifacts = () => { return (game && game.isRoguelite) ? activeArt
 // DADOS DO JOGO (TERRENOS, TAGS E MAGIAS)
 // ==========================================
 const TERRAINS = {
-    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#3a5a2a', icon: '🟩' },
+    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#3a5a2a'},
     FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#23411b', icon: '🌲' },
     MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#4a554a', icon: '⛰️' },
     WATER: { id: 'WATER', name: 'Água', cost: 2, def: -0.15, color: '#1c4568', icon: '🌊' },
@@ -24,9 +24,9 @@ const TERRAINS = {
     DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#d2b48c', icon: '🏜️' },
     VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#8a753c', icon: '🏘️' },
     CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#505860', icon: '🏰' },
-    ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada', col: '#3498db', moveCost: 2, icon: '⚡' },
-    BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas', col: '#d35400', moveCost: 1, icon: '🔥' }, 
-    ASHES: { id: 'ASHES', name: 'Cinzas', col: '#555555', moveCost: 1 }
+    ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada',cost: 2, def: -0.50, col: '#1c4568', icon: '⚡' },
+    BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas',cost: 2, def: -0.50, col: '#23411b', icon: '🔥' }, 
+    ASHES: { id: 'ASHES', name: 'Cinzas', col: '#555555', cost: 2, def: -0.50, icon: '💨'}
 };
 
 const TAGS = {
@@ -110,29 +110,29 @@ const SPELLS = [
 
     //SPELLS DE TERRENO
     {
-        id: 'sl_combustao', name: 'Combustão', icon: '🔥',
+        id: 'sl_combustao', name: 'Incendiar', icon: '🔥',
         desc: 'Causa 15 de dano. Incendeia florestas ou derrete o gelo do alvo.',
-        level: 1, type: 'atk', range: 3, tags: ['FIRE', 'MYSTIC'], cost: { 'FIRE': 2 }, targetTerrain: true,
+        level: 1, type: 'atk', range: 3, tags: ['FIRE'], cost: { 'FIRE': 1 }, targetTerrain: true,
         effect: async (game, caster, target, targetHex) => {
-            if (target) { target.hp -= 15; if (typeof showPopup === 'function') showPopup("-15 🔥", target, '#e74c3c'); if (target.hp <= 0) game.handleDeath(target, caster); }
+            if (target) { target.hp -= 5; if (typeof showPopup === 'function') showPopup("-5 🔥", target, '#e74c3c'); if (target.hp <= 0) game.handleDeath(target, caster); }
             return true;
         }
     },
     {
-        id: 'sl_zero_absoluto', name: 'Zero Absoluto', icon: '❄️',
+        id: 'sl_zero_absoluto', name: 'Congelar', icon: '❄️',
         desc: 'Causa 15 de dano. Congela a água sob o alvo, espalhando para águas adjacentes.',
-        level: 1, type: 'atk', range: 3, tags: ['ICE', 'WATER'], cost: { 'WATER': 2 }, targetTerrain: true,
+        level: 1, type: 'atk', range: 3, tags: ['ICE'], cost: { 'ICE': 1 }, targetTerrain: true,
         effect: async (game, caster, target, targetHex) => {
-            if (target) { target.hp -= 15; if (typeof showPopup === 'function') showPopup("-15 ❄️", target, '#00ffff'); if (target.hp <= 0) game.handleDeath(target, caster); }
+            if (target) { target.hp -= 5; if (typeof showPopup === 'function') showPopup("-5 ❄️", target, '#00ffff'); if (target.hp <= 0) game.handleDeath(target, caster); }
             return true;
         }
     },
     {
         id: 'sl_curto_circuito', name: 'Curto-Circuito', icon: '⚡',
         desc: 'Causa 15 de dano. Se atingir a água, espalha eletricidade.',
-        level: 1, type: 'atk', range: 3, tags: ['ELECTRIC', 'MYSTIC'], cost: { 'ELECTRIC': 2 }, targetTerrain: true,
+        level: 1, type: 'atk', range: 3, tags: ['ELECTRIC'], cost: { 'ELECTRIC': 1 }, targetTerrain: true,
         effect: async (game, caster, target, targetHex) => {
-            if (target) { target.hp -= 15; if (typeof showPopup === 'function') showPopup("-15 ⚡", target, '#f1c40f'); if (target.hp <= 0) game.handleDeath(target, caster); }
+            if (target) { target.hp -= 5; if (typeof showPopup === 'function') showPopup("-5 ⚡", target, '#f1c40f'); if (target.hp <= 0) game.handleDeath(target, caster); }
             return true;
         }
     },

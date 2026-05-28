@@ -4,34 +4,69 @@
 document.addEventListener("DOMContentLoaded", () => {
     loadMeta();
     game = new Game();
-    // --- PATCH VISUAL PARA TERRENOS ELEMENTAIS ---
-    const originalDraw = Renderer.prototype.draw;
-    Renderer.prototype.draw = function() {
-        originalDraw.call(this);
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        
-        game.map.forEach(h => {
-            const pos = this.getPos(h.q, h.r);
-            if (h.terrain.id === 'ELECTRIC_WATER') {
-                this.ctx.font = `${this.hexSize * 0.9}px Arial`;
-                this.ctx.fillText('⚡', pos.x, pos.y + 4);
-            } else if (h.terrain.id === 'BURNING_FOREST') {
-                this.ctx.font = `${this.hexSize * 0.9}px Arial`;
-                this.ctx.fillText('🔥', pos.x, pos.y + 4);
-            } else if (h.terrain.id === 'ASHES') {
-                this.ctx.font = `${this.hexSize * 0.7}px Arial`;
-                this.ctx.fillText('💨', pos.x, pos.y + 4);
-            }
-        });
-    };
-    
     renderer = new Renderer($('gameCanvas'), game);
     let isDragging = false, startX, startY, initOffX, initOffY;
     let initialPinchDist = null, initialHexSize = null;
     let lastForecastTarget = null;
     let lastForecastAttacker = null;
     window.pendingAttackTarget = null; // Guarda o alvo do primeiro clique
+
+    // ==========================================
+    // SISTEMA DE REAÇÕES ELEMENTAIS (GLOBAL)
+    // ==========================================
+
+    // 1. INJEÇÃO GLOBAL: Clona os terrenos originais para herdar 'cost' e 'def' perfeitamente
+    if (typeof TERRAINS !== 'undefined') {
+        // Clona a Água e só muda o ID e Nome
+        if (TERRAINS.WATER) {
+            TERRAINS.ELECTRIC_WATER = { ...TERRAINS.WATER, id: 'ELECTRIC_WATER', name: 'Água Eletrizada' };
+        }
+        
+        // Clona a Floresta e muda a Cor, ID e Nome
+        if (TERRAINS.FOREST) {
+            TERRAINS.BURNING_FOREST = { ...TERRAINS.FOREST, id: 'BURNING_FOREST', name: 'Floresta em Chamas', col: '#d35400' };
+        }
+        
+        // Pega qualquer terreno base (como LAND) para servir de molde para as Cinzas
+        let baseLand = TERRAINS.LAND || TERRAINS.PLAINS || Object.values(TERRAINS)[0];
+        TERRAINS.ASHES = { ...baseLand, id: 'ASHES', name: 'Cinzas', col: '#555555' };
+    }
+
+    // 2. PATCH VISUAL: Desenha apenas os Emojis (a cor agora vem nativa do motor)
+    const originalDraw = Renderer.prototype.draw;
+    Renderer.prototype.draw = function() {
+        originalDraw.call(this); // Desenha o mapa perfeitamente com as cores do dicionário
+        
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        game.map.forEach(h => {
+            const pos = this.getPos(h.q, h.r);
+            if (h.terrain.id === 'ELECTRIC_WATER') {
+                this.ctx.font = `${this.hexSize * 0.9}px Arial`; this.ctx.fillText('⚡', pos.x, pos.y + 4);
+            } else if (h.terrain.id === 'BURNING_FOREST') {
+                this.ctx.font = `${this.hexSize * 0.9}px Arial`; this.ctx.fillText('🔥', pos.x, pos.y + 4);
+            } else if (h.terrain.id === 'ASHES') {
+                this.ctx.font = `${this.hexSize * 0.7}px Arial`; this.ctx.fillText('💨', pos.x, pos.y + 4);
+            }
+        });
+    };
+
+    // 3. PATCH ARMADILHA: Dano e Stun ao caminhar
+    const originalMoveUnit = Game.prototype.moveUnit;
+    Game.prototype.moveUnit = async function(unit, targetQ, targetR) {
+        await originalMoveUnit.call(this, unit, targetQ, targetR);
+        let hex = this.map.get(`${targetQ},${targetR}`);
+        if (hex && unit.hp > 0) {
+            if (hex.terrain.id === 'ELECTRIC_WATER') {
+                unit.status = 'stun'; unit.mp = 0;
+                if (typeof showPopup === 'function') showPopup("Zzz ⚡", unit, '#f1c40f');
+            } else if (hex.terrain.id === 'BURNING_FOREST') {
+                unit.hp -= 10;
+                if (typeof showPopup === 'function') showPopup("-10 🔥", unit, '#e74c3c');
+                if (unit.hp <= 0) this.handleDeath(unit, { name: 'As Chamas', faction: -1 });
+            }
+        }
+    };
 
     function handleCombatForecast(clientX, clientY, isTouch = false, isPinned = false) {
         const fc = $('combat-forecast');
@@ -351,7 +386,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             if (spell.targetTerrain) {
                                 if (u && u.faction === FACTIONS.PLAYER.id) { showMessage("Mire no inimigo ou chão vazio!", "#e74c3c"); return; }
                             } else {
-                            // MAGIAS COMUNS (Obrigam a mirar num inimigo):
+                                // MAGIAS COMUNS (Obrigam a mirar num inimigo):
                                 if (!u || u.faction === FACTIONS.PLAYER.id) { showMessage("Selecione um inimigo!", "#e74c3c"); return; }
                             }
                         } else if (spell.type === 'def' && spRange > 0) {
@@ -433,27 +468,33 @@ document.addEventListener("DOMContentLoaded", () => {
                         return;
                     }
 
-                    // Segundo Clique: Executa o Combate!
                     window.pendingAttackTarget = null;
                     $('combat-forecast').style.display = 'none';
 
                     game.isAnimating = true;
                     if (game.tameMode && u.faction === FACTIONS.WILD.id && dist === 1) await game.attemptTame(su, u);
                     else if (!game.tameMode) await game.executeCombat(su, u);
+                    
                     game.selectedUnit = null; game.tameMode = false; game.isAnimating = false;
+                    game.reachableHexes.clear(); // NOVO: Limpa a pintura após atacar!
 
                 } else if (!u && game.reachableHexes.has(cH.getKey())) {
                     window.pendingAttackTarget = null; $('combat-forecast').style.display = 'none';
                     saveSnapshot(); su.mp -= game.reachableHexes.get(cH.getKey()); game.isAnimating = true; await game.moveUnit(su, cH.q, cH.r); game.isAnimating = false; game.calculateReachable(su);
                 } else {
-                    game.selectedUnit = u; if (u) game.calculateReachable(u);
+                    game.selectedUnit = u; 
+                    if (u) game.calculateReachable(u);
+                    else game.reachableHexes.clear(); // NOVO: Limpa a pintura ao clicar no chão vazio!
                 }
             } else {
-                game.selectedUnit = u; if (u && u.faction === FACTIONS.PLAYER.id) game.calculateReachable(u);
+                game.selectedUnit = u; 
+                if (u && u.faction === FACTIONS.PLAYER.id) game.calculateReachable(u);
+                else game.reachableHexes.clear(); // NOVO: Limpa a pintura ao selecionar aliado diferente!
             }
         } else {
             game.selectedUnit = null; game.activeSpell = null;
             window.pendingAttackTarget = null; $('combat-forecast').style.display = 'none';
+            game.reachableHexes.clear(); // NOVO: Limpa a pintura ao clicar na escuridão fora do mapa!
         }
         updateUI(); renderer.draw();
     }
