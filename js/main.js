@@ -209,7 +209,31 @@ document.addEventListener("DOMContentLoaded", () => {
             else if (destHex.terrain.id === 'BURNING_FOREST') { unit.hp -= 15; if (typeof showPopup === 'function') showPopup("-15 🔥", unit, '#e74c3c'); if (unit.hp <= 0) this.handleDeath(unit, { name: 'As Chamas', faction: -1 }); }
         }
     };
-    
+
+    // 7. MÁGICA DA IMUNIDADE: Oculta quem está cavando sem causar Game Over!
+    const origRunAITurn = window.runAITurn;
+    window.runAITurn = async function() {
+        let diggingUnits = game.units.filter(u => u.status === 'digging');
+        
+        // Em vez de mudar a facção (o que mata o líder), jogamos eles para fora do mapa!
+        // A IA vai calcular a distância como > 9000 e vai ignorá-los completamente.
+        diggingUnits.forEach(u => { 
+            u._realQ = u.q; u._realR = u.r; 
+            u.q = -9999; u.r = -9999; 
+        });
+        
+        // A IA joga o turno dela sem enxergar quem está debaixo da terra
+        if (origRunAITurn) await origRunAITurn.call(this); 
+        
+        // Fim do turno da IA: devolve as criaturas para a posição exata do buraco
+        diggingUnits.forEach(u => { 
+            if (u._realQ !== undefined) {
+                u.q = u._realQ; u.r = u._realR; 
+                delete u._realQ; delete u._realR; 
+            }
+        });
+    };
+
     function handleCombatForecast(clientX, clientY, isTouch = false, isPinned = false) {
         const fc = $('combat-forecast');
         if (!fc) return;
@@ -601,19 +625,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // --- MECÂNICA DE EMERGIR (ESCAVAR) ---
                 if (su.status === 'digging') {
-                    if (Hex.distance(su, cH) <= su.maxMp) {
+                    // BLINDAGEM: Verifica se ele está tentando sair no mesmo turno em que entrou!
+                    if (su._digTurn === game.turnCount) {
+                        if (typeof showMessage === 'function') showMessage("Você está cavando! Aguarde o próximo turno.", "#f39c12");
+                        game.selectedUnit = null; game.reachableHexes.clear(); updateUI(); renderer.draw(); return;
+                    }
+
+                    if (Hex.distance(su, cH) <= (su.maxMp || 3)) {
                         su.status = null; su.isHidden = false; su.filter = 'none';
                         let targetU = game.units.find(x => x.q === cH.q && x.r === cH.r && x.hp > 0);
                         
-                        // Teleporta para o buraco de saída
                         su.q = cH.q; su.r = cH.r;
+                        su.vq = cH.q; su.vr = cH.r; 
+                        
                         if (typeof showPopup === 'function') showPopup("Emergiu! 💥", su, '#e67e22');
 
-                        // Se tiver alguém lá, toma dano e voa pra longe!
                         if (targetU && targetU !== su) {
                             let pushNeighbors = Hex.getNeighbors(cH.q, cH.r);
                             let emptyN = pushNeighbors.find(n => !game.units.find(x => x.q === n.q && x.r === n.r) && game.map.get(`${n.q},${n.r}`));
-                            if (emptyN) { targetU.q = emptyN.q; targetU.r = emptyN.r; } // Empurra!
+                            if (emptyN) { 
+                                targetU.q = emptyN.q; targetU.r = emptyN.r; 
+                                targetU.vq = emptyN.q; targetU.vr = emptyN.r; 
+                            }
                             targetU.status = 'stun';
                             targetU.hp -= 20;
                             if (typeof showPopup === 'function') showPopup("-20 💥", targetU, '#e74c3c');
@@ -623,10 +656,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         su.hasAttacked = true; su.mp = 0; game.selectedUnit = null; 
                         game.reachableHexes.clear(); updateUI(); renderer.draw(); return;
                     } else {
-                        showMessage("Muito longe para emergir!", "#e74c3c"); return;
+                        if (typeof showMessage === 'function') showMessage("Muito longe para emergir!", "#e74c3c"); return;
                     }
                 }
-
+                // -------------------------------------
                 const dist = u ? Hex.distance(su, u) : 0;
 
                 if (u && u.faction !== FACTIONS.PLAYER.id && dist <= su.getEffectiveRange(game) && !su.hasAttacked) {

@@ -120,12 +120,20 @@ const SPELLS = [
     },
     {
         id: 'sl_escavar', name: 'Escavar', icon: '🕳️',
-        desc: 'Cava um buraco e fica oculto e inalvejável. No próximo turno, clique em um local para emergir, causando dano e empurrando inimigos!',
+        desc: 'Cava um buraco e fica oculto. No próximo turno, clique num local para emergir e atacar!',
         level: 1, type: 'def', range: 0, tags: ['ROCK', 'PRIMAL'], cost: { 'ROCK': 0 },
         effect: async (game, caster) => {
             caster.status = 'digging';
             caster.isHidden = true;
             caster.filter = caster.faction === 1 ? 'opacity(0.5) grayscale(100%)' : 'opacity(0)';
+            
+            // TRAVA DE TURNO: Grava em qual rodada ele começou a cavar
+            caster._digTurn = game.turnCount;
+            
+            // Força a finalização do turno da unidade (ele não pode andar debaixo da terra no mesmo turno)
+            caster.hasAttacked = true;
+            caster.mp = 0;
+            
             if (typeof showPopup === 'function') showPopup("Escavou! 🕳️", caster, '#7f8c8d');
             return true;
         }
