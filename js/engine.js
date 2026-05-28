@@ -1111,52 +1111,83 @@ window.runAITurn = async function () {
     let maxL = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) ? (game.leaderData.limit + 1) : (game.leaderData.limit || 6);
 
     for (const u of units) {
-        if (game.gameOver) return; if (u.mp === 0) continue;
+        if (game.gameOver) return; 
+        if (u.mp === 0 && u.hasAttacked) continue; 
+        
         if (renderer) { renderer.centerOn(u.vq, u.vr); renderer.draw(); }
         game.selectedUnit = u; if (typeof sleep === 'function') await sleep(300);
-        game.calculateReachable(u); 
+        game.calculateReachable(u);
+
+        let myM = game.units.filter(x => x.faction === u.faction && !x.isLeader).length;
+        let isSafe = u.hp / u.maxHp > 0.4;
+
+        // --- 1. DEFINIÇÃO DE PRIORIDADE DE ALVO ---
+        let pUnits = game.units.filter(t => t.faction === 1);
+        let wUnits = game.units.filter(t => t.faction === 0);
         
-        let acted = false; 
-        const myM = game.units.filter(x => x.faction === u.faction && !x.isLeader).length; 
-        const isSafe = u.hp / u.maxHp > 0.4;
+        // Prioridade Suprema: Jogador quase morto (<= 35% HP ou letalidade direta)
+        let priorityTarget = pUnits.find(p => (p.hp / p.maxHp <= 0.35) || (p.hp <= u.atk));
+        let intent = priorityTarget ? 'attack' : 'none';
 
-        // 1. ANÁLISE DE MOVIMENTAÇÃO (Anda antes de agir)
-        let tgts = game.units.filter(t => t.faction === 1); 
-        if (u.isLeader && myM < maxL) tgts = tgts.concat(game.units.filter(t => t.faction === 0)); 
-        let cls = null; let minD = 999;
-        tgts.forEach(t => { 
-            let d = Hex.distance(u, t); 
-            if (u.isLeader && t.faction === 0) { 
-                if (isSafe) { d -= 3; if (t.hp / t.maxHp <= 0.3) d -= 5; } 
-                else { d += 10; } 
-            } 
-            if (!u.isLeader && t.faction === 1) d -= 2; 
-            if (d < minD) { minD = d; cls = t; } 
-        });
-
-        if (cls) {
-            const moves = Array.from(game.reachableHexes.keys()); 
-            let bM = { q: u.q, r: u.r }; let bestScore = -9999;
-            moves.forEach(m => {
-                const [mq, mr] = m.split(',').map(Number); 
-                if (game.getUnitAt(mq, mr) && (mq !== u.q || mr !== u.r)) return;
-                let distToTarget = Hex.distance({ q: mq, r: mr }, cls); 
-                let score = -distToTarget * 10;
-                if (distToTarget > 0 && distToTarget <= u.getEffectiveRange(game)) { score += 1000; score += distToTarget * 5; }
-                let hMap = game.map.get(m); if (hMap && hMap.terrain.id === 'VILLAGE' && hMap.owner !== 2) score += 20;
-                if (!isSafe && hMap && hMap.terrain.id === 'VILLAGE') score += 80;
-                if (score > bestScore) { bestScore = score; bM = { q: mq, r: mr }; }
+        // Segunda Prioridade: Domar criatura com 70%+ de chance de captura
+        if (!priorityTarget && u.isLeader && myM < maxL) {
+            let bestChance = 0;
+            let bestWild = null;
+            wUnits.forEach(w => {
+                let chance = typeof game.calculateTameChance === 'function' ? game.calculateTameChance(u, w) : 0;
+                if (chance >= 0.7 && chance > bestChance) {
+                    bestChance = chance;
+                    bestWild = w;
+                }
             });
-
-            // A IA Caminha primeiro!
-            if (bM.q !== u.q || bM.r !== u.r) { 
-                u.mp -= (game.reachableHexes.get(`${bM.q},${bM.r}`) || 1); 
-                await game.moveUnit(u, bM.q, bM.r); 
+            if (bestWild) {
+                priorityTarget = bestWild;
+                intent = 'tame';
             }
         }
 
-        // 2. DECISÃO DE MAGIA (Após mover e reavaliar alvos)
-        let hasCast = false;
+        // Alvo Padrão: O mais próximo
+        if (!priorityTarget) {
+            let minD = 999;
+            let tgts = pUnits.concat(u.isLeader && myM < maxL ? wUnits : []);
+            tgts.forEach(t => {
+                let d = Hex.distance(u, t);
+                if (t.faction === 0) {
+                    if (isSafe) d -= 3;
+                    else d += 10;
+                }
+                if (d < minD) { minD = d; priorityTarget = t; intent = t.faction === 0 ? 'tame' : 'attack'; }
+            });
+        }
+
+        let cls = priorityTarget;
+
+        // --- 2. MOVIMENTAÇÃO RUMO À PRIORIDADE ---
+        if (cls && u.mp > 0) {
+            const moves = Array.from(game.reachableHexes.keys());
+            let bM = { q: u.q, r: u.r }; let bestScore = -9999;
+            moves.forEach(m => {
+                const [mq, mr] = m.split(',').map(Number);
+                if (game.getUnitAt(mq, mr) && (mq !== u.q || mr !== u.r)) return;
+                let distToTarget = Hex.distance({ q: mq, r: mr }, cls);
+                let score = -distToTarget * 10;
+                
+                // Se o alvo for alcançável de onde parou, a posição ganha pontuação extrema!
+                if (distToTarget > 0 && distToTarget <= u.getEffectiveRange(game)) { 
+                    score += 1000; score += distToTarget * 5; 
+                }
+                let hMap = game.map.get(m); 
+                if (hMap && hMap.terrain.id === 'VILLAGE' && hMap.owner !== 2) score += 20;
+                if (score > bestScore) { bestScore = score; bM = { q: mq, r: mr }; }
+            });
+
+            if (bM.q !== u.q || bM.r !== u.r) {
+                u.mp -= (game.reachableHexes.get(`${bM.q},${bM.r}`) || 1);
+                await game.moveUnit(u, bM.q, bM.r);
+            }
+        }
+
+        // --- 3. DECISÃO DE MAGIA (Líderes mantêm o turno ao conjurar) ---
         if (u.knownSpells && u.knownSpells.length > 0) {
             for (let sid of u.knownSpells) {
                 if (game.spellCooldowns[sid] > 0) continue;
@@ -1169,9 +1200,10 @@ window.runAITurn = async function () {
 
                 if (sp.type === 'atk') {
                     let inRange = game.units.filter(t => t.faction !== u.faction && t.hp > 0 && Hex.distance(u, t) <= spRange);
-                    if (inRange.length > 0) target = inRange[Math.floor(Math.random() * inRange.length)];
+                    // Foca a magia ofensiva na prioridade, se estiver no alcance
+                    if (inRange.includes(priorityTarget) && intent === 'attack') target = priorityTarget;
+                    else if (inRange.length > 0) target = inRange[Math.floor(Math.random() * inRange.length)];
                 } else if (sp.type === 'def') {
-                    // CÉREBRO CORRIGIDO: Só busca aliados que estão com vida INFERIOR ao máximo
                     let inRange = game.units.filter(t => t.faction === u.faction && t.hp > 0 && t.hp < t.maxHp && Hex.distance(u, t) <= spRange);
                     if (inRange.length > 0) target = inRange[Math.floor(Math.random() * inRange.length)];
                 }
@@ -1184,36 +1216,44 @@ window.runAITurn = async function () {
                         if (ok) {
                             if (typeof showPopup === 'function') showPopup(`✨ ${sp.name}!`, u, '#9b59b6');
                             game.spellCooldowns[sid] = sp.level > 1 ? sp.level : 2;
-                            u.hasAttacked = true;
-                            u.mp = 0;
-                            hasCast = true;
-                            acted = true;
+                            
+                            // A CORREÇÃO: O líder adversário agora registra a magia mas não perde a ação física!
+                            if (u.isLeader) {
+                                u.spellsCast = (u.spellsCast || 0) + 1;
+                            } else {
+                                u.hasAttacked = true;
+                                u.mp = 0;
+                            }
                             if (typeof sleep === 'function') await sleep(800);
                         }
                     } catch (e) { console.error("Erro magia IA:", e); }
                     
-                    // CORREÇÃO CIRÚRGICA: Libera a tela SEMPRE, aconteça o que acontecer!
-                    game.isAnimating = false; 
-                    
-                    if (hasCast) break; // Só encerra a busca depois da tela estar liberada
+                    game.isAnimating = false;
+                    break; 
                 }
             }
         }
 
-        // 3. DECISÃO BÁSICA (Ataque ou Doma)
-        if (!hasCast && cls) {
-            if (Hex.distance(u, cls) <= u.range && !u.hasAttacked) { 
-                if (u.isLeader && cls.faction === 0 && Hex.distance(u, cls) === 1 && cls.hp / cls.maxHp <= 0.3 && myM < maxL) { 
-                    await game.attemptTame(u, cls); 
-                } else { 
-                    let risk = false; 
-                    if (u.isLeader) { 
-                        let cDmg = Math.floor(game.calcDmg(cls, u) * 0.6); 
-                        if (cls.abilities.includes('counter')) cDmg = Math.floor(cDmg * 1.2); 
-                        if (u.hp <= cDmg) risk = true; 
-                    } 
-                    if (!risk) await game.executeCombat(u, cls); 
-                } 
+        // --- 4. AÇÃO FÍSICA / DOMA ---
+        if (!u.hasAttacked && cls && Hex.distance(u, cls) <= u.getEffectiveRange(game)) {
+            if (u.isLeader && cls.faction === 0 && Hex.distance(u, cls) === 1) {
+                let chance = typeof game.calculateTameChance === 'function' ? game.calculateTameChance(u, cls) : 0;
+                
+                // Tenta domar baseado na intenção primária definida no passo 1
+                if (intent === 'tame' || chance >= 0.7 || (cls.hp / cls.maxHp <= 0.3 && myM < maxL)) {
+                    await game.attemptTame(u, cls);
+                } else {
+                    await game.executeCombat(u, cls);
+                }
+            } else {
+                let risk = false;
+                // A IA avalia o contra-ataque antes de bater à toa
+                if (u.isLeader && intent !== 'attack' && !priorityTarget) {
+                    let cDmg = Math.floor(game.calcDmg(cls, u) * 0.6);
+                    if (cls.abilities.includes('counter')) cDmg = Math.floor(cDmg * 1.2);
+                    if (u.hp <= cDmg) risk = true;
+                }
+                if (!risk) await game.executeCombat(u, cls);
             }
         }
         
