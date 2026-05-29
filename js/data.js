@@ -280,8 +280,6 @@ const LEADER_GRIMOIRE_TAGS = {
     'ld_porco_eletrico': ['ELECTRIC', 'CARAPACE'],
     'ld_escaravelho': ['SAND', 'VENOM'],
     'ld_doutor_praga': ['VENOM']
-
-
 };
 
 const LEADERS = [
@@ -384,7 +382,7 @@ const EVOS = {
     '🐒': () => { this.emoji = '🦍'; this.name = "Gorila Rei"; },
     '🦊': () => { this.emoji = '🦊'; this.name = "Raposa de Nove Caudas"; },
     '🐸': () => { this.emoji = '🐸'; this.name = "Sapo-Boi Gigante"; },
-    '🐦': () => { this.emoji = '🦅'; this.name = "Fênix"; if (!this.tags.includes('CELESTIAL')) this.tags.push('CELESTIAL'); if (!this.tags.includes('FIRE')) this.tags.push('FIRE'); },
+    '🐦': () => { this.emoji = '🐦‍🔥'; this.name = "Fênix"; if (!this.tags.includes('CELESTIAL')) this.tags.push('CELESTIAL'); if (!this.tags.includes('FIRE')) this.tags.push('FIRE'); },
     'Coelho': ['Lebre Veloz', 'Jackalope'],
     'Canguru': ['Canguru Boxeador', 'Canguru Campeão'],
     'Pinguim': ['Pinguim Deslizante', 'Pinguim Imperador'],
