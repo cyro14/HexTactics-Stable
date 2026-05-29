@@ -321,13 +321,13 @@ const LEADERS = [
     {
         id: 'ld_porco_eletrico', name: 'Porco-Espinho Elétrico', emoji: '🦔',
         maxHp: 140, hp: 140, maxMp: 4, atk: 25, range: 1, limit: 7,
-        tags: ['CARAPACE', 'ELECTRIC'], abilities: ['counter'],
+        tags: ['CARAPACE', 'ELECTRIC'], abilities: ['counter','eletric],
         desc: 'Agulhas carregadas. Eletrocuta a água para criar armadilhas pelo mapa.',
     },
     {
         id: 'ld_escaravelho', name: 'Escaravelho das Pragas', emoji: '🪲',
         maxHp: 160, hp: 160, maxMp: 4, atk: 35, range: 1, limit: 6,
-        tags: ['SAND', 'POISON'], abilities: [],
+        tags: ['SAND', 'VENOM'], abilities: ['poison'],
         desc: 'Emerge das areias espalhando toxinas mortais pelo campo.',
     },
     {
