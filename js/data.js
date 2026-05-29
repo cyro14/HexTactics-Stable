@@ -273,7 +273,15 @@ const LEADER_GRIMOIRE_TAGS = {
     'L_BARBARIAN': ['PRIMAL', 'ICE'],
     'L_TREX': ['PRIMAL', 'ROCK', 'STALKER'],
     'L_ICE_QUEEN': ['ICE'],
-    'L_HARPY': ['WING', 'STALKER']
+    'L_HARPY': ['WING', 'STALKER'],
+    'ld_dragao_galatico': ['FIRE', 'CELESTIAL'],
+    'ld_gargula': ['ROCK', 'WING'],
+    'ld_golem_gelo': ['ICE', 'ROCK'],
+    'ld_porco_eletrico': ['ELECTRIC', 'CARAPACE'],
+    'ld_escaravelho': ['SAND', 'VENOM'],
+    'ld_doutor_praga': ['VENOM']
+
+
 };
 
 const LEADERS = [
@@ -309,7 +317,7 @@ const LEADERS = [
     {
         id: 'ld_gargula', name: 'Gárgula Anciã', emoji: '🗿',
         maxHp: 200, hp: 200, maxMp: 3, atk: 35, range: 1, limit: 5,
-        tags: ['ROCK', 'WINGED'], abilities: ['flying', 'counter'],
+        tags: ['ROCK', 'WING'], abilities: ['flying', 'counter'],
         desc: 'Estátua viva de altíssima defesa. Voa e pune quem a ataca de perto.',
     },
     {
