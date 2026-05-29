@@ -585,6 +585,7 @@ function updateUI() {
         else if (u.status === 'bind') sH = getStatusHTML('bind', 'Preso', 'Movimento reduzido a 0.', '#9b59b6');
         else if (u.status === 'chilled') sH = getStatusHTML('chilled', 'Congelado', 'Movimento reduzido em 2.', '#00ffff');
         else if (u.status === 'shielded') sH = getStatusHTML('shielded', 'Escudado', 'Recebe menos dano.', '#95a5a6');
+        else if (u.status === 'silenced') sH = getStatusHTML('silenced', 'Silenciado', 'Não pode lançar magias ou domar feras.', '#7f8c8d');
         else if (u.faction === 0 && u.alerted) sH = getStatusHTML('alerted', '⚠️ Alerta!', 'Em estado de agressão.', 'var(--enemy-color)'); let ab = u.abilities.filter(x => x && ABILITY_DESCRIPTIONS[x]).map(ab => `<div class="btn-ability-link" onclick="window.showAbility('${ab}','${u.emoji}','${u.name}','${u.filter}')">📖 ${ABILITY_DESCRIPTIONS[ab].split(':')[0]}</div>`).join('');
         let tI = ''; const uH = game.map.get(`${u.q},${u.r}`); if (uH) { let defV = uH.terrain.def; if (u.fav.includes(uH.terrain.id)) defV += 0.2; tI = `<span style="color:#888;"> | 📍 ${uH.terrain.icon} ${uH.terrain.name} (${Math.round(defV * 100)}% Def)</span>`; }
         let tagsHtml = (u.tags || []).map(t => getTagHTML(t)).join('');
@@ -830,7 +831,12 @@ function generateShopItems() {
         { id: 'potion', name: 'Poção de Cura', icon: '🧪', desc: 'Cura 30 HP de um aliado no campo.', cost: 4, rarity: 'common', color: 'var(--rarity-common)' },
         { id: 'bandage', name: 'Atadura Médica', icon: '🩹', desc: 'Cura 15 HP e remove Veneno.', cost: 3, rarity: 'common', color: 'var(--rarity-common)' },
         { id: 'scroll', name: 'Pergaminho Arcano', icon: '📜', desc: 'Causa 25 de dano mágico.', cost: 8, rarity: 'rare', color: 'var(--rarity-rare)' },
-        { id: 'sphere', name: 'Esfera Elemental', icon: '🔮', desc: 'Aplica status negativo num inimigo.', cost: 7, rarity: 'rare', color: 'var(--rarity-rare)' }
+        { id: 'sphere', name: 'Esfera Elemental', icon: '🔮', desc: 'Aplica status negativo num inimigo.', cost: 7, rarity: 'rare', color: 'var(--rarity-rare)' },
+        { id: 'adrenalina', name: 'Frasco de Adrenalina', icon: '💉', desc: 'Concede turno extra a um aliado.', cost: 15, rarity: 'epic', color: 'var(--rarity-epic)' },
+        { id: 'apito', name: 'Apito Ancestral', icon: '🪈', desc: 'Doma livre (1x ao turno). Risco alto de contra-ataque!', cost: 15, rarity: 'epic', color: 'var(--rarity-epic)' },
+        { id: 'trap_stun', name: 'Armadilha Atordoante', icon: '⚡', desc: 'Atordoa quem pisar nela.', cost: 8, rarity: 'uncommon', color: 'var(--rarity-uncommon)' },
+        { id: 'trap_teleport', name: 'Armadilha de Teleporte', icon: '🌀', desc: 'Teleporta o alvo aleatoriamente.', cost: 10, rarity: 'rare', color: 'var(--rarity-rare)' },
+        { id: 'silence', name: 'Selo de Silêncio', icon: '🔕', desc: 'Bloqueia magias e doma do alvo.', cost: 8, rarity: 'uncommon', color: 'var(--rarity-uncommon)' }
     ];
     fieldItemsPool.sort(() => Math.random() - 0.5).slice(0, 2).forEach(fi => {
         shopItems.push({
@@ -844,7 +850,7 @@ function generateShopItems() {
     });
 
     // --- 4. EQUIPAMENTOS (Embaralha e pega 2 para irem direto para o Inventário) ---
-    let gearPool = ['RUSTY_SWORD', 'WOODEN_SHIELD', 'SWORD', 'SHIELD', 'BOOTS', 'BOW'];
+    let gearPool = ['RUSTY_SWORD', 'WOODEN_SHIELD', 'SWORD', 'SHIELD', 'BOOTS', 'BOW', 'WINGS_ICARUS', 'CATALYST'];
     let randomGear = gearPool.sort(() => Math.random() - 0.5).slice(0, 2);
     randomGear.forEach(gId => {
         let iDef = typeof ITEMS !== 'undefined' ? ITEMS[gId] : null;
@@ -2503,11 +2509,18 @@ window.renderFieldItemMenu = function () {
     // Dicionário visual de nomes bonitos para a interface
     const itemDefs = {
         isca: { name: "🍖 Isca de Carne" },
+        picanha: { name: "🥩 Picanha" },
         rede: { name: "🕸️ Rede Hexagonal" },
+        feromonio: { name: "🌸 Rede c/ Feromônio" },
         potion: { name: "🧪 Poção de Cura" },
         bandage: { name: "🩹 Atadura Médica" },
         scroll: { name: "📜 Pergaminho Arcano" },
-        sphere: { name: "🔮 Esfera Elemental" }
+        sphere: { name: "🔮 Esfera Elemental" },
+        adrenalina: { name: "💉 Adrenalina" },
+        apito: { name: "🪈 Apito Ancestral" },
+        trap_stun: { name: "⚡ Armadilha Stun" },
+        trap_teleport: { name: "🌀 Armadilha Teleporte" },
+        silence: { name: "🔕 Selo de Silêncio" }
     };
 
     let html = '';

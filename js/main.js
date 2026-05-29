@@ -24,35 +24,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 1. Ocultar unidades do Clique do Jogador
     const originalGetUnitAt = Game.prototype.getUnitAt;
-    Game.prototype.getUnitAt = function(q, r) {
+    Game.prototype.getUnitAt = function (q, r) {
         let u = originalGetUnitAt.call(this, q, r);
-        if (u && u.isHidden && u.faction !== 1) return null; 
+        if (u && u.isHidden && u.faction !== 1) return null;
         return u;
     };
 
     // 2. MÁGICA DO PATHFINDER: Remove fisicamente as unidades do array por 1 milissegundo!
     const originalCalcReachable = Game.prototype.calculateReachable;
-    Game.prototype.calculateReachable = function(unit) {
+    Game.prototype.calculateReachable = function (unit) {
         let allUnitsBackup = [...this.units]; // Salva todas as unidades originais
         // Filtra as ocultas para fora da existência!
         this.units = this.units.filter(u => !(u.isHidden && u.faction !== 1));
-        
+
         originalCalcReachable.call(this, unit); // O motor calcula a rota no mapa vazio
-        
+
         this.units = allUnitsBackup; // Traz as tropas de volta da dimensão fantasma!
     };
 
     // 3. Bônus de Dano da Marca do Caçador
     const originalCalcDmg = Game.prototype.calcDmg;
-    Game.prototype.calcDmg = function(attacker, defender) {
+    Game.prototype.calcDmg = function (attacker, defender) {
         let dmg = originalCalcDmg.call(this, attacker, defender);
-        if (defender.status === 'marked' && attacker.tags && attacker.tags.includes('STALKER')) dmg = Math.floor(dmg * 2); 
+        if (defender.status === 'marked' && attacker.tags && attacker.tags.includes('STALKER')) dmg = Math.floor(dmg * 2);
         return dmg;
     };
 
     // 4. Virada de Turno: Camuflagem Passiva e Espalhamento de Fogo
     const originalStartNextTurn = Game.prototype.startNextTurn;
-    Game.prototype.startNextTurn = function() {
+    Game.prototype.startNextTurn = function () {
         let restedUnits = this.units.filter(u => u.mp === u.maxMp);
         originalStartNextTurn.call(this);
 
@@ -60,10 +60,10 @@ document.addEventListener("DOMContentLoaded", () => {
             if (u.hp <= 0 || !u.abilities) return;
             let hex = this.map.get(`${u.q},${u.r}`);
             if (!hex) return;
-            
+
             let isDive = u.abilities.includes('dive') && hex.terrain.id === 'WATER';
             let isCamo = u.abilities.includes('camouflage') && hex.terrain.id === 'FOREST';
-            
+
             let enemiesAdj = false;
             Hex.getNeighbors(u.q, u.r).forEach(n => {
                 let tU = this.units.find(x => x.q === n.q && x.r === n.r && x.hp > 0 && !x.isHidden);
@@ -94,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 5. MÁGICA DA RENDERIZAÇÃO: Remove o desenho absoluto!
     const originalDraw = Renderer.prototype.draw;
-    Renderer.prototype.draw = function() {
+    Renderer.prototype.draw = function () {
         if (!game || !game.units) return originalDraw.call(this);
 
         if (game.turnCount <= 1 && !game._stealthInit) {
@@ -128,16 +128,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 6. Armadilhas e Emboscadas Perfeitas (Com registro no LOG!)
     const originalMoveUnit = Game.prototype.moveUnit;
-    Game.prototype.moveUnit = async function(unit, targetQ, targetR) {
+    Game.prototype.moveUnit = async function (unit, targetQ, targetR) {
         let isFlying = unit.abilities && unit.abilities.includes('flying');
         let finalQ = targetQ; let finalR = targetR;
 
         if (!isFlying && this.reachableHexes && this.reachableHexes.has(`${targetQ},${targetR}`)) {
             let path = []; let curr = `${targetQ},${targetR}`; let start = `${unit.q},${unit.r}`; let maxIter = 0;
-            while(curr !== start && maxIter < 100) {
+            while (curr !== start && maxIter < 100) {
                 path.unshift(curr);
                 let [cq, cr] = curr.split(',').map(Number);
-                let neighbors = typeof Hex !== 'undefined' && Hex.getNeighbors ? Hex.getNeighbors(cq, cr) : [{q: cq+1, r: cr}, {q: cq+1, r: cr-1}, {q: cq, r: cr-1}, {q: cq-1, r: cr}, {q: cq-1, r: cr+1}, {q: cq, r: cr+1}];
+                let neighbors = typeof Hex !== 'undefined' && Hex.getNeighbors ? Hex.getNeighbors(cq, cr) : [{ q: cq + 1, r: cr }, { q: cq + 1, r: cr - 1 }, { q: cq, r: cr - 1 }, { q: cq - 1, r: cr }, { q: cq - 1, r: cr + 1 }, { q: cq, r: cr + 1 }];
                 let bestN = null; let minCost = Infinity;
                 for (let n of neighbors) {
                     let nKey = `${n.q},${n.r}`;
@@ -152,23 +152,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
             for (let step of path) {
                 let [sq, sr] = step.split(',').map(Number);
-                
-                let ambusher = this.units.find(u => u.isHidden && u.faction !== unit.faction && Hex.distance({q: sq, r: sr}, u) <= 1 && u.status !== 'digging');
+
+                let ambusher = this.units.find(u => u.isHidden && u.faction !== unit.faction && Hex.distance({ q: sq, r: sr }, u) <= 1 && u.status !== 'digging');
                 if (ambusher) {
                     if (sq === ambusher.q && sr === ambusher.r) {
-                        if (step === path[0]) { finalQ = unit.q; finalR = unit.r; } 
-                        else { let [pq, pr] = path[path.indexOf(step)-1].split(',').map(Number); finalQ = pq; finalR = pr; }
+                        if (step === path[0]) { finalQ = unit.q; finalR = unit.r; }
+                        else { let [pq, pr] = path[path.indexOf(step) - 1].split(',').map(Number); finalQ = pq; finalR = pr; }
                     } else {
-                        finalQ = sq; finalR = sr; 
+                        finalQ = sq; finalR = sr;
                     }
-                    
-                    ambusher.isHidden = false; ambusher.filter = 'none'; 
+
+                    ambusher.isHidden = false; ambusher.filter = 'none';
                     if (typeof showPopup === 'function') showPopup("Emboscada! ⚠️", ambusher, '#e74c3c');
-                    
-                    let dmg = Math.floor(this.calcDmg(ambusher, unit) * 1.5); 
+
+                    let dmg = Math.floor(this.calcDmg(ambusher, unit) * 1.5);
                     unit.hp -= dmg; unit.status = 'stun'; unit.mp = 0;
                     if (typeof showPopup === 'function') showPopup(`-${dmg} ⚔️`, unit, '#e74c3c');
-                    
+
                     // --- REGISTRO DE COMBATE NO LOG ---
                     let log = document.getElementById('combat-log');
                     if (log) {
@@ -178,7 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         log.appendChild(entry);
                         log.scrollTop = log.scrollHeight;
                     }
-                    
+
                     if (unit.hp <= 0) this.handleDeath(unit, ambusher);
                     break;
                 }
@@ -201,35 +201,35 @@ document.addEventListener("DOMContentLoaded", () => {
                 let tU = this.units.find(x => x.q === n.q && x.r === n.r && x.hp > 0 && !x.isHidden);
                 if (tU && tU.faction !== unit.faction) enemiesAdj = true;
             });
-            if (!enemiesAdj) { unit.isHidden = true; if(unit.faction===1) unit.filter = 'opacity(0.5) sepia(100%)'; }
+            if (!enemiesAdj) { unit.isHidden = true; if (unit.faction === 1) unit.filter = 'opacity(0.5) sepia(100%)'; }
         }
 
         if (destHex && unit.hp > 0) {
-            if (destHex.terrain.id === 'ELECTRIC_WATER' && !isFlying) { unit.status = 'stun'; unit.mp = 0; if (typeof showPopup === 'function') showPopup("Zzz ⚡", unit, '#f1c40f'); } 
+            if (destHex.terrain.id === 'ELECTRIC_WATER' && !isFlying) { unit.status = 'stun'; unit.mp = 0; if (typeof showPopup === 'function') showPopup("Zzz ⚡", unit, '#f1c40f'); }
             else if (destHex.terrain.id === 'BURNING_FOREST') { unit.hp -= 15; if (typeof showPopup === 'function') showPopup("-15 🔥", unit, '#e74c3c'); if (unit.hp <= 0) this.handleDeath(unit, { name: 'As Chamas', faction: -1 }); }
         }
     };
 
     // 7. MÁGICA DA IMUNIDADE: Oculta quem está cavando sem causar Game Over!
     const origRunAITurn = window.runAITurn;
-    window.runAITurn = async function() {
+    window.runAITurn = async function () {
         let diggingUnits = game.units.filter(u => u.status === 'digging');
-        
+
         // Em vez de mudar a facção (o que mata o líder), jogamos eles para fora do mapa!
         // A IA vai calcular a distância como > 9000 e vai ignorá-los completamente.
-        diggingUnits.forEach(u => { 
-            u._realQ = u.q; u._realR = u.r; 
-            u.q = -9999; u.r = -9999; 
+        diggingUnits.forEach(u => {
+            u._realQ = u.q; u._realR = u.r;
+            u.q = -9999; u.r = -9999;
         });
-        
+
         // A IA joga o turno dela sem enxergar quem está debaixo da terra
-        if (origRunAITurn) await origRunAITurn.call(this); 
-        
+        if (origRunAITurn) await origRunAITurn.call(this);
+
         // Fim do turno da IA: devolve as criaturas para a posição exata do buraco
-        diggingUnits.forEach(u => { 
+        diggingUnits.forEach(u => {
             if (u._realQ !== undefined) {
-                u.q = u._realQ; u.r = u._realR; 
-                delete u._realQ; delete u._realR; 
+                u.q = u._realQ; u.r = u._realR;
+                delete u._realQ; delete u._realR;
             }
         });
     };
@@ -324,8 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
         game.activeSpell = null;
 
         // Define o alcance baseado no item
-        const ranges = { isca: 2, rede: 3, potion: 2, bandage: 2, scroll: 4, sphere: 3 };
-        game.itemRange = ranges[type];
+        const ranges = { isca: 2, picanha: 2, rede: 3, feromonio: 3, potion: 2, bandage: 2, scroll: 4, sphere: 3, adrenalina: 2, apito: 2, trap_stun: 2, trap_teleport: 2, silence: 3 }; game.itemRange = ranges[type];
 
         // Seleciona o Líder automaticamente
         const leader = game.units.find(u => u.isLeader && u.faction === 1);
@@ -511,6 +510,72 @@ document.addEventListener("DOMContentLoaded", () => {
                     game.fieldItems.sphere--;
                     if (typeof showPopup === 'function') showPopup("🔮 Caos Elemental!", u, '#00ffff');
                     itemUsed = true;
+                } else if (game.activeItem === 'picanha') {
+                    if (u) { showMessage("Selecione um chão vazio!", "#e74c3c"); return; }
+                    if (dist > 2) { showMessage("Muito longe para jogar a picanha!", "#e74c3c"); return; }
+                    cH.hasPremiumLure = true;
+                    game.fieldItems.picanha--;
+                    showMessage("Picanha posicionada!", "#e74c3c");
+                    itemUsed = true;
+
+                } else if (game.activeItem === 'feromonio') {
+                    if (!u || u.faction === FACTIONS.PLAYER.id) { showMessage("Selecione uma fera inimiga!", "#e74c3c"); return; }
+                    if (dist > 3) { showMessage("Fora do alcance!", "#e74c3c"); return; }
+                    u.status = 'bind'; u.pheromone = true;
+                    game.fieldItems.feromonio--;
+                    if (typeof showPopup === 'function') showPopup("Preso e Encantado!", u, '#ff69b4');
+                    itemUsed = true;
+
+                } else if (game.activeItem === 'adrenalina') {
+                    if (!u || u.faction !== FACTIONS.PLAYER.id) { showMessage("Selecione uma unidade aliada!", "#e74c3c"); return; }
+                    if (dist > 2) { showMessage("Fora do alcance!", "#e74c3c"); return; }
+                    u.hasAttacked = false; u.mp = u.maxMp;
+                    game.fieldItems.adrenalina--;
+                    if (typeof showPopup === 'function') showPopup("Turno Extra! 💉", u, '#f1c40f');
+                    itemUsed = true;
+
+                } else if (game.activeItem === 'apito') {
+                    if (!u || u.faction === FACTIONS.PLAYER.id) { showMessage("Selecione uma fera inimiga!", "#e74c3c"); return; }
+                    if (dist > 2) { showMessage("Fora de alcance!", "#e74c3c"); return; }
+                    if (su.hasUsedApitoThisTurn) { showMessage("Apito já usado neste turno!", "#e74c3c"); return; }
+
+                    game.fieldItems.apito--; itemUsed = true;
+                    su.hasUsedApitoThisTurn = true;
+
+                    // Guarda o estado original para o Apito não gastar a ação do líder
+                    let originalHasAttacked = su.hasAttacked;
+                    let originalMp = su.mp;
+
+                    let success = await game.attemptTame(su, u);
+
+                    su.hasAttacked = originalHasAttacked;
+                    su.mp = originalMp;
+
+                    if (!success && u.hp > 0) {
+                        let dmg = game.calcDmg(u, su);
+                        su.hp -= dmg;
+                        if (typeof showPopup === 'function') showPopup(`Revide do Apito: -${dmg}!`, su, '#e74c3c');
+                        if (su.hp <= 0) game.handleDeath(su, u);
+                    }
+
+                } else if (game.activeItem === 'trap_stun') {
+                    if (u) { showMessage("Selecione um chão vazio!", "#e74c3c"); return; }
+                    if (dist > 2) { showMessage("Muito longe!", "#e74c3c"); return; }
+                    cH.hasStunTrap = true; game.fieldItems.trap_stun--;
+                    showMessage("Armadilha Atordoante armada!", "#f1c40f"); itemUsed = true;
+
+                } else if (game.activeItem === 'trap_teleport') {
+                    if (u) { showMessage("Selecione um chão vazio!", "#e74c3c"); return; }
+                    if (dist > 2) { showMessage("Muito longe!", "#e74c3c"); return; }
+                    cH.hasTeleportTrap = true; game.fieldItems.trap_teleport--;
+                    showMessage("Armadilha de Teleporte armada!", "#9b59b6"); itemUsed = true;
+
+                } else if (game.activeItem === 'silence') {
+                    if (!u) { showMessage("Selecione uma unidade!", "#e74c3c"); return; }
+                    if (dist > 3) { showMessage("Muito longe!", "#e74c3c"); return; }
+                    u.status = 'silenced'; game.fieldItems.silence--;
+                    if (typeof showPopup === 'function') showPopup("Silenciado! 🔕", u, '#7f8c8d');
+                    itemUsed = true;
                 }
 
                 if (itemUsed) {
@@ -537,6 +602,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (game.activeSpell && su && game.currentTurn === FACTIONS.PLAYER.id) {
+                if (su.status === 'silenced') { showMessage("Você está silenciado e não pode lançar magias!", "#e74c3c"); return; }
                 const spell = SPELLS.find(s => s.id === game.activeSpell);
                 if (spell) {
                     let spRange = spell.range !== undefined ? spell.range : 99;
@@ -634,26 +700,26 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (Hex.distance(su, cH) <= (su.maxMp || 3)) {
                         su.status = null; su.isHidden = false; su.filter = 'none';
                         let targetU = game.units.find(x => x.q === cH.q && x.r === cH.r && x.hp > 0);
-                        
+
                         su.q = cH.q; su.r = cH.r;
-                        su.vq = cH.q; su.vr = cH.r; 
-                        
+                        su.vq = cH.q; su.vr = cH.r;
+
                         if (typeof showPopup === 'function') showPopup("Emergiu! 💥", su, '#e67e22');
 
                         if (targetU && targetU !== su) {
                             let pushNeighbors = Hex.getNeighbors(cH.q, cH.r);
                             let emptyN = pushNeighbors.find(n => !game.units.find(x => x.q === n.q && x.r === n.r) && game.map.get(`${n.q},${n.r}`));
-                            if (emptyN) { 
-                                targetU.q = emptyN.q; targetU.r = emptyN.r; 
-                                targetU.vq = emptyN.q; targetU.vr = emptyN.r; 
+                            if (emptyN) {
+                                targetU.q = emptyN.q; targetU.r = emptyN.r;
+                                targetU.vq = emptyN.q; targetU.vr = emptyN.r;
                             }
                             targetU.status = 'stun';
                             targetU.hp -= 20;
                             if (typeof showPopup === 'function') showPopup("-20 💥", targetU, '#e74c3c');
                             if (targetU.hp <= 0) game.handleDeath(targetU, su);
                         }
-                        
-                        su.hasAttacked = true; su.mp = 0; game.selectedUnit = null; 
+
+                        su.hasAttacked = true; su.mp = 0; game.selectedUnit = null;
                         game.reachableHexes.clear(); updateUI(); renderer.draw(); return;
                     } else {
                         if (typeof showMessage === 'function') showMessage("Muito longe para emergir!", "#e74c3c"); return;
@@ -678,7 +744,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     game.isAnimating = true;
                     if (game.tameMode && u.faction === FACTIONS.WILD.id && dist === 1) await game.attemptTame(su, u);
                     else if (!game.tameMode) await game.executeCombat(su, u);
-                    
+
                     game.selectedUnit = null; game.tameMode = false; game.isAnimating = false;
                     game.reachableHexes.clear(); // NOVO: Limpa a pintura após atacar!
 
@@ -686,12 +752,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     window.pendingAttackTarget = null; $('combat-forecast').style.display = 'none';
                     saveSnapshot(); su.mp -= game.reachableHexes.get(cH.getKey()); game.isAnimating = true; await game.moveUnit(su, cH.q, cH.r); game.isAnimating = false; game.calculateReachable(su);
                 } else {
-                    game.selectedUnit = u; 
+                    game.selectedUnit = u;
                     if (u) game.calculateReachable(u);
                     else game.reachableHexes.clear(); // NOVO: Limpa a pintura ao clicar no chão vazio!
                 }
             } else {
-                game.selectedUnit = u; 
+                game.selectedUnit = u;
                 if (u && u.faction === FACTIONS.PLAYER.id) game.calculateReachable(u);
                 else game.reachableHexes.clear(); // NOVO: Limpa a pintura ao selecionar aliado diferente!
             }

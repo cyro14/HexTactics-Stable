@@ -51,7 +51,6 @@ class Unit {
             if (arts.includes('art_atk')) { this.atk += 8; }
             if (this.isLeader && arts.includes('art_move')) { this.maxMp += 1; this.mp += 1; }
             if (this.isLeader && arts.includes('art_crystal')) { this.range += 1; this.atk += 5; }
-            if (arts.includes('art_wild_call')) { this.tags.push('WILD_CALL'); }
             if (arts.includes('art_umbral_seal') && !this.tags.includes('UMBRAL')) this.tags.push('UMBRAL');
             if (arts.includes('art_celestial_seal') && !this.tags.includes('CELESTIAL')) this.tags.push('CELESTIAL');
 
@@ -451,6 +450,7 @@ class Game {
             }
             if (typeof updateUI === 'function') updateUI(); if (renderer) renderer.draw();
         }
+
     }
 
     selectPlayerLeader() { const pL = this.units.find(u => u.faction === 1 && u.isLeader); if (pL) { this.selectedUnit = pL; this.calculateReachable(pL); } }
@@ -574,7 +574,15 @@ class Game {
         if (typeof showPopup === 'function') showPopup("☠ Eliminado!", victim, '#e74c3c');
         if (victim.faction === 1 && !victim.isLeader) { this.lastDeadAlly = new Unit({ ...victim }); }
 
-        if (killer && killer.faction === 1 && victim.faction !== 1) { killer.addXp(victim.isBoss ? 100 : 30); let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : []; if (arts.includes('art_wild_call')) { killer.addXp(10); } }
+        if (killer && killer.faction === 1 && victim.faction !== 1) {
+            killer.addXp(victim.isBoss ? 100 : 30); let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
+            
+            // INSÍGNIA DO BANDIDO
+            if (arts.includes('art_bandit_badge')) {
+                this.gold += 2;
+                if (typeof showPopup === 'function') showPopup("+2💰", killer, 'var(--gold-light)');
+            }
+        }
 
         if (killer && killer.name === 'Lord Vampiro' && killer.isLeader && victim.faction === 0) {
             let chance = (victim.baseName === 'Morcego' || victim.name === 'Morcego') ? 1.0 : 0.3;
@@ -647,13 +655,15 @@ class Game {
     }
 
     calculateTameChance(tamer, wild) {
+        if (wild.tameImmuneTurn === this.turnCount) return 0; // Trava do Laço do Predador
         let cC = 1.1 - (wild.hp / wild.maxHp);
         if (wild.isBoss) cC -= 0.35;
         let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
         if (tamer.faction === 1 && arts.includes('art_tame')) cC += 0.20;
+        if (tamer.faction === 1 && arts.includes('art_predator_lasso')) cC += 0.30; // Artefato Novo
 
-        if (tamer.baseName === 'Almirante' && wild.tags.includes('ABYSSAL')) cC += 0.40;
-        if (tamer.baseName === 'Arqueira' && wild.tags.includes('SILVESTRE')) cC += 0.40;
+        if (tamer.baseName === 'Almirante' && wild.tags.includes('ABYSSAL')) cC += 0.20;
+        if (tamer.baseName === 'Arqueira' && wild.tags.includes('SILVESTRE')) cC += 0.20;
 
         if (tamer.faction === 1 && typeof countKingdomBuildings === 'function') {
             if (wild.level === 1 && wild.hp === wild.maxHp && window.countKingdomBuildings('PARK') > 0) cC += 0.40;
@@ -663,15 +673,24 @@ class Game {
 
         let willBreakMod = 1.0;
         if (['stun', 'bind', 'sleep', 'paralyzed', 'chilled'].includes(wild.status)) willBreakMod = 1.5;
+        if (wild.pheromone) willBreakMod = 2.0;
 
         let lureMod = 1.0;
         let hexLure = this.map.get(`${wild.q},${wild.r}`);
-        if (hexLure && hexLure.hasLure) lureMod = 2.0;
+        if (hexLure) {
+            if (hexLure.hasPremiumLure) lureMod = 3.0; // Picanha Triplica!
+            else if (hexLure.hasLure) lureMod = 2.0;
+        }
 
         return cC * willBreakMod * lureMod;
     }
 
     async attemptTame(tamer, wild) {
+        if (tamer.status === 'silenced') { 
+            if (typeof showPopup === 'function') showPopup("Silenciado!", tamer, '#7f8c8d'); 
+            return false; 
+        }
+
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true; this.isAnimating = true; let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
         try {
             tamer.hasAttacked = true; tamer.mp = 0;
@@ -684,8 +703,8 @@ class Game {
                 if (typeof showPopup === 'function') showPopup("Vontade Quebrada!", wild, '#9b59b6');
             }
             let hexLure = this.map.get(`${wild.q},${wild.r}`);
-            if (hexLure && hexLure.hasLure) {
-                hexLure.hasLure = false; // A fera come a isca
+            if (hexLure && (hexLure.hasLure || hexLure.hasPremiumLure)) {
+                hexLure.hasLure = false; hexLure.hasPremiumLure = false; 
                 if (typeof showPopup === 'function') showPopup("Isca Devorada!", wild, '#e67e22');
             }
 
@@ -742,6 +761,16 @@ class Game {
                 if (typeof showPopup === 'function') showPopup("Falhou!", wild, '#e74c3c');
                 if (typeof addLog === 'function') addLog(`✗ ${tamer.name} falhou ao domar.`, '#777');
                 wild.alerted = true;
+
+                // REVIDE DO LAÇO DO PREDADOR
+                if (tamer.faction === 1 && arts.includes('art_predator_lasso')) {
+                    let dmg = this.calcDmg(wild, tamer) * 2;
+                    tamer.hp -= dmg;
+                    wild.tameImmuneTurn = this.turnCount; // Imune este turno!
+                    if (typeof showPopup === 'function') showPopup(`Predador: -${dmg}!`, tamer, '#e74c3c');
+                    if (tamer.hp <= 0) this.handleDeath(tamer, wild);
+                }
+
                 if (typeof sleep === 'function') await sleep(600);
                 return false;
             }
@@ -832,7 +861,7 @@ class Game {
         if (typeof showPopup === 'function') showPopup("☠ Eliminado!", victim, '#e74c3c');
         if (victim.faction === 1 && !victim.isLeader) { this.lastDeadAlly = new Unit({ ...victim }); }
 
-        if (killer && killer.faction === 1 && victim.faction !== 1) { killer.addXp(victim.isBoss ? 100 : 30); let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : []; if (arts.includes('art_wild_call')) { killer.addXp(10); } }
+        if (killer && killer.faction === 1 && victim.faction !== 1) { killer.addXp(victim.isBoss ? 100 : 30); let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];}
 
 
         // Lógica do Necromante (Doma Feras da Natureza ao abater)
@@ -954,6 +983,17 @@ class Game {
         let sys = this.getSynergies(fId);
         if (sys['CELESTIAL'] >= 3) { this.units.filter(u => u.faction === fId && u.tags.includes('CELESTIAL')).forEach(cel => { Hex.getNeighbors(cel.q, cel.r).forEach(n => { let ally = this.getUnitAt(n.q, n.r); if (ally && ally.faction === fId) { let h = Math.min(ally.maxHp - ally.hp, 10); if (h > 0) { ally.hp += h; if (typeof showPopup === 'function') showPopup(`+${h}✨`, ally, '#fffbc2'); } ally.status = null; } }); }); }
         this.units.filter(u => u.faction === fId).forEach(u => {
+            // Reseta a restrição do Apito
+            u.hasUsedApitoThisTurn = false;
+
+            // Dano Contínuo das Asas de Ícaro
+            let hasIcarus = u.equipment && u.equipment.some(e => e.id === 'WINGS_ICARUS');
+            if (hasIcarus && u.hp > 0) {
+                u.hp -= 5;
+                if (typeof showPopup === 'function') showPopup("-5 🪽", u, '#e74c3c');
+                if (u.hp <= 0) this.handleDeath(u, {name:'Maldição de Ícaro', faction:-1});
+            }
+            
             if (u.baseName === 'Troll' && !u.hasAttacked) {
                 const hex = this.map.get(`${u.q},${u.r}`);
                 if (hex && (hex.terrain.id === 'MOUNTAIN' || hex.terrain.id === 'FOREST')) {
@@ -1030,12 +1070,15 @@ class Renderer {
             if (hex.isCrystal) { this.hexPath(ctx, p.x, p.y, this.hexSize - 1); ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = 'rgba(0,255,255,0.2)'; ctx.fill(); }
             if (this.game.reachableHexes.has(hex.getKey())) { ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3; ctx.stroke(); } else { ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1; ctx.stroke(); }
             if (hex.terrain.icon) { ctx.save(); ctx.globalAlpha = 0.8; ctx.font = `${this.hexSize * 0.7}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(hex.terrain.icon, p.x, p.y); ctx.restore(); }
-            if (hex.hasLure) {
-                ctx.font = `${this.hexSize * 0.7}px sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
+            if (hex.hasPremiumLure) {
+                ctx.font = `${this.hexSize * 0.7}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText("🥩", p.x, p.y + (this.hexSize * 0.2));
+            } else if (hex.hasLure) {
+                ctx.font = `${this.hexSize * 0.7}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText("🍖", p.x, p.y + (this.hexSize * 0.2));
             }
+            if (hex.hasStunTrap) { ctx.font = `${this.hexSize * 0.5}px sans-serif`; ctx.fillText("⚡", p.x, p.y + (this.hexSize * 0.2)); }
+            if (hex.hasTeleportTrap) { ctx.font = `${this.hexSize * 0.5}px sans-serif`; ctx.fillText("🌀", p.x, p.y + (this.hexSize * 0.2)); }
             if (hex.terrain.id === 'VILLAGE' && hex.owner !== null) { ctx.fillStyle = hex.owner === 1 ? '#4a9edd' : '#c0392b'; ctx.beginPath(); ctx.arc(p.x + this.hexSize * 0.4, p.y - this.hexSize * 0.3, 6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
 
         });

@@ -456,8 +456,9 @@ const ARTIFACTS = [
     { id: 'art_blood', name: 'Colar Vampírico', icon: '🩸', desc: 'Tropas ganham +20% Roubo de Vida.', cost: 22, rarity: 'epic', color: 'var(--rarity-epic)' },
     { id: 'art_umbral_seal', name: 'Selo do Umbral', icon: '👁️‍🗨️', desc: 'Todas as suas feras ganham a tag Umbral.', cost: 22, rarity: 'epic', color: 'var(--rarity-epic)' },
     { id: 'art_celestial_seal', name: 'Selo Celestial', icon: '👼', desc: 'Todas as suas feras ganham a tag Celestial.', cost: 22, rarity: 'epic', color: 'var(--rarity-epic)' },
-    { id: 'art_wild_call', name: 'Chamado Selvagem', icon: '📯', desc: 'Aliados ganham +10 XP no fim da batalha.', cost: 25, rarity: 'legendary', color: 'var(--rarity-legendary)' },
-    { id: 'art_omega', name: 'Coração do Infinito', icon: '🌌', desc: '+20 HP, +5 ATK e +1 Limite de Exército.', cost: 999, rarity: 'legendary', color: '#ff00ff' }
+    { id: 'art_omega', name: 'Coração do Infinito', icon: '🌌', desc: '+20 HP, +5 ATK e +1 Limite de Exército.', cost: 999, rarity: 'legendary', color: '#ff00ff' },
+    { id: 'art_predator_lasso', name: 'O Laço do Predador', icon: '➰', desc: '+30% chance de Domar. Falha: O alvo revida com DANO DUPLO e fica imune à doma no turno.', cost: 30, rarity: 'epic', color: 'var(--rarity-epic)' },
+    { id: 'art_bandit_badge', name: 'Insígnia do Bandido', icon: '🦹', desc: 'Recebe +2 de Ouro ao abater unidades inimigas.', cost: 20, rarity: 'rare', color: 'var(--rarity-rare)' },
 ];
 
 const ITEMS = {
@@ -480,7 +481,13 @@ const ITEMS = {
     'KEY': { icon: '🗝️', name: 'Chave', desc: 'Abre Baús.', type: 'instant', f: async (u, g) => { if (u.faction === 1) { g.hasKey = true; return true; } return false; } },
     'CHEST': { icon: '🪎', name: 'Baú', desc: 'Encontrou +15 Ouro.', type: 'instant', f: async (u, g) => { if (u.faction === 1 && g.hasKey) { g.hasKey = false; g.gold += 15; return true; } return false; } },
     'EGG': { icon: '🪺', name: 'Ovo', desc: 'Ovo de Monstro.', type: 'instant', f: async (u, g) => { if (u.faction === 1) { g.hasEgg = true; return true; } return false; } },
-    'POTION': { icon: '🧪', name: 'Poção Menor', desc: 'Cura 30 HP.', type: 'instant', f: async (u, g) => { u.hp = Math.min(u.maxHp, u.hp + 30); return true; } }
+    'POTION': { icon: '🧪', name: 'Poção Menor', desc: 'Cura 30 HP.', type: 'instant', f: async (u, g) => { u.hp = Math.min(u.maxHp, u.hp + 30); return true; } },
+    'WINGS_ICARUS': { icon: '🪽', name: 'Asas de Ícaro', desc: 'Ganha atributo Voador, mas recebe 5 de dano puro todo turno.', type: 'equip', onEquip: (u, lvl) => { if (!u.abilities.includes('flying')) u.abilities.push('flying'); }, onUnequip: (u, lvl) => { u.abilities = u.abilities.filter(a => a !== 'flying'); } },
+    'CATALYST': { icon: '💠', name: 'Catalisador', desc: 'Desperta uma habilidade extra baseada na tag da fera.', type: 'equip', onEquip: (u, lvl) => { 
+        let tagMap = { 'FIRE': 'burn', 'ICE': 'freeze', 'VENOM': 'poison', 'ROCK': 'counter', 'SAND': 'dodge', 'CARAPACE': 'counter', 'WING': 'swift', 'SILVESTRE': 'swift', 'UMBRAL': 'lifesteal', 'CELESTIAL': 'leadership', 'PRIMAL': 'corte_amplo', 'STALKER': 'hit_run', 'ABYSSAL': 'dodge' }; 
+        let t = u.tags && u.tags[0]; let ab = t ? tagMap[t] : 'dodge'; 
+        if(ab && !u.abilities.includes(ab)) u.abilities.push(ab); u._catalystAb = ab; 
+    }, onUnequip: (u, lvl) => { if(u._catalystAb) u.abilities = u.abilities.filter(a => a !== u._catalystAb); } },
 };
 
 const NODE_TYPES = {
