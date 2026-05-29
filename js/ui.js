@@ -660,11 +660,13 @@ function updateUI() {
 // 4. LOJA, GERENCIAMENTO E INVENTÁRIO
 // ==========================================
 function generateShopItems() {
-    shopItems = []; let arts = getActiveArtifacts();
-
+    shopItems = []; 
+    let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
     let bLvl = game && game.currentLevel ? game.currentLevel : 1;
 
-    // --- LOJA EXCLUSIVA DO MODO DUELO ---
+    // ==========================================
+    // 1. LOJA EXCLUSIVA DO MODO DUELO
+    // ==========================================
     if (game && game.isDuel) {
         let tags = game.leaderData.tags || [];
         let pool = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW].filter(b => b.tags && b.tags.some(t => tags.includes(t)) && !b.minLevel);
@@ -674,13 +676,27 @@ function generateShopItems() {
         for (let i = 0; i < 6; i++) {
             let rB = pool[Math.floor(Math.random() * pool.length)];
             shopItems.push({
-                name: `Contrato: ${rB.name}`, icon: rB.e, desc: `Adiciona ${rB.name} à Box.`, cost: 10, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none', action: async () => {
-                    rosterMemory.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: rB.name, baseName: rB.name, emoji: rB.e, hp: rB.hp, maxHp: rB.hp, mp: rB.mp, maxMp: rB.mp, atk: rB.atk, range: rB.range, level: 1, abilities: [...rB.abilities], isNew: true, filter: rB.filter, tags: rB.tags || [], fav: rB.fav || [] })); return true;
+                name: `Contrato: ${rB.name}`, icon: rB.e, desc: `Adiciona ${rB.name} à Box.`, cost: 10, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none', 
+                action: async () => {
+                    // Mágica das Passivas no Duelo!
+                    let newAbilities = [...(rB.abilities || [])];
+                    let newTags = [...(rB.tags || [])];
+                    let newFilter = rB.filter || 'none';
+
+                    if (game && game.leaderData) {
+                        if (game.leaderData.name === 'Piromante' && !newAbilities.includes('burn')) newAbilities.push('burn');
+                        if (game.leaderData.name === 'Doutor da Praga' && !newTags.includes('POISON')) {
+                            newTags.push('POISON');
+                            newFilter = newFilter === 'none' ? 'sepia(100%) hue-rotate(50deg) saturate(200%)' : newFilter + ' sepia(100%) hue-rotate(50deg) saturate(200%)';
+                        }
+                    }
+
+                    rosterMemory.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: rB.name, baseName: rB.name, emoji: rB.e, hp: rB.hp, maxHp: rB.hp, mp: rB.mp, maxMp: rB.mp, atk: rB.atk, range: rB.range, level: 1, abilities: newAbilities, isNew: true, filter: newFilter, tags: newTags, fav: rB.fav || [] })); 
+                    return true;
                 }
             });
         }
-        // Consumíveis e Equipamentos Fixos de Duelo
-        //shopItems.push({ name: "Poção de Exército", icon: "🧪", desc: "Cura 30 HP de todos.", cost: 4, rarity: 'common', color: 'var(--rarity-common)', type: 'consumable', filter: 'none', action: async () => { rosterMemory.forEach(u => u.hp = Math.min(u.maxHp, u.hp + 30)); deployedRoster.forEach(u => u.hp = Math.min(u.maxHp, u.hp + 30)); return true; } });
+        
         shopItems.push({ name: "Fruta da Evolução", icon: "🍎", desc: "+100 XP a uma fera.", cost: 8, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: 'none', action: async () => { let m = [...rosterMemory, ...deployedRoster].filter(u => !u.isLeader); if (m.length === 0) { alert("Nenhuma fera!"); return false; } let r = await window.promptSelectUnit("Quem receberá XP?", m); if (r) { r.addXp(100); return true; } return false; } });
 
         let gearPool = ['SWORD', 'SHIELD', 'BOOTS', 'BOW'];
@@ -692,9 +708,11 @@ function generateShopItems() {
 
         return; // ENCERRA A FUNÇÃO AQUI SE FOR DUELO
     }
-    // --- FIM DA LOJA DE DUELO ---
 
-    // --- 1. CONTRATOS DE FERAS COMUNS E CHEFES ---
+
+    // ==========================================
+    // 2. LOJA PADRÃO (CAMPANHA E ROGUELITE)
+    // ==========================================
     const rB = BEASTS.LAND[Math.floor(Math.random() * BEASTS.LAND.length)];
     let bName = rB.name;
     let bAtk = rB.atk + (bLvl - 1) * 6;
@@ -704,7 +722,48 @@ function generateShopItems() {
         bName = bLvl === 2 ? evArr[0] : (evArr[1] || evArr[0]);
     }
 
-    shopItems.push({ name: `Contrato: ${bName}`, icon: rB.e, desc: `Adiciona fera Lv${bLvl} à Box.`, cost: 10 + (bLvl * 2), rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none', action: async () => { let newAbilities = [...rB.abilities]; if (game && game.leaderData.name === 'Piromante' && !newAbilities.includes('burn')) { newAbilities.push('burn'); } rosterMemory.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: bName, baseName: rB.name, emoji: rB.e, hp: bHp, maxHp: bHp, mp: rB.mp, maxMp: rB.mp, atk: bAtk, range: rB.range, level: bLvl, abilities: newAbilities, isNew: true, filter: rB.filter, tags: rB.tags || [], fav: rB.fav || [] })); return true; } });
+    // A AÇÃO DE COMPRA DA FERA CORRIGIDA! Tudo acontece aqui dentro:
+    shopItems.push({ 
+        name: `Contrato: ${bName}`, icon: rB.e, desc: `Adiciona fera Lv${bLvl} à Box.`, cost: 10 + (bLvl * 2), rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none', 
+        action: async () => { 
+            let newAbilities = [...(rB.abilities || [])]; 
+            let newTags = [...(rB.tags || [])];
+            let newFilter = rB.filter || 'none';
+
+            if (game && game.leaderData) {
+                // --- PASSIVA DO PIROMANTE ---
+                if (game.leaderData.name === 'Piromante' && !newAbilities.includes('burn')) { 
+                    newAbilities.push('burn'); 
+                }
+
+                // --- PASSIVA DO DOUTOR DA PRAGA ---
+                if (game.leaderData.name === 'Doutor da Praga' && !newTags.includes('POISON')) {
+                    newTags.push('POISON');
+                    if (newFilter === 'none') {
+                        newFilter = 'sepia(100%) hue-rotate(50deg) saturate(200%)';
+                    } else {
+                        newFilter += ' sepia(100%) hue-rotate(50deg) saturate(200%)';
+                    }
+                }
+            }
+
+            // Cria a unidade e envia para a Box SOMENTE quando o jogador pagar e clicar!
+            rosterMemory.push(new Unit({
+                q: 0, r: 0, faction: 1, isLeader: false,
+                name: bName, baseName: rB.name, emoji: rB.e,
+                hp: bHp, maxHp: bHp, mp: rB.mp, maxMp: rB.mp,
+                atk: bAtk, range: rB.range, level: bLvl,
+                abilities: newAbilities,
+                isNew: true,
+                filter: newFilter, 
+                tags: newTags,     
+                fav: rB.fav || []
+            }));
+
+            return true; 
+        } 
+    });
+
 
     // Contrato Épico (Chefe) - 15% de chance de aparecer na loja!
     if (Math.random() < 0.15) {

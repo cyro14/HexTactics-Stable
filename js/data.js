@@ -16,7 +16,7 @@ const getActiveArtifacts = () => { return (game && game.isRoguelite) ? activeArt
 // DADOS DO JOGO (TERRENOS, TAGS E MAGIAS)
 // ==========================================
 const TERRAINS = {
-    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#3a5a2a'},
+    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#3a5a2a' },
     FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#23411b', icon: '🌲' },
     MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#4a554a', icon: '⛰️' },
     WATER: { id: 'WATER', name: 'Água', cost: 2, def: -0.15, color: '#1c4568', icon: '🌊' },
@@ -24,9 +24,9 @@ const TERRAINS = {
     DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#d2b48c', icon: '🏜️' },
     VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#8a753c', icon: '🏘️' },
     CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#505860', icon: '🏰' },
-    ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada',cost: 2, def: -0.50, col: '#1c4568', icon: '⚡' },
-    BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas',cost: 2, def: -0.50, col: '#23411b', icon: '🔥' }, 
-    ASHES: { id: 'ASHES', name: 'Cinzas', col: '#555555', cost: 2, def: -0.50, icon: '💨'}
+    ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada', cost: 2, def: -0.50, col: '#1c4568', icon: '⚡' },
+    BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas', cost: 2, def: -0.50, col: '#23411b', icon: '🔥' },
+    ASHES: { id: 'ASHES', name: 'Cinzas', col: '#555555', cost: 2, def: -0.50, icon: '💨' }
 };
 
 const TAGS = {
@@ -106,7 +106,7 @@ const SPELLS = [
     { id: 'sl_phoenix_rebirth', name: 'Renascimento Fênix', icon: '🔱', level: 5, tags: ['CELESTIAL', 'FIRE'], type: 'def', range: 99, cost: { CELESTIAL: 3, FIRE: 2 }, desc: 'Cura TODOS os aliados para HP Máx.', effect: async (g, c, t) => { g.units.filter(u => u.faction === c.faction).forEach(u => { u.hp = u.maxHp; u.status = null; showPopup("🔱 PLENO", u, '#fffbc2'); }); return true; } },
     { id: 'sl_world_freeze', name: 'Congelamento Mundial', icon: '🧊', level: 5, tags: ['ICE'], type: 'atk', range: 99, cost: { ICE: 4 }, desc: 'Atordoa TODOS os inimigos por 1 turno e causa 15 dano.', effect: async (g, c, t) => { g.units.filter(u => u.faction !== c.faction).forEach(u => { u.status = 'stun'; u.hp -= 15; showPopup("🧊 CONGELADO", u, '#00ffff'); if (u.hp <= 0) g.handleDeath(u, c); }); g.checkWin(); return true; } },
     { id: 'sl_soul_harvest', name: 'Colheita de Almas', icon: '⚡', level: 5, tags: ['UMBRAL', 'VENOM'], type: 'atk', range: 99, cost: { UMBRAL: 3, VENOM: 2 }, desc: 'Drena 25% do HP atual de TODOS inimigos.', effect: async (g, c, t) => { let total = 0; g.units.filter(u => u.faction !== c.faction && u.hp > 0).forEach(u => { let d = Math.floor(u.hp * 0.25); u.hp -= d; total += d; showPopup(`⚡ -${d}`, u, '#8e44ad'); if (u.hp <= 0) g.handleDeath(u, c); }); c.hp = Math.min(c.maxHp, c.hp + total); showPopup(`⚡ +${total}`, c, '#8e44ad'); g.checkWin(); return true; } },
-{
+    {
         id: 'sl_marca_cacador', name: 'Marca do Caçador', icon: '🎯',
         desc: 'Marca a presa. O alvo recebe o DOBRO de dano de aliados com a tag STALKER!',
         level: 1, type: 'def', range: 4, tags: ['STALKER', 'PRIMAL'], cost: { 'STALKER': 1 },
@@ -126,14 +126,14 @@ const SPELLS = [
             caster.status = 'digging';
             caster.isHidden = true;
             caster.filter = caster.faction === 1 ? 'opacity(0.5) grayscale(100%)' : 'opacity(0)';
-            
+
             // TRAVA DE TURNO: Grava em qual rodada ele começou a cavar
             caster._digTurn = game.turnCount;
-            
+
             // Força a finalização do turno da unidade (ele não pode andar debaixo da terra no mesmo turno)
             caster.hasAttacked = true;
             caster.mp = 0;
-            
+
             if (typeof showPopup === 'function') showPopup("Escavou! 🕳️", caster, '#7f8c8d');
             return true;
         }
@@ -217,8 +217,39 @@ const SPELLS = [
             }
             return true;
         }
+    },
+
+    {
+        id: 'sl_miasma_curativo', name: 'Miasma Alquímico', icon: '🧪',
+        desc: 'Nuvem tóxica em área 1. Inimigos recebem 20 de dano. Aliados com a tag POISON recuperam 30 HP.',
+        level: 1, type: 'atk', range: 3, tags: ['VENOM'], cost: { 'VENOM': 2 }, targetTerrain: true,
+        effect: async (game, caster, target, targetHex) => {
+            // Pega todos no raio de 1 hexágono do alvo/chão clicado
+            let affectedHexes = [targetHex, ...Hex.getNeighbors(targetHex.q, targetHex.r).map(n => game.map.get(`${n.q},${n.r}`))].filter(Boolean);
+
+            for (let h of affectedHexes) {
+                let u = game.getUnitAt(h.q, h.r);
+                if (u && u.hp > 0) {
+                    if (u.faction === caster.faction) {
+                        // Se for aliado E tiver a tag de veneno, cura!
+                        if (u.tags && u.tags.includes('POISON')) {
+                            u.hp = Math.min(u.maxHp, u.hp + 30);
+                            if (typeof showPopup === 'function') showPopup("+30 🧪", u, '#2ecc71');
+                        }
+                    } else {
+                        // Se for inimigo, dano neles!
+                        u.hp -= 20;
+                        if (typeof showPopup === 'function') showPopup("-20 ☠️", u, '#9b59b6');
+                        if (u.hp <= 0) game.handleDeath(u, caster);
+                    }
+                }
+            }
+            return true;
+        }
     }
 ];
+
+
 
 const LEADER_GRIMOIRE_TAGS = {
     'mage': ['MYSTIC'],
@@ -250,7 +281,7 @@ const LEADERS = [
     { id: 'orc', name: 'Chefe Orc', emoji: '👹', hp: 80, atk: 15, mp: 5, range: 1, limit: 15, abilities: ['leadership'], desc: 'Líder de Horda (+10% ATK por aliado).', tags: ['PRIMAL'] },
     { id: 'necro', name: 'Necromante', emoji: '💀', hp: 55, atk: 10, mp: 4, range: 2, limit: 8, desc: 'Exército Morto (Domina como Umbral ao matar).', tags: ['UMBRAL'] },
     { id: 'paladin', name: 'Paladina', emoji: '🛡️', hp: 85, atk: 10, mp: 4, range: 1, limit: 6, abilities: ['leadership'], desc: 'Unidades compradas ganham a tag Celestial. Aliados até 2 hexes curam 2 HP por turno.', tags: ['CELESTIAL', 'CARAPACE'] },
-    { id: 'ranger', name: 'Arqueira', emoji: '🏹', hp: 65, atk: 14, mp: 5, range: 3, limit: 6, abilities: ['camouflage'],desc: 'Alcance longo e Doma feras Silvestres facilmente. Silvestres adjacentes a ela recebem +1 de Alcance.', tags: ['SILVESTRE', 'STALKER'], fav: ['FOREST'] },
+    { id: 'ranger', name: 'Arqueira', emoji: '🏹', hp: 65, atk: 14, mp: 5, range: 3, limit: 6, abilities: ['camouflage'], desc: 'Alcance longo e Doma feras Silvestres facilmente. Silvestres adjacentes a ela recebem +1 de Alcance.', tags: ['SILVESTRE', 'STALKER'], fav: ['FOREST'] },
     { id: 'pyro', name: 'Piromante', emoji: '🔥', hp: 50, atk: 16, mp: 4, range: 2, limit: 6, desc: 'Feras compradas e domadas vêm com queimadura e ganham a tag Ígnea.', tags: ['FIRE'], abilities: ['burn'] },
     { id: 'admiral', name: 'Almirante', emoji: '🏴‍☠️', hp: 65, atk: 13, mp: 5, range: 1, limit: 7, desc: 'Custo de movimento na Água é livre (1). Encontra e doma mais feras Abissais.', tags: ['ABYSSAL'], fav: ['WATER'] },
     { id: 'vampire', name: 'Lord Vampiro', emoji: '🧛🏻‍♂️', hp: 65, atk: 16, mp: 6, range: 1, limit: 7, desc: 'Roubo de vida. Doma feras abatidas transformando em Rastreadores. Fome se não atacar.', tags: ['UMBRAL', 'STALKER'], abilities: ['lifesteal'] },
@@ -268,7 +299,44 @@ const LEADERS = [
     { id: 'L_TREX', name: 'T-Rex', emoji: '🦖', hp: 150, maxHp: 150, mp: 3, maxMp: 2, atk: 25, range: 1, tags: ['PRIMAL', 'ROCK', 'STALKER'], fav: ['DIRT'], desc: 'Kaiju. Bate em todos à frente. A cada passo, esmaga florestas e vilas, tornando-as planícies.' },
     { id: 'L_ICE_QUEEN', name: 'Rainha do Gelo', emoji: '👸🏼', hp: 75, maxHp: 75, mp: 3, maxMp: 3, atk: 12, range: 2, tags: ['ICE'], fav: ['SNOW'], filter: 'hue-rotate(180deg)', abilities: ['frost_armor', 'freeze'], desc: 'Magia glacial. Inimigos que a atacam corpo-a-corpo sofrem Congelamento (Chilled) instantâneo.' },
     { id: 'L_HARPY', name: 'Matriarca Harpia', emoji: '🦅', hp: 65, maxHp: 65, mp: 5, maxMp: 5, atk: 14, range: 1, tags: ['WING', 'STALKER'], fav: ['MOUNTAIN'], filter: 'saturate(150%)', abilities: ['flying', 'dodge'], desc: 'Senhora dos ventos. Ignora custos de terreno pesado (sempre move por 1 MP) e possui esquiva natural alta.' },
-    { id: 'shaman', name: 'Xamã da Tempestade', emoji: '🧙‍♂️', desc: 'Mestre dos raios. Seus feitiços ricocheteiam e causam caos nas fileiras inimigas.', hp: 75, mp: 4, atk: 12, range: 2, limit: 6, tags: ['ELECTRIC', 'MYSTIC'], fav: ['MOUNTAIN'], filter: 'hue-rotate(45deg) saturate(200%)' }
+    { id: 'shaman', name: 'Xamã da Tempestade', emoji: '🧙‍♂️', desc: 'Mestre dos raios. Seus feitiços ricocheteiam e causam caos nas fileiras inimigas.', hp: 75, mp: 4, atk: 12, range: 2, limit: 6, tags: ['ELECTRIC', 'MYSTIC'], fav: ['MOUNTAIN'], filter: 'hue-rotate(45deg) saturate(200%)', knownSpells: ['sl_furia_tempestade'] },
+    {
+        id: 'ld_dragao_galatico', name: 'Dragão Galático', emoji: '🌌',
+        maxHp: 180, hp: 180, maxMp: 5, atk: 45, range: 1, limit: 6,
+        tags: ['CELESTIAL', 'FIRE'], abilities: ['flying'],
+        desc: 'Uma entidade cósmica. Sobrevoa os perigos e incendeia o campo.',
+    },
+    {
+        id: 'ld_gargula', name: 'Gárgula Anciã', emoji: '🗿',
+        maxHp: 200, hp: 200, maxMp: 3, atk: 35, range: 1, limit: 5,
+        tags: ['ROCK', 'WINGED'], abilities: ['flying', 'counter'],
+        desc: 'Estátua viva de altíssima defesa. Voa e pune quem a ataca de perto.',
+    },
+    {
+        id: 'ld_golem_gelo', name: 'Golem de Gelo', emoji: '🧊',
+        maxHp: 250, hp: 250, maxMp: 3, atk: 30, range: 1, limit: 5,
+        tags: ['ROCK', 'ICE'], abilities: [],
+        desc: 'Um colosso glacial. Caminha devagar, mas congela os mares.',
+    },
+    {
+        id: 'ld_porco_eletrico', name: 'Porco-Espinho Elétrico', emoji: '🦔',
+        maxHp: 140, hp: 140, maxMp: 4, atk: 25, range: 1, limit: 7,
+        tags: ['CARAPACE', 'ELECTRIC'], abilities: ['counter'],
+        desc: 'Agulhas carregadas. Eletrocuta a água para criar armadilhas pelo mapa.',
+    },
+    {
+        id: 'ld_escaravelho', name: 'Escaravelho das Pragas', emoji: '🪲',
+        maxHp: 160, hp: 160, maxMp: 4, atk: 35, range: 1, limit: 6,
+        tags: ['SAND', 'POISON'], abilities: [],
+        desc: 'Emerge das areias espalhando toxinas mortais pelo campo.',
+    },
+    {
+        id: 'ld_doutor_praga', name: 'Doutor da Praga', emoji: '🐦‍⬛',
+        maxHp: 130, hp: 130, maxMp: 4, atk: 20, range: 2, limit: 8,
+        tags: ['VENOM'], abilities: ['poison'],
+        desc: 'Mestre alquimista. Todas as feras aliadas compradas se tornam Venenosas.',
+        knownSpells: ['sl_miasma_curativo'] // Magia nova abaixo!
+    }
 ];
 
 const FACTIONS = { WILD: { id: 0 }, PLAYER: { id: 1 }, AI: { id: 2 } };
@@ -354,7 +422,7 @@ const BEASTS = {
         { e: '🦈', name: 'Tubarão', hp: 45, atk: 18, mp: 4, range: 1, abilities: ['lifesteal', 'dive'], minLevel: 2, filter: 'none', tags: ['STALKER', 'ABYSSAL'], fav: ['WATER'] },
         { e: '🦑', name: 'Kraken', hp: 75, atk: 12, mp: 2, range: 1, abilities: ['bind', 'dive'], minLevel: 3, filter: 'none', tags: ['MYSTIC', 'ABYSSAL'], fav: ['WATER'] },
         { e: '🦀', name: 'Caranguejo Blindado', hp: 65, atk: 12, mp: 2, range: 1, abilities: ['counter'], minLevel: 2, filter: 'none', tags: ['CARAPACE', 'ABYSSAL'], fav: ['WATER'] },
-        { e: '🐍', name: 'Enguia Elétrica', hp: 35, atk: 15, mp: 4, range: 1, abilities: ['electric','dive'], minLevel: 3, filter: 'hue-rotate(200deg)', tags: ['ELECTRIC', 'ABYSSAL'], fav: ['WATER'] },
+        { e: '🐍', name: 'Enguia Elétrica', hp: 35, atk: 15, mp: 4, range: 1, abilities: ['electric', 'dive'], minLevel: 3, filter: 'hue-rotate(200deg)', tags: ['ELECTRIC', 'ABYSSAL'], fav: ['WATER'] },
         { e: '🐸', name: 'Sapo', hp: 25, atk: 9, mp: 3, range: 1, abilities: ['poison'], minLevel: 1, filter: 'none', tags: ['VENOM', 'ABYSSAL'], fav: ['WATER'] },
         { e: '🦭', name: 'Morsa', hp: 60, mp: 2, atk: 14, range: 1, abilities: ['crystal_skin', 'dive'], filter: 'none', tags: ['ICE', 'ABYSSAL'], fav: ['WATER', 'SNOW'] }],
 
