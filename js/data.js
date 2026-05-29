@@ -321,7 +321,7 @@ const LEADERS = [
     {
         id: 'ld_porco_eletrico', name: 'Porco-Espinho Elétrico', emoji: '🦔',
         maxHp: 140, hp: 140, maxMp: 4, atk: 25, range: 1, limit: 7,
-        tags: ['CARAPACE', 'ELECTRIC'], abilities: ['counter','eletric],
+        tags: ['CARAPACE', 'ELECTRIC'], abilities: ['counter','eletric'],
         desc: 'Agulhas carregadas. Eletrocuta a água para criar armadilhas pelo mapa.',
     },
     {
