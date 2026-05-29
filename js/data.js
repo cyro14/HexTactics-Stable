@@ -109,7 +109,7 @@ const SPELLS = [
     {
         id: 'sl_marca_cacador', name: 'Marca do Caçador', icon: '🎯',
         desc: 'Marca a presa. O alvo recebe o DOBRO de dano de aliados com a tag STALKER!',
-        level: 1, type: 'def', range: 4, tags: ['STALKER', 'PRIMAL'], cost: { 'STALKER': 1 },
+        level: 1, type: 'atk', range: 4, tags: ['STALKER', 'PRIMAL'], cost: { 'STALKER': 1 },
         effect: async (game, caster, target) => {
             if (target) {
                 target.status = 'marked';
