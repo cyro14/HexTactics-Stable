@@ -1371,8 +1371,8 @@ button.btn-success {
     margin: 0 !important; 
 }
 
-/* Estilo para as bolinhas de mana do lado do Turno */
 .mana-compact { 
+    position: relative; /* Mantém o dropdown preso ao botão */
     display: flex; gap: 4px; align-items: center; 
     background: rgba(0,0,0,0.5); padding: 4px 10px; 
     border-radius: 20px; border: 1px solid #333; 

@@ -235,43 +235,54 @@ function resetSpentMana() { game.spentMana = {}; updateManaUI(); }
 
 function updateManaUI() {
     if (!game) return;
-    // === RENDERIZAÇÃO COMPACTA DE MANA NA TOP BAR ===
-    if (game.manaPool) {
-        let manaHtml = '';
-        for (let t in game.manaPool) {
-            for (let i = 0; i < game.manaPool[t]; i++) {
-                // Pega a cor da mana do data.js, se não achar usa branco
-                let color = (typeof MANA_TYPES !== 'undefined' && MANA_TYPES[t]) ? MANA_TYPES[t].color : '#ccc';
-                manaHtml += `<span class="mana-token" style="background:${color};" title="${t}"></span>`;
-            }
-        }
-        if ($('mana-bar-container')) {
-            $('mana-bar-container').innerHTML = manaHtml || '<span style="font-size:10px;color:#777;">0</span>';
-        }
-    }
     const container = $('mana-bar-container');
     if (!container) return;
-    container.innerHTML = '';
+
+    let totalAvailable = 0;
+    let listHtml = '';
     let hasMana = false;
+
+    // Varre a pool de mana calculando os saldos reais disponíveis
     Object.entries(game.manaPool).forEach(([tag, total]) => {
         if (total <= 0) return;
         const mt = MANA_TYPES[tag]; if (!mt) return;
         const spent = game.spentMana[tag] || 0;
         let available = Math.floor(total - spent);
         if (available <= 0 && Math.floor(total) <= 0) return;
+        
         hasMana = true;
-        const pip = document.createElement('span');
-        pip.className = `mana-pip ${available > 0 ? 'available' : 'spent'}`;
-        pip.style.background = available > 0 ? mt.col + '44' : 'rgba(30,30,40,0.7)';
-        pip.style.color = mt.col; pip.style.borderColor = mt.col + '88';
-        pip.style.width = 'auto'; pip.style.padding = '0 8px';
-        pip.innerText = `${mt.icon} x${available}`;
-        pip.style.padding = '0 4px';
-        pip.style.fontSize = '9px';
-        pip.title = `${mt.name}: ${available}/${Math.floor(total)}`;
-        container.appendChild(pip);
+        if (available > 0) totalAvailable += available;
+
+        // Monta as linhas da lista (1 coluna com as manas existentes)
+        listHtml += `
+            <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; border-bottom:1px solid rgba(255,255,255,0.05); color:${mt.col}; font-size:11px; font-weight:bold; white-space:nowrap;">
+                <span style="font-size:13px;">${mt.icon}</span>
+                <span style="flex:1; text-align:left; color:#ddd; font-family:sans-serif; font-weight:normal;">${mt.name}</span>
+                <span style="color:#fff; background:rgba(255,255,255,0.1); padding:1px 5px; border-radius:3px;">${available}</span>
+            </div>`;
     });
-    if (!hasMana) { container.innerHTML = `<span style="font-size:10px;color:var(--text-dim);">Sem mana</span>`; }
+
+    // Injeta o gatilho compacto e a caixinha absoluta oculta
+    container.innerHTML = `
+        <div id="mana-trigger" style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px; font-weight:bold; color:var(--gold-light); padding:2px 4px; user-select:none;">
+            🔮 <span>Mana: ${totalAvailable}</span> <small style="font-size:8px; opacity:0.5; transform:scale(0.8);">▼</small>
+        </div>
+        <div id="mana-dropdown-list" class="hidden" style="position:absolute; top:32px; left:0; background:rgba(10,10,15,0.98); border:1px solid var(--gold-dark); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,0.9); z-index:2500; min-width:150px; display:flex; flex-direction:column; backdrop-filter:blur(10px);">
+            ${hasMana ? listHtml : '<div style="color:#666; padding:10px; font-size:11px; font-style:italic; text-align:center;">Sem Mana</div>'}
+        </div>
+    `;
+
+    // Gerencia a abertura/fechamento do painel ao clicar
+    $('mana-trigger')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        $('mana-dropdown-list')?.classList.toggle('hidden');
+    });
+
+    // Garante que o menu feche se o jogador clicar em qualquer outro ponto do mapa
+    window.addEventListener('click', () => {
+        $('mana-dropdown-list')?.classList.add('hidden');
+    });
+
     renderSpellBar();
 }
 
