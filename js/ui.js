@@ -94,8 +94,8 @@ function autoSave() {
             rosterMemory: rosterMemory.map(u => ({ ...u })),
             deployedRoster: deployedRoster.map(u => ({ ...u })),
             manaPool: game.manaPool, spentMana: game.spentMana, spellCooldowns: game.spellCooldowns,
+            fieldItems: game.fieldItems,
             routeMap: game.routeMap, currentFloor: game.currentFloor, inventory: game.inventory,
-            isBossStage: game.isBossStage, currentRouteType: game.currentRouteType
         };
         localStorage.setItem(sk, JSON.stringify(sv));
     }
@@ -267,12 +267,10 @@ function renderSpellBar() {
     bar.innerHTML = '';
     if (!game || game.currentTurn !== 1) return;
 
-    // Define quem está conjurando (Fera ou Líder)
-    let caster = game.selectedUnit && game.selectedUnit.faction === 1 && game.selectedUnit.knownSpells && game.selectedUnit.knownSpells.length > 0
-        ? game.selectedUnit
-        : game.units.find(u => u.isLeader && u.faction === 1);
-
-    if (!caster || !caster.knownSpells || !caster.knownSpells.length) return;
+    // Se a unidade selecionada não tiver magias, não mostramos as magias do líder por engano!
+    let caster = game.selectedUnit;
+    if (!caster || caster.faction !== 1) return;
+    if (!caster.knownSpells || caster.knownSpells.length === 0) return;
 
     caster.knownSpells.forEach(sid => {
         const spell = typeof SPELLS !== 'undefined' ? SPELLS.find(s => s.id === sid) : null;
@@ -1737,6 +1735,8 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
         game.manaPool = d.manaPool || {};
         game.spentMana = d.spentMana || {};
         game.spellCooldowns = d.spellCooldowns || {};
+        // <-- CARREGA A MOCHILA (ou cria vazia)
+        game.fieldItems = d.fieldItems || { isca: 0, rede: 0, potion: 0, bandage: 0, scroll: 0, sphere: 0, picanha: 0, feromonio: 0, adrenalina: 0, apito: 0, trap_stun: 0, trap_teleport: 0, silence: 0 };
 
         const stInd = $('stage-indicator'); if (stInd) stInd.innerText = `ATO ${toRoman(game.currentLevel)} - NÓ ${game.currentFloor + 1}`;
         game.map.clear();

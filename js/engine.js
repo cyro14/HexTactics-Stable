@@ -348,31 +348,41 @@ class Game {
         this.map.set(`${pS.q},${pS.r}`, new Hex(pS.q, pS.r, TERRAINS.CASTLE, 1));
         this.map.set(`${aS.q},${aS.r}`, new Hex(aS.q, aS.r, TERRAINS.CASTLE, 2));
 
-        // 2. Posiciona o Jogador (Com as compras feitas no Mercador)
+        // 2. Posiciona o Jogador (Garante que as tropas não nasçam no mesmo hexágono)
+        let pNeighbors = [pS, ...Hex.getNeighbors(pS.q, pS.r), ...Hex.getNeighbors(pS.q+1, pS.r), ...Hex.getNeighbors(pS.q-1, pS.r)];
+        let pValid = pNeighbors.filter(n => this.map.has(`${n.q},${n.r}`) && this.map.get(`${n.q},${n.r}`).terrain.id !== 'WATER' && this.map.get(`${n.q},${n.r}`).terrain.id !== 'MOUNTAIN');
+        let pUsed = new Set();
+        
         deployedRoster.forEach((u, i) => {
-            let hq = pS.q, hr = pS.r;
-            if (i > 0) { hq += (i % 2 === 0 ? 1 : -1); hr += (i % 2 === 0 ? 0 : 1); }
-            this.units.push(new Unit({ ...u, q: hq, r: hr, mp: u.maxMp, hasAttacked: false, isNew: false }));
+            let spawn = pValid.find(n => !pUsed.has(`${n.q},${n.r}`)) || pS;
+            pUsed.add(`${spawn.q},${spawn.r}`);
+            this.units.push(new Unit({ ...u, q: spawn.q, r: spawn.r, mp: u.maxMp, hasAttacked: false, isNew: false }));
         });
 
         // 3. IA Oponente e sua Tropa Mímica!
         let chosenAI = typeof LEADERS !== 'undefined' ? LEADERS.find(l => l.id === this.opponentId) : null;
-        if (!chosenAI) chosenAI = LEADERS[0]; // Prevenção de erro
+        if (!chosenAI) chosenAI = LEADERS[0]; 
 
         let aiSpells = [];
         if (typeof SPELLS !== 'undefined') SPELLS.forEach(s => { if (s.level <= 2 && s.tags.some(t => chosenAI.tags.includes(t))) aiSpells.push(s.id); });
 
+        let eNeighbors = [aS, ...Hex.getNeighbors(aS.q, aS.r), ...Hex.getNeighbors(aS.q-1, aS.r), ...Hex.getNeighbors(aS.q+1, aS.r)];
+        let eValid = eNeighbors.filter(n => this.map.has(`${n.q},${n.r}`) && this.map.get(`${n.q},${n.r}`).terrain.id !== 'WATER' && this.map.get(`${n.q},${n.r}`).terrain.id !== 'MOUNTAIN');
+        let eUsed = new Set([`${aS.q},${aS.r}`]); // Reserva o Castelo para o Líder inimigo
+
+        // Nasce o Líder Inimigo
         this.units.push(new Unit({ q: aS.q, r: aS.r, faction: 2, isLeader: true, name: chosenAI.name, baseName: chosenAI.name, emoji: chosenAI.emoji, hp: chosenAI.hp, maxHp: chosenAI.hp, mp: chosenAI.mp, maxMp: chosenAI.mp, atk: chosenAI.atk, range: chosenAI.range, isBoss: true, level: 2, tags: chosenAI.tags, fav: chosenAI.fav, knownSpells: aiSpells }));
 
-        // A IA compra feras equivalentes à quantidade que VOCÊ comprou
+        // A IA compra feras e as espalha
         let beastPool = BEASTS.LAND.filter(b => b.tags && b.tags.some(t => chosenAI.tags.includes(t)));
         if (beastPool.length === 0) beastPool = BEASTS.LAND;
 
         for (let i = 0; i < deployedRoster.length - 1; i++) {
             const b = beastPool[Math.floor(Math.random() * beastPool.length)];
-            let hq = aS.q, hr = aS.r;
-            if (i >= 0) { hq += (i % 2 === 0 ? -1 : 1); hr += (i % 2 === 0 ? 0 : -1); } // Oposto de direção
-            this.units.push(new Unit({ q: hq, r: hr, faction: 2, name: b.name, baseName: b.name, emoji: b.e, hp: b.hp, maxHp: b.hp, mp: b.mp, maxMp: b.mp, atk: b.atk, range: b.range, abilities: [...b.abilities], filter: b.filter, tags: b.tags || [], fav: b.fav || [], level: 2 }));
+            let spawn = eValid.find(n => !eUsed.has(`${n.q},${n.r}`)) || aS;
+            eUsed.add(`${spawn.q},${spawn.r}`);
+            
+            this.units.push(new Unit({ q: spawn.q, r: spawn.r, faction: 2, name: b.name, baseName: b.name, emoji: b.e, hp: b.hp, maxHp: b.hp, mp: b.mp, maxMp: b.mp, atk: b.atk, range: b.range, abilities: [...b.abilities], filter: b.filter, tags: b.tags || [], fav: b.fav || [], level: 2 }));
         }
 
         this.currentTurn = 1; this.gameOver = false; this.selectPlayerLeader();

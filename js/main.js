@@ -455,7 +455,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const su = game.selectedUnit;
 
             // --- USO DE ITENS DE CAMPO EXPANDIDO ---
-            if (game.activeItem && su && su.isLeader && game.currentTurn === FACTIONS.PLAYER.id) {
+            if (game.activeItem && game.currentTurn === FACTIONS.PLAYER.id) {
+                // Força o líder a ser o usuário do item, independente de quem você clicou
+                if (!su || !su.isLeader) {
+                    su = game.units.find(x => x.faction === 1 && x.isLeader);
+                    game.selectedUnit = su;
+                }
+                if (!su) { showMessage("Líder não encontrado para usar o item!", "#e74c3c"); return; }
+                
                 let dist = Hex.distance(su, cH);
                 let itemUsed = false;
 
@@ -742,7 +749,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     $('combat-forecast').style.display = 'none';
 
                     game.isAnimating = true;
-                    if (game.tameMode && u.faction === FACTIONS.WILD.id && dist === 1) await game.attemptTame(su, u);
+                    if (game.tameMode && u.faction === FACTIONS.WILD.id && dist === 1) {
+                        if (!su.isLeader) { showMessage("Apenas o Herói pode domar!", "#e74c3c"); return; }
+                        await game.attemptTame(su, u);
+                    }
                     else if (!game.tameMode) await game.executeCombat(su, u);
 
                     game.selectedUnit = null; game.tameMode = false; game.isAnimating = false;
