@@ -12,6 +12,35 @@ document.addEventListener("DOMContentLoaded", () => {
     window.pendingAttackTarget = null; // Guarda o alvo do primeiro clique
 
     // ==========================================
+    // BOTÃO DE LIMPEZA DE CACHE (GITHUB PAGES)
+    // ==========================================
+    const menuContainer = document.querySelector('#main-menu .menu-box');
+    if (menuContainer) {
+        const updateBtn = document.createElement('button');
+        updateBtn.innerHTML = "🔄 Verificar Atualizações (Limpar Cache)";
+        updateBtn.style.cssText = "background: rgba(0,0,0,0.5); border: 1px solid #7f8c8d; color: #bdc3c7; margin-top: 20px; font-size: 14px; transition: all 0.2s;";
+        updateBtn.onmouseover = () => updateBtn.style.borderColor = '#bdc3c7';
+        updateBtn.onmouseout = () => updateBtn.style.borderColor = '#7f8c8d';
+
+        updateBtn.onclick = async () => {
+            updateBtn.innerText = "Limpando...";
+            // Limpa o Cache Storage (Service Workers/PWA)
+            if ('caches' in window) {
+                try {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                } catch (e) { console.error("Erro ao limpar cache:", e); }
+            }
+            // Limpa o LocalStorage de saves se quiser garantir (opcional, comente se não quiser)
+            // localStorage.removeItem('ht_save_camp'); localStorage.removeItem('ht_save_rogue'); localStorage.removeItem('ht_save_duel');
+
+            // Força o recarregamento com uma querystring nova para quebrar o cache de memória do navegador
+            window.location.href = window.location.pathname + '?v=' + new Date().getTime();
+        };
+        menuContainer.appendChild(updateBtn);
+    }
+
+    // ==========================================
     // SISTEMA AVANÇADO DE ELEMENTOS E FURTIVIDADE
     // ==========================================
 
@@ -462,7 +491,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     game.selectedUnit = su;
                 }
                 if (!su) { showMessage("Líder não encontrado para usar o item!", "#e74c3c"); return; }
-                
+
                 let dist = Hex.distance(su, cH);
                 let itemUsed = false;
 
