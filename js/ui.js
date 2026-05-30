@@ -558,99 +558,63 @@ function updateUI() {
 
     updateManaUI();
     if (game && game.selectedUnit) {
-        const u = game.selectedUnit; const col = u.faction === 1 ? '#4a9edd' : u.faction === 2 ? '#c0392b' : '#27ae60'; const st = u.faction === 1 ? 'Aliado' : u.faction === 2 ? 'Inimigo' : 'Fera';
-        $('unit-portrait').style.cssText = `display:flex;border-color:${col};box-shadow:0 0 10px ${col}40;filter:${u.filter}`; $('unit-portrait').innerText = u.emoji;
-
-        // NOVO: Permite clicar no retrato da HUD para inspecionar os custos e evoluções!
+        $('bottom-hud').classList.remove('hidden'); // Exibe a HUD inferior
+        
+        const u = game.selectedUnit; 
+        const col = u.faction === 1 ? '#4a9edd' : u.faction === 2 ? '#c0392b' : '#27ae60'; 
+        
+        $('unit-portrait').style.cssText = `border-color:${col}; box-shadow:0 0 10px ${col}40; filter:${u.filter}`; 
+        $('unit-portrait').innerText = u.emoji;
         $('unit-portrait').onclick = () => { window.showBeastDetails(u, true); };
 
         let starIcon = u.starLevel === 2 ? '🥉' : u.starLevel === 3 ? '🥈' : u.starLevel >= 4 ? '🌟' : '';
-        $('unit-name').innerHTML = `<span style="color:${col}">[${st}]</span> ${u.name} <span style="color:var(--gold);font-size:11px;">Lv${u.level}${starIcon}</span>`;
+        $('unit-name').innerHTML = `${u.name} <span style="color:#aaa; font-size:11px;">Lv${u.level}${starIcon}</span>`;
 
-        let res = game ? (game.resources || { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 }) : { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
-        if ($('res-wood')) $('res-wood').innerText = res.wood;
-        if ($('res-stone')) $('res-stone').innerText = res.stone;
-        if ($('res-scales')) $('res-scales').innerText = res.scales;
-        if ($('res-sand')) $('res-sand').innerText = res.sand;
+        // Barras Compactas (HP, MP, XP)
+        let hpHtml = `<div class="stat-bar-row"><span style="width:18px;color:#e74c3c;">HP</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-hp" style="width:${(u.hp/u.maxHp)*100}%"></div></div><span style="width:35px;text-align:right;">${Math.floor(u.hp)}/${u.maxHp}</span></div>`;
+        let mpHtml = `<div class="stat-bar-row"><span style="width:18px;color:#3498db;">MP</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-mp" style="width:${(u.mp/u.maxMp)*100}%"></div></div><span style="width:35px;text-align:right;">${Math.floor(u.mp)}/${u.maxMp}</span></div>`;
+        let xpHtml = u.faction === 1 && !u.isBoss ? `<div class="stat-bar-row"><span style="width:18px;color:#2ecc71;">XP</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-xp" style="width:${(u.xp/u.maxXp)*100}%"></div></div><span style="width:35px;text-align:right;">${u.xp}/${u.maxXp}</span></div>` : '';
+        $('unit-bars').innerHTML = hpHtml + mpHtml + xpHtml;
 
-        updateManaUI();
+        // Status de Combate
+        let defInfo = ''; const uH = game.map.get(`${u.q},${u.r}`); 
+        if (uH) { let defV = uH.terrain.def; if (u.fav.includes(uH.terrain.id)) defV += 0.2; defInfo = `<br>📍 ${uH.terrain.icon} Def: ${Math.round(defV * 100)}%`; }
+        $('unit-combat-stats').innerHTML = `<strong style="color:#fff;">ATK:</strong> ${u.getEffectiveAtk(game)} &nbsp;|&nbsp; <strong style="color:#fff;">ALC:</strong> ${u.getEffectiveRange(game)}${defInfo}`;
 
-        const getStatusHTML = (id, name, desc, col) => `<div class="qol-tooltip tag-badge" style="background:rgba(20,20,30,0.9); border:1px solid ${col}; color:${col}; font-size:9px; padding:2px 6px; border-radius:4px; box-shadow:0 0 5px ${col}40; text-shadow:0 0 2px ${col}80;">${name}<span class="qol-tooltiptext">${desc}</span></div>`;
+        // Mapeamento das Habilidades e Tags para Ícones Limpos
+        const ABILITY_ICONS = {
+            dodge: '💨', lifesteal: '🦇', poison: '☠️', stun: '⚡', bind: '🕸️', burn: '🔥', pierce: '🗡️', counter: '↩️', freeze: '🧊', leadership: '👑', electric: '🌩️', hit_run: '🐎', swift: '🐇', crystal_skin: '💎', corte_amplo: '🪓', carapace: '🐢', flying: '🪽', frost_armor: '🛡️', camouflage: '🍃', dive: '🌊'
+        };
 
-        let sH = '';
-        if (u.status === 'poison') sH = getStatusHTML('poison', 'Envenenado', 'Perde HP a cada turno.', 'var(--success)');
-        else if (u.status === 'stun') sH = getStatusHTML('stun', 'Atordoado', 'Perde o turno atual.', 'var(--warning)');
-        else if (u.status === 'bind') sH = getStatusHTML('bind', 'Preso', 'Movimento reduzido a 0.', '#9b59b6');
-        else if (u.status === 'chilled') sH = getStatusHTML('chilled', 'Congelado', 'Movimento reduzido em 2.', '#00ffff');
-        else if (u.status === 'shielded') sH = getStatusHTML('shielded', 'Escudado', 'Recebe menos dano.', '#95a5a6');
-        else if (u.status === 'silenced') sH = getStatusHTML('silenced', 'Silenciado', 'Não pode lançar magias ou domar feras.', '#7f8c8d');
-        else if (u.faction === 0 && u.alerted) sH = getStatusHTML('alerted', '⚠️ Alerta!', 'Em estado de agressão.', 'var(--enemy-color)'); let ab = u.abilities.filter(x => x && ABILITY_DESCRIPTIONS[x]).map(ab => `<div class="btn-ability-link" onclick="window.showAbility('${ab}','${u.emoji}','${u.name}','${u.filter}')">📖 ${ABILITY_DESCRIPTIONS[ab].split(':')[0]}</div>`).join('');
-        let tI = ''; const uH = game.map.get(`${u.q},${u.r}`); if (uH) { let defV = uH.terrain.def; if (u.fav.includes(uH.terrain.id)) defV += 0.2; tI = `<span style="color:#888;"> | 📍 ${uH.terrain.icon} ${uH.terrain.name} (${Math.round(defV * 100)}% Def)</span>`; }
-        let tagsHtml = (u.tags || []).map(t => getTagHTML(t)).join('');
+        const getIconHTML = (icon, title, desc) => `<div class="qol-tooltip icon-badge">${icon}<span class="qol-tooltiptext" style="font-family:sans-serif; text-align:left;"><strong>${title}</strong><br>${desc}</span></div>`;
 
-        $('unit-info').innerHTML = `<div style="display:flex;gap:10px;margin-top:2px;justify-content:flex-end;"><div>HP: ${u.hp}/${u.maxHp}</div><div>MP: ${u.mp}/${u.maxMp}</div></div><div style="color:var(--text-muted);margin-top:2px;">ATK: ${u.getEffectiveAtk(game)} | Alc: ${u.getEffectiveRange(game)}</div><div style="color:#888;font-size:10px;margin-top:1px;">${u.faction === 1 ? `XP: ${u.xp}/${u.maxXp}` : ''} ${tI}</div><div style="margin-top:2px;">${sH}</div><div style="margin-top:4px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;align-items:center;">${ab} ${tagsHtml}</div>`;
+        let iconsHtml = '';
+        
+        // Efeitos Negativos (Debuffs visíveis primeiro)
+        if (u.status === 'poison') iconsHtml += getIconHTML('🤢', 'Envenenado', 'Perde HP a cada turno.');
+        if (u.status === 'stun') iconsHtml += getIconHTML('💫', 'Atordoado', 'Perde o turno atual.');
+        if (u.status === 'bind') iconsHtml += getIconHTML('⛓️', 'Preso', 'Movimento 0.');
+        if (u.status === 'silenced') iconsHtml += getIconHTML('🔕', 'Silenciado', 'Não pode lançar magias.');
+        if (u.faction === 0 && u.alerted) iconsHtml += getIconHTML('⚠️', 'Alerta', 'Em estado de agressão.');
+
+        // Tags e Habilidades
+        (u.tags || []).forEach(t => { let tDef = TAGS[t]; if(tDef) iconsHtml += getIconHTML(MANA_TYPES[t]?.icon || '✨', tDef.name, tDef.desc); });
+        u.abilities.forEach(ab => { if(ABILITY_DESCRIPTIONS[ab]) iconsHtml += getIconHTML(ABILITY_ICONS[ab] || '📖', ab.toUpperCase(), ABILITY_DESCRIPTIONS[ab]); });
+
+        $('unit-tags-abilities').innerHTML = iconsHtml || '<span style="font-size:10px; color:#555;">Normal</span>';
+
         if (u.isLeader && u.faction === 1 && !u.hasAttacked && u.status !== 'stun' && u.status !== 'bind') { show('btn-tame'); $('btn-tame').classList.toggle('active', game.tameMode); } else { hide('btn-tame'); }
-    } else if (game && game.selectedHex) {
-        const h = game.selectedHex, t = h.terrain; $('unit-portrait').style.cssText = `display:flex;border-color:#555;box-shadow:none;filter:none;`; $('unit-portrait').innerText = t.icon || '⬛';
-        let o = h.owner === 1 ? " <span style='color:var(--player-color)'>(Sua)</span>" : h.owner === 2 ? " <span style='color:var(--enemy-color)'>(Inimigo)</span>" : "";
-        $('unit-name').innerHTML = `<span style="color:var(--gold-light)">Terreno: ${t.name}${o}</span>`; $('unit-info').innerHTML = `<div style="margin-top:4px;color:var(--text-muted);">Custo Mov: ${t.cost}<br>Defesa Base: ${Math.round(t.def * 100)}%</div>`; hide('btn-tame');
 
-        // NOVO: Remove a ação de clique se for apenas um terreno vazio
+    } else if (game && game.selectedHex) {
+        $('bottom-hud').classList.remove('hidden');
+        const h = game.selectedHex, t = h.terrain; 
+        $('unit-portrait').style.cssText = `border-color:#555; background:#222;`; $('unit-portrait').innerText = t.icon || '⬛';
+        $('unit-name').innerHTML = `${t.name}`;
+        $('unit-bars').innerHTML = `<div style="font-size:12px; color:#aaa; margin-top:5px;">Custo Mov: ${t.cost}<br>Defesa Base: ${Math.round(t.def * 100)}%</div>`;
+        $('unit-combat-stats').innerHTML = ''; $('unit-tags-abilities').innerHTML = ''; hide('btn-tame');
         $('unit-portrait').onclick = null;
     } else {
-        hide('unit-portrait'); $('unit-name').innerHTML = '—'; $('unit-info').innerHTML = '<div style="color:var(--text-dim);">Selecione um alvo</div>'; hide('btn-tame');
-        $('unit-portrait').onclick = null;
-    }
-
-    // INJEÇÃO DA MOCHILA DE ITENS
-    if (!$('btn-field-items') && $('game-container')) {
-        let itemBtn = document.createElement('button');
-        itemBtn.id = 'btn-field-items';
-        itemBtn.innerHTML = '🎒';
-        itemBtn.title = "Ferramentas de Campo";
-        itemBtn.onclick = () => {
-            const menu = $('field-item-menu');
-            menu.classList.toggle('hidden');
-            if (!menu.classList.contains('hidden')) {
-                renderFieldItemMenu(); // Reconstrói a lista com o que você realmente tem
-            }
-        };
-        $('game-container').appendChild(itemBtn);
-
-        let itemMenu = document.createElement('div');
-        itemMenu.id = 'field-item-menu';
-        itemMenu.className = 'hidden';
-        $('game-container').appendChild(itemMenu);
-    }
-
-    // INJEÇÃO DO BOTÃO UNIVERSAL DE CANCELAR
-    let cancelBtn = $('btn-cancel-action');
-    if (!cancelBtn && $('game-container')) {
-        cancelBtn = document.createElement('button');
-        cancelBtn.id = 'btn-cancel-action';
-        cancelBtn.className = 'btn-danger hidden';
-        cancelBtn.innerHTML = '❌ Cancelar Ação';
-        cancelBtn.style.cssText = 'position:absolute; bottom: 85px; left: 50%; transform: translateX(-50%); z-index: 100; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 0 10px rgba(231,76,60,0.5); cursor: pointer;';
-
-        cancelBtn.onclick = () => {
-            if (game) {
-                game.activeSpell = null;
-                game.activeItem = null;
-            }
-            if (typeof renderSpellBar === 'function') renderSpellBar();
-            updateUI();
-            if (typeof renderer !== 'undefined') renderer.draw();
-        };
-        $('game-container').appendChild(cancelBtn);
-    }
-
-    // Mostra o botão apenas se algo estiver ativo para mirar
-    if (cancelBtn && game) {
-        if (game.activeSpell || game.activeItem) {
-            cancelBtn.classList.remove('hidden');
-        } else {
-            cancelBtn.classList.add('hidden');
-        }
+        $('bottom-hud').classList.add('hidden'); // Esconde a HUD inteira se clicar no nada!
     }
 
 }

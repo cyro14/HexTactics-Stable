@@ -16,14 +16,14 @@ const getActiveArtifacts = () => { return (game && game.isRoguelite) ? activeArt
 // DADOS DO JOGO (TERRENOS, TAGS E MAGIAS)
 // ==========================================
 const TERRAINS = {
-    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#3a5a2a' },
-    FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#23411b', icon: '🌲' },
-    MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#4a554a', icon: '⛰️' },
-    WATER: { id: 'WATER', name: 'Água', cost: 2, def: -0.15, color: '#1c4568', icon: '🌊' },
-    SNOW: { id: 'SNOW', name: 'Neve', cost: 2, def: -0.15, color: '#b8cad4', icon: '❄️' },
-    DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#d2b48c', icon: '🏜️' },
-    VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#8a753c', icon: '🏘️' },
-    CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#505860', icon: '🏰' },
+    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#5b8c42' },
+    FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#1e4d2b', icon: '🌲' },
+    MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#5b5b5b', icon: '⛰️' },
+    WATER: { id: 'WATER', name: 'Água', cost: 2, def: -0.15, color: '#2b7fb8', icon: '🌊' },
+    SNOW: { id: 'SNOW', name: 'Neve', cost: 2, def: -0.15, color: '#cce6f4', icon: '❄️' },
+    DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#e6c86e', icon: '🏜️' },
+    VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#c49a45', icon: '🏘️' },
+    CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#3d444a', icon: '🏰' },
     ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada', cost: 2, def: -0.50, col: '#1c4568', icon: '⚡' },
     BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas', cost: 2, def: -0.50, col: '#23411b', icon: '🔥' },
     ASHES: { id: 'ASHES', name: 'Cinzas', col: '#555555', cost: 2, def: -0.50, icon: '💨' }

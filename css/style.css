@@ -1305,7 +1305,69 @@ button.btn-success {
 .forecast-vs { display: flex; align-items: center; font-weight: bold; color: var(--gold-light); font-size: 20px; }
 .forecast-emoji { font-size: 26px; margin-bottom: 2px; }
 
-#btn-field-items { position: absolute; right: 15px; top: 235px; background: rgba(30, 10, 30, 0.8); border: 1px solid #9b59b6; color: #fff; border-radius: 50%; width: 45px; height: 45px; font-size: 16px; cursor: pointer; z-index: 100; box-shadow: 0 0 10px rgba(155, 89, 182, 0.3); transition: all 0.2s; }
+
+
+/* =========================================
+   HUD COMPACTA (TOP & BOTTOM)
+========================================= */
+.hud-top {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 12px; background: rgba(10, 10, 15, 0.95);
+    border-bottom: 2px solid var(--gold-dark); max-height: 50px;
+}
+.hud-top-left, .hud-top-right { display: flex; gap: 10px; align-items: center; }
+.hud-top-center { display: flex; gap: 8px; background: rgba(0,0,0,0.5); padding: 4px 10px; border-radius: 20px; }
+.res-compact { font-size: 12px; font-weight: bold; color: #ddd; display: flex; align-items: center; gap: 3px;}
+.res-icon { font-size: 14px; }
+.btn-icon { background: none; border: 1px solid #444; border-radius: 5px; font-size: 18px; padding: 4px 8px; cursor: pointer; color: var(--gold); }
+.btn-icon:hover { border-color: var(--gold-light); background: rgba(255,255,255,0.1); }
+
+.hud-bottom {
+    position: absolute; bottom: 0; left: 0; width: 100%;
+    background: linear-gradient(to top, rgba(5,5,8,1) 0%, rgba(15,15,22,0.95) 100%);
+    border-top: 2px solid var(--gold-dark);
+    display: flex; flex-direction: column; gap: 10px; padding: 10px 20px;
+    box-sizing: border-box; transition: transform 0.3s ease;
+}
+.unit-layout { display: flex; gap: 15px; align-items: center; width: 100%; }
+.unit-portrait-box #unit-portrait { width: 60px; height: 60px; font-size: 40px; background: rgba(0,0,0,0.5); border: 2px solid #555; border-radius: 8px; display: flex; justify-content: center; align-items: center; }
+.unit-stats-box { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.unit-title { font-size: 16px; font-weight: bold; font-family: Cinzel, serif; color: var(--gold-light); }
+.stat-bar-row { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: bold; color: #ccc; }
+.stat-bar-bg { flex: 1; background: #222; height: 6px; border-radius: 3px; overflow: hidden; border: 1px solid #000; }
+.stat-bar-fill { height: 100%; transition: width 0.3s; }
+.fill-hp { background: #e74c3c; } .fill-mp { background: #3498db; } .fill-xp { background: #2ecc71; }
+
+.unit-details-box { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; min-width: 120px; }
+.unit-combat-stats { font-size: 12px; color: #aaa; text-align: right; line-height: 1.4; }
+.unit-icons-row { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.icon-badge { font-size: 16px; cursor: help; filter: drop-shadow(1px 1px 2px #000); }
+
+.hud-bottom-actions { display: flex; justify-content: center; gap: 10px; position: absolute; right: 20px; top: -20px; }
+.spell-bar-compact { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
+
+/* Força o botão de itens a ficar na barra superior, anulando o absolute antigo */
+#btn-field-items { 
+    position: static !important; 
+    width: auto !important; 
+    height: auto !important; 
+    border-radius: 5px !important; 
+    box-shadow: none !important; 
+    margin: 0 !important; 
+}
+
+/* Estilo para as bolinhas de mana do lado do Turno */
+.mana-compact { 
+    display: flex; gap: 4px; align-items: center; 
+    background: rgba(0,0,0,0.5); padding: 4px 10px; 
+    border-radius: 20px; border: 1px solid #333; 
+    min-height: 24px;
+}
+.mana-token { 
+    width: 12px; height: 12px; border-radius: 50%; 
+    display: inline-block; 
+    box-shadow: 0 0 4px rgba(255,255,255,0.3) inset, 0 0 2px #000; 
+}
 #btn-field-items:hover { background: rgba(155, 89, 182, 0.3); box-shadow: 0 0 15px #9b59b6; transform: scale(1.1); }
 
 #field-item-menu { position: absolute; right: 75px; top: 235px; background: rgba(15, 15, 20, 0.95); border: 1px solid var(--gold-dark); border-radius: 8px; padding: 10px; z-index: 100; display: flex; flex-direction: column; gap: 8px; }

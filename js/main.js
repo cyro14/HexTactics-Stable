@@ -810,10 +810,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // === BOTÕES DA INTERFACE ===
 
-    $('toggle-log-text').addEventListener('click', () => {
+    $('toggle-log-text')?.addEventListener('click', () => {
         const log = $('combat-log');
         const txt = $('toggle-log-text');
-
+        if (!log || !txt) return;
+        
         if (log.classList.contains('hidden')) {
             log.classList.remove('hidden');
             txt.innerHTML = '▼ Ocultar Log';
@@ -823,18 +824,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    $('unit-portrait').addEventListener('click', () => {
+    $('unit-portrait')?.addEventListener('click', () => {
         if (game && game.selectedUnit) { let u = game.selectedUnit; let template = ALL_BEASTS.find(x => x.name === u.baseName || x.name === u.name); if (!template && u.isLeader) { template = LEADERS.find(x => x.name === u.name); if (!template) { template = { name: u.name, emoji: u.emoji, hp: u.maxHp, mp: u.maxMp, atk: u.atk, range: u.range, filter: u.filter, fav: u.fav, isBoss: true }; } } if (template) { showBeastDetails(template, true); } }
     });
 
-    $('btn-undo').addEventListener('click', () => {
+    $('btn-undo')?.addEventListener('click', () => {
         if (!lastState || game.isAnimating || game.currentTurn !== FACTIONS.PLAYER.id) return;
         game.units = lastState.u.map(u => new Unit({ ...u, isNew: false })); game.items = new Map(lastState.i); game.gold = lastState.g; game.hasKey = lastState.hk; game.hasEgg = lastState.he; game.manaPool = JSON.parse(JSON.stringify(lastState.mana)); game.spentMana = {};
         lastState.m.forEach(([k, o]) => game.map.get(k).owner = o);
-        lastState = null; $('btn-undo').disabled = true; game.selectedUnit = null; game.activeSpell = null; updateUI(); renderer.draw();
+        lastState = null; const btn = $('btn-undo'); if(btn) btn.disabled = true; game.selectedUnit = null; game.activeSpell = null; updateUI(); renderer.draw();
     });
 
-    $('btn-next-unit').addEventListener('click', () => {
+    $('btn-next-unit')?.addEventListener('click', () => {
         if (game.isAnimating || game.currentTurn !== FACTIONS.PLAYER.id) return;
         const vU = game.units.filter(u => u.faction === FACTIONS.PLAYER.id && (u.mp > 0 || !u.hasAttacked) && u.status !== 'stun' && u.status !== 'bind');
         if (vU.length === 0) return;
@@ -842,25 +843,25 @@ document.addEventListener("DOMContentLoaded", () => {
         game.selectedUnit = nU; game.calculateReachable(nU); renderer.centerOn(nU.vq, nU.vr); updateUI(); renderer.draw();
     });
 
-    $('btn-end-turn').addEventListener('click', () => {
+    $('btn-end-turn')?.addEventListener('click', () => {
         if (!game.isAnimating) {
             if (typeof autoSave === 'function') autoSave();
             game.startNextTurn();
         }
     });
 
-    $('btn-tame').addEventListener('click', () => { game.tameMode = !game.tameMode; updateUI(); renderer.draw(); });
+    $('btn-tame')?.addEventListener('click', () => { game.tameMode = !game.tameMode; updateUI(); renderer.draw(); });
 
     // Botões de Pausa e Popups
-    $('btn-pause').addEventListener('click', () => { $('pause-menu').classList.remove('hidden'); });
-    $('btn-resume').addEventListener('click', () => { $('pause-menu').classList.add('hidden'); });
-    $('btn-close-details').addEventListener('click', () => { $('unit-details-modal').classList.add('hidden'); });
-    $('btn-open-help').addEventListener('click', () => { $('help-screen').classList.remove('hidden'); });
-    $('btn-help-pause').addEventListener('click', () => { $('pause-menu').classList.add('hidden'); $('help-screen').classList.remove('hidden'); });
-    $('btn-close-help').addEventListener('click', () => { $('help-screen').classList.add('hidden'); if (!$('game-container').classList.contains('hidden')) $('pause-menu').classList.remove('hidden'); });
+    $('btn-pause')?.addEventListener('click', () => { $('pause-menu').classList.remove('hidden'); });
+    $('btn-resume')?.addEventListener('click', () => { $('pause-menu').classList.add('hidden'); });
+    $('btn-close-details')?.addEventListener('click', () => { $('unit-details-modal').classList.add('hidden'); });
+    $('btn-open-help')?.addEventListener('click', () => { $('help-screen').classList.remove('hidden'); });
+    $('btn-help-pause')?.addEventListener('click', () => { $('pause-menu').classList.add('hidden'); $('help-screen').classList.remove('hidden'); });
+    $('btn-close-help')?.addEventListener('click', () => { $('help-screen').classList.add('hidden'); if (!$('game-container').classList.contains('hidden')) $('pause-menu').classList.remove('hidden'); });
 
-    $('btn-go-shop').addEventListener('click', openShop);
-    $('btn-leave-shop').addEventListener('click', () => { openManagement(); });
+    $('btn-go-shop')?.addEventListener('click', openShop);
+    $('btn-leave-shop')?.addEventListener('click', () => { openManagement(); });
 
     // === CÓDIGO SEGURO DOS BOTÕES DO GERENCIAMENTO E PAUSA ===
     const btnStart = $('btn-start-stage');
