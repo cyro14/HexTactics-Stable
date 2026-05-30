@@ -314,13 +314,13 @@ const LEADERS = [
     },
     {
         id: 'ld_gargula', name: 'Gárgula Anciã', emoji: '🗿',
-        maxHp: 200, hp: 200, maxMp: 3, atk: 35, range: 1, limit: 5,
+        maxHp: 200, hp: 200, maxMp: 3, atk: 35, range: 1, limit: 5, fav: 'MOUNTAIN',
         tags: ['ROCK', 'WING'], abilities: ['flying', 'counter'],
         desc: 'Estátua viva de altíssima defesa. Voa e pune quem a ataca de perto.',
     },
     {
         id: 'ld_golem_gelo', name: 'Golem de Gelo', emoji: '🧊',
-        maxHp: 250, hp: 250, maxMp: 3, atk: 30, range: 1, limit: 5,
+        maxHp: 250, hp: 250, maxMp: 3, atk: 30, range: 1, limit: 5, fav: 'SNOW',
         tags: ['ROCK', 'ICE'], abilities: [],
         desc: 'Um colosso glacial. Caminha devagar, mas congela os mares.',
     },
@@ -333,7 +333,7 @@ const LEADERS = [
     {
         id: 'ld_escaravelho', name: 'Escaravelho das Pragas', emoji: '🪲',
         maxHp: 160, hp: 160, maxMp: 4, atk: 35, range: 1, limit: 6,
-        tags: ['SAND', 'VENOM'], abilities: ['poison'],
+        tags: ['SAND', 'VENOM'], abilities: ['poison'], fav: 'DESERT',
         desc: 'Emerge das areias espalhando toxinas mortais pelo campo.',
     },
     {
