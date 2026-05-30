@@ -748,15 +748,30 @@ button.btn-success {
         font-size: 2.4rem;
     }
 
-    /* --- 1. CABEÇALHO LADO A LADO --- */
+    /* --- 1. CABEÇALHO LADO A LADO (CORRIGIDO PARA MOBILE) --- */
     #top-bar {
-        padding: 8px;
+        padding: 8px 8px 6px 8px;
+        padding-top: 24px; /* Espaço para o indicador de fase */
         flex-direction: row;
-        align-items: flex-start;
-        gap: 5px;
-        /* Adiciona um espaço no topo para o indicador de FASE não sobrepor os status */
-        padding-top: 24px;
+        flex-wrap: wrap; /* Permite que os itens quebrem linha */
+        align-items: center;
+        justify-content: space-between;
+        max-height: none !important; /* Libera a altura da caixa preta! */
+        gap: 8px;
     }
+
+    /* Força os recursos a descerem para a linha de baixo com elegância */
+    .hud-top-center {
+        order: 3; 
+        width: 100%; 
+        flex-wrap: wrap; /* Se a tela for muito fina, os recursos quebram também */
+        justify-content: center;
+        padding: 4px 2px;
+    }
+
+    /* Mantém o Turno/Mana na esquerda e Botões na direita, em cima */
+    .hud-top-left { order: 1; }
+    .hud-top-right { order: 2; }
 
     .turn-section {
         flex: 1;
