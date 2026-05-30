@@ -1373,3 +1373,68 @@ button.btn-success {
 #field-item-menu { position: absolute; right: 75px; top: 235px; background: rgba(15, 15, 20, 0.95); border: 1px solid var(--gold-dark); border-radius: 8px; padding: 10px; z-index: 100; display: flex; flex-direction: column; gap: 8px; }
 .item-slot { background: rgba(30, 30, 40, 0.8); border: 1px solid #444; padding: 8px 12px; border-radius: 4px; color: #ddd; cursor: pointer; font-size: 12px; font-family: sans-serif; display: flex; justify-content: space-between; gap: 15px; }
 .item-slot:hover { background: rgba(50, 50, 60, 0.9); border-color: var(--gold-light); }
+
+/* Remove resquícios da antiga div absoluta de botões */
+.hud-bottom-actions { display: none !important; }
+
+/* Nova Linha integrada de botões na HUD Inferior */
+.hud-actions-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 10px;
+}
+
+/* Estilização base dos botões de ação da HUD */
+.btn-hud-action {
+    font-family: Cinzel, serif;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 6px 14px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #161622 0%, #0b0b10 100%) !important;
+    border: 1px solid #444 !important;
+    color: #ccc !important;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: auto !important;
+    position: static !important;
+}
+
+.btn-hud-action:hover:not(:disabled) {
+    border-color: var(--gold) !important;
+    color: var(--gold-light) !important;
+    background: linear-gradient(180deg, #252535 0%, #12121a 100%) !important;
+    box-shadow: 0 0 8px rgba(201, 162, 39, 0.3);
+}
+
+.btn-hud-action:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: #222 !important;
+    color: #555 !important;
+    background: #0a0a0f !important;
+    box-shadow: none !important;
+}
+
+/* Visual destacado para o botão tático de Passar Turno */
+.btn-end-turn-style {
+    border-color: var(--gold-dark) !important;
+    color: var(--gold-light) !important;
+    background: linear-gradient(180deg, #2e240f 0%, #191307 100%) !important;
+}
+
+.btn-end-turn-style:hover {
+    border-color: var(--gold-light) !important;
+    background: linear-gradient(180deg, #3f3114 0%, #221a0a 100%) !important;
+    box-shadow: 0 0 10px rgba(232, 200, 74, 0.4) !important;
+}
