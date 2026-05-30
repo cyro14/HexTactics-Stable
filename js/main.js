@@ -810,6 +810,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // === BOTÕES DA INTERFACE ===
 
+    // Botão da Mochila de Itens de Campo
+    $('btn-field-items')?.addEventListener('click', () => { 
+        let menu = $('field-item-menu');
+        
+        // Se a div do menu não existir na tela, cria-a imediatamente
+        if (!menu) {
+            menu = document.createElement('div');
+            menu.id = 'field-item-menu';
+            menu.className = 'hidden';
+            $('game-container').appendChild(menu);
+        }
+        
+        // Alterna entre abrir e fechar
+        menu.classList.toggle('hidden');
+        
+        // Se abriu, preenche com os itens da mochila
+        if (!menu.classList.contains('hidden') && typeof renderFieldItemMenu === 'function') {
+            renderFieldItemMenu(); 
+        }
+    });
+    
     $('toggle-log-text')?.addEventListener('click', () => {
         const log = $('combat-log');
         const txt = $('toggle-log-text');
