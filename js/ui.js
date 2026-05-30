@@ -235,6 +235,20 @@ function resetSpentMana() { game.spentMana = {}; updateManaUI(); }
 
 function updateManaUI() {
     if (!game) return;
+    // === RENDERIZAÇÃO COMPACTA DE MANA NA TOP BAR ===
+    if (game.manaPool) {
+        let manaHtml = '';
+        for (let t in game.manaPool) {
+            for (let i = 0; i < game.manaPool[t]; i++) {
+                // Pega a cor da mana do data.js, se não achar usa branco
+                let color = (typeof MANA_TYPES !== 'undefined' && MANA_TYPES[t]) ? MANA_TYPES[t].color : '#ccc';
+                manaHtml += `<span class="mana-token" style="background:${color};" title="${t}"></span>`;
+            }
+        }
+        if ($('mana-bar-container')) {
+            $('mana-bar-container').innerHTML = manaHtml || '<span style="font-size:10px;color:#777;">0</span>';
+        }
+    }
     const container = $('mana-bar-container');
     if (!container) return;
     container.innerHTML = '';
