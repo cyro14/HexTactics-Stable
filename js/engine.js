@@ -973,7 +973,7 @@ class Game {
                     }
                 }
             });
-            
+
             this.units.filter(u => u.faction === 1).forEach(u => { if (u.status === 'shielded') u.status = null; });
             this.units.forEach(u => { if (u._mcDuration !== undefined) { u._mcDuration--; if (u._mcDuration <= 0) { u.faction = u._origFaction; delete u._origFaction; delete u._mcDuration; if (typeof showPopup === 'function') showPopup("Controle Perdido!", u, '#9b59b6'); } } });
             this.currentTurn = 2; const tb = document.getElementById('turn-blocker'); if (tb) tb.style.display = 'block'; this.updateTurnUI("Turno: Inimigo", 'var(--enemy-color)'); this.processStatus(2);
@@ -1219,6 +1219,14 @@ class KingdomRenderer {
         this.offsetX = 0;
         this.offsetY = 0;
         this.selectedHex = null;
+
+        // --- CARREGANDO O TILESET NO REINO ---
+        this.tileset = new Image();
+        this.tileset.onload = () => { if (this.game) this.draw(); };
+
+        // MUITO IMPORTANTE: Coloque o mesmo nome de arquivo que você usou no outro mapa!
+        this.tileset.src = 'img/tileset.png';
+
         window.addEventListener('resize', () => this.initCamera());
     }
 
@@ -1266,15 +1274,47 @@ class KingdomRenderer {
 
         this.game.kingdomMap.forEach(hex => {
             const p = this.getPos(hex.q, hex.r);
-
             const terrainData = typeof hex.terrain === 'string' ? TERRAINS[hex.terrain] : hex.terrain;
             if (!terrainData) return;
-
+            
+            // 1. APLICA A MÁSCARA (CLIP) NO REINO
+            ctx.save();
             this.hexPath(ctx, p.x, p.y, this.hexSize - 1);
-            ctx.fillStyle = terrainData.color || '#333';
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-            ctx.lineWidth = 1;
+            ctx.clip();
+
+            if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && terrainData.variations) {
+                const colunasNaImagem = 4;
+                const linhasNaImagem = 11;
+
+                let tileW = this.tileset.naturalWidth / colunasNaImagem;
+                let tileH = this.tileset.naturalHeight / linhasNaImagem;
+
+                let hexWidth = this.hexSize * Math.sqrt(3);
+                let hexHeight = this.hexSize * 2;
+
+                let hash = Math.abs((hex.q * 101) + (hex.r * 37));
+                let varIndex = hash % terrainData.variations.length;
+                let selectedTile = terrainData.variations[varIndex];
+
+                let zoom = 1.15;
+                let drawW = hexWidth * zoom;
+                let drawH = hexHeight * zoom;
+
+                ctx.drawImage(
+                    this.tileset,
+                    selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
+                    p.x - (drawW / 2), p.y - (drawH / 2), drawW, drawH
+                );
+            } else {
+                ctx.fillStyle = terrainData.color || '#333';
+                ctx.fill();
+            }
+            ctx.restore(); // Finaliza a máscara
+
+            // 2. Bordas Suaves do Reino (Finas e quase transparentes!)
+            this.hexPath(ctx, p.x, p.y, this.hexSize - 1);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.lineWidth = 0.5;
             ctx.stroke();
 
             if (terrainData.icon) {

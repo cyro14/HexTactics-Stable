@@ -249,7 +249,7 @@ function updateManaUI() {
         const spent = game.spentMana[tag] || 0;
         let available = Math.floor(total - spent);
         if (available <= 0 && Math.floor(total) <= 0) return;
-        
+
         hasMana = true;
         if (available > 0) totalAvailable += available;
 
@@ -574,12 +574,12 @@ function updateUI() {
         document.body.appendChild(fc);
     }
 
-        // Atualiza os contadores individuais de Ouro e DNA
+    // Atualiza os contadores individuais de Ouro e DNA
     const goldDisplay = $('ui-gold');
     if (goldDisplay && game) {
         goldDisplay.innerText = game.gold;
         // ADICIONE ESTA LINHA:
-        if ($('ui-gold-trigger')) $('ui-gold-trigger').innerText = game.gold; 
+        if ($('ui-gold-trigger')) $('ui-gold-trigger').innerText = game.gold;
     }
 
     const dnaDisplay = $('ui-dna');
@@ -591,15 +591,15 @@ function updateUI() {
     if ($('res-stone')) $('res-stone').innerText = res.stone || 0;
     if ($('res-scales')) $('res-scales').innerText = res.scales || 0;
     if ($('res-sand')) $('res-sand').innerText = res.sand || 0;
-    
+
     updateManaUI();
     if (game && game.selectedUnit) {
         $('bottom-hud').classList.remove('hidden'); // Exibe a HUD inferior
-        
-        const u = game.selectedUnit; 
-        const col = u.faction === 1 ? '#4a9edd' : u.faction === 2 ? '#c0392b' : '#27ae60'; 
-        
-        $('unit-portrait').style.cssText = `border-color:${col}; box-shadow:0 0 10px ${col}40; filter:${u.filter}`; 
+
+        const u = game.selectedUnit;
+        const col = u.faction === 1 ? '#4a9edd' : u.faction === 2 ? '#c0392b' : '#27ae60';
+
+        $('unit-portrait').style.cssText = `border-color:${col}; box-shadow:0 0 10px ${col}40; filter:${u.filter}`;
         $('unit-portrait').innerText = u.emoji;
         $('unit-portrait').onclick = () => { window.showBeastDetails(u, true); };
 
@@ -607,13 +607,13 @@ function updateUI() {
         $('unit-name').innerHTML = `${u.name} <span style="color:#aaa; font-size:11px;">Lv${u.level}${starIcon}</span>`;
 
         // Barras Compactas (HP, MP, XP)
-        let hpHtml = `<div class="stat-bar-row"><span style="width:18px;color:#e74c3c;">HP</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-hp" style="width:${(u.hp/u.maxHp)*100}%"></div></div><span style="width:35px;text-align:right;">${Math.floor(u.hp)}/${u.maxHp}</span></div>`;
-        let mpHtml = `<div class="stat-bar-row"><span style="width:18px;color:#3498db;">MP</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-mp" style="width:${(u.mp/u.maxMp)*100}%"></div></div><span style="width:35px;text-align:right;">${Math.floor(u.mp)}/${u.maxMp}</span></div>`;
-        let xpHtml = u.faction === 1 && !u.isBoss ? `<div class="stat-bar-row"><span style="width:18px;color:#2ecc71;">XP</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-xp" style="width:${(u.xp/u.maxXp)*100}%"></div></div><span style="width:35px;text-align:right;">${u.xp}/${u.maxXp}</span></div>` : '';
+        let hpHtml = `<div class="stat-bar-row"><span style="width:18px;color:#e74c3c;">HP</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-hp" style="width:${(u.hp / u.maxHp) * 100}%"></div></div><span style="width:35px;text-align:right;">${Math.floor(u.hp)}/${u.maxHp}</span></div>`;
+        let mpHtml = `<div class="stat-bar-row"><span style="width:18px;color:#3498db;">MP</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-mp" style="width:${(u.mp / u.maxMp) * 100}%"></div></div><span style="width:35px;text-align:right;">${Math.floor(u.mp)}/${u.maxMp}</span></div>`;
+        let xpHtml = u.faction === 1 && !u.isBoss ? `<div class="stat-bar-row"><span style="width:18px;color:#2ecc71;">XP</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-xp" style="width:${(u.xp / u.maxXp) * 100}%"></div></div><span style="width:35px;text-align:right;">${u.xp}/${u.maxXp}</span></div>` : '';
         $('unit-bars').innerHTML = hpHtml + mpHtml + xpHtml;
 
         // Status de Combate
-        let defInfo = ''; const uH = game.map.get(`${u.q},${u.r}`); 
+        let defInfo = ''; const uH = game.map.get(`${u.q},${u.r}`);
         if (uH) { let defV = uH.terrain.def; if (u.fav.includes(uH.terrain.id)) defV += 0.2; defInfo = `<br>📍 ${uH.terrain.icon} Def: ${Math.round(defV * 100)}%`; }
         $('unit-combat-stats').innerHTML = `<strong style="color:#fff;">ATK:</strong> ${u.getEffectiveAtk(game)} &nbsp;|&nbsp; <strong style="color:#fff;">ALC:</strong> ${u.getEffectiveRange(game)}${defInfo}`;
 
@@ -625,7 +625,7 @@ function updateUI() {
         const getIconHTML = (icon, title, desc) => `<div class="qol-tooltip icon-badge">${icon}<span class="qol-tooltiptext" style="font-family:sans-serif; text-align:left;"><strong>${title}</strong><br>${desc}</span></div>`;
 
         let iconsHtml = '';
-        
+
         // Efeitos Negativos (Debuffs visíveis primeiro)
         if (u.status === 'poison') iconsHtml += getIconHTML('🤢', 'Envenenado', 'Perde HP a cada turno.');
         if (u.status === 'stun') iconsHtml += getIconHTML('💫', 'Atordoado', 'Perde o turno atual.');
@@ -634,8 +634,8 @@ function updateUI() {
         if (u.faction === 0 && u.alerted) iconsHtml += getIconHTML('⚠️', 'Alerta', 'Em estado de agressão.');
 
         // Tags e Habilidades
-        (u.tags || []).forEach(t => { let tDef = TAGS[t]; if(tDef) iconsHtml += getIconHTML(MANA_TYPES[t]?.icon || '✨', tDef.name, tDef.desc); });
-        u.abilities.forEach(ab => { if(ABILITY_DESCRIPTIONS[ab]) iconsHtml += getIconHTML(ABILITY_ICONS[ab] || '📖', ab.toUpperCase(), ABILITY_DESCRIPTIONS[ab]); });
+        (u.tags || []).forEach(t => { let tDef = TAGS[t]; if (tDef) iconsHtml += getIconHTML(MANA_TYPES[t]?.icon || '✨', tDef.name, tDef.desc); });
+        u.abilities.forEach(ab => { if (ABILITY_DESCRIPTIONS[ab]) iconsHtml += getIconHTML(ABILITY_ICONS[ab] || '📖', ab.toUpperCase(), ABILITY_DESCRIPTIONS[ab]); });
 
         $('unit-tags-abilities').innerHTML = iconsHtml || '<span style="font-size:10px; color:#555;">Normal</span>';
 
@@ -643,7 +643,7 @@ function updateUI() {
 
     } else if (game && game.selectedHex) {
         $('bottom-hud').classList.remove('hidden');
-        const h = game.selectedHex, t = h.terrain; 
+        const h = game.selectedHex, t = h.terrain;
         $('unit-portrait').style.cssText = `border-color:#555; background:#222;`; $('unit-portrait').innerText = t.icon || '⬛';
         $('unit-name').innerHTML = `${t.name}`;
         $('unit-bars').innerHTML = `<div style="font-size:12px; color:#aaa; margin-top:5px;">Custo Mov: ${t.cost}<br>Defesa Base: ${Math.round(t.def * 100)}%</div>`;
@@ -657,14 +657,14 @@ function updateUI() {
         $('mana-dropdown-list')?.classList.add('hidden');
         $('resources-dropdown-list')?.classList.add('hidden'); // <-- Adicione esta linha!
     });
-    
+
 }
 
 // ==========================================
 // 4. LOJA, GERENCIAMENTO E INVENTÁRIO
 // ==========================================
 function generateShopItems() {
-    shopItems = []; 
+    shopItems = [];
     let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
     let bLvl = game && game.currentLevel ? game.currentLevel : 1;
 
@@ -680,7 +680,7 @@ function generateShopItems() {
         for (let i = 0; i < 6; i++) {
             let rB = pool[Math.floor(Math.random() * pool.length)];
             shopItems.push({
-                name: `Contrato: ${rB.name}`, icon: rB.e, desc: `Adiciona ${rB.name} à Box.`, cost: 10, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none', 
+                name: `Contrato: ${rB.name}`, icon: rB.e, desc: `Adiciona ${rB.name} à Box.`, cost: 10, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none',
                 action: async () => {
                     // Mágica das Passivas no Duelo!
                     let newAbilities = [...(rB.abilities || [])];
@@ -695,12 +695,12 @@ function generateShopItems() {
                         }
                     }
 
-                    rosterMemory.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: rB.name, baseName: rB.name, emoji: rB.e, hp: rB.hp, maxHp: rB.hp, mp: rB.mp, maxMp: rB.mp, atk: rB.atk, range: rB.range, level: 1, abilities: newAbilities, isNew: true, filter: newFilter, tags: newTags, fav: rB.fav || [] })); 
+                    rosterMemory.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: rB.name, baseName: rB.name, emoji: rB.e, hp: rB.hp, maxHp: rB.hp, mp: rB.mp, maxMp: rB.mp, atk: rB.atk, range: rB.range, level: 1, abilities: newAbilities, isNew: true, filter: newFilter, tags: newTags, fav: rB.fav || [] }));
                     return true;
                 }
             });
         }
-        
+
         shopItems.push({ name: "Fruta da Evolução", icon: "🍎", desc: "+100 XP a uma fera.", cost: 8, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: 'none', action: async () => { let m = [...rosterMemory, ...deployedRoster].filter(u => !u.isLeader); if (m.length === 0) { alert("Nenhuma fera!"); return false; } let r = await window.promptSelectUnit("Quem receberá XP?", m); if (r) { r.addXp(100); return true; } return false; } });
 
         let gearPool = ['SWORD', 'SHIELD', 'BOOTS', 'BOW'];
@@ -727,17 +727,17 @@ function generateShopItems() {
     }
 
     // A AÇÃO DE COMPRA DA FERA CORRIGIDA! Tudo acontece aqui dentro:
-    shopItems.push({ 
-        name: `Contrato: ${bName}`, icon: rB.e, desc: `Adiciona fera Lv${bLvl} à Box.`, cost: 10 + (bLvl * 2), rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none', 
-        action: async () => { 
-            let newAbilities = [...(rB.abilities || [])]; 
+    shopItems.push({
+        name: `Contrato: ${bName}`, icon: rB.e, desc: `Adiciona fera Lv${bLvl} à Box.`, cost: 10 + (bLvl * 2), rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none',
+        action: async () => {
+            let newAbilities = [...(rB.abilities || [])];
             let newTags = [...(rB.tags || [])];
             let newFilter = rB.filter || 'none';
 
             if (game && game.leaderData) {
                 // --- PASSIVA DO PIROMANTE ---
-                if (game.leaderData.name === 'Piromante' && !newAbilities.includes('burn')) { 
-                    newAbilities.push('burn'); 
+                if (game.leaderData.name === 'Piromante' && !newAbilities.includes('burn')) {
+                    newAbilities.push('burn');
                 }
 
                 // --- PASSIVA DO DOUTOR DA PRAGA ---
@@ -759,13 +759,13 @@ function generateShopItems() {
                 atk: bAtk, range: rB.range, level: bLvl,
                 abilities: newAbilities,
                 isNew: true,
-                filter: newFilter, 
-                tags: newTags,     
+                filter: newFilter,
+                tags: newTags,
                 fav: rB.fav || []
             }));
 
-            return true; 
-        } 
+            return true;
+        }
     });
 
 
@@ -1613,10 +1613,12 @@ function triggerStageEnd(win) {
             let pDna = window.countKingdomBuildings('LIBRARY') * 1;
             let pTraps = window.countKingdomBuildings('TRAP_MAKER') * 1;
 
-            if (!game.resources) game.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
-            game.resources.wood += pWood; game.resources.stone += pStone;
-            game.resources.scales += pScales; game.resources.sand += pSand;
-            game.gold += pGold;
+            if (!game.resources) game.resources = {};
+            game.resources.wood = (game.resources.wood || 0) + pWood;
+            game.resources.stone = (game.resources.stone || 0) + pStone;
+            game.resources.scales = (game.resources.scales || 0) + pScales;
+            game.resources.sand = (game.resources.sand || 0) + pSand;
+            game.gold = (game.gold || 0) + pGold;
 
             game.dna = (game.dna || 0) + pDna;
 
@@ -1935,13 +1937,13 @@ function openKingdom() {
     }
 
     // Atualiza os contadores de recursos na tela
-    let res = game.resources || { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
-    if ($('k-res-gold')) $('k-res-gold').innerText = game.gold;
+    let res = game.resources || {};
+    if ($('k-res-gold')) $('k-res-gold').innerText = game.gold || 0;
     if ($('k-res-dna')) $('k-res-dna').innerText = game.dna || 0;
-    if ($('k-res-wood')) $('k-res-wood').innerText = res.wood;
-    if ($('k-res-stone')) $('k-res-stone').innerText = res.stone;
-    if ($('k-res-scales')) $('k-res-scales').innerText = res.scales;
-    if ($('k-res-sand')) $('k-res-sand').innerText = res.sand;
+    if ($('k-res-wood')) $('k-res-wood').innerText = res.wood || 0;
+    if ($('k-res-stone')) $('k-res-stone').innerText = res.stone || 0;
+    if ($('k-res-scales')) $('k-res-scales').innerText = res.scales || 0;
+    if ($('k-res-sand')) $('k-res-sand').innerText = res.sand || 0;
 
     // Inicializa o motor gráfico e os inputs de câmera livre
     setTimeout(() => {
@@ -2103,8 +2105,8 @@ window.executeMarketTrade = function (resType, amount, goldChange) {
     if (goldChange < 0 && game.gold < Math.abs(goldChange)) { alert("Ouro insuficiente!"); return; }
     if (amount < 0 && game.resources[resType] < Math.abs(amount)) { alert("Recursos insuficientes!"); return; }
 
-    game.resources[resType] += amount;
-    game.gold += goldChange;
+    game.resources[resType] = (game.resources[resType] || 0) + amount;
+    game.gold = (game.gold || 0) + goldChange;
 
     let hex = kRenderer.selectedHex;
     let icon = resType === 'wood' ? '🌲' : resType === 'stone' ? '⛰️' : resType === 'scales' ? '🐟' : '⏳';
@@ -2146,10 +2148,15 @@ function renderBuildingMenu() {
         let bLvl = hex.bLevel || 1;
         let maxLvl = bData.id === 'CASTLE' ? 1 : 3;
 
-        let html = `<div style="display:flex; flex-direction:column; align-items:center; min-width:220px; background:rgba(20,20,30,0.9); border:1px solid var(--gold); padding:10px; border-radius:8px;">
-            <span style="font-size:32px;">${bData.icon}</span>
-            <span style="font-size:13px; color:var(--gold-light); margin:4px 0; font-weight:bold;">${bData.name} <span style="color:#fff; background:#444; padding:1px 5px; border-radius:8px; font-size:10px;">Nv ${bLvl}</span></span>
-            <span style="font-size:10px; color:#aaa; margin-bottom:8px; text-align:center;">${bData.desc}</span>`;
+        let html = `<div style="display:flex; flex-direction:column; min-width:170px; background:rgba(15,15,20,0.95); border:1px solid var(--gold-dark); padding:8px 12px; border-radius:8px; box-shadow: 0 5px 15px rgba(0,0,0,0.9); backdrop-filter:blur(5px);">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                <span style="font-size:26px;">${bData.icon}</span>
+                <div style="text-align:left; line-height:1.2;">
+                    <span style="font-size:12px; color:var(--gold-light); font-weight:bold;">${bData.name}</span><br>
+                    <span style="color:#fff; background:#444; padding:1px 4px; border-radius:4px; font-size:9px;">Nv ${bLvl}</span>
+                </div>
+            </div>
+            <div style="font-size:9px; color:#aaa; margin-bottom:6px; text-align:center; line-height:1.2;">${bData.desc}</div>`;
 
         if (bLvl < maxLvl) {
             let nextLvl = bLvl + 1;
@@ -2390,19 +2397,22 @@ function renderBuildingMenu() {
         let opacity = 1;
         if (opt.alreadyHas) { btnStyle = '#e74c3c'; cursor = 'not-allowed'; opacity = 0.5; }
 
-        btn.style.cssText = `display:flex; flex-direction:column; align-items:center; min-width:140px; background:rgba(20,20,30,0.8); border:1px solid ${btnStyle}; padding:10px; border-radius:8px; cursor:${cursor}; opacity:${opacity};`;
+        // Deixei o botão um pouquinho mais largo (110px) para a descrição caber melhor
+        btn.style.cssText = `display:flex; flex-direction:column; align-items:center; min-width:115px; max-width:125px; background:rgba(20,20,30,0.95); border:1px solid ${btnStyle}; padding:6px; border-radius:8px; cursor:${cursor}; opacity:${opacity}; box-shadow: 0 4px 10px rgba(0,0,0,0.6); backdrop-filter:blur(5px); transition: transform 0.1s;`;
 
         let costHtml = opt.alreadyHas
-            ? `<span style="color:#e74c3c; font-size:10px; font-weight:bold;">LIMITE ÚNICO ATINGIDO</span>`
+            ? `<span style="color:#e74c3c; font-size:9px; font-weight:bold;">LIMITE ÚNICO</span>`
             : Object.entries(b.cost).map(([res, amt]) => {
                 let icon = res === 'wood' ? '🌲' : res === 'stone' ? '⛰️' : res === 'scales' ? '🐟' : res === 'sand' ? '⏳' : '🩸';
                 let color = (game.resources[res] || 0) >= amt ? '#fff' : 'var(--enemy-color)';
-                return `<span style="color:${color}; font-size:11px; font-weight:bold;">${icon}${amt}</span>`;
+                return `<span style="color:${color}; font-size:9px; font-weight:bold;">${icon}${amt}</span>`;
             }).join(' ');
 
-        btn.innerHTML = `<span style="font-size:26px;">${b.icon}</span><span style="font-size:11px; color:var(--gold-light); margin:4px 0; font-weight:bold;">${b.name}</span><div style="display:flex; gap:6px;">${costHtml}</div><span style="font-size:9px; color:#aaa; margin-top:6px; text-align:center;">${b.desc}</span>`;
-
-        if (opt.canAfford && !opt.alreadyHas) {
+        // Adicionando o ${b.desc} de volta no final, com uma fonte tamanho 8px para não estourar a tela!
+        btn.innerHTML = `<span style="font-size:24px; margin-bottom:2px;">${b.icon}</span>
+                         <span style="font-size:10px; color:var(--gold-light); font-weight:bold; text-align:center; line-height:1.1;">${b.name}</span>
+                         <div style="display:flex; gap:3px; margin:4px 0; flex-wrap:wrap; justify-content:center;">${costHtml}</div>
+                         <span style="font-size:8px; color:#aaa; margin-top:2px; text-align:center; line-height:1.2;">${b.desc}</span>`; if (opt.canAfford && !opt.alreadyHas) {
             btn.onclick = async () => {
                 Object.entries(b.cost).forEach(([res, amt]) => game.resources[res] -= amt);
 

@@ -343,37 +343,37 @@ const LEADERS = [
     { id: 'shaman', name: 'Xamã da Tempestade', emoji: '🧙‍♂️', desc: 'Mestre dos raios. Seus feitiços ricocheteiam e causam caos nas fileiras inimigas.', hp: 75, mp: 4, atk: 12, range: 2, limit: 6, tags: ['ELECTRIC', 'MYSTIC'], fav: ['MOUNTAIN'], filter: 'hue-rotate(45deg) saturate(200%)', knownSpells: ['sl_furia_tempestade'] },
     {
         id: 'ld_dragao_galatico', name: 'Dragão Galático', emoji: '🌌',
-        maxHp: 180, hp: 180, maxMp: 5, atk: 45, range: 1, limit: 6,
+        maxHp: 180, hp: 180, mp: 5, maxMp: 5, atk: 45, range: 1, limit: 6,
         tags: ['CELESTIAL', 'FIRE'], abilities: ['flying'],
         desc: 'Uma entidade cósmica. Sobrevoa os perigos e incendeia o campo.',
     },
     {
         id: 'ld_gargula', name: 'Gárgula Anciã', emoji: '🗿',
-        maxHp: 200, hp: 200, maxMp: 3, atk: 35, range: 1, limit: 5, fav: 'MOUNTAIN',
+        maxHp: 200, hp: 200, mp: 3, maxMp: 3, atk: 35, range: 1, limit: 5, fav: 'MOUNTAIN',
         tags: ['ROCK', 'WING'], abilities: ['flying', 'counter'],
         desc: 'Estátua viva de altíssima defesa. Voa e pune quem a ataca de perto.',
     },
     {
         id: 'ld_golem_gelo', name: 'Golem de Gelo', emoji: '🧊',
-        maxHp: 250, hp: 250, maxMp: 3, atk: 30, range: 1, limit: 5, fav: 'SNOW',
+        maxHp: 250, hp: 250, mp: 3, maxMp: 3, atk: 30, range: 1, limit: 5, fav: 'SNOW',
         tags: ['ROCK', 'ICE'], abilities: [],
         desc: 'Um colosso glacial. Caminha devagar, mas congela os mares.',
     },
     {
         id: 'ld_porco_eletrico', name: 'Porco-Espinho Elétrico', emoji: '🦔',
-        maxHp: 140, hp: 140, maxMp: 4, atk: 25, range: 1, limit: 7,
+        maxHp: 140, hp: 140, mp: 4, maxMp: 4, atk: 25, range: 1, limit: 7,
         tags: ['CARAPACE', 'ELECTRIC'], abilities: ['counter','eletric'],
         desc: 'Agulhas carregadas. Eletrocuta a água para criar armadilhas pelo mapa.',
     },
     {
         id: 'ld_escaravelho', name: 'Escaravelho das Pragas', emoji: '🪲',
-        maxHp: 160, hp: 160, maxMp: 4, atk: 35, range: 1, limit: 6,
+        maxHp: 160, hp: 160, mp: 4, maxMp: 4, atk: 35, range: 1, limit: 6,
         tags: ['SAND', 'VENOM'], abilities: ['poison'], fav: 'DESERT',
         desc: 'Emerge das areias espalhando toxinas mortais pelo campo.',
     },
     {
         id: 'ld_doutor_praga', name: 'Doutor da Praga', emoji: '🐦‍⬛',
-        maxHp: 130, hp: 130, maxMp: 4, atk: 20, range: 2, limit: 8,
+        maxHp: 130, hp: 130, mp: 4, maxMp: 4, atk: 20, range: 2, limit: 8,
         tags: ['VENOM'], abilities: ['poison'],
         desc: 'Mestre alquimista. Todas as feras aliadas compradas se tornam Venenosas.',
         knownSpells: ['sl_miasma_curativo'] // Magia nova abaixo!

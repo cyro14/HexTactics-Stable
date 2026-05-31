@@ -1493,3 +1493,106 @@ button.btn-success {
     background: linear-gradient(180deg, #3f3114 0%, #221a0a 100%) !important;
     box-shadow: 0 0 10px rgba(232, 200, 74, 0.4) !important;
 }
+
+/* =========================================
+   TELA DO REINO FULLSCREEN E HUD FLUTUANTE
+========================================= */
+#kingdom-screen {
+    position: fixed !important;
+    top: 0; left: 0;
+    width: 100vw !important; height: 100vh !important;
+    background: #050508 !important;
+    z-index: 50;
+}
+
+#kingdomCanvas {
+    position: absolute !important;
+    top: 0; left: 0;
+    width: 100% !important; height: 100% !important;
+    z-index: 1;
+}
+
+/* 1. Título Menor no Topo (Agora apontando para o H1 correto!) */
+#kingdom-screen h1.screen-title {
+    position: absolute !important;
+    top: 15px !important; 
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 18px !important;
+    margin: 0 !important;
+    z-index: 10 !important;
+    pointer-events: none !important; 
+    text-shadow: 0 2px 8px rgba(0,0,0,1) !important;
+    background: none !important;
+    border: none !important;
+}
+
+/* 2. Barra de Recursos Compacta (Apontando direto para o ID) */
+#kingdom-resources {
+    position: absolute !important;
+    top: 45px !important; 
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 10 !important;
+    background: rgba(10,10,15, 0.85) !important;
+    border: 1px solid var(--gold-dark) !important;
+    border-radius: 20px !important;
+    padding: 4px 15px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
+    backdrop-filter: blur(5px) !important;
+    width: auto !important;
+    margin: 0 !important;
+}
+
+#kingdom-screen > div:last-child {
+    position: absolute;
+    bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex; gap: 10px;
+}
+
+#building-menu {
+    position: absolute !important;
+    bottom: 75px !important;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex; 
+    flex-direction: row !important; 
+    gap: 8px;
+    max-width: 95vw;
+    overflow-x: auto; 
+    padding: 5px;
+    align-items: flex-end;
+}
+
+/* =========================================
+   QUEBRANDO A JAULA DO HTML (MAPA 100%)
+========================================= */
+#kingdom-grid-container {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    border: none !important; /* Remove aquelas linhas douradas horizontais */
+    background: transparent !important;
+    z-index: 1 !important;
+}
+
+/* =========================================
+   ENCOLHENDO OS BOTÕES DE AÇÃO
+========================================= */
+#btn-toggle-build, #btn-leave-kingdom {
+    font-size: 12px !important;
+    padding: 8px 20px !important;
+    border-radius: 20px !important; /* Deixa eles mais arredondados e elegantes */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.8) !important;
+}
+
+/* Ajusta o distanciamento da barra inferior para ficar bem colada na base */
+#kingdom-screen > div:last-child {
+    bottom: 15px !important;
+    gap: 10px !important;
+}
