@@ -810,6 +810,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // === BOTÕES DA INTERFACE ===
 
+        // Dropdown de Recursos
+    $('resources-trigger')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        $('resources-dropdown-list')?.classList.toggle('hidden');
+        $('mana-dropdown-list')?.classList.add('hidden'); // Fecha a mana se estiver aberta
+    });
+    
     // Botão da Mochila de Itens de Campo
     $('btn-field-items')?.addEventListener('click', () => { 
         let menu = $('field-item-menu');
