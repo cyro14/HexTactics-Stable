@@ -774,18 +774,21 @@ button.btn-success {
         max-width: 45% !important; /* Garante que não invada a área dos botões */
     }
 
-    /* 2. Empurra os botões (Mochila, Escudo, etc) para a extrema direita */
+        /* Empurra os botões (Mochila, Escudo, etc) para a ESQUERDA e força-os para a linha de baixo */
     .hud-top-right {
-        justify-content: flex-end !important; 
-        flex-wrap: wrap !important; 
-        max-width: 55% !important; 
-        gap: 4px !important;
+        justify-content: flex-start !important; /* MUDANÇA: Alinha à esquerda */
+        width: 100% !important; /* Ocupa a segunda linha inteira */
+        order: 3 !important; /* Garante que ficará em baixo */
+        margin-top: 8px !important;
     }
     
-    /* Dá um respiro para a linha de Recursos embaixo */
+    /* Move o resumo de Recursos para o canto direito, na mesma linha do Turno */
     .hud-top-center {
-        margin-top: 6px !important; 
+        order: 2 !important; 
+        margin-top: 0 !important; 
+        margin-left: auto !important; /* Empurra para a extrema direita */
     }
+
     
     /* Ajuste fino do botão de Cancelar para telas menores */
     #btn-cancel-action {
