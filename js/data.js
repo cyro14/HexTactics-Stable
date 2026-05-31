@@ -15,20 +15,55 @@ const getActiveArtifacts = () => { return (game && game.isRoguelite) ? activeArt
 // ==========================================
 // DADOS DO JOGO (TERRENOS, TAGS E MAGIAS)
 // ==========================================
-const TERRAINS = {
-    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#5b8c42' },
-    FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#1e4d2b', icon: '🌲' },
-    MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#5b5b5b', icon: '⛰️' },
-    WATER: { id: 'WATER', name: 'Água', cost: 2, def: -0.15, color: '#2b7fb8', icon: '🌊' },
-    SNOW: { id: 'SNOW', name: 'Neve', cost: 2, def: -0.15, color: '#cce6f4', icon: '❄️' },
-    DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#e6c86e', icon: '🏜️' },
-    VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#c49a45', icon: '🏘️' },
-    CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#3d444a', icon: '🏰' },
-    ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada', cost: 2, def: -0.50, col: '#1c4568', icon: '⚡' },
-    BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas', cost: 2, def: -0.50, col: '#23411b', icon: '🔥' },
-    ASHES: { id: 'ASHES', name: 'Cinzas', col: '#555555', cost: 2, def: -0.50, icon: '💨' }
-};
+// ==========================================
+// DADOS DO JOGO: TERRENOS (SISTEMA QUADRADO COM VARIAÇÕES)
+// ==========================================
+// Assumindo um Tileset de 4 Colunas x 11 Linhas.
+// Cada linha é um terreno, cada coluna é uma variação visual daquele terreno.
 
+// ==========================================
+// DADOS DO JOGO: TERRENOS (Mapeamento Imagem IA 4x11)
+// ==========================================
+
+const TERRAINS = {
+    // Linha 0: Planície
+    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#5b8c42', icon: '🌿', variations: [{x:0,y:0}, {x:1,y:0}, {x:2,y:0}, {x:3,y:0}] },
+    
+    // Linha 1: Floresta
+    FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#1e4d2b', icon: '🌲', variations: [{x:0,y:1}, {x:1,y:1}, {x:2,y:1}, {x:3,y:1}] },
+    
+    // Linha 2: Montanha
+    MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#5b5b5b', icon: '⛰️', variations: [{x:0,y:2}, {x:1,y:2}, {x:2,y:2}, {x:3,y:2}] },
+    
+    // Linha 3: Água (Lago)
+    WATER: { id: 'WATER', name: 'Lago', cost: 2, def: -0.10, color: '#3498db', icon: '💧', variations: [{x:0,y:3}, {x:1,y:3}, {x:2,y:3}, {x:3,y:3}] },
+
+    // Linha 4: Mar (Água Funda)
+    SEA: { id: 'SEA', name: 'Mar', cost: 3, def: -0.20, color: '#2980b9', icon: '🌊', variations: [{x:0,y:4}, {x:1,y:4}, {x:2,y:4}, {x:3,y:4}] },
+    
+    // Linha 5: Deserto
+    DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#e6c86e', icon: '🏜️', variations: [{x:0,y:5}, {x:1,y:5}, {x:2,y:5}, {x:3,y:5}] },
+    
+    // Linha 6: Neve
+    SNOW: { id: 'SNOW', name: 'Neve', cost: 2, def: -0.15, color: '#cce6f4', icon: '❄️', variations: [{x:0,y:6}, {x:1,y:6}, {x:2,y:6}, {x:3,y:6}] },
+    
+    // Linha 7: Pântano
+    SWAMP: { id: 'SWAMP', name: 'Pântano', cost: 2, def: 0.10, color: '#3b5323', icon: '🐸', variations: [{x:0,y:7}, {x:1,y:7}, {x:2,y:7}, {x:3,y:7}] },
+    
+    // Linha 8: Vila
+    VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#c49a45', icon: '🏘️', variations: [{x:0,y:8}, {x:1,y:8}, {x:2,y:8}, {x:3,y:8}] },
+    
+    // Linha 9: Castelo
+    CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#3d444a', icon: '🏰', variations: [{x:0,y:9}, {x:1,y:9}, {x:2,y:9}, {x:3,y:9}] },
+    
+    // Linha 10: Savana
+    SAVANNA: { id: 'SAVANNA', name: 'Savana', cost: 1, def: 0.05, color: '#d4a373', icon: '🦁', variations: [{x:0,y:10}, {x:1,y:10}, {x:2,y:10}, {x:3,y:10}] },
+
+    // Especiais / Mecânicos
+    BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas', cost: 2, def: -0.50, color: '#d35400', icon: '🔥' },
+    ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada', cost: 2, def: -0.50, color: '#1c4568', icon: '⚡' },
+    ASHES: { id: 'ASHES', name: 'Cinzas', cost: 2, def: -0.50, color: '#444444', icon: '💨' }
+};
 const TAGS = {
     FIRE: { name: 'Ígneo', col: '#e67e22', req: 3, desc: '(3) Causa 20% de dano em área.' },
     SILVESTRE: { name: 'Silvestre', col: '#27ae60', req: 3, desc: '(3) Cura +5 HP e 15% chance de Atordoar.' },

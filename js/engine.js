@@ -349,10 +349,10 @@ class Game {
         this.map.set(`${aS.q},${aS.r}`, new Hex(aS.q, aS.r, TERRAINS.CASTLE, 2));
 
         // 2. Posiciona o Jogador (Garante que as tropas não nasçam no mesmo hexágono)
-        let pNeighbors = [pS, ...Hex.getNeighbors(pS.q, pS.r), ...Hex.getNeighbors(pS.q+1, pS.r), ...Hex.getNeighbors(pS.q-1, pS.r)];
+        let pNeighbors = [pS, ...Hex.getNeighbors(pS.q, pS.r), ...Hex.getNeighbors(pS.q + 1, pS.r), ...Hex.getNeighbors(pS.q - 1, pS.r)];
         let pValid = pNeighbors.filter(n => this.map.has(`${n.q},${n.r}`) && this.map.get(`${n.q},${n.r}`).terrain.id !== 'WATER' && this.map.get(`${n.q},${n.r}`).terrain.id !== 'MOUNTAIN');
         let pUsed = new Set();
-        
+
         deployedRoster.forEach((u, i) => {
             let spawn = pValid.find(n => !pUsed.has(`${n.q},${n.r}`)) || pS;
             pUsed.add(`${spawn.q},${spawn.r}`);
@@ -361,12 +361,12 @@ class Game {
 
         // 3. IA Oponente e sua Tropa Mímica!
         let chosenAI = typeof LEADERS !== 'undefined' ? LEADERS.find(l => l.id === this.opponentId) : null;
-        if (!chosenAI) chosenAI = LEADERS[0]; 
+        if (!chosenAI) chosenAI = LEADERS[0];
 
         let aiSpells = [];
         if (typeof SPELLS !== 'undefined') SPELLS.forEach(s => { if (s.level <= 2 && s.tags.some(t => chosenAI.tags.includes(t))) aiSpells.push(s.id); });
 
-        let eNeighbors = [aS, ...Hex.getNeighbors(aS.q, aS.r), ...Hex.getNeighbors(aS.q-1, aS.r), ...Hex.getNeighbors(aS.q+1, aS.r)];
+        let eNeighbors = [aS, ...Hex.getNeighbors(aS.q, aS.r), ...Hex.getNeighbors(aS.q - 1, aS.r), ...Hex.getNeighbors(aS.q + 1, aS.r)];
         let eValid = eNeighbors.filter(n => this.map.has(`${n.q},${n.r}`) && this.map.get(`${n.q},${n.r}`).terrain.id !== 'WATER' && this.map.get(`${n.q},${n.r}`).terrain.id !== 'MOUNTAIN');
         let eUsed = new Set([`${aS.q},${aS.r}`]); // Reserva o Castelo para o Líder inimigo
 
@@ -381,7 +381,7 @@ class Game {
             const b = beastPool[Math.floor(Math.random() * beastPool.length)];
             let spawn = eValid.find(n => !eUsed.has(`${n.q},${n.r}`)) || aS;
             eUsed.add(`${spawn.q},${spawn.r}`);
-            
+
             this.units.push(new Unit({ q: spawn.q, r: spawn.r, faction: 2, name: b.name, baseName: b.name, emoji: b.e, hp: b.hp, maxHp: b.hp, mp: b.mp, maxMp: b.mp, atk: b.atk, range: b.range, abilities: [...b.abilities], filter: b.filter, tags: b.tags || [], fav: b.fav || [], level: 2 }));
         }
 
@@ -586,7 +586,7 @@ class Game {
 
         if (killer && killer.faction === 1 && victim.faction !== 1) {
             killer.addXp(victim.isBoss ? 100 : 30); let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
-            
+
             // INSÍGNIA DO BANDIDO
             if (arts.includes('art_bandit_badge')) {
                 this.gold += 2;
@@ -696,9 +696,9 @@ class Game {
     }
 
     async attemptTame(tamer, wild) {
-        if (tamer.status === 'silenced') { 
-            if (typeof showPopup === 'function') showPopup("Silenciado!", tamer, '#7f8c8d'); 
-            return false; 
+        if (tamer.status === 'silenced') {
+            if (typeof showPopup === 'function') showPopup("Silenciado!", tamer, '#7f8c8d');
+            return false;
         }
 
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true; this.isAnimating = true; let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
@@ -714,7 +714,7 @@ class Game {
             }
             let hexLure = this.map.get(`${wild.q},${wild.r}`);
             if (hexLure && (hexLure.hasLure || hexLure.hasPremiumLure)) {
-                hexLure.hasLure = false; hexLure.hasPremiumLure = false; 
+                hexLure.hasLure = false; hexLure.hasPremiumLure = false;
                 if (typeof showPopup === 'function') showPopup("Isca Devorada!", wild, '#e67e22');
             }
 
@@ -871,7 +871,7 @@ class Game {
         if (typeof showPopup === 'function') showPopup("☠ Eliminado!", victim, '#e74c3c');
         if (victim.faction === 1 && !victim.isLeader) { this.lastDeadAlly = new Unit({ ...victim }); }
 
-        if (killer && killer.faction === 1 && victim.faction !== 1) { killer.addXp(victim.isBoss ? 100 : 30); let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];}
+        if (killer && killer.faction === 1 && victim.faction !== 1) { killer.addXp(victim.isBoss ? 100 : 30); let arts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : []; }
 
 
         // Lógica do Necromante (Doma Feras da Natureza ao abater)
@@ -1001,9 +1001,9 @@ class Game {
             if (hasIcarus && u.hp > 0) {
                 u.hp -= 5;
                 if (typeof showPopup === 'function') showPopup("-5 🪽", u, '#e74c3c');
-                if (u.hp <= 0) this.handleDeath(u, {name:'Maldição de Ícaro', faction:-1});
+                if (u.hp <= 0) this.handleDeath(u, { name: 'Maldição de Ícaro', faction: -1 });
             }
-            
+
             if (u.baseName === 'Troll' && !u.hasAttacked) {
                 const hex = this.map.get(`${u.q},${u.r}`);
                 if (hex && (hex.terrain.id === 'MOUNTAIN' || hex.terrain.id === 'FOREST')) {
@@ -1062,7 +1062,18 @@ class Game {
 // RENDERER E DESENHO DA TELA
 // ==========================================
 class Renderer {
-    constructor(canvas, game) { this.canvas = canvas; this.ctx = canvas.getContext('2d'); this.game = game; this.hexSize = 55; this.offsetX = 0; this.offsetY = 0; window.addEventListener('resize', () => this.initCamera(false)); }
+    constructor(canvas, game) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.game = game;
+        this.hexSize = 55;
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.tileset = new Image();
+        this.tileset.onload = () => { if (this.game) this.draw(); };
+        this.tileset.src = 'img/tileset.png';
+        window.addEventListener('resize', () => this.initCamera(false));
+    }
 
     initCamera(force = false) { this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight; if (force || this.hexSize < 35) { const mapW = this.game.cols * Math.sqrt(3); const mapH = this.game.rows * 1.5 + 0.5; this.hexSize = Math.max(Math.min(this.canvas.width / mapW, this.canvas.height / mapH) * 0.75, 40); } let pL = this.game.units.find(u => u.isLeader && u.faction === 1); if (pL) this.centerOn(pL.vq, pL.vr); else this.draw(); }
     getPosUnscaled(q, r) { return { x: this.hexSize * Math.sqrt(3) * (q + r / 2) + this.hexSize, y: this.hexSize * 1.5 * r + this.hexSize }; }
@@ -1076,10 +1087,59 @@ class Renderer {
         ctx.fillStyle = bgColor; ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); ctx.globalAlpha = 1.0; ctx.shadowBlur = 0;
 
         this.game.map.forEach(hex => {
-            const p = this.getPos(hex.q, hex.r); this.hexPath(ctx, p.x, p.y, this.hexSize - 0.5); ctx.fillStyle = hex.terrain.color; ctx.fill();
-            if (hex.isCrystal) { this.hexPath(ctx, p.x, p.y, this.hexSize - 1); ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = 'rgba(0,255,255,0.2)'; ctx.fill(); }
-            if (this.game.reachableHexes.has(hex.getKey())) { ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3; ctx.stroke(); } else { ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1; ctx.stroke(); }
-            if (hex.terrain.icon) { ctx.save(); ctx.globalAlpha = 0.8; ctx.font = `${this.hexSize * 0.7}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(hex.terrain.icon, p.x, p.y); ctx.restore(); }
+            const p = this.getPos(hex.q, hex.r);
+
+            // 1. APLICA A MÁSCARA (CLIP) PARA CORTAR O QUADRADO EM FORMATO HEXAGONAL
+            ctx.save();
+            this.hexPath(ctx, p.x, p.y, this.hexSize - 0.5);
+            ctx.clip();
+
+            // Se o tileset carregou e o terreno possui o array de variações
+            if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && hex.terrain && hex.terrain.variations) {
+
+                // Configuração exata da imagem gerada pelo ChatGPT (4 colunas, 11 linhas)
+                const colunasNaImagem = 4;
+                const linhasNaImagem = 11;
+
+                let tileW = this.tileset.naturalWidth / colunasNaImagem;
+                let tileH = this.tileset.naturalHeight / linhasNaImagem;
+
+                let hexWidth = this.hexSize * Math.sqrt(3);
+                let hexHeight = this.hexSize * 2;
+
+                let hash = Math.abs((hex.q * 101) + (hex.r * 37));
+                let varIndex = hash % hex.terrain.variations.length;
+                let selectedTile = hex.terrain.variations[varIndex];
+
+                // ZOOM de 15% (1.15) para esticar a arte e esconder a grade preta da IA
+                let zoom = 1.15;
+                let drawW = hexWidth * zoom;
+                let drawH = hexHeight * zoom;
+
+                ctx.drawImage(
+                    this.tileset,
+                    selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
+                    p.x - (drawW / 2), p.y - (drawH / 2), drawW, drawH
+                );
+            } else {
+                ctx.fillStyle = (hex.terrain && hex.terrain.color) ? hex.terrain.color : '#000';
+                ctx.fill();
+            }
+            ctx.restore(); // Finaliza a máscara
+
+            // 2. DESENHA A BORDA E OS EFEITOS (Fora da máscara)
+            this.hexPath(ctx, p.x, p.y, this.hexSize - 0.5);
+
+            if (hex.isCrystal) { ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = 'rgba(0,255,255,0.2)'; ctx.fill(); }
+            if (this.game.reachableHexes.has(hex.getKey())) { ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3; ctx.stroke(); }
+            else {
+                // Borda super suave (Espessura 0.5 e Opacidade 15%)
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+                ctx.lineWidth = 0.5;
+                //ctx.stroke();
+
+                // DICA: Se quiser remover a borda COMPLETAMENTE, basta apagar o "ctx.stroke();" da linha acima.
+            }
             if (hex.hasPremiumLure) {
                 ctx.font = `${this.hexSize * 0.7}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText("🥩", p.x, p.y + (this.hexSize * 0.2));
