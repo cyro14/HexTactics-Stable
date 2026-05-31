@@ -743,6 +743,11 @@ button.btn-success {
     border-radius: 2px;
 }
 
+#btn-cancel-action {
+    bottom: 130px !important; 
+    z-index: 3000 !important; 
+}
+
 @media (max-width: 600px) {
     .screen-title {
         font-size: 2.4rem;
@@ -751,6 +756,7 @@ button.btn-success {
     /* --- 1. CABEÇALHO LADO A LADO (CORRIGIDO PARA MOBILE) --- */
     #top-bar {
         padding: 8px 8px 6px 8px;
+        align-items: flex-start !important; 
         padding-top: 24px; /* Espaço para o indicador de fase */
         flex-direction: row;
         flex-wrap: wrap; /* Permite que os itens quebrem linha */
@@ -760,18 +766,31 @@ button.btn-success {
         gap: 8px;
     }
 
-    /* Força os recursos a descerem para a linha de baixo com elegância */
-    .hud-top-center {
-        order: 3; 
-        width: 100%; 
-        flex-wrap: wrap; /* Se a tela for muito fina, os recursos quebram também */
-        justify-content: center;
-        padding: 4px 2px;
+    /* 1. Joga a Mana para debaixo da badge de Turno */
+    .hud-top-left {
+        flex-direction: column !important; 
+        align-items: flex-start !important;
+        gap: 6px !important;
+        max-width: 45% !important; /* Garante que não invada a área dos botões */
     }
 
-    /* Mantém o Turno/Mana na esquerda e Botões na direita, em cima */
-    .hud-top-left { order: 1; }
-    .hud-top-right { order: 2; }
+    /* 2. Empurra os botões (Mochila, Escudo, etc) para a extrema direita */
+    .hud-top-right {
+        justify-content: flex-end !important; 
+        flex-wrap: wrap !important; 
+        max-width: 55% !important; 
+        gap: 4px !important;
+    }
+    
+    /* Dá um respiro para a linha de Recursos embaixo */
+    .hud-top-center {
+        margin-top: 6px !important; 
+    }
+    
+    /* Ajuste fino do botão de Cancelar para telas menores */
+    #btn-cancel-action {
+        bottom: 115px !important; 
+    }
 
     .turn-section {
         flex: 1;
