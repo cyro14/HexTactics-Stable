@@ -23,13 +23,33 @@
                 <div id="mana-bar-container" class="mana-compact"></div>
             </div>
             
-            <div class="hud-top-center">
-                <div class="res-compact" title="Ouro"><span class="res-icon">💰</span><span id="ui-gold">0</span></div>
-                <div class="res-compact" title="DNA"><span class="res-icon">🧬</span><span id="ui-dna">0</span></div>
-                <div class="res-compact" title="Madeira"><span class="res-icon">🌲</span><span id="res-wood">0</span></div>
-                <div class="res-compact" title="Pedra"><span class="res-icon">⛰️</span><span id="res-stone">0</span></div>
-                <div class="res-compact" title="Escamas"><span class="res-icon">🐟</span><span id="res-scales">0</span></div>
-                <div class="res-compact" title="Areia"><span class="res-icon">⏳</span><span id="res-sand">0</span></div>
+                        <div class="hud-top-center" id="resources-dropdown-container" style="position: relative; background: none; padding: 0;">
+                <!-- Gatilho (Resumo do Ouro) -->
+                <div id="resources-trigger" class="mana-compact" style="cursor:pointer; user-select:none; color:var(--gold-light);">
+                    💰 <span id="ui-gold-trigger">0</span> <small style="font-size:8px; opacity:0.5;">▼</small>
+                </div>
+                
+                <!-- Lista de Recursos Suspensa -->
+                <div id="resources-dropdown-list" class="hidden" style="position:absolute; top:32px; right:0; background:rgba(10,10,15,0.98); border:1px solid var(--gold-dark); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,0.9); z-index:2500; min-width:140px; display:flex; flex-direction:column; backdrop-filter:blur(10px);">
+                    <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:11px; font-weight:bold;">
+                        <span style="font-size:14px;">💰</span><span style="flex:1; color:#ddd; font-weight:normal;">Ouro</span><span id="ui-gold" style="color:#fff;">0</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:11px; font-weight:bold;">
+                        <span style="font-size:14px;">🧬</span><span style="flex:1; color:#ddd; font-weight:normal;">DNA</span><span id="ui-dna" style="color:#fff;">0</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:11px; font-weight:bold;">
+                        <span style="font-size:14px;">🌲</span><span style="flex:1; color:#ddd; font-weight:normal;">Madeira</span><span id="res-wood" style="color:#fff;">0</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:11px; font-weight:bold;">
+                        <span style="font-size:14px;">⛰️</span><span style="flex:1; color:#ddd; font-weight:normal;">Pedra</span><span id="res-stone" style="color:#fff;">0</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:11px; font-weight:bold;">
+                        <span style="font-size:14px;">🐟</span><span style="flex:1; color:#ddd; font-weight:normal;">Escamas</span><span id="res-scales" style="color:#fff;">0</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; font-size:11px; font-weight:bold;">
+                        <span style="font-size:14px;">⏳</span><span style="flex:1; color:#ddd; font-weight:normal;">Areia</span><span id="res-sand" style="color:#fff;">0</span>
+                    </div>
+                </div>
             </div>
 
             <div class="hud-top-right">
