@@ -1557,6 +1557,9 @@ function triggerStageEnd(win) {
         show('rs-menu-win');
 
         let btn = $('btn-go-shop');
+        let novoBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(novoBtn, btn);
+        btn = novoBtn;
         btn.innerText = "Voltar ao Menu Principal";
         btn.onclick = () => location.reload();
         return;
@@ -1647,6 +1650,9 @@ function triggerStageEnd(win) {
         deployedRoster = survivors.map(u => { u.furyAtk = 0; u.hasAttacked = false; u.status = null; u.spellsCast = 0; return u; });
 
         let btn = $('btn-go-shop');
+        let novoBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(novoBtn, btn);
+        btn = novoBtn;
 
         if (game.isBossStage) {
             if (game.currentLevel < 5) {
@@ -2685,4 +2691,22 @@ window.openHallOfFame = function () {
     html += `<button class="btn-danger" style="margin-top:15px; width:100%; padding:12px; font-weight:bold; font-size:14px; letter-spacing:1px; box-shadow:0 4px 10px rgba(231,76,60,0.3);" onclick="document.getElementById('hall-fame-modal').style.display='none'">Fechar Galeria</button></div>`;
     el.innerHTML = html;
     el.style.display = 'flex';
+};
+
+// ==========================================
+// CONTROLE DE ABAS DO GERENCIAMENTO (MOBILE)
+// ==========================================
+window.switchMgmtTab = function(tabId, btn) {
+    // 1. Remove a cor de "ativo" de todos os botões de aba
+    document.querySelectorAll('.mgmt-tab-btn').forEach(b => b.classList.remove('active'));
+    
+    // 2. Acende o botão que foi clicado
+    if (btn) btn.classList.add('active');
+    
+    // 3. Esconde todos os painéis (no celular)
+    document.querySelectorAll('.mgmt-panel').forEach(p => p.classList.remove('active-panel'));
+    
+    // 4. Mostra apenas o painel solicitado
+    const target = document.getElementById('panel-' + tabId);
+    if (target) target.classList.add('active-panel');
 };

@@ -216,26 +216,36 @@
 <div id="management-screen" class="layer screen hidden">
     <h1 class="screen-title" style="font-size:2.2rem;">Gerenciamento</h1>
     <p class="screen-subtitle">Escale suas Lendas (Limite: <span id="mgmt-limit">0</span>)</p>
+
+    <div class="mgmt-tabs">
+        <button class="mgmt-tab-btn active" onclick="switchMgmtTab('deploy', this)">⚔️ Campo</button>
+        <button class="mgmt-tab-btn" onclick="switchMgmtTab('box', this)">📦 Box</button>
+        <button class="mgmt-tab-btn" onclick="switchMgmtTab('inv', this)">🎒 Mochila</button>
+        <button class="mgmt-tab-btn" onclick="switchMgmtTab('syn', this)">🔗 Sinergias</button>
+    </div>
+
     <div class="mgmt-container">
-        
-        <div class="mgmt-panel" style="flex:0.8; border-color:var(--gold);">
+        <div id="panel-inv" class="mgmt-panel" style="flex:0.8; border-color:var(--gold);">
             <div class="mgmt-header" style="color:var(--gold);">🎒 Mochila</div>
             <div id="mgmt-inv-grid" class="mgmt-grid" style="grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));"></div>
         </div>
 
-        <div class="mgmt-panel" style="flex:2;">
+        <div id="panel-box" class="mgmt-panel" style="flex:2;">
             <div class="mgmt-header">📦 A Box (Reservas)</div>
             <div id="mgmt-box-grid" class="mgmt-grid"></div>
         </div>
-        <div class="mgmt-panel" style="flex:2;border-color:var(--tame-color);">
+
+        <div id="panel-deploy" class="mgmt-panel active-panel" style="flex:2;border-color:var(--tame-color);">
             <div class="mgmt-header" style="color:var(--tame-color);">⚔️ Em Campo</div>
             <div id="mgmt-deploy-grid" class="mgmt-grid"></div>
         </div>
-        <div class="mgmt-panel" style="flex:1.5;border-color:var(--warning);">
+
+        <div id="panel-syn" class="mgmt-panel" style="flex:1.5;border-color:var(--warning);">
             <div class="mgmt-header" style="color:var(--warning);">🔗 Sinergias</div>
             <div id="mgmt-synergy-list" class="syn-list"></div>
         </div>
     </div>
+    
     <button id="btn-start-stage" class="btn-success" style="margin-top:15px;font-size:14px;padding:12px 30px;">Avançar Combate →</button>
     <button id="btn-close-team" class="btn-danger hidden" style="margin-top:15px;width:100%;">Voltar ao Menu</button>
 </div>
