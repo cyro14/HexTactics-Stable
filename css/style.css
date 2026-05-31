@@ -774,21 +774,17 @@ button.btn-success {
         max-width: 45% !important; /* Garante que não invada a área dos botões */
     }
 
-        /* Empurra os botões (Mochila, Escudo, etc) para a ESQUERDA e força-os para a linha de baixo */
-    .hud-top-right {
+          .hud-top-right {
         justify-content: flex-end !important; 
         flex-wrap: wrap !important; 
         max-width: 55% !important; 
         gap: 4px !important;
     }
     
-    /* Move o resumo de Recursos para o canto direito, na mesma linha do Turno */
+    /* Dá um respiro para a linha de Recursos embaixo */
     .hud-top-center {
-        order: 2 !important; 
-        margin-top: 0 !important; 
-        margin-left: auto !important; /* Empurra para a extrema direita */
+        margin-top: 6px !important; 
     }
-
     
     /* Ajuste fino do botão de Cancelar para telas menores */
     #btn-cancel-action {
