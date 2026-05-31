@@ -776,10 +776,10 @@ button.btn-success {
 
         /* Empurra os botões (Mochila, Escudo, etc) para a ESQUERDA e força-os para a linha de baixo */
     .hud-top-right {
-        justify-content: flex-start !important; /* MUDANÇA: Alinha à esquerda */
-        width: 100% !important; /* Ocupa a segunda linha inteira */
-        order: 3 !important; /* Garante que ficará em baixo */
-        margin-top: 8px !important;
+        justify-content: flex-end !important; 
+        flex-wrap: wrap !important; 
+        max-width: 55% !important; 
+        gap: 4px !important;
     }
     
     /* Move o resumo de Recursos para o canto direito, na mesma linha do Turno */
