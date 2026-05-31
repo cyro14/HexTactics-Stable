@@ -887,6 +887,28 @@ button.btn-success {
     .bestiary-grid {
         grid-template-columns: repeat(3, 1fr);
     }
+     /* Garante que os botões caibam lado a lado se distribuindo igualmente sem quebrar o layout */
+    .hud-actions-row {
+        gap: 4px !important;
+        padding-top: 6px !important;
+    }
+    .btn-hud-action {
+        font-size: 9px !important;
+        padding: 6px 2px !important;
+        flex: 1 1 0 !important; /* Força distribuição perfeitamente simétrica e encolhimento seguro */
+        justify-content: center;
+        white-space: nowrap;
+        letter-spacing: 0px !important;
+        gap: 2px !important;
+    }
+
+    /* Move a lista de itens da mochila para baixo da barra superior duplicada do mobile */
+    #field-item-menu {
+        top: 92px !important; /* Desce o menu para limpar a linha de recursos */
+        right: 8px !important;
+        min-width: 160px !important;
+        z-index: 2800 !important;
+    }
 }
 
 .tag-badge {
