@@ -412,12 +412,12 @@ class Game {
         if (u.baseName === 'T-Rex') {
             let h = this.map.get(k);
             if (h && (h.terrain.id === 'FOREST' || h.terrain.id === 'VILLAGE' || h.terrain.id === 'SNOW')) {
-                if (!this.resources) this.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
+                if (!this.resources) this.resources = {};
                 let resGot = "";
 
-                if (h.terrain.id === 'FOREST') { this.resources.wood += 2; resGot = "+2 🌲"; }
-                if (h.terrain.id === 'SNOW') { this.resources.sand += 2; resGot = "+2 ⏳"; }
-                if (h.terrain.id === 'VILLAGE') { this.gold += 10; resGot = "+10 💰"; }
+                if (h.terrain.id === 'FOREST') { this.resources.wood = (this.resources.wood || 0) + 2; resGot = "+2 🌲"; }
+                if (h.terrain.id === 'SNOW') { this.resources.sand = (this.resources.sand || 0) + 2; resGot = "+2 ⏳"; }
+                if (h.terrain.id === 'VILLAGE') { this.gold = (this.gold || 0) + 10; resGot = "+10 💰"; }
 
                 h.terrain = TERRAINS.PLAINS;
                 if (resGot && typeof showPopup === 'function') showPopup(`Esmagado! ${resGot}`, u, '#e74c3c');
@@ -956,22 +956,24 @@ class Game {
                 }
             });
 
-            if (!this.resources) this.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
+            if (!this.resources) this.resources = {};
             this.units.filter(u => u.faction === 1).forEach(u => {
                 const hex = this.map.get(`${u.q},${u.r}`);
                 if (hex) {
                     let resGained = null, icon = '', color = '';
 
-                    if (hex.terrain.id === 'FOREST') { this.resources.wood++; resGained = '+1 Madeira'; icon = '🌲'; color = '#27ae60'; }
-                    else if (hex.terrain.id === 'MOUNTAIN') { this.resources.stone++; resGained = '+1 Pedra'; icon = '⛰️'; color = '#95a5a6'; }
-                    else if (hex.terrain.id === 'WATER') { this.resources.scales++; resGained = '+1 Escama'; icon = '🐟'; color = '#3498db'; }
-                    else if (hex.terrain.id === 'DESERT') { this.resources.sand++; resGained = '+1 Areia'; icon = '⏳'; color = '#f1c40f'; }
+                    // O SEGREDO AQUI: (this.resources.wood || 0) garante que o NaN nunca exista!
+                    if (hex.terrain.id === 'FOREST') { this.resources.wood = (this.resources.wood || 0) + 1; resGained = '+1 Madeira'; icon = '🌲'; color = '#27ae60'; }
+                    else if (hex.terrain.id === 'MOUNTAIN') { this.resources.stone = (this.resources.stone || 0) + 1; resGained = '+1 Pedra'; icon = '⛰️'; color = '#95a5a6'; }
+                    else if (hex.terrain.id === 'WATER') { this.resources.scales = (this.resources.scales || 0) + 1; resGained = '+1 Escama'; icon = '🐟'; color = '#3498db'; }
+                    else if (hex.terrain.id === 'DESERT') { this.resources.sand = (this.resources.sand || 0) + 1; resGained = '+1 Areia'; icon = '⏳'; color = '#f1c40f'; }
 
                     if (resGained && typeof showPopup === 'function') {
                         showPopup(`${icon} ${resGained}`, u, color);
                     }
                 }
             });
+            
             this.units.filter(u => u.faction === 1).forEach(u => { if (u.status === 'shielded') u.status = null; });
             this.units.forEach(u => { if (u._mcDuration !== undefined) { u._mcDuration--; if (u._mcDuration <= 0) { u.faction = u._origFaction; delete u._origFaction; delete u._mcDuration; if (typeof showPopup === 'function') showPopup("Controle Perdido!", u, '#9b59b6'); } } });
             this.currentTurn = 2; const tb = document.getElementById('turn-blocker'); if (tb) tb.style.display = 'block'; this.updateTurnUI("Turno: Inimigo", 'var(--enemy-color)'); this.processStatus(2);

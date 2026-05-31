@@ -585,6 +585,13 @@ function updateUI() {
     const dnaDisplay = $('ui-dna');
     if (dnaDisplay && game) dnaDisplay.innerText = game.dna || 0;
 
+    let res = game.resources || {};
+    if ($('ui-dna')) $('ui-dna').innerText = game.dna || 0;
+    if ($('res-wood')) $('res-wood').innerText = res.wood || 0;
+    if ($('res-stone')) $('res-stone').innerText = res.stone || 0;
+    if ($('res-scales')) $('res-scales').innerText = res.scales || 0;
+    if ($('res-sand')) $('res-sand').innerText = res.sand || 0;
+    
     updateManaUI();
     if (game && game.selectedUnit) {
         $('bottom-hud').classList.remove('hidden'); // Exibe a HUD inferior
