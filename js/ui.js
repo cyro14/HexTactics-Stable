@@ -574,9 +574,13 @@ function updateUI() {
         document.body.appendChild(fc);
     }
 
-    // Atualiza os contadores individuais de Ouro e DNA
+        // Atualiza os contadores individuais de Ouro e DNA
     const goldDisplay = $('ui-gold');
-    if (goldDisplay && game) goldDisplay.innerText = game.gold;
+    if (goldDisplay && game) {
+        goldDisplay.innerText = game.gold;
+        // ADICIONE ESTA LINHA:
+        if ($('ui-gold-trigger')) $('ui-gold-trigger').innerText = game.gold; 
+    }
 
     const dnaDisplay = $('ui-dna');
     if (dnaDisplay && game) dnaDisplay.innerText = game.dna || 0;
@@ -641,7 +645,12 @@ function updateUI() {
     } else {
         $('bottom-hud').classList.add('hidden'); // Esconde a HUD inteira se clicar no nada!
     }
-
+    // Garante que os menus fechem se o jogador clicar em qualquer outro ponto do mapa
+    window.addEventListener('click', () => {
+        $('mana-dropdown-list')?.classList.add('hidden');
+        $('resources-dropdown-list')?.classList.add('hidden'); // <-- Adicione esta linha!
+    });
+    
 }
 
 // ==========================================
