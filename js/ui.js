@@ -2759,13 +2759,15 @@ $('btn-editor-export').onclick = () => {
         // Salva apenas a coordenada e a ID do terreno
         exportData.push({ q: h.q, r: h.r, tId: h.terrain.id });
     });
-
+    
     // Transforma a lista num texto bonitinho e joga no modal
     let jsonStr = JSON.stringify(exportData);
-    $('editor-export-text').value = `const MEU_MAPA_CUSTOMIZADO = ${jsonStr};`;
+    
+    // AGORA ELE GERA SÓ A LISTA PURA! Perfeito para copiar e colar direto.
+    $('editor-export-text').value = jsonStr;
+    
     $('editor-export-modal').classList.remove('hidden');
 };
-
 $('btn-editor-copy').onclick = () => {
     $('editor-export-text').select();
     document.execCommand('copy');

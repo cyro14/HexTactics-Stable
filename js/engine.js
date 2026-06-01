@@ -204,9 +204,68 @@ class Game {
         this.map.clear(); this.units = []; this.items.clear(); this.hasKey = false;
         this.manaPool = {}; this.spentMana = {}; this.spellCooldowns = {}; this.activeSpell = null; this.lastDeadAlly = null; this.turnCount = 0;
 
-        for (let r = 0; r < this.rows; r++) { const off = Math.floor(r / 2); for (let q = -off; q < this.cols - off; q++) { const rnd = Math.random(); let t = TERRAINS.PLAINS; if (rnd > 0.94) t = TERRAINS.MOUNTAIN; else if (rnd > 0.86) t = TERRAINS.SNOW; else if (rnd > 0.74) t = TERRAINS.WATER; else if (rnd > 0.62) t = TERRAINS.FOREST; else if (rnd > 0.52) t = TERRAINS.DESERT; else if (rnd > 0.45) t = TERRAINS.VILLAGE; this.map.set(`${q},${r}`, new Hex(q, r, t)); } }
+      // ----------------------------------------------------
+        // MÁGICA DOS MAPAS CUSTOMIZADOS (BLINDADA V3)
+        // ----------------------------------------------------
+        // 1. Pega o Ato e o Nó usando as variáveis reais do Motor
+        let atoAtual = this.currentLevel || 1;
+        let noAtual = this.currentFloor !== undefined ? this.currentFloor : 0;
+        let mapKey = `ATO${atoAtual}_NO${noAtual}`;
+        
+        let customMap = typeof CUSTOM_MAPS !== 'undefined' ? CUSTOM_MAPS[mapKey] : null;
+        let pS = null; let aS = null;
 
-        const mR = Math.floor(this.rows / 2); const pS = { q: -Math.floor(mR / 2), r: mR }; const aS = { q: this.cols - 1 - Math.floor(mR / 2), r: mR };
+        this.cols = 15; // Garante o tamanho exato da tela do Editor
+        this.rows = 11;
+
+        if (customMap && customMap.length > 0 && !this.isRoguelite) {
+            customMap.forEach(h => {
+                let tDef = TERRAINS[h.tId] || TERRAINS.PLAINS;
+                this.map.set(`${h.q},${h.r}`, new Hex(h.q, h.r, tDef));
+            });
+
+            // 2. Procura pelas VILAS (VILLAGE) que você pintou para usar como base!
+            let bases = [];
+            this.map.forEach(h => { 
+                if (h.terrain && h.terrain.id === 'VILLAGE') {
+                    bases.push(h); 
+                }
+            });
+            
+            if (bases.length >= 2) {
+                bases.sort((a,b) => a.q - b.q); // A Vila mais à esquerda é a sua!
+                pS = { q: bases[0].q, r: bases[0].r };
+                aS = { q: bases[bases.length-1].q, r: bases[bases.length-1].r };
+            }
+        } else {
+            // Lógica Aleatória Original (Roda no Roguelite ou se não houver mapa salvo)
+            for (let r = 0; r < this.rows; r++) { 
+                const off = Math.floor(r / 2); 
+                for (let q = -off; q < this.cols - off; q++) { 
+                    const rnd = Math.random(); 
+                    let t = TERRAINS.PLAINS; 
+                    if (rnd > 0.94) t = TERRAINS.MOUNTAIN; 
+                    else if (rnd > 0.86) t = TERRAINS.SNOW; 
+                    else if (rnd > 0.74) t = TERRAINS.WATER; 
+                    else if (rnd > 0.62) t = TERRAINS.FOREST; 
+                    else if (rnd > 0.52) t = TERRAINS.DESERT; 
+                    else if (rnd > 0.45) t = TERRAINS.VILLAGE; 
+                    this.map.set(`${q},${r}`, new Hex(q, r, t)); 
+                } 
+            }
+        }
+
+        // 3. Fallback de Segurança (Garante que as tropas sempre tenham onde pisar)
+        if (!pS || !aS) {
+            const mR = Math.floor(this.rows / 2); 
+            pS = { q: -Math.floor(mR / 2), r: mR }; 
+            aS = { q: this.cols - 1 - Math.floor(mR / 2), r: mR };
+            
+            if (!this.map.has(`${pS.q},${pS.r}`)) this.map.set(`${pS.q},${pS.r}`, new Hex(pS.q, pS.r, TERRAINS.PLAINS));
+            if (!this.map.has(`${aS.q},${aS.r}`)) this.map.set(`${aS.q},${aS.r}`, new Hex(aS.q, aS.r, TERRAINS.PLAINS));
+        }
+        // ----------------------------------------------------
+
         let pSpawns = [pS]; let queue = [pS]; let vis = new Set([pS.q + ',' + pS.r]);
         while (queue.length > 0 && pSpawns.length < 20) { let curr = queue.shift(); Hex.getNeighbors(curr.q, curr.r).forEach(n => { let k = n.q + ',' + n.r; if (this.map.has(k) && !vis.has(k) && this.map.get(k).terrain.id !== 'WATER' && this.map.get(k).terrain.id !== 'MOUNTAIN') { vis.add(k); queue.push(n); pSpawns.push(n); } }); }
         if (pSpawns.length < 15) { this.map.forEach((h, k) => { if (!vis.has(k) && h.terrain.id !== 'CASTLE') { vis.add(k); pSpawns.push(h); } }); }
