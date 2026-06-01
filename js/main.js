@@ -391,12 +391,18 @@ document.addEventListener("DOMContentLoaded", () => {
         handleCombatForecast(e.clientX, e.clientY, false, false);
     });
 
+    // Bloqueia o menu chato do navegador ao clicar com o botão direito no Editor
+    $('gameCanvas').addEventListener('contextmenu', e => {
+        if (game.isEditorMode) e.preventDefault(); 
+    });
+
     window.addEventListener('mouseup', e => {
         if (startX === undefined) return;
         let wasDragging = isDragging;
         isDragging = false; startX = undefined;
         if (wasDragging) return;
-        processHexClick(e.clientX, e.clientY);
+        // Agora nós passamos o 'e.button' (0 é o Esquerdo, 2 é o Direito)
+        processHexClick(e.clientX, e.clientY, false, e.button); 
     });
 
     $('gameCanvas').addEventListener('wheel', e => {
@@ -449,7 +455,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    async function processHexClick(clientX, clientY, isTouch = false) {
+   async function processHexClick(clientX, clientY, isTouch = false, button = 0) {
         if (game.isAnimating) return;
         const rect = $('gameCanvas').getBoundingClientRect();
         let x = clientX - rect.left, y = clientY - rect.top;
@@ -477,9 +483,31 @@ document.addEventListener("DOMContentLoaded", () => {
         // MÁGICA DO EDITOR: MODO PINTURA
         // ==========================================
         if (game.isEditorMode) {
-            cH.terrain = TERRAINS[window.currentEditorBrush];
+            // Salva a tela na memória antes de pintar (Para o Ctrl+Z)
+            if (typeof saveEditorState === 'function') saveEditorState();
+            
+            if (button === 2) {
+                // CLIQUE DIREITO: Borracha (Volta para Planície pura)
+                cH.terrain = TERRAINS['PLAINS'];
+                cH.customVar = undefined; 
+            } else {
+                // CLIQUE ESQUERDO: Pintar
+                let brushId = window.currentEditorBrush;
+                
+                // Se clicou no mesmo terreno e ele tem variações gráficas
+                if (cH.terrain.id === brushId && cH.terrain.variations) {
+                    let maxVars = cH.terrain.variations.length;
+                    // Avança para a próxima variação
+                    let currentVar = cH.customVar !== undefined ? cH.customVar : (Math.abs((cH.q * 101) + (cH.r * 37)) % maxVars);
+                    cH.customVar = (currentVar + 1) % maxVars;
+                } else {
+                    // Pinta o novo terreno
+                    cH.terrain = TERRAINS[brushId];
+                    cH.customVar = undefined;
+                }
+            }
             renderer.draw();
-            return; // Impede que o jogo tente fazer cálculos de combate!
+            return; 
         }
         // ==========================================
 

@@ -205,9 +205,8 @@ class Game {
         this.manaPool = {}; this.spentMana = {}; this.spellCooldowns = {}; this.activeSpell = null; this.lastDeadAlly = null; this.turnCount = 0;
 
       // ----------------------------------------------------
-        // MÁGICA DOS MAPAS CUSTOMIZADOS (BLINDADA V3)
+        // MÁGICA DOS MAPAS CUSTOMIZADOS (BLINDADA V4 - COMPRIMIDA)
         // ----------------------------------------------------
-        // 1. Pega o Ato e o Nó usando as variáveis reais do Motor
         let atoAtual = this.currentLevel || 1;
         let noAtual = this.currentFloor !== undefined ? this.currentFloor : 0;
         let mapKey = `ATO${atoAtual}_NO${noAtual}`;
@@ -215,16 +214,27 @@ class Game {
         let customMap = typeof CUSTOM_MAPS !== 'undefined' ? CUSTOM_MAPS[mapKey] : null;
         let pS = null; let aS = null;
 
-        this.cols = 15; // Garante o tamanho exato da tela do Editor
+        this.cols = 15; 
         this.rows = 11;
 
         if (customMap && customMap.length > 0 && !this.isRoguelite) {
+            // 1. PRIMEIRO: Preenche a tela toda com Planície (Grama)
+            for (let r = 0; r < this.rows; r++) { 
+                const off = Math.floor(r / 2); 
+                for (let q = -off; q < this.cols - off; q++) { 
+                    this.map.set(`${q},${r}`, new Hex(q, r, TERRAINS.PLAINS));
+                }
+            }
+
+            // 2. SEGUNDO: Carimba os seus detalhes exportados por cima da grama
             customMap.forEach(h => {
                 let tDef = TERRAINS[h.tId] || TERRAINS.PLAINS;
-                this.map.set(`${h.q},${h.r}`, new Hex(h.q, h.r, tDef));
+                let hex = new Hex(h.q, h.r, tDef);
+                if (h.cV !== undefined) hex.customVar = h.cV;
+                this.map.set(`${h.q},${h.r}`, hex);
             });
 
-            // 2. Procura castelos que você pintou para usar como base!
+            // Procura pelos CASTELOS (CASTLE) que você pintou para usar como base!
             let bases = [];
             this.map.forEach(h => { 
                 if (h.terrain && h.terrain.id === 'CASTLE') {
@@ -233,12 +243,12 @@ class Game {
             });
             
             if (bases.length >= 2) {
-                bases.sort((a,b) => a.q - b.q); // A Vila mais à esquerda é a sua!
+                bases.sort((a,b) => a.q - b.q); // O Castelo mais à esquerda é o seu!
                 pS = { q: bases[0].q, r: bases[0].r };
                 aS = { q: bases[bases.length-1].q, r: bases[bases.length-1].r };
             }
         } else {
-            // Lógica Aleatória Original (Roda no Roguelite ou se não houver mapa salvo)
+            // Lógica Aleatória Original
             for (let r = 0; r < this.rows; r++) { 
                 const off = Math.floor(r / 2); 
                 for (let q = -off; q < this.cols - off; q++) { 
@@ -255,7 +265,6 @@ class Game {
             }
         }
 
-        // 3. Fallback de Segurança (Garante que as tropas sempre tenham onde pisar)
         if (!pS || !aS) {
             const mR = Math.floor(this.rows / 2); 
             pS = { q: -Math.floor(mR / 2), r: mR }; 
@@ -1169,7 +1178,8 @@ class Renderer {
                 let hexHeight = this.hexSize * 2;
 
                 let hash = Math.abs((hex.q * 101) + (hex.r * 37));
-                let varIndex = hash % hex.terrain.variations.length;
+                // Lê a variação customizada ou, se não houver, usa o hash matemático
+                let varIndex = hex.customVar !== undefined ? hex.customVar : (hash % hex.terrain.variations.length);
                 let selectedTile = hex.terrain.variations[varIndex];
 
                 // ZOOM de 15% (1.15) para esticar a arte e esconder a grade preta da IA

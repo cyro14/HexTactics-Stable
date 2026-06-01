@@ -2764,9 +2764,15 @@ $('btn-editor-save').onclick = () => {
     }
     
     let exportData = [];
-    game.map.forEach(h => exportData.push({ q: h.q, r: h.r, tId: h.terrain.id }));
+    game.map.forEach(h => {
+        // O SEGREDO DA COMPRESSÃO: Ignora as planícies sem variações visuais!
+        if (h.terrain.id === 'PLAINS' && h.customVar === undefined) return;
+        
+        let node = { q: h.q, r: h.r, tId: h.terrain.id };
+        if (h.customVar !== undefined) node.cV = h.customVar;
+        exportData.push(node);
+    });
     
-    // Salva o mapa na memória do navegador
     let saved = JSON.parse(localStorage.getItem('HexTactics_SavedMaps') || '{}');
     saved[name] = exportData;
     localStorage.setItem('HexTactics_SavedMaps', JSON.stringify(saved));
@@ -2774,11 +2780,27 @@ $('btn-editor-save').onclick = () => {
     alert(`O mapa '${name}' foi salvo com sucesso no seu Editor!`);
 };
 
+$('btn-editor-export').onclick = () => {
+    let exportData = [];
+    game.map.forEach(h => {
+        // O SEGREDO DA COMPRESSÃO: Ignora as planícies sem variações visuais!
+        if (h.terrain.id === 'PLAINS' && h.customVar === undefined) return;
+
+        let node = { q: h.q, r: h.r, tId: h.terrain.id };
+        if (h.customVar !== undefined) node.cV = h.customVar;
+        exportData.push(node);
+    });
+    
+    // Transforma a lista num texto corrido (sem espaços/quebras de linha inúteis)
+    $('editor-export-text').value = JSON.stringify(exportData);
+    $('editor-export-modal').classList.remove('hidden');
+};
+
 $('btn-editor-load').onclick = () => {
     let saved = JSON.parse(localStorage.getItem('HexTactics_SavedMaps') || '{}');
     let list = $('editor-load-list');
     list.innerHTML = '';
-    
+
     if (Object.keys(saved).length === 0) {
         list.innerHTML = '<p style="color:#aaa; font-size:12px; text-align:center;">Nenhum mapa salvo ainda.</p>';
     } else {
@@ -2797,10 +2819,10 @@ $('btn-editor-load').onclick = () => {
     $('editor-load-modal').classList.remove('hidden');
 };
 
-window.loadMapToEditor = function(mapData, mapName) {
+window.loadMapToEditor = function (mapData, mapName) {
     $('editor-map-name').value = mapName;
     game.map.clear();
-    
+
     // Recria a grama primeiro (por segurança)
     game.cols = 15; game.rows = 11;
     for (let r = 0; r < game.rows; r++) {
@@ -2809,31 +2831,49 @@ window.loadMapToEditor = function(mapData, mapName) {
             game.map.set(`${q},${r}`, new Hex(q, r, TERRAINS.PLAINS));
         }
     }
-    
+
     // Pinta os terrenos salvos por cima
     mapData.forEach(h => {
         let tDef = TERRAINS[h.tId] || TERRAINS.PLAINS;
-        game.map.set(`${h.q},${h.r}`, new Hex(h.q, h.r, tDef));
+        let hex = new Hex(h.q, h.r, tDef);
+        if (h.cV !== undefined) hex.customVar = h.cV;
+        game.map.set(`${h.q},${h.r}`, hex);
     });
-    
+
     renderer.draw();
 };
 
 $('btn-editor-export').onclick = () => {
+    let name = $('editor-map-name').value.trim();
+    if (!name) {
+        alert("Digite o nome do mapa (ex: ATO1_NO0) no campo 'Arquivo' antes de exportar!");
+        return;
+    }
+
     let exportData = [];
     game.map.forEach(h => {
-        // Salva apenas a coordenada e a ID do terreno
-        exportData.push({ q: h.q, r: h.r, tId: h.terrain.id });
+        // Ignora as planícies vazias para o arquivo ficar levinho
+        if (h.terrain.id === 'PLAINS' && h.customVar === undefined) return;
+
+        let node = { q: h.q, r: h.r, tId: h.terrain.id };
+        if (h.customVar !== undefined) node.cV = h.customVar;
+        exportData.push(node);
     });
     
-    // Transforma a lista num texto bonitinho e joga no modal
-    let jsonStr = JSON.stringify(exportData);
+    // Cria a estrutura exata para o jogo ler esse mapa de fora
+    let fileContent = `window.CUSTOM_MAPS = window.CUSTOM_MAPS || {};\nwindow.CUSTOM_MAPS["${name}"] = ${JSON.stringify(exportData)};`;
     
-    // AGORA ELE GERA SÓ A LISTA PURA! Perfeito para copiar e colar direto.
-    $('editor-export-text').value = jsonStr;
+    // Mágica do Download (Cria um arquivo .js virtual e clica nele)
+    let blob = new Blob([fileContent], { type: 'text/javascript' });
+    let link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${name}.js`; // Baixa com o nome exato que você digitou
     
-    $('editor-export-modal').classList.remove('hidden');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 };
+
 $('btn-editor-copy').onclick = () => {
     $('editor-export-text').select();
     document.execCommand('copy');
@@ -2883,3 +2923,32 @@ window.startMapEditor = function () {
     // Ajuste matemático para a inclinação do eixo Q no grid Hexagonal:
     renderer.centerOn(midQ - Math.floor(midR / 2), midR);
 };
+
+// ==========================================
+// MÁQUINA DO TEMPO (CTRL+Z)
+// ==========================================
+window.editorUndoStack = [];
+
+window.saveEditorState = function () {
+    let state = [];
+    game.map.forEach(h => state.push({ q: h.q, r: h.r, tId: h.terrain.id, cV: h.customVar }));
+    window.editorUndoStack.push(state);
+    // Limita a memória para os últimos 30 movimentos
+    if (window.editorUndoStack.length > 30) window.editorUndoStack.shift();
+};
+
+window.addEventListener('keydown', (e) => {
+    // Escuta o "Ctrl + Z"
+    if (game.isEditorMode && e.ctrlKey && e.key.toLowerCase() === 'z') {
+        if (window.editorUndoStack.length > 0) {
+            let prevState = window.editorUndoStack.pop();
+            game.map.clear();
+            prevState.forEach(h => {
+                let hex = new Hex(h.q, h.r, TERRAINS[h.tId] || TERRAINS.PLAINS);
+                if (h.cV !== undefined) hex.customVar = h.cV;
+                game.map.set(`${h.q},${h.r}`, hex);
+            });
+            renderer.draw();
+        }
+    }
+});
