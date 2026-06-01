@@ -1659,3 +1659,33 @@ button.btn-success {
     object-fit: contain; /* Garante que a imagem não distorça */
     pointer-events: none; /* Evita "bugs" de clique e arraste na imagem */
 }
+
+/* =========================================
+   EDITOR DE MAPAS
+========================================= */
+.editor-palette-btn {
+    background: rgba(20,20,30,0.8);
+    border: 1px solid #444;
+    color: #fff;
+    width: 42px;
+    height: 42px;
+    font-size: 22px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.editor-palette-btn.active {
+    border-color: var(--gold-light);
+    background: rgba(40,30,10,0.9);
+    box-shadow: 0 0 10px rgba(212,175,55,0.5);
+    transform: scale(1.1);
+    z-index: 2;
+}
+
+.editor-palette-btn:hover {
+    border-color: #888;
+}

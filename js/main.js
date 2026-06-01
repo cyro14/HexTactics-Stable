@@ -473,6 +473,16 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        // ==========================================
+        // MÁGICA DO EDITOR: MODO PINTURA
+        // ==========================================
+        if (game.isEditorMode) {
+            cH.terrain = TERRAINS[window.currentEditorBrush];
+            renderer.draw();
+            return; // Impede que o jogo tente fazer cálculos de combate!
+        }
+        // ==========================================
+
         // 3. SE clicou em um hexágono válido, continua o jogo normalmente
         game.selectedHex = cH;
         const u = game.getUnitAt(cH.q, cH.r);
@@ -810,17 +820,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // === BOTÕES DA INTERFACE ===
 
-        // Dropdown de Recursos
+    // Dropdown de Recursos
     $('resources-trigger')?.addEventListener('click', (e) => {
         e.stopPropagation();
         $('resources-dropdown-list')?.classList.toggle('hidden');
         $('mana-dropdown-list')?.classList.add('hidden'); // Fecha a mana se estiver aberta
     });
-    
+
     // Botão da Mochila de Itens de Campo
-    $('btn-field-items')?.addEventListener('click', () => { 
+    $('btn-field-items')?.addEventListener('click', () => {
         let menu = $('field-item-menu');
-        
+
         // Se a div do menu não existir na tela, cria-a imediatamente
         if (!menu) {
             menu = document.createElement('div');
@@ -828,21 +838,21 @@ document.addEventListener("DOMContentLoaded", () => {
             menu.className = 'hidden';
             $('game-container').appendChild(menu);
         }
-        
+
         // Alterna entre abrir e fechar
         menu.classList.toggle('hidden');
-        
+
         // Se abriu, preenche com os itens da mochila
         if (!menu.classList.contains('hidden') && typeof renderFieldItemMenu === 'function') {
-            renderFieldItemMenu(); 
+            renderFieldItemMenu();
         }
     });
-    
+
     $('toggle-log-text')?.addEventListener('click', () => {
         const log = $('combat-log');
         const txt = $('toggle-log-text');
         if (!log || !txt) return;
-        
+
         if (log.classList.contains('hidden')) {
             log.classList.remove('hidden');
             txt.innerHTML = '▼ Ocultar Log';
@@ -860,7 +870,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!lastState || game.isAnimating || game.currentTurn !== FACTIONS.PLAYER.id) return;
         game.units = lastState.u.map(u => new Unit({ ...u, isNew: false })); game.items = new Map(lastState.i); game.gold = lastState.g; game.hasKey = lastState.hk; game.hasEgg = lastState.he; game.manaPool = JSON.parse(JSON.stringify(lastState.mana)); game.spentMana = {};
         lastState.m.forEach(([k, o]) => game.map.get(k).owner = o);
-        lastState = null; const btn = $('btn-undo'); if(btn) btn.disabled = true; game.selectedUnit = null; game.activeSpell = null; updateUI(); renderer.draw();
+        lastState = null; const btn = $('btn-undo'); if (btn) btn.disabled = true; game.selectedUnit = null; game.activeSpell = null; updateUI(); renderer.draw();
     });
 
     $('btn-next-unit')?.addEventListener('click', () => {
@@ -934,7 +944,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $('btn-menu-from-lose').addEventListener('click', () => { location.reload(); });
     $('btn-play').addEventListener('click', () => { $('main-menu').classList.add('hidden'); $('mode-screen').classList.remove('hidden'); });
     $('btn-close-mode').addEventListener('click', () => { $('mode-screen').classList.add('hidden'); $('main-menu').classList.remove('hidden'); });
-
+    $('btn-map-editor')?.addEventListener('click', startMapEditor);
     $('btn-campaign').addEventListener('click', () => { if (localStorage.getItem('ht_save_camp')) { if (!confirm("Existe um jogo salvo. Deseja iniciar uma nova campanha e perder o progresso?")) return; } openLeaderSelection(false); });
     $('btn-roguelite').addEventListener('click', () => { if (localStorage.getItem('ht_save_rogue')) { if (!confirm("Existe uma Run salva. Deseja iniciar uma nova e perder o progresso atual?")) return; } openLeaderSelection(true); });
     const btnDuel = $('btn-duel');

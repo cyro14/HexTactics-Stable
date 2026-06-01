@@ -207,9 +207,14 @@
                 style="background:var(--success);color:#000;font-size:14px;padding:14px;">▶ JOGAR</button><button
                 id="btn-open-reliquary" style="border-color:#9b59b6;">🏺 Relicário</button><button
                 id="btn-open-bestiary" style="border-color:#3498db;">📖 Bestiário</button><button id="btn-open-help"
-                style="border-color:#888;">❓ Como Jogar</button><button id="btn-hall-fame" class="btn-warning"
-                style="margin-top: 10px; width: 100%; padding: 15px; font-size: 16px; background: linear-gradient(to right, #b9935a, #e7c996); color:#111; font-weight:bold;">🏛️
-                Hall da Fama</button></div>
+                style="border-color:#888;">❓ Como Jogar</button>
+            <button id="btn-map-editor"
+                style="margin-top: 10px; width: 100%; padding: 15px; font-size: 16px; background: linear-gradient(to right, #2c3e50, #1a252f); border-color: #e67e22; color: #fff; font-weight: bold;">🗺️
+                Editor de Mapa</button>
+            <button id="btn-hall-fame" class="btn-warning"
+                style="margin-top: 10px; width: 100%; padding: 15px; font-size: 16px; background: linear-gradient(to right, #b9935a, #e7c996); color:#111; font-weight:bold;">🏛️Hall
+                da Fama</button>
+        </div>
     </div>
 
     <div id="leader-selection" class="layer screen hidden">
@@ -269,7 +274,8 @@
     <div id="shop-screen" class="layer screen hidden">
         <h1 class="screen-title" style="font-size:2.5rem;">O Mercador</h1>
         <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold-light);margin-bottom:10px;">Seu Ouro: 💰
-            <span id="shop-gold-display">0</span></div>
+            <span id="shop-gold-display">0</span>
+        </div>
         <div id="shop-grid" class="shop-grid"></div>
         <div style="display:flex;gap:10px;margin-top:10px;justify-content:center;flex-wrap:wrap;"><button
                 id="btn-refresh-shop"
@@ -444,6 +450,49 @@
             <div id="rs-menu-lose" class="hidden menu-box" style="margin:0 auto;"><button id="btn-retry"
                     class="btn-danger">↺ Tentar Novamente</button><button id="btn-menu-from-lose"
                     style="background:transparent;margin-top:10px;">← Menu Principal</button></div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+     TELA DO EDITOR DE MAPAS (IN-GAME)
+========================================== -->
+    <div id="map-editor-screen" class="layer hidden"
+        style="pointer-events: none; z-index: 800; background: transparent !important;">
+        <!-- Barra de Ferramentas Lateral -->
+        <div id="editor-toolbar"
+            style="position: absolute; right: 20px; top: 20px; width: 220px; background: rgba(10,10,15,0.95); border: 1px solid var(--gold-dark); border-radius: 8px; padding: 15px; pointer-events: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); backdrop-filter: blur(5px);">
+            <h2
+                style="font-family: 'Cinzel', serif; color: var(--gold); font-size: 16px; margin-top: 0; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px;">
+                Pincel de Terreno</h2>
+
+            <!-- A paleta de tintas será injetada aqui via JavaScript -->
+            <div id="editor-terrain-palette"
+                style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; justify-content: center;"></div>
+
+            <h2
+                style="font-family: 'Cinzel', serif; color: var(--gold); font-size: 16px; margin-top: 0; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px;">
+                Ferramentas</h2>
+            <button id="btn-editor-export" class="btn-success"
+                style="width: 100%; margin-bottom: 8px; font-size: 12px; padding: 10px;">💾 Exportar Código</button>
+            <button id="btn-editor-clear" class="btn-warning"
+                style="width: 100%; margin-bottom: 8px; font-size: 12px; padding: 10px;">🗑️ Limpar Mapa</button>
+            <button id="btn-editor-exit" class="btn-danger" style="width: 100%; font-size: 12px; padding: 10px;">✕ Sair
+                do Editor</button>
+        </div>
+
+        <!-- Modal que vai cuspir o código para você copiar -->
+        <div id="editor-export-modal" class="hidden"
+            style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid var(--gold); padding: 20px; z-index: 900; border-radius: 8px; pointer-events: auto; width: 80%; max-width: 500px; box-shadow: 0 0 30px rgba(0,0,0,1);">
+            <h3 style="color: var(--gold); margin-top: 0; font-family: 'Cinzel', serif;">Mapa Exportado com Sucesso!
+            </h3>
+            <p style="font-size: 12px; color: #aaa; margin-bottom: 10px;">Copie o código abaixo e cole no seu arquivo de
+                roteiro de mapas:</p>
+            <textarea id="editor-export-text" readonly
+                style="width: 100%; height: 180px; background: #050508; color: #2ecc71; font-family: monospace; font-size: 11px; border: 1px solid #333; padding: 10px; resize: none; border-radius: 4px;"></textarea>
+            <button id="btn-editor-copy" class="btn-success" style="width: 100%; margin-top: 15px; padding: 12px;">📋
+                Copiar para a Área de Transferência</button>
+            <button onclick="document.getElementById('editor-export-modal').classList.add('hidden')" class="btn-danger"
+                style="width: 100%; margin-top: 8px; padding: 12px;">Fechar</button>
         </div>
     </div>
 

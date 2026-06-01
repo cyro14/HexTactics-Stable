@@ -1356,59 +1356,53 @@ function showRandomEvent() {
 
 function generateRouteMap() {
     const map = [];
-    const numFloors = 8;
+    const numFloors = 8; // Total de andares até o Boss
 
-    // 1. Geração inicial com base nas probabilidades normais
+    // 1. Geração de Nós (Roteiro Fixo Tensão/Alívio para AMBOS os modos)
     for (let i = 0; i < numFloors; i++) {
         let numNodes = (i === numFloors - 1) ? 1 : 3;
         let floor = [];
+
         for (let j = 0; j < numNodes; j++) {
             let type = 'BATTLE';
-            if (i === numFloors - 1) type = 'BOSS';
-            else if (i === 0) type = 'BATTLE';
-            else if (i === Math.floor(numFloors / 2)) type = 'TREASURE';
-            else {
-                if (j === 1) {
-                    type = Math.random() < 0.8 ? 'BATTLE' : 'ELITE';
-                } else {
-                    let r = Math.random();
-                    if (r < 0.25) type = 'BATTLE';
-                    else if (r < 0.45) type = 'EVENT';
-                    else if (r < 0.60) type = 'ELITE';
-                    else if (r < 0.80) type = 'SHOP';
-                    else type = 'LAB';
-                }
+
+            // Andar 0: Batalha Inicial
+            // Andar 1: Respiro (Evento/Loja/Lab)
+            // Andar 2: Batalha ou Elite
+            // Andar 3: Respiro (Evento/Loja/Lab)
+            // Andar 4: Batalha ou Elite
+            // Andar 5: Respiro + Tesouro
+            // Andar 6: Elite (Mini-Boss de preparo) ou Tesouro
+            // Andar 7: Boss
+            if (i === 0) {
+                type = 'BATTLE';
+            } else if (i === 1 || i === 3) {
+                const pool = ['EVENT', 'SHOP', 'LAB'];
+                type = pool[Math.floor(Math.random() * pool.length)];
+            } else if (i === 2 || i === 4) {
+                type = Math.random() < 0.7 ? 'BATTLE' : 'ELITE';
+            } else if (i === 5) {
+                const pool = ['EVENT', 'SHOP', 'LAB', 'TREASURE'];
+                type = pool[Math.floor(Math.random() * pool.length)];
+            } else if (i === 6) {
+                type = j === 1 ? 'TREASURE' : 'ELITE';
+            } else if (i === 7) {
+                type = 'BOSS';
             }
+
             floor.push({ id: `f${i}_n${j}`, floor: i, pos: j, type: type, next: [], status: i === 0 ? 'reachable' : 'locked' });
         }
         map.push(floor);
     }
 
-    // --- NOVA TRAVA DE SEGURANÇA: MÍNIMO 3 MERCADORES E 3 LABORATÓRIOS (UM POR ROTA) ---
-    const validFloors = [1, 2, 3, 5, 6]; // Apenas andares com geração aleatória livre
+    // 2. Travas de Segurança (Garante que todo andar de respiro tenha opções vitais)
+    [1, 3, 5].forEach(fIdx => {
+        let floor = map[fIdx];
+        if (!floor.some(n => n.type === 'SHOP')) floor[0].type = 'SHOP'; // Força Loja na esquerda
+        if (!floor.some(n => n.type === 'LAB')) floor[2].type = 'LAB';   // Força Lab na direita
+    });
 
-    for (let j = 0; j < 3; j++) {
-        // Garante pelo menos um Mercador (SHOP) na rota/coluna j
-        let hasShop = map.some(floor => floor[j] && floor[j].type === 'SHOP' && validFloors.includes(floor[j].floor));
-        if (!hasShop) {
-            let targetFloor = validFloors[Math.floor(Math.random() * validFloors.length)];
-            map[targetFloor][j].type = 'SHOP';
-        }
-
-        // Garante pelo menos um Laboratório (LAB) na rota/coluna j
-        let hasLab = map.some(floor => floor[j] && floor[j].type === 'LAB' && validFloors.includes(floor[j].floor));
-        if (!hasLab) {
-            // Filtra os andares para não sobrescrever o Mercador que acabou de ser travado ou já existia
-            let availableFloors = validFloors.filter(f => map[f][j].type !== 'SHOP');
-            if (availableFloors.length > 0) {
-                let targetFloor = availableFloors[Math.floor(Math.random() * availableFloors.length)];
-                map[targetFloor][j].type = 'LAB';
-            }
-        }
-    }
-    // ----------------------------------------------------------------------------------
-
-    // 2. Criação das conexões de caminhos (Mantém o seu loop original intacto)
+    // 3. Criação das conexões (As teias de aranha entre os nós)
     for (let i = 0; i < numFloors - 1; i++) {
         let currentFloor = map[i];
         let nextFloor = map[i + 1];
@@ -1416,6 +1410,7 @@ function generateRouteMap() {
             if (nextFloor.length === 1) { node.next.push(nextFloor[0].id); }
             else {
                 node.next.push(nextFloor[j].id);
+                // 40% de chance de cruzar caminhos com os nós dos lados
                 if (j > 0 && Math.random() < 0.4) node.next.push(nextFloor[j - 1].id);
                 if (j < nextFloor.length - 1 && Math.random() < 0.4) node.next.push(nextFloor[j + 1].id);
             }
@@ -1425,7 +1420,6 @@ function generateRouteMap() {
     game.routeMap = map;
     game.currentFloor = -1;
 }
-
 
 function renderRouteMap() {
     const container = $('map-nodes-container');
@@ -2696,17 +2690,128 @@ window.openHallOfFame = function () {
 // ==========================================
 // CONTROLE DE ABAS DO GERENCIAMENTO (MOBILE)
 // ==========================================
-window.switchMgmtTab = function(tabId, btn) {
+window.switchMgmtTab = function (tabId, btn) {
     // 1. Remove a cor de "ativo" de todos os botões de aba
     document.querySelectorAll('.mgmt-tab-btn').forEach(b => b.classList.remove('active'));
-    
+
     // 2. Acende o botão que foi clicado
     if (btn) btn.classList.add('active');
-    
+
     // 3. Esconde todos os painéis (no celular)
     document.querySelectorAll('.mgmt-panel').forEach(p => p.classList.remove('active-panel'));
-    
+
     // 4. Mostra apenas o painel solicitado
     const target = document.getElementById('panel-' + tabId);
     if (target) target.classList.add('active-panel');
+};
+
+// ==========================================
+// EDITOR DE MAPAS IN-GAME
+// ==========================================
+window.currentEditorBrush = 'PLAINS'; // A tinta inicial do pincel
+
+window.initMapEditorUI = function () {
+    const palette = $('editor-terrain-palette');
+    if (!palette) return;
+    palette.innerHTML = '';
+
+    // Loop que varre todos os terrenos que existem no seu jogo
+    Object.values(TERRAINS).forEach(t => {
+        // Pula os terrenos de efeito mágico temporário para não sujar a paleta
+        if (t.id === 'BURNING_FOREST' || t.id === 'ELECTRIC_WATER' || t.id === 'ASHES') return;
+
+        const btn = document.createElement('button');
+        btn.className = `editor-palette-btn qol-tooltip ${t.id === currentEditorBrush ? 'active' : ''}`;
+
+        // Ícone do terreno e o Tooltip pra você saber o que está pintando
+        btn.innerHTML = `
+            ${t.icon}
+            <span class="qol-tooltiptext" style="font-size:10px;">${t.name}</span>
+        `;
+
+        // Ao clicar numa tinta, acende o botão e atualiza o pincel
+        btn.onclick = () => {
+            currentEditorBrush = t.id;
+            document.querySelectorAll('.editor-palette-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        };
+
+        palette.appendChild(btn);
+    });
+};
+
+// Ação dos Botões da Barra de Ferramentas
+$('btn-editor-clear').onclick = () => {
+    if (confirm("Tem certeza que deseja apagar tudo?")) {
+        game.map.forEach(h => h.terrain = TERRAINS.PLAINS);
+        renderer.draw();
+    }
+};
+
+$('btn-editor-exit').onclick = () => {
+    game.isEditorMode = false;
+    location.reload(); // Recarrega a página para limpar a memória e voltar ao menu
+};
+
+$('btn-editor-export').onclick = () => {
+    let exportData = [];
+    game.map.forEach(h => {
+        // Salva apenas a coordenada e a ID do terreno
+        exportData.push({ q: h.q, r: h.r, tId: h.terrain.id });
+    });
+
+    // Transforma a lista num texto bonitinho e joga no modal
+    let jsonStr = JSON.stringify(exportData);
+    $('editor-export-text').value = `const MEU_MAPA_CUSTOMIZADO = ${jsonStr};`;
+    $('editor-export-modal').classList.remove('hidden');
+};
+
+$('btn-editor-copy').onclick = () => {
+    $('editor-export-text').select();
+    document.execCommand('copy');
+    alert('Código copiado para a Área de Transferência com sucesso!');
+};
+
+// Iniciar o Editor com uma tela em branco
+window.startMapEditor = function () {
+    $('main-menu').classList.add('hidden');
+    $('game-container').classList.remove('hidden');
+    $('map-editor-screen').classList.remove('hidden');
+
+    // 1. Desliga a HUD de combate para o JavaScript não dar erro no console
+    let uiLayer = $('ui-layer');
+    if (uiLayer) uiLayer.classList.add('hidden');
+
+    game.isEditorMode = true;
+    game.isAnimating = false;
+    game.currentLevel = 1; // Garante que o fundo da tela fique na cor clara do Ato 1
+    game.map.clear();
+    game.units = [];
+    game.items.clear();
+
+    // Cria uma caixa fantasma para evitar os erros vermelhos do mouse!
+    if (!document.getElementById('combat-forecast')) {
+        let fc = document.createElement('div');
+        fc.id = 'combat-forecast';
+        fc.style.display = 'none';
+        document.body.appendChild(fc);
+    }
+    // 2. Cria um tabuleiro em branco de 15x11 e preenche tudo com Planícies
+    game.cols = 15;
+    game.rows = 11;
+    for (let r = 0; r < game.rows; r++) {
+        const off = Math.floor(r / 2);
+        for (let q = -off; q < game.cols - off; q++) {
+            game.map.set(`${q},${r}`, new Hex(q, r, TERRAINS.PLAINS));
+        }
+    }
+
+    initMapEditorUI();
+    renderer.initCamera(true);
+
+    // 3. O SEGREDO: Força a câmera a focar no centro exato do mapa!
+    let midQ = Math.floor(game.cols / 2);
+    let midR = Math.floor(game.rows / 2);
+    // Ajuste matemático para a inclinação do eixo Q no grid Hexagonal:
+    renderer.centerOn(midQ - Math.floor(midR / 2), midR);
 };
