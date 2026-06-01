@@ -119,12 +119,20 @@ function loadMeta() {
     $('btn-load-roguelite').classList.toggle('hidden', !localStorage.getItem('ht_save_rogue'));
 }
 
+window.fullCombatHistory = []; // Memória global do log
+
 function addLog(msg, col = '#9a8a6a') {
+    // Trava de segurança: garante que a memória existe antes de tentar salvar
+    if (!window.fullCombatHistory) window.fullCombatHistory = [];
+    
     const e = document.createElement('div');
     e.className = 'log-entry';
     e.style.borderLeftColor = col;
     e.innerText = msg;
-    const combatLog = $('combat-log');
+    
+    window.fullCombatHistory.push({ text: msg, color: col });
+
+    const combatLog = document.getElementById('combat-log');
     if (combatLog) {
         combatLog.appendChild(e);
         if (combatLog.childNodes.length > 5) combatLog.removeChild(combatLog.firstChild);
@@ -204,7 +212,8 @@ function collectMana() {
     if (!game) return;
     let income = computeManaIncome();
     Object.entries(income).forEach(([tag, count]) => {
-        if (MANA_TYPES[tag]) { game.manaPool[tag] = (game.manaPool[tag] || 0) + (count * 0.5); }
+        // Agora gera 1 inteiro por tag!
+        if (MANA_TYPES[tag]) { game.manaPool[tag] = (game.manaPool[tag] || 0) + count; }
     });
     updateManaUI();
 }
@@ -356,27 +365,33 @@ function openGrimoire() {
     const leader = game && game.units.find(u => u.isLeader && u.faction === 1);
     $('grimoire-subtitle').innerText = leader ? `${leader.emoji} ${leader.name} — Nível ${leader.level}` : 'Grimório';
     const manaDiv = $('grimoire-mana-display'); manaDiv.innerHTML = '';
+    
     if (game) {
         let income = computeManaIncome();
         Object.entries(game.manaPool).forEach(([tag, total]) => {
             if (total <= 0) return;
             const mt = MANA_TYPES[tag]; if (!mt) return;
             const spent = game.spentMana[tag] || 0;
-            const inc = income[tag] ? ` (+${income[tag] * 0.5}/t)` : '';
+            const inc = income[tag] ? ` (+${income[tag]}/t)` : '';
             const el = document.createElement('span');
             el.style.cssText = `background:${mt.col}22;border:1px solid ${mt.col}66;border-radius:4px;padding:3px 8px;font-size:12px;color:${mt.col};`;
             el.innerText = `${mt.icon} ${mt.name}: ${Math.floor(total - spent)}/${Math.floor(total)}${inc}`;
             manaDiv.appendChild(el);
         });
     }
-    const grid = $('grimoire-grid'); grid.innerHTML = '';
-    const grimTags = leader ? (leader.grimTags || []) : []; const known = leader ? (leader.knownSpells || []) : [];
+    
+    const grid = $('grimoire-grid'); 
+    grid.innerHTML = '';
+    const grimTags = leader ? (leader.grimTags || []) : []; 
+    const known = leader ? (leader.knownSpells || []) : [];
+    
     for (let lvl = 1; lvl <= 5; lvl++) {
         const spellsOfLevel = SPELLS.filter(s => { return s.tags.some(t => grimTags.includes(t)); }).filter(s => s.level === lvl);
         if (!spellsOfLevel.length) continue;
         const hdr = document.createElement('div');
         hdr.style.cssText = `grid-column:1/-1;font-family:Cinzel,serif;font-size:12px;color:var(--gold);border-bottom:1px solid var(--gold-dark);padding-bottom:4px;margin-top:8px;`;
-        hdr.innerText = `── Nível ${lvl} ──`; grid.appendChild(hdr);
+        hdr.innerText = `── Nível ${lvl} ──`; 
+        grid.appendChild(hdr);
         spellsOfLevel.forEach(spell => {
             const isKnown = known.includes(spell.id); const mt = MANA_TYPES[Object.keys(spell.cost)[0]]; const borderCol = mt ? mt.col : '#888';
             const card = document.createElement('div'); card.className = `grimoire-card ${isKnown ? 'known' : ''}`; card.style.borderColor = isKnown ? borderCol : borderCol + '44'; card.style.opacity = isKnown ? '1' : '0.5';
@@ -573,6 +588,19 @@ function updateUI() {
         fc.id = 'combat-forecast';
         document.body.appendChild(fc);
     }
+
+    // ==========================================
+    // CONTROLE DO BOTÃO DE CANCELAR AÇÃO
+    // ==========================================
+    const btnCancel = $('btn-cancel-action');
+    if (btnCancel) {
+        if ((game && game.activeSpell) || (game && game.activeItem)) {
+            btnCancel.classList.remove('hidden');
+        } else {
+            btnCancel.classList.add('hidden');
+        }
+    }
+    // ==========================================
 
     // Atualiza os contadores individuais de Ouro e DNA
     const goldDisplay = $('ui-gold');
@@ -1724,6 +1752,7 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
     const sk = isDuel ? 'ht_save_duel' : (isRoguelite ? 'ht_save_rogue' : 'ht_save_camp'); game.isAnimating = false; const tb = $('turn-blocker'); if (tb) tb.style.display = 'none';
     lastState = null; const undoBtn = $('btn-undo'); if (undoBtn) undoBtn.disabled = true;
     game.manaPool = {}; game.spentMana = {}; game.spellCooldowns = {}; game.activeSpell = null; game.lastDeadAlly = null; game.turnCount = 0;
+    window.fullCombatHistory = [];
     game.isDuel = isDuel;
 
     if (!ARTIFACTS.find(a => a.id === 'art_omega')) {
@@ -2762,21 +2791,21 @@ $('btn-editor-save').onclick = () => {
         alert("Por favor, digite um nome para o mapa antes de salvar!");
         return;
     }
-    
+
     let exportData = [];
     game.map.forEach(h => {
         // O SEGREDO DA COMPRESSÃO: Ignora as planícies sem variações visuais!
         if (h.terrain.id === 'PLAINS' && h.customVar === undefined) return;
-        
+
         let node = { q: h.q, r: h.r, tId: h.terrain.id };
         if (h.customVar !== undefined) node.cV = h.customVar;
         exportData.push(node);
     });
-    
+
     let saved = JSON.parse(localStorage.getItem('HexTactics_SavedMaps') || '{}');
     saved[name] = exportData;
     localStorage.setItem('HexTactics_SavedMaps', JSON.stringify(saved));
-    
+
     alert(`O mapa '${name}' foi salvo com sucesso no seu Editor!`);
 };
 
@@ -2790,7 +2819,7 @@ $('btn-editor-export').onclick = () => {
         if (h.customVar !== undefined) node.cV = h.customVar;
         exportData.push(node);
     });
-    
+
     // Transforma a lista num texto corrido (sem espaços/quebras de linha inúteis)
     $('editor-export-text').value = JSON.stringify(exportData);
     $('editor-export-modal').classList.remove('hidden');
@@ -2859,16 +2888,16 @@ $('btn-editor-export').onclick = () => {
         if (h.customVar !== undefined) node.cV = h.customVar;
         exportData.push(node);
     });
-    
+
     // Cria a estrutura exata para o jogo ler esse mapa de fora
     let fileContent = `window.CUSTOM_MAPS = window.CUSTOM_MAPS || {};\nwindow.CUSTOM_MAPS["${name}"] = ${JSON.stringify(exportData)};`;
-    
+
     // Mágica do Download (Cria um arquivo .js virtual e clica nele)
     let blob = new Blob([fileContent], { type: 'text/javascript' });
     let link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `${name}.js`; // Baixa com o nome exato que você digitou
-    
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

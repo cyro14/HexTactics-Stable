@@ -393,7 +393,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Bloqueia o menu chato do navegador ao clicar com o botão direito no Editor
     $('gameCanvas').addEventListener('contextmenu', e => {
-        if (game.isEditorMode) e.preventDefault(); 
+        if (game.isEditorMode) e.preventDefault();
     });
 
     window.addEventListener('mouseup', e => {
@@ -402,7 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
         isDragging = false; startX = undefined;
         if (wasDragging) return;
         // Agora nós passamos o 'e.button' (0 é o Esquerdo, 2 é o Direito)
-        processHexClick(e.clientX, e.clientY, false, e.button); 
+        processHexClick(e.clientX, e.clientY, false, e.button);
     });
 
     $('gameCanvas').addEventListener('wheel', e => {
@@ -455,7 +455,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-   async function processHexClick(clientX, clientY, isTouch = false, button = 0) {
+    async function processHexClick(clientX, clientY, isTouch = false, button = 0) {
         if (game.isAnimating) return;
         const rect = $('gameCanvas').getBoundingClientRect();
         let x = clientX - rect.left, y = clientY - rect.top;
@@ -485,15 +485,15 @@ document.addEventListener("DOMContentLoaded", () => {
         if (game.isEditorMode) {
             // Salva a tela na memória antes de pintar (Para o Ctrl+Z)
             if (typeof saveEditorState === 'function') saveEditorState();
-            
+
             if (button === 2) {
                 // CLIQUE DIREITO: Borracha (Volta para Planície pura)
                 cH.terrain = TERRAINS['PLAINS'];
-                cH.customVar = undefined; 
+                cH.customVar = undefined;
             } else {
                 // CLIQUE ESQUERDO: Pintar
                 let brushId = window.currentEditorBrush;
-                
+
                 // Se clicou no mesmo terreno e ele tem variações gráficas
                 if (cH.terrain.id === brushId && cH.terrain.variations) {
                     let maxVars = cH.terrain.variations.length;
@@ -507,7 +507,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
             renderer.draw();
-            return; 
+            return;
         }
         // ==========================================
 
@@ -1038,5 +1038,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
     $('btn-duel-history')?.addEventListener('click', openDuelHistory);
     $('btn-hall-fame')?.addEventListener('click', openHallOfFame);
+    $('btn-cancel-action')?.addEventListener('click', () => {
+        if (game) {
+            game.selectedUnit = null;
+            game.activeSpell = null;
+            game.activeItem = null;
+            game.reachableHexes.clear();
+            window.pendingAttackTarget = null;
 
+            const fc = $('combat-forecast');
+            if (fc) fc.style.display = 'none';
+
+            updateUI();
+            if (renderer) renderer.draw();
+        }
+    });
 });
+
+// Abrir o Histórico Completo de Combate
+    $('btn-full-log')?.addEventListener('click', () => {
+        const content = $('full-log-content');
+        if (!content) return;
+        content.innerHTML = '';
+        
+        if (!window.fullCombatHistory || window.fullCombatHistory.length === 0) {
+            content.innerHTML = '<div style="color:#aaa; text-align:center; padding: 20px;">A batalha está silenciosa... Nenhum evento registrado ainda.</div>';
+        } else {
+            // Desenha todas as mensagens salvas
+            window.fullCombatHistory.forEach(log => {
+                let div = document.createElement('div');
+                div.style.borderLeft = `3px solid ${log.color}`;
+                div.style.paddingLeft = '8px';
+                div.style.marginBottom = '6px';
+                div.style.color = '#ddd';
+                div.style.lineHeight = '1.4';
+                div.innerText = log.text;
+                content.appendChild(div);
+            });
+        }
+        
+        $('full-log-modal').classList.remove('hidden');
+        // Desce a barra de rolagem automaticamente para a última mensagem
+        content.scrollTop = content.scrollHeight;
+    });

@@ -19,8 +19,31 @@
 
 <body>
     <div id="game-container" class="hidden">
-        <canvas id="gameCanvas" class="layer"></canvas>
+        <canvas id="gameCanvas" class="layer"> </canvas>
         <div id="ui-layer" class="layer">
+            <!-- Modal do Histórico Completo (Livre no meio da tela) -->
+            <div id="full-log-modal" class="hidden" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid var(--gold); padding: 20px; z-index: 10000; border-radius: 8px; pointer-events: auto; width: 90%; max-width: 500px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,1);">
+                <h3 style="color: var(--gold); margin-top: 0; text-align: center; font-family: 'Cinzel', serif;">Histórico da Batalha</h3>
+                <div id="full-log-content" style="flex: 1; overflow-y: auto; font-size: 12px; background: rgba(0,0,0,0.5); padding: 10px; border: 1px solid #333; margin-bottom: 15px; border-radius: 4px;"></div>
+                <button onclick="document.getElementById('full-log-modal').classList.add('hidden')" class="btn-danger" style="width: 100%; padding: 12px; font-weight: bold;">Fechar Histórico</button>
+            </div>
+
+            <!-- afastar o Log apenas no Celular -->
+            <style>
+                @media (max-width: 768px) {
+                    #combat-log-container {
+                        top: 110px !important; /* Empurra mais para baixo nas telas menores */
+                    }
+                }
+            </style>
+            <!-- Log de Combate (Livre embaixo do menu superior) -->
+            <div id="combat-log-container" style="position: absolute; top: 75px; left: 10px; z-index: 1000; width: 250px; pointer-events: none;">
+                <div style="display: flex; gap: 15px; pointer-events: auto; margin-bottom: 4px;">
+                    <div id="toggle-log-text" style="color: #aaa; font-size: 11px; cursor: pointer; text-shadow: 1px 1px 2px #000; font-weight: bold;">▼ Ocultar Log</div>
+                    <div id="btn-full-log" style="color: var(--gold-light); font-size: 11px; cursor: pointer; text-shadow: 1px 1px 2px #000; font-weight: bold;">📖 Histórico Completo</div>
+                </div>
+                <div id="combat-log" style="background: rgba(10,10,15,0.7); padding: 5px; border: 1px solid #333; border-radius: 4px; font-size: 11px; max-height: 120px; overflow-y: hidden; display: flex; flex-direction: column; justify-content: flex-end; backdrop-filter: blur(2px);"></div>
+            </div>
             <div id="top-bar" class="panel hud-top">
                 <div class="hud-top-left">
                     <div id="turn-badge" class="turn-indicator">Turno: Jogador</div>
@@ -121,6 +144,9 @@
                     <button id="btn-end-turn" class="btn-hud-action btn-end-turn-style" title="Encerrar Turno Atual">⏳
                         Pronto</button>
                 </div>
+                <button id="btn-cancel-action" class="btn-danger hidden"
+                    style="position: absolute; bottom: 120px; right: 20px; padding: 6px 12px; font-size: 11px; font-weight: bold; z-index: 2000; border-radius: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.8); pointer-events: auto;">✖
+                    Cancelar Ação</button>
             </div>
         </div>
     </div>
@@ -520,8 +546,7 @@
     <script src="js/engine.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/main.js"></script>
-    <!-- SEUS ARQUIVOS DE MAPA (Adicione um novo para cada mapa criado) -->
-    <script src="mapas/campanha/ATO1_NO0.js"></script>
+
 
     <script>
         if ('serviceWorker' in navigator) {
