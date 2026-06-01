@@ -1539,6 +1539,7 @@ button.btn-success {
     border-radius: 20px !important;
     padding: 4px 15px !important;
     box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
     backdrop-filter: blur(5px) !important;
     width: auto !important;
     margin: 0 !important;
@@ -1648,4 +1649,13 @@ button.btn-success {
     .mgmt-panel.active-panel {
         display: flex; /* Mostra APENAS a caixa que tem a classe ativa */
     }
+}
+/* =========================================
+   ÍCONES DE IMAGEM NA HUD
+========================================= */
+.btn-icon img {
+    width: 22px; /* Largura padrão do ícone */
+    height: 22px; /* Altura padrão do ícone */
+    object-fit: contain; /* Garante que a imagem não distorça */
+    pointer-events: none; /* Evita "bugs" de clique e arraste na imagem */
 }

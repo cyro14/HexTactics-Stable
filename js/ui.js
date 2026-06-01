@@ -265,7 +265,7 @@ function updateManaUI() {
     // Injeta o gatilho compacto e a caixinha absoluta oculta
     container.innerHTML = `
         <div id="mana-trigger" style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px; font-weight:bold; color:var(--gold-light); padding:2px 4px; user-select:none;">
-            🔮 <span>Mana: ${totalAvailable}</span> <small style="font-size:8px; opacity:0.5; transform:scale(0.8);">▼</small>
+            <img src="img/icone-mana.png" style="width: 16px; height: 16px;"> <span>Mana: ${totalAvailable}</span> <small style="font-size:8px; opacity:0.5; transform:scale(0.8);">▼</small>
         </div>
         <div id="mana-dropdown-list" class="hidden" style="position:absolute; top:32px; left:0; background:rgba(10,10,15,0.98); border:1px solid var(--gold-dark); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,0.9); z-index:2500; min-width:150px; display:flex; flex-direction:column; backdrop-filter:blur(10px);">
             ${hasMana ? listHtml : '<div style="color:#666; padding:10px; font-size:11px; font-style:italic; text-align:center;">Sem Mana</div>'}
