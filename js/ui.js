@@ -2753,6 +2753,72 @@ $('btn-editor-exit').onclick = () => {
     location.reload(); // Recarrega a página para limpar a memória e voltar ao menu
 };
 
+// ==========================================
+// SISTEMA DE SALVAR/CARREGAR NO EDITOR
+// ==========================================
+$('btn-editor-save').onclick = () => {
+    let name = $('editor-map-name').value.trim();
+    if (!name) {
+        alert("Por favor, digite um nome para o mapa antes de salvar!");
+        return;
+    }
+    
+    let exportData = [];
+    game.map.forEach(h => exportData.push({ q: h.q, r: h.r, tId: h.terrain.id }));
+    
+    // Salva o mapa na memória do navegador
+    let saved = JSON.parse(localStorage.getItem('HexTactics_SavedMaps') || '{}');
+    saved[name] = exportData;
+    localStorage.setItem('HexTactics_SavedMaps', JSON.stringify(saved));
+    
+    alert(`O mapa '${name}' foi salvo com sucesso no seu Editor!`);
+};
+
+$('btn-editor-load').onclick = () => {
+    let saved = JSON.parse(localStorage.getItem('HexTactics_SavedMaps') || '{}');
+    let list = $('editor-load-list');
+    list.innerHTML = '';
+    
+    if (Object.keys(saved).length === 0) {
+        list.innerHTML = '<p style="color:#aaa; font-size:12px; text-align:center;">Nenhum mapa salvo ainda.</p>';
+    } else {
+        // Cria um botão para cada mapa salvo na memória
+        for (let mapName in saved) {
+            let btn = document.createElement('button');
+            btn.innerText = `📄 ${mapName}`;
+            btn.style.cssText = 'padding: 10px; font-size: 14px; text-align: left; background: #2c3e50; border: 1px solid #34495e; color: white; cursor: pointer; border-radius: 4px;';
+            btn.onclick = () => {
+                loadMapToEditor(saved[mapName], mapName);
+                $('editor-load-modal').classList.add('hidden');
+            };
+            list.appendChild(btn);
+        }
+    }
+    $('editor-load-modal').classList.remove('hidden');
+};
+
+window.loadMapToEditor = function(mapData, mapName) {
+    $('editor-map-name').value = mapName;
+    game.map.clear();
+    
+    // Recria a grama primeiro (por segurança)
+    game.cols = 15; game.rows = 11;
+    for (let r = 0; r < game.rows; r++) {
+        const off = Math.floor(r / 2);
+        for (let q = -off; q < game.cols - off; q++) {
+            game.map.set(`${q},${r}`, new Hex(q, r, TERRAINS.PLAINS));
+        }
+    }
+    
+    // Pinta os terrenos salvos por cima
+    mapData.forEach(h => {
+        let tDef = TERRAINS[h.tId] || TERRAINS.PLAINS;
+        game.map.set(`${h.q},${h.r}`, new Hex(h.q, h.r, tDef));
+    });
+    
+    renderer.draw();
+};
+
 $('btn-editor-export').onclick = () => {
     let exportData = [];
     game.map.forEach(h => {

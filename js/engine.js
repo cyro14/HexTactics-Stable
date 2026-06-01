@@ -224,10 +224,10 @@ class Game {
                 this.map.set(`${h.q},${h.r}`, new Hex(h.q, h.r, tDef));
             });
 
-            // 2. Procura pelas VILAS (VILLAGE) que você pintou para usar como base!
+            // 2. Procura castelos que você pintou para usar como base!
             let bases = [];
             this.map.forEach(h => { 
-                if (h.terrain && h.terrain.id === 'VILLAGE') {
+                if (h.terrain && h.terrain.id === 'CASTLE') {
                     bases.push(h); 
                 }
             });

@@ -471,13 +471,33 @@
 
             <h2
                 style="font-family: 'Cinzel', serif; color: var(--gold); font-size: 16px; margin-top: 0; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px;">
-                Ferramentas</h2>
+                Arquivo</h2>
+
+            <input type="text" id="editor-map-name" placeholder="Nome do seu mapa..."
+                style="width: 100%; margin-bottom: 8px; padding: 8px; background: #050508; color: #fff; border: 1px solid var(--gold-dark); border-radius: 4px; box-sizing: border-box; font-family: sans-serif;">
+
+            <button id="btn-editor-save" class="btn-primary"
+                style="width: 100%; margin-bottom: 8px; font-size: 12px; padding: 10px; background: #2980b9;">💾 Salvar
+                no Editor</button>
+            <button id="btn-editor-load" class="btn-info"
+                style="width: 100%; margin-bottom: 8px; font-size: 12px; padding: 10px; background: #8e44ad; color: white;">📂
+                Carregar Mapa</button>
             <button id="btn-editor-export" class="btn-success"
-                style="width: 100%; margin-bottom: 8px; font-size: 12px; padding: 10px;">💾 Exportar Código</button>
+                style="width: 100%; margin-bottom: 8px; font-size: 12px; padding: 10px;">📤 Exportar Código</button>
             <button id="btn-editor-clear" class="btn-warning"
                 style="width: 100%; margin-bottom: 8px; font-size: 12px; padding: 10px;">🗑️ Limpar Mapa</button>
             <button id="btn-editor-exit" class="btn-danger" style="width: 100%; font-size: 12px; padding: 10px;">✕ Sair
                 do Editor</button>
+        </div>
+
+        <div id="editor-load-modal" class="hidden"
+            style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid var(--gold); padding: 20px; z-index: 900; border-radius: 8px; pointer-events: auto; width: 80%; max-width: 400px; box-shadow: 0 0 30px rgba(0,0,0,1);">
+            <h3 style="color: var(--gold); margin-top: 0; font-family: 'Cinzel', serif;">Carregar Mapa Salvo</h3>
+            <div id="editor-load-list"
+                style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px;">
+            </div>
+            <button onclick="document.getElementById('editor-load-modal').classList.add('hidden')" class="btn-danger"
+                style="width: 100%; padding: 12px;">Cancelar</button>
         </div>
 
         <!-- Modal que vai cuspir o código para você copiar -->
