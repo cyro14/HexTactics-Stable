@@ -261,40 +261,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
 
-    // 8. CARREGADOR DE MAPAS CUSTOMIZADOS
-    const origGenerateMap = Game.prototype.generateCampaignMap;
-    Game.prototype.generateCampaignMap = function(roster) {
-        // Primeiro, gera o mapa e posiciona os inimigos e o seu esquadrão normalmente
-        origGenerateMap.call(this, roster);
-
-        // Cria o nome automático que o jogo vai procurar (ex: ATO1_NO0)
-        let mapName = `ATO${this.currentLevel}_NO${this.currentFloor}`;
-        
-        // Se você exportou um mapa com esse nome e ele já estiver carregado na memória:
-        if (window.CUSTOM_MAPS && window.CUSTOM_MAPS[mapName]) {
-            console.log("Substituindo terreno pelo mapa customizado: ", mapName);
-            
-            this.map.clear();
-            this.cols = 15; 
-            this.rows = 11;
-            
-            // Recria a grama base limpa
-            for (let r = 0; r < this.rows; r++) {
-                const off = Math.floor(r / 2);
-                for (let q = -off; q < this.cols - off; q++) {
-                    this.map.set(`${q},${r}`, new Hex(q, r, TERRAINS.PLAINS));
-                }
-            }
-            
-            // Pinta os hexágonos usando o seu desenho do Editor (As unidades manterão as posições válidas onde nasceram!)
-            window.CUSTOM_MAPS[mapName].forEach(h => {
-                let hex = new Hex(h.q, h.r, TERRAINS[h.tId] || TERRAINS.PLAINS);
-                if (h.cV !== undefined) hex.customVar = h.cV;
-                this.map.set(`${h.q},${h.r}`, hex);
-            });
-        }
-    };
-
     function handleCombatForecast(clientX, clientY, isTouch = false, isPinned = false) {
         const fc = $('combat-forecast');
         if (!fc) return;

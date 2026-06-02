@@ -1305,7 +1305,7 @@ class Renderer {
             else if (u.status === 'shielded') { ctx.fillStyle = 'rgba(149,165,166,0.4)'; ctx.fill(); }
             // ==========================================
 
-            ctx.save(); ctx.globalAlpha = (u.mp === 0 && u.hasAttacked) ? 0.5 : 1.0; ctx.font = `${this.hexSize * sMod * 0.85}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.save(); ctx.globalAlpha = 1.0; ctx.font = `${this.hexSize * sMod * 0.85}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             if (u.hitTimer) ctx.filter = 'brightness(50%) sepia(100%) hue-rotate(-50deg) saturate(500%)'; else if (u.filter !== 'none') ctx.filter = u.filter;
 
             // ==========================================
