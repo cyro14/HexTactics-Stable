@@ -318,16 +318,16 @@ const LEADER_GRIMOIRE_TAGS = {
 };
 
 const LEADERS = [
-    { id: 'mage', name: 'Arquimago', emoji: '🧙🏻‍♂️', hp: 60, atk: 12, mp: 4, range: 2, limit: 6, desc: 'Consegue utilizar duas magias por turno.', tags: ['MYSTIC'] },
-    { id: 'orc', name: 'Chefe Orc', emoji: '👹', hp: 80, atk: 15, mp: 5, range: 1, limit: 15, abilities: ['leadership'], desc: 'Líder de Horda (+10% ATK por aliado).', tags: ['PRIMAL'] },
+    { id: 'mage', name: 'Arquimago', emoji: '🧙🏻‍♂️', hp: 60, atk: 12, mp: 4, range: 2, limit: 6, desc: 'Consegue utilizar duas magias por turno.', tags: ['MYSTIC'] , sprite: 'img/lideres/arquimago.png'},
+    { id: 'orc', name: 'Chefe Orc', emoji: '👹', hp: 80, atk: 15, mp: 5, range: 1, limit: 15, abilities: ['leadership'], desc: 'Líder de Horda (+10% ATK por aliado).', tags: ['PRIMAL'] , sprite: 'img/lideres/chefe_orc.png'},
     { id: 'necro', name: 'Necromante', emoji: '💀', hp: 55, atk: 10, mp: 4, range: 2, limit: 8, desc: 'Exército Morto (Domina como Umbral ao matar).', tags: ['UMBRAL'] },
-    { id: 'paladin', name: 'Paladina', emoji: '🛡️', hp: 85, atk: 10, mp: 4, range: 1, limit: 6, abilities: ['leadership'], desc: 'Unidades compradas ganham a tag Celestial. Aliados até 2 hexes curam 2 HP por turno.', tags: ['CELESTIAL', 'CARAPACE'] },
-    { id: 'ranger', name: 'Arqueira', emoji: '🏹', hp: 65, atk: 14, mp: 5, range: 3, limit: 6, abilities: ['camouflage'], desc: 'Alcance longo e Doma feras Silvestres facilmente. Silvestres adjacentes a ela recebem +1 de Alcance.', tags: ['SILVESTRE', 'STALKER'], fav: ['FOREST'] },
-    { id: 'pyro', name: 'Piromante', emoji: '🔥', hp: 50, atk: 16, mp: 4, range: 2, limit: 6, desc: 'Feras compradas e domadas vêm com queimadura e ganham a tag Ígnea.', tags: ['FIRE'], abilities: ['burn'] },
-    { id: 'admiral', name: 'Almirante', emoji: '🏴‍☠️', hp: 65, atk: 13, mp: 5, range: 1, limit: 7, desc: 'Custo de movimento na Água é livre (1). Encontra e doma mais feras Abissais.', tags: ['ABYSSAL'], fav: ['WATER'] },
-    { id: 'vampire', name: 'Lord Vampiro', emoji: '🧛🏻‍♂️', hp: 65, atk: 16, mp: 6, range: 1, limit: 7, desc: 'Roubo de vida. Doma feras abatidas transformando em Rastreadores. Fome se não atacar.', tags: ['UMBRAL', 'STALKER'], abilities: ['lifesteal'] },
+    { id: 'paladin', name: 'Paladina', emoji: '🛡️', hp: 85, atk: 10, mp: 4, range: 1, limit: 6, abilities: ['leadership'], desc: 'Unidades compradas ganham a tag Celestial. Aliados até 2 hexes curam 2 HP por turno.', tags: ['CELESTIAL', 'CARAPACE'] , sprite: 'img/lideres/paladina.png'},
+    { id: 'ranger', name: 'Arqueira', emoji: '🏹', hp: 65, atk: 14, mp: 5, range: 3, limit: 6, abilities: ['camouflage'], desc: 'Alcance longo e Doma feras Silvestres facilmente. Silvestres adjacentes a ela recebem +1 de Alcance.', tags: ['SILVESTRE', 'STALKER'], fav: ['FOREST'] , sprite: 'img/lideres/arqueira.png'},
+    { id: 'pyro', name: 'Piromante', emoji: '🔥', hp: 50, atk: 16, mp: 4, range: 2, limit: 6, desc: 'Feras compradas e domadas vêm com queimadura e ganham a tag Ígnea.', tags: ['FIRE'], abilities: ['burn'], sprite: 'img/lideres/piromante.png' },
+    { id: 'admiral', name: 'Almirante', emoji: '🏴‍☠️', hp: 65, atk: 13, mp: 5, range: 1, limit: 7, desc: 'Custo de movimento na Água é livre (1). Encontra e doma mais feras Abissais.', tags: ['ABYSSAL'], fav: ['WATER'], sprite: 'img/lideres/almirante.png' },
+    { id: 'vampire', name: 'Lord Vampiro', emoji: '🧛🏻‍♂️', hp: 65, atk: 16, mp: 6, range: 1, limit: 7, desc: 'Roubo de vida. Doma feras abatidas transformando em Rastreadores. Fome se não atacar.', tags: ['UMBRAL', 'STALKER'], abilities: ['lifesteal'] , sprite: 'img/lideres/lord_vampiro.png'},
     { id: 'L_CENTAUR', name: 'Centauro Espectral', emoji: '🏇', hp: 70, maxHp: 70, mp: 6, maxMp: 6, atk: 6, range: 1, tags: ['MYSTIC', 'SILVESTRE'], fav: ['PLAINS'], desc: 'Ganha +10% de ATK Base por cada hexágono percorrido antes de atacar no turno.' },
-    { id: 'L_ANUBIS', name: 'Anubis', emoji: '🐕‍🦺', hp: 80, maxHp: 80, mp: 3, maxMp: 3, atk: 14, range: 1, tags: ['UMBRAL', 'SAND'], fav: ['DESERT'], desc: 'Sempre que elimina um inimigo, ganha +1 ATK permanentemente (Acumula na run).' },
+    { id: 'L_ANUBIS', name: 'Anubis', emoji: '🐕‍🦺', hp: 80, maxHp: 80, mp: 3, maxMp: 3, atk: 14, range: 1, tags: ['UMBRAL', 'SAND'], fav: ['DESERT'], desc: 'Sempre que elimina um inimigo, ganha +1 ATK permanentemente (Acumula na run).', sprite: 'img/lideres/anubis.png' },
     { id: 'L_SHAPESHIFTER', name: 'Metamorfo', emoji: '🕵️‍♂️', hp: 85, maxHp: 85, mp: 4, maxMp: 4, atk: 8, range: 1, tags: ['PRIMAL', 'SILVESTRE'], fav: ['FOREST'], desc: 'Alterna posturas sem custo de mana. Urso (+Defesa, Alc:1) ou Falcão (-Defesa, Perfurante, Alc:3).' },
     { id: 'L_EXECUTIONER', name: 'Carrasco', emoji: '🪓', hp: 90, maxHp: 90, mp: 3, maxMp: 3, atk: 14, range: 1, tags: ['STALKER'], fav: ['MOUNTAIN'], desc: 'Possui o ataque especial Execução. Se matar o alvo, recupera a ação e o movimento.' },
     { id: 'L_SUMMONER', name: 'Invocador', emoji: '👨‍🎨', hp: 60, maxHp: 60, mp: 3, maxMp: 3, atk: 8, range: 2, tags: ['MYSTIC'], desc: 'Mestre dos tokens. Usa mana para evocar criaturas como o Dragão Ígneo direto no tabuleiro.' },
@@ -345,6 +345,7 @@ const LEADERS = [
         id: 'ld_dragao_galatico', name: 'Dragão Galático', emoji: '🌌',
         maxHp: 180, hp: 180, mp: 5, maxMp: 5, atk: 45, range: 1, limit: 6,
         tags: ['CELESTIAL', 'FIRE'], abilities: ['flying'],
+        sprite: 'img/lideres/dragao_galatico.png',
         desc: 'Uma entidade cósmica. Sobrevoa os perigos e incendeia o campo.',
     },
     {
@@ -352,18 +353,21 @@ const LEADERS = [
         maxHp: 200, hp: 200, mp: 3, maxMp: 3, atk: 35, range: 1, limit: 5, fav: 'MOUNTAIN',
         tags: ['ROCK', 'WING'], abilities: ['flying', 'counter'],
         desc: 'Estátua viva de altíssima defesa. Voa e pune quem a ataca de perto.',
+        sprite: 'img/lideres/gargula.png'
     },
     {
         id: 'ld_golem_gelo', name: 'Golem de Gelo', emoji: '🧊',
         maxHp: 250, hp: 250, mp: 3, maxMp: 3, atk: 30, range: 1, limit: 5, fav: 'SNOW',
         tags: ['ROCK', 'ICE'], abilities: [],
         desc: 'Um colosso glacial. Caminha devagar, mas congela os mares.',
+        sprite: 'img/lideres/golem_gelo.png'
     },
     {
         id: 'ld_porco_eletrico', name: 'Porco-Espinho Elétrico', emoji: '🦔',
         maxHp: 140, hp: 140, mp: 4, maxMp: 4, atk: 25, range: 1, limit: 7,
         tags: ['CARAPACE', 'ELECTRIC'], abilities: ['counter','eletric'],
         desc: 'Agulhas carregadas. Eletrocuta a água para criar armadilhas pelo mapa.',
+        sprite: 'img/lideres/espinho_eletrico.png'
     },
     {
         id: 'ld_escaravelho', name: 'Escaravelho das Pragas', emoji: '🪲',
@@ -375,6 +379,7 @@ const LEADERS = [
         id: 'ld_doutor_praga', name: 'Doutor da Praga', emoji: '🐦‍⬛',
         maxHp: 130, hp: 130, mp: 4, maxMp: 4, atk: 20, range: 2, limit: 8,
         tags: ['VENOM'], abilities: ['poison'],
+        sprite: 'img/lideres/doutor_praga.png',
         desc: 'Mestre alquimista. Todas as feras aliadas compradas se tornam Venenosas.',
         knownSpells: ['sl_miasma_curativo'] // Magia nova abaixo!
     }

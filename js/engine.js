@@ -13,10 +13,15 @@ class Hex {
 
 class Unit {
     constructor(d) {
+        let lDef = typeof LEADERS !== 'undefined' ? LEADERS.find(x => x.name === (d.baseName || d.name)) : null;
+        let finalSprite = d.sprite || (lDef ? lDef.sprite : null);
+
         Object.assign(this, {
             q: d.q, r: d.r, vq: d.q, vr: d.r, faction: d.faction,
             isLeader: d.isLeader || false, name: d.name, baseName: d.baseName || d.name,
-            emoji: d.emoji, hp: d.hp, maxHp: d.maxHp, mp: d.mp, maxMp: d.maxMp,
+            emoji: d.emoji,
+            sprite: finalSprite, // <--- Puxando a imagem à força aqui!
+            hp: d.hp, maxHp: d.maxHp, mp: d.mp, maxMp: d.maxMp,
             atk: d.atk, range: d.range, level: d.level || 1, xp: d.xp || 0,
             starLevel: d.starLevel || 1,
             hasAttacked: d.hasAttacked || false, status: d.status || null,
@@ -204,24 +209,24 @@ class Game {
         this.map.clear(); this.units = []; this.items.clear(); this.hasKey = false;
         this.manaPool = {}; this.spentMana = {}; this.spellCooldowns = {}; this.activeSpell = null; this.lastDeadAlly = null; this.turnCount = 0;
 
-      // ----------------------------------------------------
+        // ----------------------------------------------------
         // MÁGICA DOS MAPAS CUSTOMIZADOS (BLINDADA V4 - COMPRIMIDA)
         // ----------------------------------------------------
         let atoAtual = this.currentLevel || 1;
         let noAtual = this.currentFloor !== undefined ? this.currentFloor : 0;
         let mapKey = `ATO${atoAtual}_NO${noAtual}`;
-        
+
         let customMap = typeof CUSTOM_MAPS !== 'undefined' ? CUSTOM_MAPS[mapKey] : null;
         let pS = null; let aS = null;
 
-        this.cols = 15; 
+        this.cols = 15;
         this.rows = 11;
 
         if (customMap && customMap.length > 0 && !this.isRoguelite) {
             // 1. PRIMEIRO: Preenche a tela toda com Planície (Grama)
-            for (let r = 0; r < this.rows; r++) { 
-                const off = Math.floor(r / 2); 
-                for (let q = -off; q < this.cols - off; q++) { 
+            for (let r = 0; r < this.rows; r++) {
+                const off = Math.floor(r / 2);
+                for (let q = -off; q < this.cols - off; q++) {
                     this.map.set(`${q},${r}`, new Hex(q, r, TERRAINS.PLAINS));
                 }
             }
@@ -236,40 +241,40 @@ class Game {
 
             // Procura pelos CASTELOS (CASTLE) que você pintou para usar como base!
             let bases = [];
-            this.map.forEach(h => { 
+            this.map.forEach(h => {
                 if (h.terrain && h.terrain.id === 'CASTLE') {
-                    bases.push(h); 
+                    bases.push(h);
                 }
             });
-            
+
             if (bases.length >= 2) {
-                bases.sort((a,b) => a.q - b.q); // O Castelo mais à esquerda é o seu!
+                bases.sort((a, b) => a.q - b.q); // O Castelo mais à esquerda é o seu!
                 pS = { q: bases[0].q, r: bases[0].r };
-                aS = { q: bases[bases.length-1].q, r: bases[bases.length-1].r };
+                aS = { q: bases[bases.length - 1].q, r: bases[bases.length - 1].r };
             }
         } else {
             // Lógica Aleatória Original
-            for (let r = 0; r < this.rows; r++) { 
-                const off = Math.floor(r / 2); 
-                for (let q = -off; q < this.cols - off; q++) { 
-                    const rnd = Math.random(); 
-                    let t = TERRAINS.PLAINS; 
-                    if (rnd > 0.94) t = TERRAINS.MOUNTAIN; 
-                    else if (rnd > 0.86) t = TERRAINS.SNOW; 
-                    else if (rnd > 0.74) t = TERRAINS.WATER; 
-                    else if (rnd > 0.62) t = TERRAINS.FOREST; 
-                    else if (rnd > 0.52) t = TERRAINS.DESERT; 
-                    else if (rnd > 0.45) t = TERRAINS.VILLAGE; 
-                    this.map.set(`${q},${r}`, new Hex(q, r, t)); 
-                } 
+            for (let r = 0; r < this.rows; r++) {
+                const off = Math.floor(r / 2);
+                for (let q = -off; q < this.cols - off; q++) {
+                    const rnd = Math.random();
+                    let t = TERRAINS.PLAINS;
+                    if (rnd > 0.94) t = TERRAINS.MOUNTAIN;
+                    else if (rnd > 0.86) t = TERRAINS.SNOW;
+                    else if (rnd > 0.74) t = TERRAINS.WATER;
+                    else if (rnd > 0.62) t = TERRAINS.FOREST;
+                    else if (rnd > 0.52) t = TERRAINS.DESERT;
+                    else if (rnd > 0.45) t = TERRAINS.VILLAGE;
+                    this.map.set(`${q},${r}`, new Hex(q, r, t));
+                }
             }
         }
 
         if (!pS || !aS) {
-            const mR = Math.floor(this.rows / 2); 
-            pS = { q: -Math.floor(mR / 2), r: mR }; 
+            const mR = Math.floor(this.rows / 2);
+            pS = { q: -Math.floor(mR / 2), r: mR };
             aS = { q: this.cols - 1 - Math.floor(mR / 2), r: mR };
-            
+
             if (!this.map.has(`${pS.q},${pS.r}`)) this.map.set(`${pS.q},${pS.r}`, new Hex(pS.q, pS.r, TERRAINS.PLAINS));
             if (!this.map.has(`${aS.q},${aS.r}`)) this.map.set(`${aS.q},${aS.r}`, new Hex(aS.q, aS.r, TERRAINS.PLAINS));
         }
@@ -1264,7 +1269,44 @@ class Renderer {
 
             ctx.save(); ctx.globalAlpha = (u.mp === 0 && u.hasAttacked) ? 0.5 : 1.0; ctx.font = `${this.hexSize * sMod * 0.85}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             if (u.hitTimer) ctx.filter = 'brightness(50%) sepia(100%) hue-rotate(-50deg) saturate(500%)'; else if (u.filter !== 'none') ctx.filter = u.filter;
-            ctx.fillText(u.emoji, p.x, p.y + 1); ctx.restore();
+
+            // ==========================================
+            // SISTEMA DE SPRITES DAS UNIDADES
+            // ==========================================
+            if (u.sprite) {
+                if (!window.imageCache) window.imageCache = {};
+                if (!window.imageCache[u.sprite]) {
+                    let img = new Image();
+                    img.onload = () => { this.draw(); };
+                    img.src = u.sprite;
+                    window.imageCache[u.sprite] = img;
+                }
+                let img = window.imageCache[u.sprite];
+                if (img.complete && img.naturalWidth > 0) {
+                    let maxDim = this.hexSize * 1.5 * sMod; 
+                    
+                    // Lê o tamanho real do seu arquivo PNG e calcula a proporção
+                    let ratio = img.naturalWidth / img.naturalHeight;
+                    let drawW = maxDim;
+                    let drawH = maxDim;
+
+                    // Ajusta a largura ou altura para não achatar a arte!
+                    if (ratio > 1) { 
+                        drawH = maxDim / ratio; // Se for mais larga que alta
+                    } else { 
+                        drawW = maxDim * ratio; // Se for mais alta que larga
+                    }
+
+                    ctx.drawImage(img, p.x - (drawW / 2), p.y - (drawH / 2) - 5, drawW, drawH);
+                } else {
+                    ctx.fillText(u.emoji, p.x, p.y + 1);
+                }
+            } else {
+                ctx.fillText(u.emoji, p.x, p.y + 1); 
+            }
+            // ==========================================
+
+            ctx.restore();
 
             if (u.isLeader) { ctx.font = `${this.hexSize * 0.55}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'center'; ctx.fillText('👑', p.x, p.y - r + 2); }
             if (u.faction === 0 && u.alerted) { ctx.font = `bold ${this.hexSize * 0.45}px Arial`; ctx.fillStyle = '#e74c3c'; ctx.textAlign = 'center'; ctx.fillText('⚠️', p.x + r - 5, p.y - r + 5); }
@@ -1345,7 +1387,7 @@ class KingdomRenderer {
             const p = this.getPos(hex.q, hex.r);
             const terrainData = typeof hex.terrain === 'string' ? TERRAINS[hex.terrain] : hex.terrain;
             if (!terrainData) return;
-            
+
             // 1. APLICA A MÁSCARA (CLIP) NO REINO
             ctx.save();
             this.hexPath(ctx, p.x, p.y, this.hexSize - 1);
