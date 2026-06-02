@@ -1043,9 +1043,9 @@ document.addEventListener("DOMContentLoaded", () => {
             
             btn.onclick = () => {
                 game.leaderData = l; 
-                // Remove o líder morto e coloca o novo com HP cheio
+                // Remove o líder morto e coloca o novo com HP e MP máximos declarados!
                 deployedRoster = deployedRoster.filter(u => !u.isLeader);
-                deployedRoster.unshift(new Unit({...l, isLeader: true, faction: 1, isNew: true}));
+                deployedRoster.unshift(new Unit({...l, maxHp: l.hp, maxMp: l.mp, isLeader: true, faction: 1, isNew: true}));
                 
                 document.body.removeChild(modal);
                 

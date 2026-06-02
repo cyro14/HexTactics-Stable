@@ -1266,7 +1266,7 @@ class Renderer {
 
             let sMod = u.isBoss ? 1.35 : 1.0;
             if (u.level > 1 && !u.isLeader) sMod += 0.20;
-            if (u.isLeader && u.faction === 1) sMod = 1.2;
+            if (u.isLeader && u.faction === 1) sMod = 1.6;
             const r = this.hexSize * 0.6 * sMod;
 
             // ==========================================
