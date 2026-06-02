@@ -1269,10 +1269,12 @@ class Renderer {
 
             ctx.save(); ctx.globalAlpha = (u.mp === 0 && u.hasAttacked) ? 0.5 : 1.0; ctx.font = `${this.hexSize * sMod * 0.85}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             if (u.hitTimer) ctx.filter = 'brightness(50%) sepia(100%) hue-rotate(-50deg) saturate(500%)'; else if (u.filter !== 'none') ctx.filter = u.filter;
+            
+            // ==========================================
+            // SISTEMA DE SPRITES (TAMANHO MÁXIMO GARANTIDO)
+            // ==========================================
+            let uiTopY = p.y - r; 
 
-            // ==========================================
-            // SISTEMA DE SPRITES DAS UNIDADES
-            // ==========================================
             if (u.sprite) {
                 if (!window.imageCache) window.imageCache = {};
                 if (!window.imageCache[u.sprite]) {
@@ -1283,40 +1285,66 @@ class Renderer {
                 }
                 let img = window.imageCache[u.sprite];
                 if (img.complete && img.naturalWidth > 0) {
-                    let maxDim = this.hexSize * 1.5 * sMod; 
+                    // Caixa limite para o Sprite (Bem grande para não ficarem minúsculos)
+                    let maxW = this.hexSize * 1.8 * sMod;
+                    let maxH = this.hexSize * 1.8 * sMod;
                     
-                    // Lê o tamanho real do seu arquivo PNG e calcula a proporção
-                    let ratio = img.naturalWidth / img.naturalHeight;
-                    let drawW = maxDim;
-                    let drawH = maxDim;
-
-                    // Ajusta a largura ou altura para não achatar a arte!
-                    if (ratio > 1) { 
-                        drawH = maxDim / ratio; // Se for mais larga que alta
-                    } else { 
-                        drawW = maxDim * ratio; // Se for mais alta que larga
-                    }
-
-                    ctx.drawImage(img, p.x - (drawW / 2), p.y - (drawH / 2) - 5, drawW, drawH);
+                    // Matemática de Encaixe Perfeito - O sprite cresce até bater no teto ou nas paredes
+                    let scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
+                    
+                    let drawW = img.naturalWidth * scale;
+                    let drawH = img.naturalHeight * scale;
+                    
+                    // Ancoragem: Os pés tocam exatamente o chão escuro
+                    let spriteY = p.y + (this.hexSize * 0.65) - drawH; 
+                    
+                    ctx.drawImage(img, p.x - (drawW / 2), spriteY, drawW, drawH);
+                    
+                    uiTopY = spriteY - 5;// A coroa vai sempre 5 pixels acima da cabeça, flutuando sozinha
                 } else {
                     ctx.fillText(u.emoji, p.x, p.y + 1);
                 }
             } else {
                 ctx.fillText(u.emoji, p.x, p.y + 1); 
             }
-            // ==========================================
-
             ctx.restore();
 
-            if (u.isLeader) { ctx.font = `${this.hexSize * 0.55}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'center'; ctx.fillText('👑', p.x, p.y - r + 2); }
-            if (u.faction === 0 && u.alerted) { ctx.font = `bold ${this.hexSize * 0.45}px Arial`; ctx.fillStyle = '#e74c3c'; ctx.textAlign = 'center'; ctx.fillText('⚠️', p.x + r - 5, p.y - r + 5); }
-            if (u.faction === 1 && (u.knownSpells || []).length > 0) { ctx.font = `${this.hexSize * 0.35}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'right'; ctx.fillText('✨', p.x + r - 2, p.y - r + 8); }
-            const hw = Math.min(50, Math.max(16, 16 + (u.maxHp / 5))); const barY = p.y - r - 8; const hpRatio = u.hp / u.maxHp;
-            ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.beginPath(); ctx.roundRect(p.x - hw / 2, barY, hw, 5, 2); ctx.fill();
-            const hpColor = hpRatio > 0.5 ? '#2ecc71' : hpRatio > 0.25 ? '#f39c12' : '#e74c3c'; ctx.fillStyle = hpColor; ctx.beginPath(); ctx.roundRect(p.x - hw / 2, barY, hw * hpRatio, 5, 2); ctx.fill();
+            // ==========================================
+            // INTERFACE 
+            // ==========================================
+            // Coroa do Líder (Livre no topo!)
+            if (u.isLeader) { ctx.font = `${this.hexSize * 0.5}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'center'; ctx.fillText('👑', p.x, uiTopY); }
+            
+            // Alertas e Magias
+            if (u.faction === 0 && u.alerted) { ctx.font = `bold ${this.hexSize * 0.45}px Arial`; ctx.fillStyle = '#e74c3c'; ctx.textAlign = 'center'; ctx.fillText('⚠️', p.x + r - 5, uiTopY + 5); }
+            if (u.faction === 1 && (u.knownSpells || []).length > 0) { ctx.font = `${this.hexSize * 0.35}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'right'; ctx.fillText('✨', p.x + r - 2, uiTopY + 8); }
+            
+            // --- BARRA DE HP VERTICAL (DIREITA DO HEXÁGONO) ---
+            const barHeight = this.hexSize * 1.1; 
+            const barWidth = 5; 
+            const barX = p.x + (this.hexSize * 0.65); // Empurrado para a direita
+            const barY = p.y - (barHeight / 2) + (this.hexSize * 0.1); 
+            const hpRatio = u.hp / u.maxHp;
+            
+            // Fundo da barra
+            ctx.fillStyle = 'rgba(0,0,0,0.8)'; 
+            ctx.beginPath(); ctx.roundRect(barX, barY, barWidth, barHeight, 2); ctx.fill();
+            
+            // Preenchimento de Vida (Cresce de baixo para cima!)
+            const hpColor = hpRatio > 0.5 ? '#2ecc71' : hpRatio > 0.25 ? '#f39c12' : '#e74c3c'; 
+            ctx.fillStyle = hpColor; 
+            const fillHeight = Math.max(1, barHeight * hpRatio); 
+            ctx.beginPath(); ctx.roundRect(barX, barY + barHeight - fillHeight, barWidth, fillHeight, 2); ctx.fill();
 
+            // --- NÍVEL E ESTRELAS (ESQUERDA DO HEXÁGONO) ---
             let starIcon = u.starLevel === 2 ? '🥉' : u.starLevel === 3 ? '🥈' : u.starLevel >= 4 ? '🌟' : '';
-            if (u.level > 1 || starIcon) { ctx.font = 'bold 10px Cinzel,serif'; ctx.fillStyle = '#c9a227'; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.fillText(`Lv${u.level}${starIcon}`, p.x + hw / 2 + 12, barY + 5); }
+            if (u.level > 1 || starIcon) { 
+                ctx.font = 'bold 11px Cinzel,serif'; 
+                ctx.fillStyle = '#c9a227'; 
+                ctx.textAlign = 'center'; 
+                ctx.textBaseline = 'middle'; 
+                ctx.fillText(`Lv${u.level}${starIcon}`, p.x - (this.hexSize * 0.65), p.y + (this.hexSize * 0.25)); 
+            }
         });
     }
 }
