@@ -1260,25 +1260,58 @@ class Renderer {
         } else if (!su && this.game.selectedHex) { const sh = this.getPos(this.game.selectedHex.q, this.game.selectedHex.r); this.hexPath(ctx, sh.x, sh.y, this.hexSize - 1); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2; ctx.stroke(); }
 
         this.game.units.forEach(u => {
-            const p = this.getPos(u.vq, u.vr); 
-            const fBg = u.faction === 1 ? '#ffffff' : u.faction === 2 ? '#e74c3c' : '#2ecc71'; 
-            const sCol = u.faction === 1 ? '#111' : '#fff';
+           const p = this.getPos(u.vq, u.vr); 
+            // Cores mais nobres e intensas: Azul (Jogador), Vermelho (Inimigo), Verde (Selvagem)
+            const fColor = u.faction === 1 ? '#3498db' : u.faction === 2 ? '#e74c3c' : '#2ecc71'; 
+            
             let sMod = u.isBoss ? 1.35 : 1.0; 
-            if (u.level > 1 && !u.isLeader) sMod += 0.20; 
-            if (u.isLeader && u.faction === 1) sMod = 1.5;
+            if (u.level > 1 && !u.isLeader) sMod += 0.20;
+            if (u.isLeader && u.faction === 1) sMod = 1.2; 
             const r = this.hexSize * 0.6 * sMod;
 
-            ctx.beginPath(); ctx.ellipse(p.x, p.y + r + 2, r * 0.85, r * 0.25, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fill();
-            ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fillStyle = fBg; ctx.fill(); ctx.lineWidth = u.isLeader ? 2.5 : 1.5; ctx.strokeStyle = sCol; ctx.stroke();
-            if (u.status === 'poison') { ctx.fillStyle = 'rgba(39,174,96,0.35)'; ctx.fill(); } else if (u.status === 'stun' || u.status === 'bind' || u.status === 'chilled') { ctx.fillStyle = 'rgba(241,196,15,0.35)'; ctx.fill(); } else if (u.status === 'shielded') { ctx.fillStyle = 'rgba(149,165,166,0.35)'; ctx.fill(); }
+            // ==========================================
+            // NOVO PEDESTAL / AURA DE FACÇÃO (Estilo RTS)
+            // ==========================================
+            // Ancoramos o anel exatamente na base (chão) do hexágono
+            let baseY = p.y + (this.hexSize * 0.55); 
+            
+            // 1. Sombra Escura Projetada no chão
+            ctx.beginPath(); 
+            ctx.ellipse(p.x, baseY, r * 1.1, r * 0.4, 0, 0, Math.PI * 2); 
+            ctx.fillStyle = 'rgba(0,0,0,0.6)'; 
+            ctx.fill();
+
+            // 2. Anel Luminoso de Facção
+            ctx.beginPath(); 
+            ctx.ellipse(p.x, baseY, r * 0.9, r * 0.35, 0, 0, Math.PI * 2); 
+            ctx.lineWidth = u.isLeader ? 3 : 1.5; 
+            ctx.strokeStyle = fColor; 
+            ctx.stroke();
+
+            // 3. Preenchimento Mágico (Brilho suave radial)
+            let aura = ctx.createRadialGradient(p.x, baseY, 0, p.x, baseY, r);
+            let hexToRgb = (hex) => {
+                let bigint = parseInt(hex.replace('#', ''), 16);
+                return `${(bigint >> 16) & 255}, ${(bigint >> 8) & 255}, ${bigint & 255}`;
+            };
+            aura.addColorStop(0, `rgba(${hexToRgb(fColor)}, 0.4)`); // Brilho interno
+            aura.addColorStop(1, 'transparent'); // Esmaece nas bordas
+            ctx.fillStyle = aura;
+            ctx.fill();
+
+            // 4. Indicador de Status Negativos
+            if (u.status === 'poison') { ctx.fillStyle = 'rgba(39,174,96,0.4)'; ctx.fill(); } 
+            else if (u.status === 'stun' || u.status === 'bind' || u.status === 'chilled') { ctx.fillStyle = 'rgba(241,196,15,0.4)'; ctx.fill(); } 
+            else if (u.status === 'shielded') { ctx.fillStyle = 'rgba(149,165,166,0.4)'; ctx.fill(); }
+            // ==========================================
 
             ctx.save(); ctx.globalAlpha = (u.mp === 0 && u.hasAttacked) ? 0.5 : 1.0; ctx.font = `${this.hexSize * sMod * 0.85}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             if (u.hitTimer) ctx.filter = 'brightness(50%) sepia(100%) hue-rotate(-50deg) saturate(500%)'; else if (u.filter !== 'none') ctx.filter = u.filter;
-            
+
             // ==========================================
             // SISTEMA DE SPRITES (TAMANHO MÁXIMO GARANTIDO)
             // ==========================================
-            let uiTopY = p.y - r; 
+            let uiTopY = p.y - r;
 
             if (u.sprite) {
                 if (!window.imageCache) window.imageCache = {};
@@ -1293,24 +1326,24 @@ class Renderer {
                     // Caixa limite para o Sprite (Estreita para não vazar para os lados!)
                     let maxW = this.hexSize * 1.25 * sMod; // Largura contida no próprio hexágono
                     let maxH = this.hexSize * 1.5 * sMod;  // Altura um pouco maior para a cabeça sair
-                    
+
                     // Matemática de Encaixe Perfeito - O sprite cresce até bater no teto ou nas paredes
                     let scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
-                    
+
                     let drawW = img.naturalWidth * scale;
                     let drawH = img.naturalHeight * scale;
-                    
+
                     // ANCORAGEM: Mantivemos no fundo do hexágono para a base ficar firme
-                    let spriteY = p.y + (this.hexSize * 0.60) - drawH; 
-                    
+                    let spriteY = p.y + (this.hexSize * 0.60) - drawH;
+
                     ctx.drawImage(img, p.x - (drawW / 2), spriteY, drawW, drawH);
-                    
+
                     uiTopY = spriteY - 5; // A coroa acompanha a descida automaticamente!
                 } else {
                     ctx.fillText(u.emoji, p.x, p.y + 1);
                 }
             } else {
-                ctx.fillText(u.emoji, p.x, p.y + 1); 
+                ctx.fillText(u.emoji, p.x, p.y + 1);
             }
             ctx.restore();
 
@@ -1319,36 +1352,36 @@ class Renderer {
             // ==========================================
             // Coroa do Líder (Livre no topo!)
             if (u.isLeader) { ctx.font = `${this.hexSize * 0.5}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'center'; ctx.fillText('👑', p.x, uiTopY); }
-            
+
             // Alertas e Magias
             if (u.faction === 0 && u.alerted) { ctx.font = `bold ${this.hexSize * 0.45}px Arial`; ctx.fillStyle = '#e74c3c'; ctx.textAlign = 'center'; ctx.fillText('⚠️', p.x + r - 5, uiTopY + 5); }
             if (u.faction === 1 && (u.knownSpells || []).length > 0) { ctx.font = `${this.hexSize * 0.35}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'right'; ctx.fillText('✨', p.x + r - 2, uiTopY + 8); }
-            
+
             // --- BARRA DE HP VERTICAL (DIREITA DO HEXÁGONO) ---
-            const barHeight = this.hexSize * 1.1; 
-            const barWidth = 5; 
+            const barHeight = this.hexSize * 1.1;
+            const barWidth = 5;
             const barX = p.x + (this.hexSize * 0.65); // Empurrado para a direita
-            const barY = p.y - (barHeight / 2) + (this.hexSize * 0.1); 
+            const barY = p.y - (barHeight / 2) + (this.hexSize * 0.1);
             const hpRatio = u.hp / u.maxHp;
-            
+
             // Fundo da barra
-            ctx.fillStyle = 'rgba(0,0,0,0.8)'; 
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
             ctx.beginPath(); ctx.roundRect(barX, barY, barWidth, barHeight, 2); ctx.fill();
-            
+
             // Preenchimento de Vida (Cresce de baixo para cima!)
-            const hpColor = hpRatio > 0.5 ? '#2ecc71' : hpRatio > 0.25 ? '#f39c12' : '#e74c3c'; 
-            ctx.fillStyle = hpColor; 
-            const fillHeight = Math.max(1, barHeight * hpRatio); 
+            const hpColor = hpRatio > 0.5 ? '#2ecc71' : hpRatio > 0.25 ? '#f39c12' : '#e74c3c';
+            ctx.fillStyle = hpColor;
+            const fillHeight = Math.max(1, barHeight * hpRatio);
             ctx.beginPath(); ctx.roundRect(barX, barY + barHeight - fillHeight, barWidth, fillHeight, 2); ctx.fill();
 
             // --- NÍVEL E ESTRELAS (ESQUERDA DO HEXÁGONO) ---
             let starIcon = u.starLevel === 2 ? '🥉' : u.starLevel === 3 ? '🥈' : u.starLevel >= 4 ? '🌟' : '';
-            if (u.level > 1 || starIcon) { 
-                ctx.font = 'bold 11px Cinzel,serif'; 
-                ctx.fillStyle = '#c9a227'; 
-                ctx.textAlign = 'center'; 
-                ctx.textBaseline = 'middle'; 
-                ctx.fillText(`Lv${u.level}${starIcon}`, p.x - (this.hexSize * 0.65), p.y + (this.hexSize * 0.25)); 
+            if (u.level > 1 || starIcon) {
+                ctx.font = 'bold 11px Cinzel,serif';
+                ctx.fillStyle = '#c9a227';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`Lv${u.level}${starIcon}`, p.x - (this.hexSize * 0.65), p.y + (this.hexSize * 0.25));
             }
         });
     }
