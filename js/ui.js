@@ -627,8 +627,17 @@ function updateUI() {
         const u = game.selectedUnit;
         const col = u.faction === 1 ? '#4a9edd' : u.faction === 2 ? '#c0392b' : '#27ae60';
 
-        $('unit-portrait').style.cssText = `border-color:${col}; box-shadow:0 0 10px ${col}40; filter:${u.filter}`;
-        $('unit-portrait').innerText = u.emoji;
+        // Aplica uma máscara (overflow: hidden) na caixinha do retrato
+        $('unit-portrait').style.cssText = `border-color:${col}; box-shadow:0 0 10px ${col}40; filter:${u.filter}; overflow: hidden; display: flex; align-items: flex-start; justify-content: center;`;
+        
+        if (u.sprite) {
+            // Se tiver sprite, dá um zoom de 1.8x e foca no topo (rosto) do personagem
+            $('unit-portrait').innerHTML = `<img src="${u.sprite}" style="width: 100%; height: 100%; object-fit: cover; object-position: center 10%; transform: scale(1.8); transform-origin: top center; pointer-events: none;">`;
+        } else {
+            // Mantém o emoji se não houver arte
+            $('unit-portrait').innerHTML = u.emoji;
+        }
+        
         $('unit-portrait').onclick = () => { window.showBeastDetails(u, true); };
 
         let starIcon = u.starLevel === 2 ? '🥉' : u.starLevel === 3 ? '🥈' : u.starLevel >= 4 ? '🌟' : '';

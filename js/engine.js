@@ -1260,32 +1260,32 @@ class Renderer {
         } else if (!su && this.game.selectedHex) { const sh = this.getPos(this.game.selectedHex.q, this.game.selectedHex.r); this.hexPath(ctx, sh.x, sh.y, this.hexSize - 1); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2; ctx.stroke(); }
 
         this.game.units.forEach(u => {
-           const p = this.getPos(u.vq, u.vr); 
+            const p = this.getPos(u.vq, u.vr);
             // Cores mais nobres e intensas: Azul (Jogador), Vermelho (Inimigo), Verde (Selvagem)
-            const fColor = u.faction === 1 ? '#3498db' : u.faction === 2 ? '#e74c3c' : '#2ecc71'; 
-            
-            let sMod = u.isBoss ? 1.35 : 1.0; 
+            const fColor = u.faction === 1 ? '#3498db' : u.faction === 2 ? '#e74c3c' : '#2ecc71';
+
+            let sMod = u.isBoss ? 1.35 : 1.0;
             if (u.level > 1 && !u.isLeader) sMod += 0.20;
-            if (u.isLeader && u.faction === 1) sMod = 1.2; 
+            if (u.isLeader && u.faction === 1) sMod = 1.2;
             const r = this.hexSize * 0.6 * sMod;
 
             // ==========================================
             // NOVO PEDESTAL / AURA DE FACÇÃO (Estilo RTS)
             // ==========================================
             // Ancoramos o anel exatamente na base (chão) do hexágono
-            let baseY = p.y + (this.hexSize * 0.55); 
-            
+            let baseY = p.y + (this.hexSize * 0.55);
+
             // 1. Sombra Escura Projetada no chão
-            ctx.beginPath(); 
-            ctx.ellipse(p.x, baseY, r * 1.1, r * 0.4, 0, 0, Math.PI * 2); 
-            ctx.fillStyle = 'rgba(0,0,0,0.6)'; 
+            ctx.beginPath();
+            ctx.ellipse(p.x, baseY, r * 1.1, r * 0.4, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
             ctx.fill();
 
             // 2. Anel Luminoso de Facção
-            ctx.beginPath(); 
-            ctx.ellipse(p.x, baseY, r * 0.9, r * 0.35, 0, 0, Math.PI * 2); 
-            ctx.lineWidth = u.isLeader ? 3 : 1.5; 
-            ctx.strokeStyle = fColor; 
+            ctx.beginPath();
+            ctx.ellipse(p.x, baseY, r * 0.9, r * 0.35, 0, 0, Math.PI * 2);
+            ctx.lineWidth = u.isLeader ? 3 : 1.5;
+            ctx.strokeStyle = fColor;
             ctx.stroke();
 
             // 3. Preenchimento Mágico (Brilho suave radial)
@@ -1300,8 +1300,8 @@ class Renderer {
             ctx.fill();
 
             // 4. Indicador de Status Negativos
-            if (u.status === 'poison') { ctx.fillStyle = 'rgba(39,174,96,0.4)'; ctx.fill(); } 
-            else if (u.status === 'stun' || u.status === 'bind' || u.status === 'chilled') { ctx.fillStyle = 'rgba(241,196,15,0.4)'; ctx.fill(); } 
+            if (u.status === 'poison') { ctx.fillStyle = 'rgba(39,174,96,0.4)'; ctx.fill(); }
+            else if (u.status === 'stun' || u.status === 'bind' || u.status === 'chilled') { ctx.fillStyle = 'rgba(241,196,15,0.4)'; ctx.fill(); }
             else if (u.status === 'shielded') { ctx.fillStyle = 'rgba(149,165,166,0.4)'; ctx.fill(); }
             // ==========================================
 
@@ -1358,7 +1358,8 @@ class Renderer {
             if (u.faction === 1 && (u.knownSpells || []).length > 0) { ctx.font = `${this.hexSize * 0.35}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'right'; ctx.fillText('✨', p.x + r - 2, uiTopY + 8); }
 
             // --- BARRA DE HP VERTICAL (DIREITA DO HEXÁGONO) ---
-            const barHeight = this.hexSize * 1.1;
+            // Calcula a altura da barra baseada no HP Máximo (Cresce com a vida do personagem!)
+            const barHeight = Math.min(this.hexSize * 1.6, Math.max(this.hexSize * 0.6, this.hexSize * 0.5 + (u.maxHp / 50) * 12)); 
             const barWidth = 5;
             const barX = p.x + (this.hexSize * 0.65); // Empurrado para a direita
             const barY = p.y - (barHeight / 2) + (this.hexSize * 0.1);
