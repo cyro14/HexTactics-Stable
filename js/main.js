@@ -239,28 +239,60 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // 7. MÁGICA DA IMUNIDADE: Oculta quem está cavando sem causar Game Over!
-    const origRunAITurn = window.runAITurn;
-    window.runAITurn = async function () {
-        let diggingUnits = game.units.filter(u => u.status === 'digging');
+    // 7. MUNIDADE: Oculta quem está cavando sem causar Game Over!
+    const origRunAITurn = Game.prototype.runAITurn; // Corrigido para acessar a Classe Game!
+    Game.prototype.runAITurn = async function () {
+        let diggingUnits = this.units.filter(u => u.status === 'digging');
 
-        // Em vez de mudar a facção (o que mata o líder), jogamos eles para fora do mapa!
-        // A IA vai calcular a distância como > 9000 e vai ignorá-los completamente.
+        // Remove a unidade do tabuleiro fisicamente durante o turno da IA
         diggingUnits.forEach(u => {
             u._realQ = u.q; u._realR = u.r;
             u.q = -9999; u.r = -9999;
         });
 
-        // A IA joga o turno dela sem enxergar quem está debaixo da terra
         if (origRunAITurn) await origRunAITurn.call(this);
 
-        // Fim do turno da IA: devolve as criaturas para a posição exata do buraco
+        // Devolve ela exatamente para o buraco após a IA terminar de agir
         diggingUnits.forEach(u => {
             if (u._realQ !== undefined) {
                 u.q = u._realQ; u.r = u._realR;
                 delete u._realQ; delete u._realR;
             }
         });
+    };
+
+    // 8. CARREGADOR DE MAPAS CUSTOMIZADOS
+    const origGenerateMap = Game.prototype.generateCampaignMap;
+    Game.prototype.generateCampaignMap = function(roster) {
+        // Primeiro, gera o mapa e posiciona os inimigos e o seu esquadrão normalmente
+        origGenerateMap.call(this, roster);
+
+        // Cria o nome automático que o jogo vai procurar (ex: ATO1_NO0)
+        let mapName = `ATO${this.currentLevel}_NO${this.currentFloor}`;
+        
+        // Se você exportou um mapa com esse nome e ele já estiver carregado na memória:
+        if (window.CUSTOM_MAPS && window.CUSTOM_MAPS[mapName]) {
+            console.log("Substituindo terreno pelo mapa customizado: ", mapName);
+            
+            this.map.clear();
+            this.cols = 15; 
+            this.rows = 11;
+            
+            // Recria a grama base limpa
+            for (let r = 0; r < this.rows; r++) {
+                const off = Math.floor(r / 2);
+                for (let q = -off; q < this.cols - off; q++) {
+                    this.map.set(`${q},${r}`, new Hex(q, r, TERRAINS.PLAINS));
+                }
+            }
+            
+            // Pinta os hexágonos usando o seu desenho do Editor (As unidades manterão as posições válidas onde nasceram!)
+            window.CUSTOM_MAPS[mapName].forEach(h => {
+                let hex = new Hex(h.q, h.r, TERRAINS[h.tId] || TERRAINS.PLAINS);
+                if (h.cV !== undefined) hex.customVar = h.cV;
+                this.map.set(`${h.q},${h.r}`, hex);
+            });
+        }
     };
 
     function handleCombatForecast(clientX, clientY, isTouch = false, isPinned = false) {

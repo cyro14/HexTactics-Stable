@@ -1739,6 +1739,7 @@ function advanceCampaign() {
         localStorage.setItem('ht_stats', JSON.stringify(stats));
     }
 
+    game.spellCooldowns = {};
     hide('management-screen');
     hide('route-map-screen');
     hide('event-screen');
@@ -2818,22 +2819,6 @@ $('btn-editor-save').onclick = () => {
     alert(`O mapa '${name}' foi salvo com sucesso no seu Editor!`);
 };
 
-$('btn-editor-export').onclick = () => {
-    let exportData = [];
-    game.map.forEach(h => {
-        // O SEGREDO DA COMPRESSÃO: Ignora as planícies sem variações visuais!
-        if (h.terrain.id === 'PLAINS' && h.customVar === undefined) return;
-
-        let node = { q: h.q, r: h.r, tId: h.terrain.id };
-        if (h.customVar !== undefined) node.cV = h.customVar;
-        exportData.push(node);
-    });
-
-    // Transforma a lista num texto corrido (sem espaços/quebras de linha inúteis)
-    $('editor-export-text').value = JSON.stringify(exportData);
-    $('editor-export-modal').classList.remove('hidden');
-};
-
 $('btn-editor-load').onclick = () => {
     let saved = JSON.parse(localStorage.getItem('HexTactics_SavedMaps') || '{}');
     let list = $('editor-load-list');
@@ -2898,15 +2883,18 @@ $('btn-editor-export').onclick = () => {
         exportData.push(node);
     });
 
-    // Cria a estrutura exata para o jogo ler esse mapa de fora
+    // Formata o código exatamente para a leitura da Engine
     let fileContent = `window.CUSTOM_MAPS = window.CUSTOM_MAPS || {};\nwindow.CUSTOM_MAPS["${name}"] = ${JSON.stringify(exportData)};`;
 
-    // Mágica do Download (Cria um arquivo .js virtual e clica nele)
+    // 1. Joga o texto na caixinha e abre o modal (Para copiar à mão, se quiser)
+    $('editor-export-text').value = fileContent;
+    $('editor-export-modal').classList.remove('hidden');
+
+    // 2. Mágica do Download (Cria um arquivo .js virtual e baixa automático)
     let blob = new Blob([fileContent], { type: 'text/javascript' });
     let link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `${name}.js`; // Baixa com o nome exato que você digitou
-
+    link.download = `${name}.js`; 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
