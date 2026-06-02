@@ -1260,8 +1260,13 @@ class Renderer {
         } else if (!su && this.game.selectedHex) { const sh = this.getPos(this.game.selectedHex.q, this.game.selectedHex.r); this.hexPath(ctx, sh.x, sh.y, this.hexSize - 1); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2; ctx.stroke(); }
 
         this.game.units.forEach(u => {
-            const p = this.getPos(u.vq, u.vr); const fBg = u.faction === 1 ? '#ffffff' : u.faction === 2 ? '#e74c3c' : '#2ecc71'; const sCol = u.faction === 1 ? '#111' : '#fff';
-            let sMod = u.isBoss ? 1.35 : 1.0; if (u.level > 1 && !u.isLeader) sMod += 0.20; const r = this.hexSize * 0.6 * sMod;
+            const p = this.getPos(u.vq, u.vr); 
+            const fBg = u.faction === 1 ? '#ffffff' : u.faction === 2 ? '#e74c3c' : '#2ecc71'; 
+            const sCol = u.faction === 1 ? '#111' : '#fff';
+            let sMod = u.isBoss ? 1.35 : 1.0; 
+            if (u.level > 1 && !u.isLeader) sMod += 0.20; 
+            if (u.isLeader && u.faction === 1) sMod = 1.5;
+            const r = this.hexSize * 0.6 * sMod;
 
             ctx.beginPath(); ctx.ellipse(p.x, p.y + r + 2, r * 0.85, r * 0.25, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fill();
             ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fillStyle = fBg; ctx.fill(); ctx.lineWidth = u.isLeader ? 2.5 : 1.5; ctx.strokeStyle = sCol; ctx.stroke();
@@ -1285,9 +1290,9 @@ class Renderer {
                 }
                 let img = window.imageCache[u.sprite];
                 if (img.complete && img.naturalWidth > 0) {
-                    // Caixa limite para o Sprite (Bem grande para não ficarem minúsculos)
-                    let maxW = this.hexSize * 1.8 * sMod;
-                    let maxH = this.hexSize * 1.8 * sMod;
+                    // Caixa limite para o Sprite (Estreita para não vazar para os lados!)
+                    let maxW = this.hexSize * 1.25 * sMod; // Largura contida no próprio hexágono
+                    let maxH = this.hexSize * 1.5 * sMod;  // Altura um pouco maior para a cabeça sair
                     
                     // Matemática de Encaixe Perfeito - O sprite cresce até bater no teto ou nas paredes
                     let scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
@@ -1295,12 +1300,12 @@ class Renderer {
                     let drawW = img.naturalWidth * scale;
                     let drawH = img.naturalHeight * scale;
                     
-                    // Ancoragem: Os pés tocam exatamente o chão escuro
-                    let spriteY = p.y + (this.hexSize * 0.65) - drawH; 
+                    // ANCORAGEM: Mantivemos no fundo do hexágono para a base ficar firme
+                    let spriteY = p.y + (this.hexSize * 0.60) - drawH; 
                     
                     ctx.drawImage(img, p.x - (drawW / 2), spriteY, drawW, drawH);
                     
-                    uiTopY = spriteY - 5;// A coroa vai sempre 5 pixels acima da cabeça, flutuando sozinha
+                    uiTopY = spriteY - 5; // A coroa acompanha a descida automaticamente!
                 } else {
                     ctx.fillText(u.emoji, p.x, p.y + 1);
                 }
