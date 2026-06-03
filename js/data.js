@@ -27,37 +27,37 @@ const getActiveArtifacts = () => { return (game && game.isRoguelite) ? activeArt
 
 const TERRAINS = {
     // Linha 0: Planície
-    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#5b8c42', icon: '🌿', variations: [{x:0,y:0}, {x:1,y:0}, {x:2,y:0}, {x:3,y:0}] },
-    
+    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#5b8c42', icon: '🌿', variations: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }] },
+
     // Linha 1: Floresta
-    FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#1e4d2b', icon: '🌲', variations: [{x:0,y:1}, {x:1,y:1}, {x:2,y:1}, {x:3,y:1}] },
-    
+    FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#1e4d2b', icon: '🌲', variations: [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 }] },
+
     // Linha 2: Montanha
-    MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#5b5b5b', icon: '⛰️', variations: [{x:0,y:2}, {x:1,y:2}, {x:2,y:2}, {x:3,y:2}] },
-    
+    MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#5b5b5b', icon: '⛰️', variations: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }, { x: 3, y: 2 }] },
+
     // Linha 3: Água (Lago)
-    WATER: { id: 'WATER', name: 'Lago', cost: 2, def: -0.10, color: '#3498db', icon: '💧', variations: [{x:0,y:3}, {x:1,y:3}, {x:2,y:3}, {x:3,y:3}] },
+    WATER: { id: 'WATER', name: 'Lago', cost: 2, def: -0.10, color: '#3498db', icon: '💧', variations: [{ x: 0, y: 3 }, { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 3 }] },
 
     // Linha 4: Mar (Água Funda)
-    SEA: { id: 'SEA', name: 'Mar', cost: 3, def: -0.20, color: '#2980b9', icon: '🌊', variations: [{x:0,y:4}, {x:1,y:4}, {x:2,y:4}, {x:3,y:4}] },
-    
+    SEA: { id: 'SEA', name: 'Mar', cost: 3, def: -0.20, color: '#2980b9', icon: '🌊', variations: [{ x: 0, y: 4 }, { x: 1, y: 4 }, { x: 2, y: 4 }, { x: 3, y: 4 }] },
+
     // Linha 5: Deserto
-    DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#e6c86e', icon: '🏜️', variations: [{x:0,y:5}, {x:1,y:5}, {x:2,y:5}, {x:3,y:5}] },
-    
+    DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#e6c86e', icon: '🏜️', variations: [{ x: 0, y: 5 }, { x: 1, y: 5 }, { x: 2, y: 5 }, { x: 3, y: 5 }] },
+
     // Linha 6: Neve
-    SNOW: { id: 'SNOW', name: 'Neve', cost: 2, def: -0.15, color: '#cce6f4', icon: '❄️', variations: [{x:0,y:6}, {x:1,y:6}, {x:2,y:6}, {x:3,y:6}] },
-    
+    SNOW: { id: 'SNOW', name: 'Neve', cost: 2, def: -0.15, color: '#cce6f4', icon: '❄️', variations: [{ x: 0, y: 6 }, { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }] },
+
     // Linha 7: Pântano
-    SWAMP: { id: 'SWAMP', name: 'Pântano', cost: 2, def: 0.10, color: '#3b5323', icon: '🐸', variations: [{x:0,y:7}, {x:1,y:7}, {x:2,y:7}, {x:3,y:7}] },
-    
+    SWAMP: { id: 'SWAMP', name: 'Pântano', cost: 2, def: 0.10, color: '#3b5323', icon: '🐸', variations: [{ x: 0, y: 7 }, { x: 1, y: 7 }, { x: 2, y: 7 }, { x: 3, y: 7 }] },
+
     // Linha 8: Vila
-    VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#c49a45', icon: '🏘️', variations: [{x:0,y:8}, {x:1,y:8}, {x:2,y:8}, {x:3,y:8}] },
-    
+    VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#c49a45', icon: '🏘️', variations: [{ x: 0, y: 8 }, { x: 1, y: 8 }, { x: 2, y: 8 }, { x: 3, y: 8 }] },
+
     // Linha 9: Castelo
-    CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#3d444a', icon: '🏰', variations: [{x:0,y:9}, {x:1,y:9}, {x:2,y:9}, {x:3,y:9}] },
-    
+    CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#3d444a', icon: '🏰', variations: [{ x: 0, y: 9 }, { x: 1, y: 9 }, { x: 2, y: 9 }, { x: 3, y: 9 }] },
+
     // Linha 10: Savana
-    SAVANNA: { id: 'SAVANNA', name: 'Savana', cost: 1, def: 0.05, color: '#d4a373', icon: '🦁', variations: [{x:0,y:10}, {x:1,y:10}, {x:2,y:10}, {x:3,y:10}] },
+    SAVANNA: { id: 'SAVANNA', name: 'Savana', cost: 1, def: 0.05, color: '#d4a373', icon: '🦁', variations: [{ x: 0, y: 10 }, { x: 1, y: 10 }, { x: 2, y: 10 }, { x: 3, y: 10 }] },
 
     // Especiais / Mecânicos
     BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas', cost: 2, def: -0.50, color: '#d35400', icon: '🔥' },
@@ -318,29 +318,29 @@ const LEADER_GRIMOIRE_TAGS = {
 };
 
 const LEADERS = [
-    { id: 'mage', name: 'Arquimago', emoji: '🧙🏻‍♂️', hp: 60, atk: 12, mp: 4, range: 2, limit: 3, desc: 'Consegue utilizar duas magias por turno.', tags: ['MYSTIC'] , sprite: 'img/lideres/arquimago.png'},
-    { id: 'orc', name: 'Chefe Orc', emoji: '👹', hp: 80, atk: 15, mp: 5, range: 1, limit: 6, abilities: ['leadership'], desc: 'Líder de Horda (+10% ATK por aliado).', tags: ['PRIMAL'] , sprite: 'img/lideres/chefe_orc.png'},
-    { id: 'necro', name: 'Necromante', emoji: '💀', hp: 55, atk: 10, mp: 4, range: 2, limit: 6, desc: 'Exército Morto (Domina como Umbral ao matar).', tags: ['UMBRAL'] , sprite: 'img/lideres/necromante.png' },
-    { id: 'paladin', name: 'Paladina', emoji: '🛡️', hp: 85, atk: 10, mp: 4, range: 1, limit: 3, abilities: ['leadership'], desc: 'Unidades compradas ganham a tag Celestial. Aliados até 2 hexes curam 2 HP por turno.', tags: ['CELESTIAL', 'CARAPACE'] , sprite: 'img/lideres/paladina.png'},
-    { id: 'ranger', name: 'Arqueira', emoji: '🏹', hp: 65, atk: 14, mp: 5, range: 3, limit: 3, abilities: ['camouflage'], desc: 'Alcance longo e Doma feras Silvestres facilmente. Silvestres adjacentes a ela recebem +1 de Alcance.', tags: ['SILVESTRE', 'STALKER'], fav: ['FOREST'] , sprite: 'img/lideres/arqueira.png'},
+    { id: 'mage', name: 'Arquimago', emoji: '🧙🏻‍♂️', hp: 60, atk: 12, mp: 4, range: 2, limit: 3, desc: 'Consegue utilizar duas magias por turno.', tags: ['MYSTIC'], sprite: 'img/lideres/arquimago.png' },
+    { id: 'orc', name: 'Chefe Orc', emoji: '👹', hp: 80, atk: 15, mp: 5, range: 1, limit: 6, abilities: ['leadership'], desc: 'Líder de Horda (+10% ATK por aliado).', tags: ['PRIMAL'], sprite: 'img/lideres/chefe_orc.png' },
+    { id: 'necro', name: 'Necromante', emoji: '💀', hp: 55, atk: 10, mp: 4, range: 2, limit: 6, desc: 'Exército Morto (Domina como Umbral ao matar).', tags: ['UMBRAL'], sprite: 'img/lideres/necromante.png' },
+    { id: 'paladin', name: 'Paladina', emoji: '🛡️', hp: 85, atk: 10, mp: 4, range: 1, limit: 3, abilities: ['leadership'], desc: 'Unidades compradas ganham a tag Celestial. Aliados até 2 hexes curam 2 HP por turno.', tags: ['CELESTIAL', 'CARAPACE'], sprite: 'img/lideres/paladina.png' },
+    { id: 'ranger', name: 'Arqueira', emoji: '🏹', hp: 65, atk: 14, mp: 5, range: 3, limit: 3, abilities: ['camouflage'], desc: 'Alcance longo e Doma feras Silvestres facilmente. Silvestres adjacentes a ela recebem +1 de Alcance.', tags: ['SILVESTRE', 'STALKER'], fav: ['FOREST'], sprite: 'img/lideres/arqueira.png' },
     { id: 'pyro', name: 'Piromante', emoji: '🔥', hp: 50, atk: 16, mp: 4, range: 2, limit: 3, desc: 'Feras compradas e domadas vêm com queimadura e ganham a tag Ígnea.', tags: ['FIRE'], abilities: ['burn'], sprite: 'img/lideres/piromante.png' },
     { id: 'admiral', name: 'Almirante', emoji: '🏴‍☠️', hp: 65, atk: 13, mp: 5, range: 1, limit: 3, desc: 'Custo de movimento na Água é livre (1). Encontra e doma mais feras Abissais.', tags: ['ABYSSAL'], fav: ['WATER'], sprite: 'img/lideres/almirante.png' },
-    { id: 'vampire', name: 'Lord Vampiro', emoji: '🧛🏻‍♂️', hp: 65, atk: 16, mp: 6, range: 1, limit: 5, desc: 'Roubo de vida. Doma feras abatidas transformando em Rastreadores. Fome se não atacar.', tags: ['UMBRAL', 'STALKER'], abilities: ['lifesteal'] , sprite: 'img/lideres/lord_vampiro.png'},
+    { id: 'vampire', name: 'Lord Vampiro', emoji: '🧛🏻‍♂️', hp: 65, atk: 16, mp: 6, range: 1, limit: 5, desc: 'Roubo de vida. Doma feras abatidas transformando em Rastreadores. Fome se não atacar.', tags: ['UMBRAL', 'STALKER'], abilities: ['lifesteal'], sprite: 'img/lideres/lord_vampiro.png' },
     { id: 'L_CENTAUR', name: 'Centauro Espectral', emoji: '🏇', hp: 70, maxHp: 70, mp: 6, maxMp: 6, limit: 3, atk: 6, range: 1, tags: ['MYSTIC', 'SILVESTRE'], fav: ['PLAINS'], desc: 'Ganha +10% de ATK Base por cada hexágono percorrido antes de atacar no turno.' },
     { id: 'L_ANUBIS', name: 'Anubis', emoji: '🐕‍🦺', hp: 80, maxHp: 80, mp: 3, maxMp: 3, atk: 14, range: 1, limit: 3, tags: ['UMBRAL', 'SAND'], fav: ['DESERT'], desc: 'Sempre que elimina um inimigo, ganha +1 ATK permanentemente (Acumula na run).', sprite: 'img/lideres/anubis.png' },
     { id: 'L_SHAPESHIFTER', name: 'Metamorfo', emoji: '🕵️‍♂️', hp: 85, maxHp: 85, mp: 4, maxMp: 4, atk: 8, limit: 3, range: 1, tags: ['PRIMAL', 'SILVESTRE'], fav: ['FOREST'], desc: 'Alterna posturas sem custo de mana. Urso (+Defesa, Alc:1) ou Falcão (-Defesa, Perfurante, Alc:3).', sprite: 'img/lideres/metamorfo.png' },
-    { id: 'L_EXECUTIONER', name: 'Carrasco', emoji: '🪓', hp: 90, maxHp: 90, mp: 3, maxMp: 3, atk: 14, limit: 3, range: 1, tags: ['STALKER'], fav: ['MOUNTAIN'], desc: 'Possui o ataque especial Execução. Se matar o alvo, recupera a ação e o movimento.' , sprite: 'img/lideres/carrasco.png'},
-    { id: 'L_SUMMONER', name: 'Invocador', emoji: '👨‍🎨', hp: 60, maxHp: 60, mp: 3, maxMp: 3, atk: 8, limit: 3, range: 2, tags: ['MYSTIC'], desc: 'Mestre dos tokens. Usa mana para evocar criaturas como o Dragão Ígneo direto no tabuleiro.' , sprite: 'img/lideres/invocador.png'},
+    { id: 'L_EXECUTIONER', name: 'Carrasco', emoji: '🪓', hp: 90, maxHp: 90, mp: 3, maxMp: 3, atk: 14, limit: 3, range: 1, tags: ['STALKER'], fav: ['MOUNTAIN'], desc: 'Possui o ataque especial Execução. Se matar o alvo, recupera a ação e o movimento.', sprite: 'img/lideres/carrasco.png' },
+    { id: 'L_SUMMONER', name: 'Invocador', emoji: '👨‍🎨', hp: 60, maxHp: 60, mp: 3, maxMp: 3, atk: 8, limit: 3, range: 2, tags: ['MYSTIC'], desc: 'Mestre dos tokens. Usa mana para evocar criaturas como o Dragão Ígneo direto no tabuleiro.', sprite: 'img/lideres/invocador.png' },
     { id: 'L_GENIE', name: 'Gênia', emoji: '🧞‍♀️', hp: 75, maxHp: 75, mp: 5, maxMp: 4, atk: 12, limit: 3, range: 2, tags: ['MYSTIC', 'SAND'], fav: ['DESERT'], desc: 'Possui "Três Desejos". Ao iniciar a fase, escolha entre injetar Ouro, Recursos ou ganhar um Item Épico.', sprite: 'img/lideres/genia.png' },
     { id: 'L_TROLL', name: 'Troll', emoji: '🧌', hp: 130, maxHp: 130, mp: 3, maxMp: 3, atk: 14, range: 1, limit: 3, tags: ['PRIMAL', 'SILVESTRE'], fav: ['MOUNTAIN', 'FOREST'], desc: 'O Tanque Absoluto. Recupera 15% do HP se passar o turno sem atacar em Montanhas/Florestas.', sprite: 'img/lideres/troll.png' },
-    { id: 'L_SIREN', name: 'Sereia', emoji: '🧜🏻‍♀️', hp: 70, maxHp: 70, mp: 3, maxMp: 3, atk: 10, range: 2, limit: 3, abilities: ['dive'], tags: ['ABYSSAL', 'MYSTIC'], fav: ['WATER'], desc: 'Usa a Canção da Sereia para puxar inimigos para perto e atordoá-los.' , sprite: 'img/lideres/sereia.png'},
-    { id: 'L_FAIRY', name: 'Fada', emoji: '🧚🏻‍♀️', hp: 60, maxHp: 50, mp: 5, maxMp: 5, atk: 6, range: 2, limit: 3, tags: ['MYSTIC', 'SILVESTRE'], fav: ['FOREST'], desc: 'Maga de Suporte. Suas magias curam aliados em área ou concedem turnos extras.' , sprite: 'img/lideres/fada.png'},
-    { id: 'L_WITCH', name: 'Bruxa', emoji: '🧙🏼‍♀️', hp: 65, maxHp: 65, mp: 3, maxMp: 3, atk: 12, range: 2, limit: 3, tags: ['VENOM', 'UMBRAL'], fav: ['FOREST'], desc: 'Alquimista. Pode sacrificar um aliado com a magia Caldeirão para curar toda a equipe massivamente.' , sprite: 'img/lideres/bruxa.png'},
-    { id: 'L_BARBARIAN', name: 'Rei Bárbaro', emoji: '🤴', hp: 80, maxHp: 80, mp: 4, maxMp: 4, atk: 12, limit: 3, range: 1, tags: ['PRIMAL', 'ICE'], fav: ['SNOW'], desc: 'Fúria Imortal: Quanto mais HP perder, mais forte ele fica.' , sprite: 'img/lideres/rei_barbaro.png'},
+    { id: 'L_SIREN', name: 'Sereia', emoji: '🧜🏻‍♀️', hp: 70, maxHp: 70, mp: 3, maxMp: 3, atk: 10, range: 2, limit: 3, abilities: ['dive'], tags: ['ABYSSAL', 'MYSTIC'], fav: ['WATER'], desc: 'Usa a Canção da Sereia para puxar inimigos para perto e atordoá-los.', sprite: 'img/lideres/sereia.png' },
+    { id: 'L_FAIRY', name: 'Fada', emoji: '🧚🏻‍♀️', hp: 60, maxHp: 50, mp: 5, maxMp: 5, atk: 6, range: 2, limit: 3, tags: ['MYSTIC', 'SILVESTRE'], fav: ['FOREST'], desc: 'Maga de Suporte. Suas magias curam aliados em área ou concedem turnos extras.', sprite: 'img/lideres/fada.png' },
+    { id: 'L_WITCH', name: 'Bruxa', emoji: '🧙🏼‍♀️', hp: 65, maxHp: 65, mp: 3, maxMp: 3, atk: 12, range: 2, limit: 3, tags: ['VENOM', 'UMBRAL'], fav: ['FOREST'], desc: 'Alquimista. Pode sacrificar um aliado com a magia Caldeirão para curar toda a equipe massivamente.', sprite: 'img/lideres/bruxa.png' },
+    { id: 'L_BARBARIAN', name: 'Rei Bárbaro', emoji: '🤴', hp: 80, maxHp: 80, mp: 4, maxMp: 4, atk: 12, limit: 3, range: 1, tags: ['PRIMAL', 'ICE'], fav: ['SNOW'], desc: 'Fúria Imortal: Quanto mais HP perder, mais forte ele fica.', sprite: 'img/lideres/rei_barbaro.png' },
     { id: 'L_TREX', name: 'T-Rex', emoji: '🦖', hp: 150, maxHp: 150, mp: 3, maxMp: 2, atk: 25, range: 1, limit: 3, tags: ['PRIMAL', 'ROCK', 'STALKER'], fav: ['DIRT'], desc: 'Kaiju. Bate em todos à frente. A cada passo, esmaga florestas e vilas, tornando-as planícies.' },
     { id: 'L_ICE_QUEEN', name: 'Rainha do Gelo', emoji: '👸🏼', hp: 75, maxHp: 75, mp: 3, maxMp: 3, atk: 12, limit: 3, range: 2, tags: ['ICE'], fav: ['SNOW'], filter: 'hue-rotate(180deg)', abilities: ['frost_armor', 'freeze'], desc: 'Magia glacial. Inimigos que a atacam corpo-a-corpo sofrem Congelamento (Chilled) instantâneo.', sprite: 'img/lideres/rainha_gelo.png' },
     { id: 'L_HARPY', name: 'Matriarca Harpia', emoji: '🦅', hp: 65, maxHp: 65, mp: 5, maxMp: 5, atk: 14, limit: 3, range: 1, tags: ['WING', 'STALKER'], fav: ['MOUNTAIN'], filter: 'saturate(150%)', abilities: ['flying', 'dodge'], desc: 'Senhora dos ventos. Ignora custos de terreno pesado (sempre move por 1 MP) e possui esquiva natural alta.' },
-    { id: 'shaman', name: 'Xamã da Tempestade', emoji: '🧙‍♂️', desc: 'Mestre dos raios. Seus feitiços ricocheteiam e causam caos nas fileiras inimigas.', limit: 3, hp: 75, mp: 4, atk: 12, range: 2, limit: 6, tags: ['ELECTRIC', 'MYSTIC'], fav: ['MOUNTAIN'], filter: 'hue-rotate(45deg) saturate(200%)', knownSpells: ['sl_furia_tempestade'] , sprite: 'img/lideres/xama_tempestade.png'},
+    { id: 'shaman', name: 'Xamã da Tempestade', emoji: '🧙‍♂️', desc: 'Mestre dos raios. Seus feitiços ricocheteiam e causam caos nas fileiras inimigas.', limit: 3, hp: 75, mp: 4, atk: 12, range: 2, limit: 6, tags: ['ELECTRIC', 'MYSTIC'], fav: ['MOUNTAIN'], filter: 'hue-rotate(45deg) saturate(200%)', knownSpells: ['sl_furia_tempestade'], sprite: 'img/lideres/xama_tempestade.png' },
     {
         id: 'ld_dragao_galatico', name: 'Dragão Galático', emoji: '🌌',
         maxHp: 180, hp: 180, mp: 5, maxMp: 5, atk: 45, range: 1, limit: 3,
@@ -365,7 +365,7 @@ const LEADERS = [
     {
         id: 'ld_porco_eletrico', name: 'Porco-Espinho Elétrico', emoji: '🦔',
         maxHp: 140, hp: 140, mp: 7, maxMp: 7, atk: 25, range: 1, limit: 3,
-        tags: ['CARAPACE', 'ELECTRIC'], abilities: ['counter','eletric'],
+        tags: ['CARAPACE', 'ELECTRIC'], abilities: ['counter', 'eletric'],
         desc: 'Agulhas carregadas. Eletrocuta a água para criar armadilhas pelo mapa.',
         sprite: 'img/lideres/espinho_eletrico.png'
     },
@@ -529,11 +529,13 @@ const ITEMS = {
     'EGG': { icon: '🪺', name: 'Ovo', desc: 'Ovo de Monstro.', type: 'instant', f: async (u, g) => { if (u.faction === 1) { g.hasEgg = true; return true; } return false; } },
     'POTION': { icon: '🧪', name: 'Poção Menor', desc: 'Cura 30 HP.', type: 'instant', f: async (u, g) => { u.hp = Math.min(u.maxHp, u.hp + 30); return true; } },
     'WINGS_ICARUS': { icon: '🪽', name: 'Asas de Ícaro', desc: 'Ganha atributo Voador, mas recebe 5 de dano puro todo turno.', type: 'equip', onEquip: (u, lvl) => { if (!u.abilities.includes('flying')) u.abilities.push('flying'); }, onUnequip: (u, lvl) => { u.abilities = u.abilities.filter(a => a !== 'flying'); } },
-    'CATALYST': { icon: '💠', name: 'Catalisador', desc: 'Desperta uma habilidade extra baseada na tag da fera.', type: 'equip', onEquip: (u, lvl) => { 
-        let tagMap = { 'FIRE': 'burn', 'ICE': 'freeze', 'VENOM': 'poison', 'ROCK': 'counter', 'SAND': 'dodge', 'CARAPACE': 'counter', 'WING': 'swift', 'SILVESTRE': 'swift', 'UMBRAL': 'lifesteal', 'CELESTIAL': 'leadership', 'PRIMAL': 'corte_amplo', 'STALKER': 'hit_run', 'ABYSSAL': 'dodge' }; 
-        let t = u.tags && u.tags[0]; let ab = t ? tagMap[t] : 'dodge'; 
-        if(ab && !u.abilities.includes(ab)) u.abilities.push(ab); u._catalystAb = ab; 
-    }, onUnequip: (u, lvl) => { if(u._catalystAb) u.abilities = u.abilities.filter(a => a !== u._catalystAb); } },
+    'CATALYST': {
+        icon: '💠', name: 'Catalisador', desc: 'Desperta uma habilidade extra baseada na tag da fera.', type: 'equip', onEquip: (u, lvl) => {
+            let tagMap = { 'FIRE': 'burn', 'ICE': 'freeze', 'VENOM': 'poison', 'ROCK': 'counter', 'SAND': 'dodge', 'CARAPACE': 'counter', 'WING': 'swift', 'SILVESTRE': 'swift', 'UMBRAL': 'lifesteal', 'CELESTIAL': 'leadership', 'PRIMAL': 'corte_amplo', 'STALKER': 'hit_run', 'ABYSSAL': 'dodge' };
+            let t = u.tags && u.tags[0]; let ab = t ? tagMap[t] : 'dodge';
+            if (ab && !u.abilities.includes(ab)) u.abilities.push(ab); u._catalystAb = ab;
+        }, onUnequip: (u, lvl) => { if (u._catalystAb) u.abilities = u.abilities.filter(a => a !== u._catalystAb); }
+    },
 };
 
 const NODE_TYPES = {
@@ -561,8 +563,11 @@ const BUILDINGS = {
     CASTLE: { id: 'CASTLE', name: 'Castelo Real', icon: '🏰', cost: {}, desc: 'O coração do seu Reino. Não pode ser destruído.', terrains: ['PLAINS', 'FOREST', 'MOUNTAIN', 'WATER', 'SNOW', 'DESERT'] },
     STABLE: { id: 'STABLE', name: 'Estábulo', icon: '🐎', cost: { wood: 0, stone: 0 }, desc: 'O Mercador sempre venderá um Cavalo extra.', terrains: ['PLAINS', 'DESERT', 'SNOW'] },
     CHURCH: { id: 'CHURCH', name: 'Igreja', icon: '⛪', cost: { stone: 0, sand: 0, wood: 0 }, desc: 'Recebe uma pomba Celestial imediatamente.', terrains: ['PLAINS', 'MOUNTAIN', 'SNOW'] },
-    MINE: { id: 'MINE', name: 'Mina', icon: '⛏️', cost: { wood: 0, stone: 0 }, desc: 'Gera +3 Pedra e +1 Ouro ao vencer batalhas.', terrains: ['MOUNTAIN'] },
-    LUMBERMILL: { id: 'LUMBERMILL', name: 'Madeireira', icon: '🪓', cost: { stone: 0, wood: 0 }, desc: 'Gera +3 Madeira ao vencer batalhas.', terrains: ['FOREST'] },
+    MINE: { id: 'MINE', name: 'Mina', icon: '⛏️', cost: { wood: 0, stone: 0 }, desc: 'Gera +3 Pedra (Nv1), +2 Ferro (Nv2) e +5 Ouro (Nv3) ao vencer.', terrains: ['MOUNTAIN'] },
+    FORGE: { id: 'FORGE', name: 'Forja de Monstros', icon: '⚒️', cost: { wood: 0, stone: 0 }, desc: 'Forje equipamentos especiais usando partes caçadas de feras.', terrains: ['MOUNTAIN', 'PLAINS'] },
+    BLACKSMITH: { id: 'BLACKSMITH', name: 'Ferreiro', icon: '⚔️', cost: { wood: 0, stone: 0 }, desc: 'Forje armas e armaduras comuns usando Ouro.', terrains: ['PLAINS', 'MOUNTAIN'] },
+    BIOTERIUM: { id: 'BIOTERIUM', name: 'Biotério', icon: '🐾', cost: { wood: 0, stone: 0 }, desc: 'Descansa as feras da Box. Elas curam todo HP e adquirem afinidade de terreno com o local onde o Biotério está construído!', terrains: ['PLAINS', 'FOREST', 'MOUNTAIN', 'WATER', 'SNOW', 'DESERT'] },
+    APOTHECARY: { id: 'APOTHECARY', name: 'Botica', icon: '🧪', cost: { wood: 0, stone: 0 }, desc: 'Produza itens de campo (Poções, Bandagens) usando Ervas e Venenos.', terrains: ['FOREST', 'PLAINS'] }, LUMBERMILL: { id: 'LUMBERMILL', name: 'Madeireira', icon: '🪓', cost: { stone: 0, wood: 0 }, desc: 'Gera +3 Madeira ao vencer batalhas.', terrains: ['FOREST'] },
     FISHINGCAMP: { id: 'FISHINGCAMP', name: 'Campo de Pesca', icon: '🎣', cost: { wood: 0 }, desc: 'Gera +3 Escamas ao vencer batalhas.', terrains: ['WATER'] },
     SANDPIT: { id: 'SANDPIT', name: 'Extrator de Areia', icon: '🐪', cost: { wood: 0, stone: 0 }, desc: 'Gera +3 Areia ao vencer batalhas.', terrains: ['DESERT'] },
     PARK: { id: 'PARK', name: 'Parque', icon: '⛲', cost: { stone: 0, sand: 0 }, desc: 'Grande chance de domar feras Nv1 com HP cheio.', terrains: ['PLAINS', 'FOREST', 'DESERT', 'SNOW'] },
@@ -571,7 +576,6 @@ const BUILDINGS = {
     MARKET: { id: 'MARKET', name: 'Mercado', icon: '⚖️', cost: { wood: 0, stone: 0 }, desc: 'Permite a troca de recursos básicos por ouro e vice-versa.', terrains: ['PLAINS', 'DESERT', 'SNOW'] },
     CRYSTAL_TOWER: { id: 'CRYSTAL_TOWER', name: 'Torre de Cristal', icon: '🔮', cost: { stone: 0, sand: 0 }, desc: 'O líder inicia o 1º turno do combate com +1 de Mana.', terrains: ['MOUNTAIN', 'SNOW'] },
     SHADOW_ALTAR: { id: 'SHADOW_ALTAR', name: 'Altar das Sombras', icon: '🪦', cost: { stone: 0, scales: 0 }, desc: 'Sacrifica feras por recursos (Apenas Líderes Umbrais).', terrains: ['MOUNTAIN', 'DESERT', 'FOREST'] },
-    FORGE: { id: 'FORGE', name: 'Forja', icon: '⚒️', cost: { wood: 0, stone: 0 }, desc: 'Forje itens e consumíveis direto para a sua mochila.', terrains: ['MOUNTAIN', 'PLAINS'] },
     BARRACKS: { id: 'BARRACKS', name: 'Quartel', icon: '⛺', cost: { wood: 0, stone: 0 }, desc: 'Recrute feras que compartilham a afinidade do seu Líder.', terrains: ['PLAINS', 'DESERT'] },
     LIBRARY: { id: 'LIBRARY', name: 'Biblioteca', icon: '📚', desc: 'Gera 1 DNA 🧬 ao final de cada combate vencido.', terrains: ['PLAINS', 'SNOW'], cost: { wood: 0, stone: 0 } }, PORT: { id: 'PORT', name: 'Porto', icon: '⚓', cost: { wood: 0, stone: 0 }, desc: 'Gera +5 Ouro ao vencer batalhas.', terrains: ['WATER'] },
     TRAP_MAKER: { id: 'TRAP_MAKER', name: 'Armadilheiro', icon: '🕸️', desc: 'Produz Iscas e Redes por batalha.', terrains: ['FOREST', 'PLAINS'], cost: { wood: 0, stone: 0 } }, RESIDENCE: { id: 'RESIDENCE', name: 'Residência', icon: '🏠', desc: 'Recupera 10% do HP perdido das feras a cada fase. Duas juntas formam uma Vila.', terrains: ['PLAINS', 'FOREST', 'SNOW', 'DESERT'], cost: { wood: 0, stone: 0 } },

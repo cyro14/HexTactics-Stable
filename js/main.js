@@ -998,71 +998,71 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     $('btn-retry').addEventListener('click', () => {
-        if (game.isRoguelite) { 
-            if (confirm("Iniciar Nova Run? Seu Ouro e Exército serão perdidos!")) { localStorage.removeItem('ht_save_rogue'); openLeaderSelection(true); } 
-        } else { 
-            $('result-screen').classList.add('hidden'); 
-            $('game-container').classList.remove('hidden'); 
-            const tb = $('turn-blocker'); if(tb) tb.style.display = 'none'; 
-            
+        if (game.isRoguelite) {
+            if (confirm("Iniciar Nova Run? Seu Ouro e Exército serão perdidos!")) { localStorage.removeItem('ht_save_rogue'); openLeaderSelection(true); }
+        } else {
+            $('result-screen').classList.add('hidden');
+            $('game-container').classList.remove('hidden');
+            const tb = $('turn-blocker'); if (tb) tb.style.display = 'none';
+
             // CORREÇÃO: Força o HP e o MP a encherem para a unidade não nascer com 0 de vida!
-            const r = deployedRoster.map(m => new Unit({ ...m, hp: m.maxHp || m.hp, mp: m.maxMp || m.mp, q: 0, r: 0, hasAttacked: false, status: null, isNew: false })); 
-            game.generateCampaignMap(r); 
-            renderer.initCamera(true); 
-            updateUI(); 
+            const r = deployedRoster.map(m => new Unit({ ...m, hp: m.maxHp || m.hp, mp: m.maxMp || m.mp, q: 0, r: 0, hasAttacked: false, status: null, isNew: false }));
+            game.generateCampaignMap(r);
+            renderer.initCamera(true);
+            updateUI();
         }
     });
 
     // LÓGICA NOVA: Escolher um novo Líder
     $('btn-change-leader')?.addEventListener('click', () => {
         $('result-screen').classList.add('hidden');
-        
+
         let modal = document.createElement('div');
         modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px;';
-        
+
         let title = document.createElement('h2');
-        title.style.cssText = 'color: var(--gold); font-family: "Cinzel", serif; margin-bottom: 20px; text-align: center;'; 
+        title.style.cssText = 'color: var(--gold); font-family: "Cinzel", serif; margin-bottom: 20px; text-align: center;';
         title.innerText = 'Reforços Chegaram: Escolha um Novo Líder';
         modal.appendChild(title);
-        
+
         let grid = document.createElement('div');
         grid.style.cssText = 'display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:600px; max-height: 60vh; overflow-y:auto;';
-        
+
         LEADERS.forEach(l => {
             let btn = document.createElement('button');
             btn.className = 'btn-primary';
             btn.style.cssText = 'padding: 15px; font-size: 14px; width: 140px; display: flex; flex-direction: column; align-items: center; gap: 10px;';
-            
+
             if (l.sprite) {
                 btn.innerHTML = `<img src="${l.sprite}" style="width:50px; height:50px; object-fit:contain;"><span>${l.name}</span>`;
             } else {
                 btn.innerHTML = `<span style="font-size:30px;">${l.emoji}</span><span>${l.name}</span>`;
             }
-            
+
             btn.onclick = () => {
-                game.leaderData = l; 
+                game.leaderData = l;
                 // Remove o líder morto e coloca o novo com HP e MP máximos declarados!
                 deployedRoster = deployedRoster.filter(u => !u.isLeader);
-                deployedRoster.unshift(new Unit({...l, maxHp: l.hp, maxMp: l.mp, isLeader: true, faction: 1, isNew: true}));
-                
+                deployedRoster.unshift(new Unit({ ...l, maxHp: l.hp, maxMp: l.mp, isLeader: true, faction: 1, isNew: true }));
+
                 document.body.removeChild(modal);
-                
-                $('game-container').classList.remove('hidden'); 
-                const tb = $('turn-blocker'); if(tb) tb.style.display = 'none'; 
-                const r = deployedRoster.map(m => new Unit({ ...m, hp: m.maxHp || m.hp, mp: m.maxMp || m.mp, q: 0, r: 0, hasAttacked: false, status: null, isNew: false })); 
-                game.generateCampaignMap(r); 
-                renderer.initCamera(true); 
+
+                $('game-container').classList.remove('hidden');
+                const tb = $('turn-blocker'); if (tb) tb.style.display = 'none';
+                const r = deployedRoster.map(m => new Unit({ ...m, hp: m.maxHp || m.hp, mp: m.maxMp || m.mp, q: 0, r: 0, hasAttacked: false, status: null, isNew: false }));
+                game.generateCampaignMap(r);
+                renderer.initCamera(true);
                 updateUI();
             };
             grid.appendChild(btn);
         });
         modal.appendChild(grid);
-        
+
         let cancel = document.createElement('button');
         cancel.className = 'btn-danger'; cancel.style.cssText = 'margin-top: 30px; padding: 12px 30px;'; cancel.innerText = 'Cancelar e Voltar';
         cancel.onclick = () => { document.body.removeChild(modal); $('result-screen').classList.remove('hidden'); };
         modal.appendChild(cancel);
-        
+
         document.body.appendChild(modal);
     });
 
@@ -1118,28 +1118,53 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Abrir o Histórico Completo de Combate
-    $('btn-full-log')?.addEventListener('click', () => {
-        const content = $('full-log-content');
-        if (!content) return;
-        content.innerHTML = '';
-        
-        if (!window.fullCombatHistory || window.fullCombatHistory.length === 0) {
-            content.innerHTML = '<div style="color:#aaa; text-align:center; padding: 20px;">A batalha está silenciosa... Nenhum evento registrado ainda.</div>';
-        } else {
-            // Desenha todas as mensagens salvas
-            window.fullCombatHistory.forEach(log => {
-                let div = document.createElement('div');
-                div.style.borderLeft = `3px solid ${log.color}`;
-                div.style.paddingLeft = '8px';
-                div.style.marginBottom = '6px';
-                div.style.color = '#ddd';
-                div.style.lineHeight = '1.4';
-                div.innerText = log.text;
-                content.appendChild(div);
-            });
-        }
-        
-        $('full-log-modal').classList.remove('hidden');
-        // Desce a barra de rolagem automaticamente para a última mensagem
-        content.scrollTop = content.scrollHeight;
-    });
+$('btn-full-log')?.addEventListener('click', () => {
+    const content = $('full-log-content');
+    if (!content) return;
+    content.innerHTML = '';
+
+    if (!window.fullCombatHistory || window.fullCombatHistory.length === 0) {
+        content.innerHTML = '<div style="color:#aaa; text-align:center; padding: 20px;">A batalha está silenciosa... Nenhum evento registrado ainda.</div>';
+    } else {
+        // Desenha todas as mensagens salvas
+        window.fullCombatHistory.forEach(log => {
+            let div = document.createElement('div');
+            div.style.borderLeft = `3px solid ${log.color}`;
+            div.style.paddingLeft = '8px';
+            div.style.marginBottom = '6px';
+            div.style.color = '#ddd';
+            div.style.lineHeight = '1.4';
+            div.innerText = log.text;
+            content.appendChild(div);
+        });
+    }
+
+    $('full-log-modal').classList.remove('hidden');
+    // Desce a barra de rolagem automaticamente para a última mensagem
+    content.scrollTop = content.scrollHeight;
+});
+
+// ==========================================
+// SISTEMA DE DROPS DE MATERIAIS (LOOT)
+// ==========================================
+const origHandleDeath = Game.prototype.handleDeath;
+Game.prototype.handleDeath = function (deadUnit, killerUnit) {
+    if (deadUnit && deadUnit.faction !== 1) { // Se um inimigo morrer
+        if (!this.resources) this.resources = {};
+
+        // Verifica o tipo biológico (TAG) da criatura abatida e gera o drop correspondente!
+        let tags = deadUnit.tags || [];
+        tags.forEach(t => {
+            if (t === 'PRIMAL' || t === 'STALKER') this.resources.garras = (this.resources.garras || 0) + 1;
+            if (t === 'WING') this.resources.asas = (this.resources.asas || 0) + 1;
+            if (t === 'SILVESTRE') this.resources.ervas = (this.resources.ervas || 0) + 1;
+            if (t === 'ROCK' || t === 'CARAPACE') this.resources.ferro = (this.resources.ferro || 0) + 1;
+            if (t === 'VENOM') this.resources.veneno = (this.resources.veneno || 0) + 1;
+            if (t === 'MYSTIC' || t === 'UMBRAL' || t === 'CELESTIAL') this.resources.po_magico = (this.resources.po_magico || 0) + 1;
+            if (t === 'FIRE') this.resources.brasa = (this.resources.brasa || 0) + 1;
+        });
+    }
+
+    // Continua a morte normal
+    if (origHandleDeath) origHandleDeath.call(this, deadUnit, killerUnit);
+};

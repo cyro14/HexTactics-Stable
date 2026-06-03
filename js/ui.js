@@ -124,12 +124,12 @@ window.fullCombatHistory = []; // Memória global do log
 function addLog(msg, col = '#9a8a6a') {
     // Trava de segurança: garante que a memória existe antes de tentar salvar
     if (!window.fullCombatHistory) window.fullCombatHistory = [];
-    
+
     const e = document.createElement('div');
     e.className = 'log-entry';
     e.style.borderLeftColor = col;
     e.innerText = msg;
-    
+
     window.fullCombatHistory.push({ text: msg, color: col });
 
     const combatLog = document.getElementById('combat-log');
@@ -365,7 +365,7 @@ function openGrimoire() {
     const leader = game && game.units.find(u => u.isLeader && u.faction === 1);
     $('grimoire-subtitle').innerText = leader ? `${leader.emoji} ${leader.name} — Nível ${leader.level}` : 'Grimório';
     const manaDiv = $('grimoire-mana-display'); manaDiv.innerHTML = '';
-    
+
     if (game) {
         let income = computeManaIncome();
         Object.entries(game.manaPool).forEach(([tag, total]) => {
@@ -379,18 +379,18 @@ function openGrimoire() {
             manaDiv.appendChild(el);
         });
     }
-    
-    const grid = $('grimoire-grid'); 
+
+    const grid = $('grimoire-grid');
     grid.innerHTML = '';
-    const grimTags = leader ? (leader.grimTags || []) : []; 
+    const grimTags = leader ? (leader.grimTags || []) : [];
     const known = leader ? (leader.knownSpells || []) : [];
-    
+
     for (let lvl = 1; lvl <= 5; lvl++) {
         const spellsOfLevel = SPELLS.filter(s => { return s.tags.some(t => grimTags.includes(t)); }).filter(s => s.level === lvl);
         if (!spellsOfLevel.length) continue;
         const hdr = document.createElement('div');
         hdr.style.cssText = `grid-column:1/-1;font-family:Cinzel,serif;font-size:12px;color:var(--gold);border-bottom:1px solid var(--gold-dark);padding-bottom:4px;margin-top:8px;`;
-        hdr.innerText = `── Nível ${lvl} ──`; 
+        hdr.innerText = `── Nível ${lvl} ──`;
         grid.appendChild(hdr);
         spellsOfLevel.forEach(spell => {
             const isKnown = known.includes(spell.id); const mt = MANA_TYPES[Object.keys(spell.cost)[0]]; const borderCol = mt ? mt.col : '#888';
@@ -629,7 +629,7 @@ function updateUI() {
 
         // Aplica uma máscara (overflow: hidden) na caixinha do retrato
         $('unit-portrait').style.cssText = `border-color:${col}; box-shadow:0 0 10px ${col}40; filter:${u.filter}; overflow: hidden; display: flex; align-items: flex-start; justify-content: center;`;
-        
+
         if (u.sprite) {
             // Se tiver sprite, dá um zoom de 1.8x e foca no topo (rosto) do personagem
             $('unit-portrait').innerHTML = `<img src="${u.sprite}" style="width: 100%; height: 100%; object-fit: cover; object-position: center 10%; transform: scale(1.8); transform-origin: top center; pointer-events: none;">`;
@@ -637,7 +637,7 @@ function updateUI() {
             // Mantém o emoji se não houver arte
             $('unit-portrait').innerHTML = u.emoji;
         }
-        
+
         $('unit-portrait').onclick = () => { window.showBeastDetails(u, true); };
 
         let starIcon = u.starLevel === 2 ? '🥉' : u.starLevel === 3 ? '🥈' : u.starLevel >= 4 ? '🌟' : '';
@@ -1638,7 +1638,15 @@ function triggerStageEnd(win) {
 
         if (typeof countKingdomBuildings === 'function' && game.kingdomMap) {
             let pWood = window.countKingdomBuildings('LUMBERMILL') * 3;
-            let pStone = window.countKingdomBuildings('MINE') * 3;
+            let pStone = 0, pFerro = 0, pMineGold = 0;
+            game.kingdomMap.forEach(h => {
+                if (h.building === 'MINE') {
+                    let lvl = h.bLevel || 1;
+                    pStone += 3;
+                    if (lvl >= 2) pFerro += 2;
+                    if (lvl >= 3) pMineGold += 5;
+                }
+            });
             let pScales = window.countKingdomBuildings('FISHINGCAMP') * 3;
             let pSand = window.countKingdomBuildings('SANDPIT') * 3;
             let pGold = (window.countKingdomBuildings('MINE') * 10) + (window.countKingdomBuildings('PORT') * 5);
@@ -1943,11 +1951,26 @@ window.showKingdomPopup = function (txt, hex, col) {
     setTimeout(() => el.remove(), 1500);
 };
 
+window.updateKingdomResourcesUI = function () {
+    let res = game.resources || {};
+    if ($('k-res-gold')) $('k-res-gold').innerText = game.gold || 0;
+    if ($('k-res-wood')) $('k-res-wood').innerText = res.wood || 0;
+    if ($('k-res-stone')) $('k-res-stone').innerText = res.stone || 0;
+    if ($('k-res-scales')) $('k-res-scales').innerText = res.scales || 0;
+    if ($('k-res-sand')) $('k-res-sand').innerText = res.sand || 0;
+    if ($('k-res-garras')) $('k-res-garras').innerText = res.garras || 0;
+    if ($('k-res-asas')) $('k-res-asas').innerText = res.asas || 0;
+    if ($('k-res-ferro')) $('k-res-ferro').innerText = res.ferro || 0;
+    if ($('k-res-ervas')) $('k-res-ervas').innerText = res.ervas || 0;
+    if ($('k-res-po_magico')) $('k-res-po_magico').innerText = res.po_magico || 0;
+};
+
 function openKingdom() {
     hide('result-screen');
     hide('route-map-screen');
     hide('game-container');
     show('kingdom-screen');
+    updateKingdomResourcesUI();
 
     // 1. Gera o mapa do Reino se não existir no save
     if (!game.kingdomMap || game.kingdomMap.size === 0) {
@@ -2258,6 +2281,31 @@ function renderBuildingMenu() {
                              <button id="btn-barracks" class="btn-success" style="flex:2; font-size:10px; padding:6px;">Recrutar (-20💰)</button>
                              <button id="btn-barracks-pool" class="btn-primary" style="flex:1; font-size:10px; padding:6px; background:#2980b9;">Ver Tropas</button>
                          </div>`;
+        } else if (bData.id === 'BLACKSMITH') { // O VELHO FERREIRO COM OURO
+            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">`;
+            let fCost = 25;
+            actsHtml += `<button id="btn-forge-gold" class="btn-warning" style="width:100%; font-size:10px; padding:6px;">Forjar Equipamento Aleatório (-25💰)</button>`;
+
+        } else if (bData.id === 'FORGE') { // A NOVA FORJA DE MONSTROS (CRAFT ESTRATÉGICO)
+            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
+                <div style="font-size:9px; color:var(--gold-dark); text-transform:uppercase; margin:4px 0;">Forja Sinergética</div>
+                <button onclick="craftSpecialItem('BOOTS', {asas: 2, couro: 0})" class="btn-primary" style="margin-bottom:4px;width:100%;font-size:10px;">👢 Botas Aladas (-2 Asas)</button>
+                <button onclick="craftSpecialItem('SWORD', {garras: 2, wood: 1})" class="btn-primary" style="margin-bottom:4px;width:100%;font-size:10px;">🗡️ Espada Feroz (-2 Garras, 1 Madeira)</button>
+                <button onclick="craftSpecialItem('SHIELD', {ferro: 2})" class="btn-primary" style="margin-bottom:4px;width:100%;font-size:10px;">🛡️ Escudo Pesado (-2 Ferro)</button>
+                <button onclick="craftSpecialItem('WINGS_ICARUS', {asas: 3, po_magico: 1})" class="btn-primary" style="margin-bottom:4px;width:100%;font-size:10px;">🪽 Asas de Ícaro (-3 Asas, 1 Pó)</button>
+            `;
+        } else if (bData.id === 'APOTHECARY') { // A BOTICA DE ITENS DE CAMPO
+            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
+                <div style="font-size:9px; color:#2ecc71; text-transform:uppercase; margin:4px 0;">Alquimia (Itens de Mochila)</div>
+                <button onclick="craftFieldItem('potion', {ervas: 2})" class="btn-success" style="margin-bottom:4px;width:100%;font-size:10px;">🧪 Poção de Cura (-2 Ervas)</button>
+                <button onclick="craftFieldItem('bandage', {ervas: 1})" class="btn-success" style="margin-bottom:4px;width:100%;font-size:10px;">🩹 Atadura (-1 Erva)</button>
+                <button onclick="craftFieldItem('sphere', {po_magico: 2})" class="btn-info" style="margin-bottom:4px;width:100%;font-size:10px; background:#8e44ad;">🔮 Esfera Elemental (-2 Pó Mágico)</button>
+                <button onclick="craftFieldItem('isca', {garras: 1})" class="btn-warning" style="margin-bottom:4px;width:100%;font-size:10px;">🍖 Isca de Carne (-1 Garra)</button>
+            `;
+        } else if (bData.id === 'BIOTERIUM') { // O INCRÍVEL BIOTÉRIO
+            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
+                <button id="btn-bioterium" class="btn-success" style="width:100%; font-size:10px; padding:6px; background:#27ae60;">🐾 Alocar fera da Box para Descansar</button>
+            `;
         }
 
         html += actsHtml;
@@ -2294,6 +2342,66 @@ function renderBuildingMenu() {
                     }
                 };
             }
+        }
+        if ($('btn-forge-gold')) {
+            $('btn-forge-gold').onclick = async () => {
+                if (game.gold >= 25) {
+                    let gearPool = ['RUSTY_SWORD', 'WOODEN_SHIELD', 'SWORD', 'SHIELD', 'BOOTS', 'BOW'];
+                    let forgedId = gearPool[Math.floor(Math.random() * gearPool.length)];
+                    game.inventory.push({ id: forgedId, level: 1 });
+                    game.gold -= 25;
+                    updateKingdomResourcesUI();
+                    kRenderer.animateHex(hex, "upgrade");
+                    window.showKingdomPopup("Arma Comum Forjada!", hex, '#f1c40f');
+                    autoSave(); renderBuildingMenu();
+                } else { alert("Ouro insuficiente!"); }
+            };
+        }
+
+        // Funções de Craft global
+        window.craftSpecialItem = function (itemId, costObj) {
+            for (let [res, amt] of Object.entries(costObj)) {
+                if ((game.resources[res] || 0) < amt) { alert(`Falta ${res.toUpperCase()}! Você precisa de ${amt}.`); return; }
+            }
+            for (let [res, amt] of Object.entries(costObj)) { game.resources[res] -= amt; }
+            game.inventory.push({ id: itemId, level: 1 });
+            window.showKingdomPopup("Item Forjado!", kRenderer.selectedHex, '#f1c40f');
+            updateKingdomResourcesUI(); autoSave();
+        };
+
+        window.craftFieldItem = function (itemId, costObj) {
+            for (let [res, amt] of Object.entries(costObj)) {
+                if ((game.resources[res] || 0) < amt) { alert(`Falta ${res.toUpperCase()}! Você precisa de ${amt}.`); return; }
+            }
+            for (let [res, amt] of Object.entries(costObj)) { game.resources[res] -= amt; }
+            if (!game.fieldItems) game.fieldItems = {};
+            game.fieldItems[itemId] = (game.fieldItems[itemId] || 0) + 1;
+            window.showKingdomPopup("Medicina Criada!", kRenderer.selectedHex, '#2ecc71');
+            updateKingdomResourcesUI(); autoSave();
+        };
+
+        // A MÁGICA DO BIOTÉRIO (Descanso e Mutação Genética Baseada no Terreno!)
+        if ($('btn-bioterium')) {
+            $('btn-bioterium').onclick = async () => {
+                let m = rosterMemory; // Puxa as feras que estão na Box
+                if (m.length === 0) { alert("Sua Box está vazia! Nenhuma fera para alocar."); return; }
+                let u = await window.promptSelectUnit("Selecione a fera para o Biotério", m);
+                if (u) {
+                    u.hp = u.maxHp; // Cura Máxima
+
+                    // Adquire a passiva de Terreno Baseado no Chão da Construção
+                    let tId = hex.terrain.id || hex.terrain;
+                    if (!u.fav) u.fav = [];
+                    if (!u.fav.includes(tId)) {
+                        u.fav.push(tId);
+                    }
+
+                    window.showKingdomPopup(`🐾 Adaptou-se a ${tId}!`, hex, '#2ecc71');
+                    kRenderer.animateHex(hex, "build");
+                    if (typeof showZeldaPopup === 'function') await showZeldaPopup(u.emoji, "Mutação Genética!", `${u.name} descansou e agora possui afinidade com: ${tId}`);
+                    autoSave();
+                }
+            };
         }
 
         if ($('btn-forge')) {
@@ -2894,7 +3002,7 @@ $('btn-editor-export').onclick = () => {
     let blob = new Blob([fileContent], { type: 'text/javascript' });
     let link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `${name}.js`; 
+    link.download = `${name}.js`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
