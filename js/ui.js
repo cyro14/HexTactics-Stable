@@ -1083,18 +1083,18 @@ function renderManagement(mode = 'prep') {
 
 function openManagement() {
     hide('shop-screen');
-    show('management-screen'); 
-    hide('btn-close-team'); 
+    show('management-screen');
+    hide('btn-close-team');
     show('btn-start-stage');
-    
+
     // CORREÇÃO: Declaramos a variável 'btn' antes de tentar mudar o texto dela!
     const btn = $('btn-start-stage');
     if (btn) {
         btn.innerText = "Avançar Combate →";
         btn.onclick = () => { advanceCampaign(); };
     }
-    
-    renderManagement('prep'); 
+
+    renderManagement('prep');
 }
 
 function openTeamView() {
@@ -1769,13 +1769,13 @@ function advanceCampaign() {
     }
 
     game.spellCooldowns = {};
-    
+
     // BLINDAGEM MÁXIMA DE TELAS: Esconde todas as interfaces falsas
     hide('management-screen');
     hide('route-map-screen');
     hide('event-screen');
-    hide('continent-map-screen'); 
-    hide('kingdom-screen');       
+    hide('continent-map-screen');
+    hide('kingdom-screen');
     show('game-container'); // Revela a arena!
 
     setTimeout(() => {
@@ -3004,7 +3004,7 @@ window.loadMapToEditor = function (mapData, mapName) {
 $('btn-editor-export').onclick = () => {
     let name = $('editor-map-name').value.trim();
     if (!name) {
-        alert("Digite o nome do mapa (ex: ATO1_NO0) no campo 'Arquivo' antes de exportar!");
+        alert("Digite o nome do mapa (ex: WEST_NO0 ou NORTH_NO2) no campo 'Arquivo' antes de exportar!");
         return;
     }
 
@@ -3230,10 +3230,10 @@ window.openContinentMap = function () {
                     btnStart.onclick = () => {
                         game.currentRegionId = reg.id;
                         game.currentLevel = game.conqueredRegions.length + 1;
-                        
+
                         if (!game.eventFlags) game.eventFlags = {};
                         if (reg.biome === 'SNOW') game.eventFlags.forceSnow = true;
-                        
+
                         hide('continent-map-screen'); // <-- NOVA LINHA PARA FECHAR O MAPA
                         generateRouteMap();
                         renderRouteMap();
