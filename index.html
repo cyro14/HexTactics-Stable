@@ -400,6 +400,34 @@
             Menu</button>
     </div>
 
+    <div id="continent-map-screen" class="layer screen hidden" style="background: rgba(5,7,12,0.98); z-index: 150;">
+        <h1 class="screen-title" style="font-size: 2.2rem; margin-top:15px; text-shadow: 0 0 15px var(--gold);">Hexis: O Tabuleiro Estilhaçado</h1>
+        <p class="screen-subtitle" style="margin-bottom: 15px; color:#aaa;">Expanda sua ideologia e purifique os setores</p>
+
+        <!-- Container Visual do Macro Mapa -->
+        <div id="macro-map-container" style="position:relative; width:95%; max-width:500px; height:320px; background:radial-gradient(circle, #1a1a2e 0%, #050508 100%); border:2px solid var(--gold-dark); border-radius:8px; margin:0 auto; overflow:hidden; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
+            <!-- O JS vai injetar os Pinos do mapa aqui -->
+        </div>
+
+        <!-- Painel de Inteligência -->
+        <div id="macro-info-panel" style="width:95%; max-width:500px; margin: 15px auto; background:rgba(20,20,30,0.95); border:1px solid var(--gold); padding:15px; border-radius:8px; text-align:left; opacity:0; transition: opacity 0.3s; pointer-events:none;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid #444; padding-bottom:8px; margin-bottom:10px;">
+                <h3 id="macro-region-name" style="color:var(--gold); margin:0; font-family:'Cinzel',serif; font-size:18px;">SELECIONE UM SETOR</h3>
+                <span id="macro-region-icon" style="font-size:24px;">🌍</span>
+            </div>
+            
+            <div style="font-size:12px; color:#ccc; line-height:1.8;">
+                <div><strong style="color:#fff;">INFLUÊNCIA:</strong> <span id="macro-region-status" style="color:#aaa;">Desconhecida</span></div>
+                <div><strong style="color:#fff;">BIOMA PREDOMINANTE:</strong> <span id="macro-region-biome">---</span></div>
+                <div id="macro-region-threat" style="margin-top:8px; padding:6px; background:rgba(231,76,60,0.1); border-left:3px solid var(--enemy-color); color:var(--gold-light);">
+                    Ameaça Rival: Detectando presença hostil na área...
+                </div>
+            </div>
+            
+            <button id="btn-start-incursion" class="btn-success" style="width:100%; margin-top:15px; padding:12px; font-weight:bold; font-size:14px; letter-spacing:1px; box-shadow:0 0 15px rgba(46,204,113,0.3);">INICIAR INCURSÃO</button>
+        </div>
+    </div>
+    
     <div id="route-map-screen" class="layer screen hidden"
         style="justify-content: flex-start; padding-top: 20px; background: rgba(5,7,12,0.98);">
         <h1 class="screen-title" style="font-size: 2.2rem;">Mapa de Exploração</h1>

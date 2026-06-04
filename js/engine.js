@@ -170,6 +170,8 @@ class Game {
         this.spellCooldowns = {}; this.activeSpell = null; this.lastDeadAlly = null; this.turnCount = 0;
         this.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
         this.kingdomMap = new Map();
+        this.conqueredRegions = []; 
+        this.currentRegionId = null; 
     }
 
     generateKingdomMap() {

@@ -40,6 +40,147 @@ document.addEventListener("DOMContentLoaded", () => {
         menuContainer.appendChild(updateBtn);
     }
 
+    // DADOS FUNDACIONAIS DO TABULEIRO DE HEXIS COM 9 NÓS
+window.CONTINENT_REGIONS = {
+    'WEST': { id: 'WEST', name: 'Floresta Ancestral', icon: '🌲', biome: 'FOREST', x: 15, y: 50, adj: ['NW', 'SW', 'CENTER'] },
+    'NORTH': { id: 'NORTH', name: 'Picos Gélidos', icon: '🏔️', biome: 'SNOW', x: 50, y: 15, adj: ['NW', 'NE', 'CENTER'] },
+    'EAST': { id: 'EAST', name: 'Ermos Desolados', icon: '🏜️', biome: 'DESERT', x: 85, y: 50, adj: ['NE', 'SE', 'CENTER'] },
+    'SOUTH': { id: 'SOUTH', name: 'Pântano Tóxico', icon: '☠️', biome: 'WATER', x: 50, y: 85, adj: ['SW', 'SE', 'CENTER'] },
+    'NW': { id: 'NW', name: 'Cordilheira Primal', icon: '⛰️', biome: 'MOUNTAIN', x: 32.5, y: 32.5, adj: ['WEST', 'NORTH'] },
+    'NE': { id: 'NE', name: 'Rota da Tempestade', icon: '⚡', biome: 'PLAINS', x: 67.5, y: 32.5, adj: ['NORTH', 'EAST'] },
+    'SE': { id: 'SE', name: 'Fenda Vulcânica', icon: '🔥', biome: 'ASHES', x: 67.5, y: 67.5, adj: ['EAST', 'SOUTH'] },
+    'SW': { id: 'SW', name: 'Costa Abissal', icon: '🌊', biome: 'WATER', x: 32.5, y: 67.5, adj: ['SOUTH', 'WEST'] },
+    'CENTER': { id: 'CENTER', name: 'Fenda do Ômega', icon: '🌀', biome: 'ASHES', x: 50, y: 50, adj: ['WEST', 'NORTH', 'EAST', 'SOUTH'] }
+};
+
+window.openContinentMap = function() {
+    hide('mode-screen');
+    hide('result-screen');
+    hide('game-container');
+    hide('route-map-screen');
+    hide('kingdom-screen');
+    show('continent-map-screen');
+
+    const container = $('macro-map-container');
+    container.innerHTML = '';
+    
+    $('macro-info-panel').style.opacity = '0';
+    $('macro-info-panel').style.pointerEvents = 'none';
+
+    if (!game.conqueredRegions) game.conqueredRegions = [];
+    
+    // A MÁGICA DA LORE: O Líder sempre começa no nó base de sua Facção!
+    let facId = game.leaderData.loreFaction || 'SILVESTRE';
+    let startNode = typeof LORE_FACTIONS !== 'undefined' && LORE_FACTIONS[facId] ? LORE_FACTIONS[facId].startNode : 'WEST';
+
+    // Desenha as linhas conectando os nós de acordo com a adjacência lógica
+    let svg = `<svg style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;">`;
+    let drawn = new Set();
+    Object.values(CONTINENT_REGIONS).forEach(r1 => {
+        r1.adj.forEach(adjId => {
+            let r2 = CONTINENT_REGIONS[adjId];
+            if (r2) {
+                let key = [r1.id, r2.id].sort().join('-');
+                if (!drawn.has(key)) {
+                    drawn.add(key);
+                    svg += `<line x1="${r1.x}%" y1="${r1.y}%" x2="${r2.x}%" y2="${r2.y}%" stroke="#444" stroke-width="2" stroke-dasharray="5,5"/>`;
+                }
+            }
+        });
+    });
+    svg += `</svg>`;
+    container.innerHTML += svg;
+
+    Object.values(CONTINENT_REGIONS).forEach(reg => {
+        let isConquered = game.conqueredRegions.includes(reg.id);
+        
+        // Regra de Adjacência: Só libera o nó se for vizinho direto de uma área já conquistada
+        let isReachable = false;
+        if (game.conqueredRegions.length === 0) {
+            // Se for o início do jogo, apenas a base do líder libera!
+            if (reg.id === startNode) isReachable = true; 
+        } else {
+            isReachable = reg.adj.some(adjId => game.conqueredRegions.includes(adjId));
+        }
+
+        // O Centro só libera após limpar pelo menos 5 regiões externas
+        let isLocked = false;
+        if (reg.id === 'CENTER') {
+            isLocked = game.conqueredRegions.length < 5; 
+        }
+
+        let canAttack = isReachable && !isConquered && !isLocked;
+
+        let pin = document.createElement('div');
+        let pinColor = isConquered ? 'var(--player-color)' : (canAttack ? 'var(--enemy-color)' : '#555');
+        
+        // Estilização diferenciada para nós intermediários (Diagonais menores)
+        let isInter = ['NW', 'NE', 'SE', 'SW'].includes(reg.id);
+        let sSize = isInter ? '35px' : '50px';
+        let fSize = isInter ? '16px' : '24px';
+        let anim = canAttack ? 'pulse 2s infinite' : 'none';
+        
+        pin.style.cssText = `position:absolute; top:${reg.y}%; left:${reg.x}%; transform:translate(-50%, -50%); 
+                             background:rgba(10,10,15,0.9); border:2px solid ${pinColor}; border-radius:50%; 
+                             width:${sSize}; height:${sSize}; display:flex; justify-content:center; align-items:center; 
+                             font-size:${fSize}; cursor:${!canAttack && !isConquered ? 'not-allowed' : 'pointer'}; box-shadow:0 0 15px ${pinColor}80;
+                             animation:${anim}; transition:transform 0.2s;`;
+                             
+        pin.innerHTML = reg.icon;
+        
+        if (canAttack || isConquered) {
+            pin.onmouseover = () => pin.style.transform = 'translate(-50%, -50%) scale(1.15)';
+            pin.onmouseout = () => pin.style.transform = 'translate(-50%, -50%) scale(1)';
+            
+            pin.onclick = () => {
+                $('macro-region-name').innerText = reg.name;
+                $('macro-region-icon').innerText = reg.icon;
+                $('macro-region-biome').innerText = reg.biome === 'FOREST' ? 'Florestas densas e antigas' : 
+                                                    reg.biome === 'SNOW' ? 'Montanhas gélidas' : 
+                                                    reg.biome === 'WATER' ? 'Pântanos e lagos perigosos' :
+                                                    reg.biome === 'MOUNTAIN' ? 'Penhascos e pedreiras' :
+                                                    reg.biome === 'PLAINS' ? 'Planícies varridas por ventos' :
+                                                    reg.biome === 'ASHES' ? 'Cinzas e magia instável' : 'Desertos e terras áridas';
+                
+                let btnStart = $('btn-start-incursion');
+                if (isConquered) {
+                    $('macro-region-status').innerText = '✅ Purificado (Seu Território)';
+                    $('macro-region-status').style.color = 'var(--player-color)';
+                    $('macro-region-threat').innerHTML = 'Ameaça Rival: <span style="color:#aaa">Nenhuma. Região segura.</span>';
+                    btnStart.innerText = 'ÁREA PURIFICADA';
+                    btnStart.className = 'btn-primary';
+                    btnStart.disabled = true;
+                } else {
+                    $('macro-region-status').innerText = '⚠️ Dominado pelo Rival';
+                    $('macro-region-status').style.color = 'var(--enemy-color)';
+                    let bossHint = reg.id === 'CENTER' ? 'Ameaça Suprema: O Leviatã Umbral aguarda.' : 'Ameaça Rival: Forças inimigas controlam este setor.';
+                    $('macro-region-threat').innerHTML = bossHint;
+                    
+                    btnStart.innerText = game.conqueredRegions.length === 0 ? 'RETOMAR CAPITAL' : 'INICIAR INCURSÃO';
+                    btnStart.className = 'btn-success';
+                    btnStart.disabled = false;
+                    
+                    btnStart.onclick = () => {
+                        game.currentRegionId = reg.id;
+                        game.currentLevel = game.conqueredRegions.length + 1;
+                        
+                        if (!game.eventFlags) game.eventFlags = {};
+                        if (reg.biome === 'SNOW') game.eventFlags.forceSnow = true;
+                        
+                        generateRouteMap();
+                        renderRouteMap();
+                    };
+                }
+                
+                $('macro-info-panel').style.opacity = '1';
+                $('macro-info-panel').style.pointerEvents = 'auto';
+            };
+        }
+        
+        container.appendChild(pin);
+    });
+};
+
     // ==========================================
     // SISTEMA AVANÇADO DE ELEMENTOS E FURTIVIDADE
     // ==========================================

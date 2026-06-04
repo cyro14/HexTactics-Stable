@@ -88,6 +88,8 @@ function autoSave() {
             hasKey: game.hasKey, hasEgg: game.hasEgg,
             leaderId: game.leaderData.id,
             opponentId: game.opponentId || null,
+            conqueredRegions: game.conqueredRegions || [],
+            currentRegionId: game.currentRegionId || null,
             map: Array.from(game.map.values()).map(h => ({ q: h.q, r: h.r, tId: h.terrain.id, owner: h.owner, hasLure: h.hasLure })),
             items: Array.from(game.items.entries()),
             units: game.units.map(u => ({ ...u })),
@@ -1079,7 +1081,21 @@ function renderManagement(mode = 'prep') {
     });
 }
 
-function openManagement() { hide('shop-screen'); show('management-screen'); hide('btn-close-team'); show('btn-start-stage'); renderManagement('prep'); }
+function openManagement() {
+    hide('shop-screen');
+    show('management-screen'); 
+    hide('btn-close-team'); 
+    show('btn-start-stage');
+    
+    // CORREÇÃO: Declaramos a variável 'btn' antes de tentar mudar o texto dela!
+    const btn = $('btn-start-stage');
+    if (btn) {
+        btn.innerText = "Avançar Combate →";
+        btn.onclick = () => { advanceCampaign(); };
+    }
+    
+    renderManagement('prep'); 
+}
 
 function openTeamView() {
     if (game && !game.gameOver) {
@@ -1694,20 +1710,25 @@ function triggerStageEnd(win) {
         btn = novoBtn;
 
         if (game.isBossStage) {
-            if (game.currentLevel < 5) {
-                $('rs-desc').innerText = `O Chefe caiu! Prepare-se para o Ato ${game.currentLevel + 1}.`;
-                btn.innerText = "Retornar ao Reino 🏰";
+            // MARCA A REGIÃO COMO DOMINADA!
+            if (game.currentRegionId && !game.conqueredRegions.includes(game.currentRegionId)) {
+                game.conqueredRegions.push(game.currentRegionId);
+            }
+
+            if (game.currentRegionId !== 'CENTER') {
+                $('rs-desc').innerText = `O Líder rival caiu e o setor foi purificado!\nVocê conquistou recursos abundantes.`;
+                btn.innerText = "Retornar ao Tabuleiro Hexis 🌍";
                 btn.onclick = () => {
-                    game.currentLevel++;
                     game.currentFloor = -1;
                     game.isBossStage = false;
-                    generateRouteMap();
+                    game.currentRegionId = null;
                     autoSave();
-                    openKingdom();
+                    // Volta para escolher o próximo território!
+                    openContinentMap();
                 };
             } else {
-                $('rs-desc').innerText = `PARABÉNS! Você venceu a Exploração Final!\nO "Coração do Infinito" foi desbloqueado no modo Roguelite.`;
-                btn.innerText = "🏆 Finalizar Exploração";
+                $('rs-desc').innerText = `PARABÉNS! Você derrotou o Leviatã Umbral e restaurou o Coração do Infinito!\nO Tabuleiro de Hexis foi unificado.`;
+                btn.innerText = "🏆 Finalizar Jornada";
 
                 let rogs = JSON.parse(localStorage.getItem('ht_artifacts_rogue') || '[]');
                 if (!rogs.includes('art_omega')) {
@@ -1722,8 +1743,8 @@ function triggerStageEnd(win) {
                 };
             }
         } else {
-            $('rs-desc').innerText = `Avançando...`;
-            btn.innerText = "Retornar ao Reino 🏰";
+            $('rs-desc').innerText = `Avançando pelas linhas inimigas...`;
+            btn.innerText = "Retornar ao Acampamento 🏰";
             btn.onclick = () => { openKingdom(); };
         }
     } else {
@@ -1748,10 +1769,14 @@ function advanceCampaign() {
     }
 
     game.spellCooldowns = {};
+    
+    // BLINDAGEM MÁXIMA DE TELAS: Esconde todas as interfaces falsas
     hide('management-screen');
     hide('route-map-screen');
     hide('event-screen');
-    show('game-container');
+    hide('continent-map-screen'); 
+    hide('kingdom-screen');       
+    show('game-container'); // Revela a arena!
 
     setTimeout(() => {
         const r = deployedRoster.map(m => new Unit({ ...m, q: 0, r: 0, hasAttacked: false, status: null, isNew: false }));
@@ -1761,7 +1786,6 @@ function advanceCampaign() {
         autoSave();
     }, 50);
 }
-
 
 function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, opponentId = null) {
     game.isDuel = isDuel;
@@ -1784,6 +1808,8 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
         game.currentLevel = d.level; game.cols = d.cols; game.rows = d.rows; game.gold = d.gold || 0;
         game.dna = d.dna || 0;
         game.isRoguelite = d.isRoguelite || false;
+        game.conqueredRegions = d.conqueredRegions || [];
+        game.currentRegionId = d.currentRegionId || null;
         game.routeMap = d.routeMap; game.currentFloor = d.currentFloor; game.inventory = d.inventory || [];
         game.isBossStage = d.isBossStage || false; game.currentRouteType = d.currentRouteType || 'BATTLE';
         game.manaPool = d.manaPool || {};
@@ -1806,7 +1832,8 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
     } else {
         if (localStorage.getItem(sk)) localStorage.removeItem(sk);
         game.currentLevel = 1; game.gold = 0; game.dna = 0; game.isRoguelite = isRoguelite; rosterMemory = []; deployedRoster = []; game.inventory = [];
-
+        game.conqueredRegions = [];
+        game.currentRegionId = null;
         // SE FOR DUELO, COMEÇA COM 50 DE OURO
         game.gold = isDuel ? 50 : 0;
 
@@ -1918,7 +1945,7 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
                 });
             };
         } else {
-            renderRouteMap();
+            openContinentMap();
         }
     }
 
@@ -3086,3 +3113,138 @@ window.addEventListener('keydown', (e) => {
         }
     }
 });
+
+window.openContinentMap = function () {
+    hide('mode-screen');
+    hide('result-screen');
+    hide('game-container');
+    hide('route-map-screen');
+    hide('kingdom-screen');
+    show('continent-map-screen');
+
+    const container = $('macro-map-container');
+    container.innerHTML = '';
+
+    $('macro-info-panel').style.opacity = '0';
+    $('macro-info-panel').style.pointerEvents = 'none';
+
+    if (!game.conqueredRegions) game.conqueredRegions = [];
+
+    // =========================================================
+    // BLINDAGEM DA LORE (Sem variáveis duplicadas!)
+    // =========================================================
+    if (!game.leaderData) {
+        game.leaderData = typeof LEADERS !== 'undefined' ? LEADERS[0] : {};
+    }
+    let facId = game.leaderData.loreFaction || 'SILVESTRE';
+    let startNode = typeof LORE_FACTIONS !== 'undefined' && LORE_FACTIONS[facId] ? LORE_FACTIONS[facId].startNode : 'WEST';
+    // =========================================================
+
+    // Linhas de Conexão (Desenhadas dinamicamente pelas adjacências)
+    let svg = `<svg style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;">`;
+    let drawn = new Set();
+    Object.values(CONTINENT_REGIONS).forEach(r1 => {
+        r1.adj.forEach(adjId => {
+            let r2 = CONTINENT_REGIONS[adjId];
+            if (r2) {
+                let key = [r1.id, r2.id].sort().join('-');
+                if (!drawn.has(key)) {
+                    drawn.add(key);
+                    svg += `<line x1="${r1.x}%" y1="${r1.y}%" x2="${r2.x}%" y2="${r2.y}%" stroke="#444" stroke-width="2" stroke-dasharray="5,5"/>`;
+                }
+            }
+        });
+    });
+    svg += `</svg>`;
+    container.innerHTML += svg;
+
+    Object.values(CONTINENT_REGIONS).forEach(reg => {
+        let isConquered = game.conqueredRegions.includes(reg.id);
+
+        // A MÁGICA DOS NÓS: Você só ataca se estiver ao lado de onde você já conquistou!
+        let isReachable = false;
+        if (game.conqueredRegions.length === 0) {
+            // Se for o início do jogo, APENAS a base principal do líder está clicável
+            if (reg.id === startNode) isReachable = true;
+        } else {
+            isReachable = reg.adj.some(adjId => game.conqueredRegions.includes(adjId));
+        }
+
+        let isLocked = false;
+        if (reg.id === 'CENTER') {
+            isLocked = game.conqueredRegions.length < 4; // Exige 4 domínios para liberar o Ômega
+        }
+
+        let canAttack = isReachable && !isConquered && !isLocked;
+
+        let pin = document.createElement('div');
+        let pinColor = isConquered ? 'var(--player-color)' : (canAttack ? 'var(--enemy-color)' : '#555');
+
+        // Estilização: Se for um nó intermediário (NW, NE...), desenha menorzinho
+        let isInter = ['NW', 'NE', 'SE', 'SW'].includes(reg.id);
+        let sSize = isInter ? '35px' : '50px';
+        let fSize = isInter ? '16px' : '24px';
+        let anim = canAttack ? 'pulse 2s infinite' : 'none';
+
+        pin.style.cssText = `position:absolute; top:${reg.y}%; left:${reg.x}%; transform:translate(-50%, -50%); 
+                             background:rgba(10,10,15,0.9); border:2px solid ${pinColor}; border-radius:50%; 
+                             width:${sSize}; height:${sSize}; display:flex; justify-content:center; align-items:center; 
+                             font-size:${fSize}; cursor:${!canAttack && !isConquered ? 'not-allowed' : 'pointer'}; box-shadow:0 0 15px ${pinColor}80;
+                             animation:${anim}; transition:transform 0.2s;`;
+
+        pin.innerHTML = reg.icon;
+
+        if (canAttack || isConquered) {
+            pin.onmouseover = () => pin.style.transform = 'translate(-50%, -50%) scale(1.15)';
+            pin.onmouseout = () => pin.style.transform = 'translate(-50%, -50%) scale(1)';
+
+            pin.onclick = () => {
+                $('macro-region-name').innerText = reg.name;
+                $('macro-region-icon').innerText = reg.icon;
+                $('macro-region-biome').innerText = reg.biome === 'FOREST' ? 'Florestas densas e antigas' :
+                    reg.biome === 'SNOW' ? 'Montanhas gélidas' :
+                        reg.biome === 'WATER' ? 'Pântanos e lagos perigosos' :
+                            reg.biome === 'MOUNTAIN' ? 'Penhascos e pedreiras' :
+                                reg.biome === 'PLAINS' ? 'Planícies varridas por ventos' :
+                                    reg.biome === 'ASHES' ? 'Cinzas e magia instável' : 'Desertos e terras áridas';
+
+                let btnStart = $('btn-start-incursion');
+                if (isConquered) {
+                    $('macro-region-status').innerText = '✅ Purificado (Seu Território)';
+                    $('macro-region-status').style.color = 'var(--player-color)';
+                    $('macro-region-threat').innerHTML = 'Ameaça Rival: <span style="color:#aaa">Nenhuma. Região segura.</span>';
+                    btnStart.innerText = 'ÁREA PURIFICADA';
+                    btnStart.className = 'btn-primary';
+                    btnStart.disabled = true;
+                } else {
+                    $('macro-region-status').innerText = '⚠️ Dominado pelo Rival';
+                    $('macro-region-status').style.color = 'var(--enemy-color)';
+                    let bossHint = reg.id === 'CENTER' ? 'Ameaça Suprema: O Leviatã Umbral aguarda.' : 'Ameaça Rival: Forças inimigas controlam este setor.';
+                    $('macro-region-threat').innerHTML = bossHint;
+
+                    // Texto especial para o seu primeiro combate!
+                    btnStart.innerText = game.conqueredRegions.length === 0 ? 'RETOMAR CAPITAL' : 'INICIAR INCURSÃO';
+                    btnStart.className = 'btn-success';
+                    btnStart.disabled = false;
+
+                    btnStart.onclick = () => {
+                        game.currentRegionId = reg.id;
+                        game.currentLevel = game.conqueredRegions.length + 1;
+                        
+                        if (!game.eventFlags) game.eventFlags = {};
+                        if (reg.biome === 'SNOW') game.eventFlags.forceSnow = true;
+                        
+                        hide('continent-map-screen'); // <-- NOVA LINHA PARA FECHAR O MAPA
+                        generateRouteMap();
+                        renderRouteMap();
+                    };
+                }
+
+                $('macro-info-panel').style.opacity = '1';
+                $('macro-info-panel').style.pointerEvents = 'auto';
+            };
+        }
+
+        container.appendChild(pin);
+    });
+};
