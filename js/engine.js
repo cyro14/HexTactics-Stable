@@ -390,21 +390,67 @@ class Game {
         let numW = 4 + act; const vC = wH.sort((a, b) => Math.abs(Hex.distance(a, pS) - Hex.distance(a, aS)) - Math.abs(Hex.distance(b, pS) - Hex.distance(b, aS)));
         if (vC.length > 0 && typeof BEASTS !== 'undefined') { let bDef = BEASTS.BOSSES.find(b => act >= b.minLevel && act <= b.maxLevel) || BEASTS.BOSSES[BEASTS.BOSSES.length - 1]; this.units.push(new Unit({ q: vC[0].q, r: vC[0].r, faction: 0, name: bDef.name, baseName: bDef.name, emoji: bDef.e, hp: Math.floor(bDef.hp * sFac), maxHp: Math.floor(bDef.hp * sFac), mp: bDef.mp, maxMp: bDef.mp, atk: Math.floor(bDef.atk * sFac), range: bDef.range, abilities: [...(bDef.abilities || [])], filter: bDef.filter || 'none', tags: bDef.tags || [], fav: bDef.fav || [], isBoss: true, level: act })); wH = wH.filter(h => h !== vC[0]); }
 
+        // ========================================================
+        // FILTRO DE LORE: FERAS SELVAGENS BASEADAS NA REGIÃO
+        // ========================================================
+        const REGION_TAGS = {
+            'WEST': ['SILVESTRE', 'WING', 'STALKER'],
+            'NORTH': ['ICE', 'CELESTIAL', 'MYSTIC', 'ROCK'],
+            'EAST': ['SAND', 'MYSTIC', 'ELECTRIC', 'FIRE'],
+            'SOUTH': ['UMBRAL', 'VENOM', 'STALKER'],
+            'NW': ['PRIMAL', 'ROCK', 'STALKER'],
+            'NE': ['ELECTRIC', 'WING', 'CARAPACE'],
+            'SE': ['SAND', 'FIRE', 'VENOM'],
+            'SW': ['ABYSSAL', 'ICE', 'VENOM'],
+            'CENTER': ['FIRE', 'UMBRAL', 'CELESTIAL', 'PRIMAL']
+        };
+        
+        let currentRegionTags = REGION_TAGS[this.currentRegionId] || ['PRIMAL', 'SILVESTRE'];
+
         while (numW > 0 && wH.length > 0 && typeof BEASTS !== 'undefined') {
             const hex = wH.splice(Math.floor(Math.random() * wH.length), 1)[0];
-            let pool = BEASTS.LAND.filter(b => !b.minLevel || act >= b.minLevel);
-            if (this.leaderData && this.leaderData.name === 'Almirante') {
-                let waterPool = BEASTS.WATER.filter(b => !b.minLevel || act >= b.minLevel);
-                pool.push(...waterPool, ...waterPool);
+            
+            // Mistura todos os monstros do jogo em uma grande piscina
+            let masterPool = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW];
+            
+            // 1. Filtra as feras pelas TAGS exatas da Região Atual
+            let pool = masterPool.filter(b => {
+                if (b.minLevel && act < b.minLevel) return false; // Nível exigido
+                
+                // A criatura PRECISA ter pelo menos uma das tags nativas daquela região
+                if (!b.tags || !b.tags.some(t => currentRegionTags.includes(t))) return false;
+                
+                // 2. Respeita a lógica de terreno exato (Água só pra quem gosta de água)
+                if (hex.terrain.id === 'WATER' && (!b.fav.includes('WATER') && !b.tags.includes('ABYSSAL'))) return false;
+                if (hex.terrain.id === 'SNOW' && (!b.fav.includes('SNOW') && !b.tags.includes('ICE'))) return false;
+                
+                // Impede que peixes puros (sem ser anfíbios) nasçam na terra
+                if (hex.terrain.id !== 'WATER' && b.tags.includes('ABYSSAL') && !b.fav.includes(hex.terrain.id)) return false;
+                
+                return true;
+            });
+
+            // Fallback (Plano B): Se o filtro for muito rigoroso e não sobrar bicho, pega os normais daquele terreno
+            if (pool.length === 0) {
+                if (hex.terrain.id === 'WATER') pool = BEASTS.WATER.filter(b => !b.minLevel || act >= b.minLevel);
+                else if (hex.terrain.id === 'SNOW') pool = BEASTS.SNOW.filter(b => !b.minLevel || act >= b.minLevel);
+                else pool = BEASTS.LAND.filter(b => !b.minLevel || act >= b.minLevel);
             }
-            if (hex.terrain.id === 'WATER') pool = BEASTS.WATER.filter(b => !b.minLevel || act >= b.minLevel);
-            if (hex.terrain.id === 'SNOW') pool = BEASTS.SNOW.filter(b => !b.minLevel || act >= b.minLevel);
 
             if (pool.length > 0) {
                 const b = pool[Math.floor(Math.random() * pool.length)];
                 let uLvl = this.getUnitLvl(b);
                 let fFac = 1 + (uLvl - 1) * 0.2;
-                this.units.push(new Unit({ q: hex.q, r: hex.r, faction: 0, name: b.name, baseName: b.name, emoji: b.e, hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac), mp: b.mp, maxMp: b.mp, atk: Math.floor(b.atk * fFac), range: b.range, abilities: [...(b.abilities || [])], filter: b.filter || 'none', tags: b.tags || [], fav: b.fav || [], level: uLvl }));
+                
+                this.units.push(new Unit({ 
+                    q: hex.q, r: hex.r, faction: 0, 
+                    name: b.name, baseName: b.name, emoji: b.e, 
+                    hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac), 
+                    mp: b.mp, maxMp: b.mp, 
+                    atk: Math.floor(b.atk * fFac), range: b.range, 
+                    abilities: [...(b.abilities || [])], filter: b.filter || 'none', 
+                    tags: b.tags || [], fav: b.fav || [], level: uLvl 
+                }));
             }
             numW--;
         }
