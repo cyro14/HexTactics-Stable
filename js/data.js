@@ -25,45 +25,50 @@ const getActiveArtifacts = () => { return (game && game.isRoguelite) ? activeArt
 // DADOS DO JOGO: TERRENOS (Mapeamento Imagem IA 4x11)
 // ==========================================
 
+// ==========================================
+// DADOS DO JOGO: TERRENOS (Mapeamento Imagem 6x11)
+// ==========================================
+
 const TERRAINS = {
     // Linha 0: Planície
-    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#5b8c42', icon: '🌿', variations: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }] },
+    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#5b8c42', icon: '🌿', variations: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 }, { x: 5, y: 0 }] },
 
     // Linha 1: Floresta
-    FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#1e4d2b', icon: '🌲', variations: [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 }] },
+    FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#1e4d2b', icon: '🌲', variations: [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 }, { x: 4, y: 1 }, { x: 5, y: 1 }] },
 
     // Linha 2: Montanha
-    MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#5b5b5b', icon: '⛰️', variations: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }, { x: 3, y: 2 }] },
+    MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#5b5b5b', icon: '⛰️', variations: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }, { x: 3, y: 2 }, { x: 4, y: 2 }, { x: 5, y: 2 }] },
 
     // Linha 3: Água (Lago)
-    WATER: { id: 'WATER', name: 'Lago', cost: 2, def: -0.10, color: '#3498db', icon: '💧', variations: [{ x: 0, y: 3 }, { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 3 }] },
+    WATER: { id: 'WATER', name: 'Lago', cost: 2, def: -0.10, color: '#3498db', icon: '💧', variations: [{ x: 0, y: 3 }, { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 3 }, { x: 4, y: 3 }, { x: 5, y: 3 }] },
 
     // Linha 4: Mar (Água Funda)
-    SEA: { id: 'SEA', name: 'Mar', cost: 3, def: -0.20, color: '#2980b9', icon: '🌊', variations: [{ x: 0, y: 4 }, { x: 1, y: 4 }, { x: 2, y: 4 }, { x: 3, y: 4 }] },
+    SEA: { id: 'SEA', name: 'Mar', cost: 3, def: -0.20, color: '#2980b9', icon: '🌊', variations: [{ x: 0, y: 4 }, { x: 1, y: 4 }, { x: 2, y: 4 }, { x: 3, y: 4 }, { x: 4, y: 4 }, { x: 5, y: 4 }] },
 
     // Linha 5: Deserto
-    DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#e6c86e', icon: '🏜️', variations: [{ x: 0, y: 5 }, { x: 1, y: 5 }, { x: 2, y: 5 }, { x: 3, y: 5 }] },
+    DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#e6c86e', icon: '🏜️', variations: [{ x: 0, y: 5 }, { x: 1, y: 5 }, { x: 2, y: 5 }, { x: 3, y: 5 }, { x: 4, y: 5 }, { x: 5, y: 5 }] },
 
     // Linha 6: Neve
-    SNOW: { id: 'SNOW', name: 'Neve', cost: 2, def: -0.15, color: '#cce6f4', icon: '❄️', variations: [{ x: 0, y: 6 }, { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }] },
+    SNOW: { id: 'SNOW', name: 'Neve', cost: 2, def: -0.15, color: '#cce6f4', icon: '❄️', variations: [{ x: 0, y: 6 }, { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 }] },
 
     // Linha 7: Pântano
-    SWAMP: { id: 'SWAMP', name: 'Pântano', cost: 2, def: 0.10, color: '#3b5323', icon: '🐸', variations: [{ x: 0, y: 7 }, { x: 1, y: 7 }, { x: 2, y: 7 }, { x: 3, y: 7 }] },
+    SWAMP: { id: 'SWAMP', name: 'Pântano', cost: 2, def: 0.10, color: '#3b5323', icon: '🐸', variations: [{ x: 0, y: 7 }, { x: 1, y: 7 }, { x: 2, y: 7 }, { x: 3, y: 7 }, { x: 4, y: 7 }, { x: 5, y: 7 }] },
 
     // Linha 8: Vila
-    VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#c49a45', icon: '🏘️', variations: [{ x: 0, y: 8 }, { x: 1, y: 8 }, { x: 2, y: 8 }, { x: 3, y: 8 }] },
+    VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#c49a45', icon: '🏘️', variations: [{ x: 0, y: 8 }, { x: 1, y: 8 }, { x: 2, y: 8 }, { x: 3, y: 8 }, { x: 4, y: 8 }, { x: 5, y: 8 }] },
 
     // Linha 9: Castelo
-    CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#3d444a', icon: '🏰', variations: [{ x: 0, y: 9 }, { x: 1, y: 9 }, { x: 2, y: 9 }, { x: 3, y: 9 }] },
+    CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#3d444a', icon: '🏰', variations: [{ x: 0, y: 9 }, { x: 1, y: 9 }, { x: 2, y: 9 }, { x: 3, y: 9 }, { x: 4, y: 9 }, { x: 5, y: 9 }] },
 
     // Linha 10: Savana
-    SAVANNA: { id: 'SAVANNA', name: 'Savana', cost: 1, def: 0.05, color: '#d4a373', icon: '🦁', variations: [{ x: 0, y: 10 }, { x: 1, y: 10 }, { x: 2, y: 10 }, { x: 3, y: 10 }] },
+    SAVANNA: { id: 'SAVANNA', name: 'Savana', cost: 1, def: 0.05, color: '#d4a373', icon: '🦁', variations: [{ x: 0, y: 10 }, { x: 1, y: 10 }, { x: 2, y: 10 }, { x: 3, y: 10 }, { x: 4, y: 10 }, { x: 5, y: 10 }] },
 
     // Especiais / Mecânicos
     BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas', cost: 2, def: -0.50, color: '#d35400', icon: '🔥' },
     ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada', cost: 2, def: -0.50, color: '#1c4568', icon: '⚡' },
     ASHES: { id: 'ASHES', name: 'Cinzas', cost: 2, def: -0.50, color: '#444444', icon: '💨' }
 };
+
 const TAGS = {
     FIRE: { name: 'Ígneo', col: '#e67e22', req: 3, desc: '(3) Causa 20% de dano em área.' },
     SILVESTRE: { name: 'Silvestre', col: '#27ae60', req: 3, desc: '(3) Cura +5 HP e 15% chance de Atordoar.' },
@@ -479,12 +484,14 @@ const BEASTS = {
         { e: '🐧', name: 'Pinguim', hp: 30, atk: 8, mp: 4, range: 1, abilities: [], minLevel: 1, filter: 'none', tags: ['ABYSSAL', 'ICE'], fav: ['WATER', 'SNOW'] }],
 
     BOSSES: [
-        { e: '🦁', name: 'Rei Leão', hp: 80, atk: 18, mp: 4, range: 1, abilities: ['leadership'], minLevel: 1, maxLevel: 1, filter: 'none', tags: ['CELESTIAL', 'SAND'], fav: ['DESERT'] },
-        { e: '🦍', name: 'Gorila Rei', hp: 120, atk: 22, mp: 3, range: 1, abilities: ['stun'], minLevel: 2, maxLevel: 2, filter: 'none', tags: ['PRIMAL', 'SILVESTRE'], fav: ['FOREST'] },
-        { e: '🦣', name: 'Mamute Obelisco', hp: 180, atk: 30, mp: 2, range: 1, abilities: [], minLevel: 3, maxLevel: 3, filter: 'none', tags: ['PRIMAL', 'ICE'], fav: ['SNOW'] },
-        { e: '🦅', name: 'Quimera', hp: 140, atk: 25, mp: 5, range: 2, abilities: ['burn'], minLevel: 4, maxLevel: 5, filter: 'hue-rotate(45deg) saturate(200%)', tags: ['WING', 'FIRE'], fav: ['PLAINS'] },
-        { e: '👹', name: 'Titã de Gelo', hp: 200, atk: 28, mp: 2, range: 1, abilities: ['freeze'], minLevel: 6, maxLevel: 99, filter: 'hue-rotate(180deg) brightness(120%)', tags: ['PRIMAL', 'ICE'], fav: ['SNOW'] }]
-};
+        { e: '🦁', sprite: 'img/boss/rei_leao.png', name: 'Rei Leão', hp: 120, atk: 20, mp: 4, range: 1, abilities: ['leadership'], minLevel: 1, maxLevel: 2, filter: 'none', tags: ['PRIMAL', 'SAND'], fav: ['DESERT', 'SAVANNA'] },
+        { e: '🔥', sprite: 'img/boss/fornalha.png', name: 'Fornalha', hp: 150, atk: 25, mp: 3, range: 2, abilities: ['burn', 'carapace'], minLevel: 2, maxLevel: 3, filter: 'none', tags: ['FIRE', 'ROCK'], fav: ['MOUNTAIN', 'ASHES'] },
+        { e: '🌳', sprite: 'img/boss/arvore_umbralina.png', name: 'Árvore Umbralina', hp: 180, atk: 18, mp: 2, range: 1, abilities: ['poison', 'lifesteal'], minLevel: 2, maxLevel: 3, filter: 'none', tags: ['SILVESTRE', 'UMBRAL'], fav: ['FOREST', 'SWAMP'] },
+        { e: '🪲', sprite: 'img/boss/centopeia-metalica.png', name: 'Centopeia Metálica', hp: 160, atk: 28, mp: 5, range: 1, abilities: ['electric', 'pierce'], minLevel: 3, maxLevel: 4, filter: 'none', tags: ['CARAPACE', 'ELECTRIC'], fav: ['DESERT', 'PLAINS'] },
+        { e: '🦣', sprite: 'img/boss/mamute.png', name: 'Mamute Ancestral', hp: 220, atk: 30, mp: 3, range: 1, abilities: ['stun'], minLevel: 3, maxLevel: 4, filter: 'none', tags: ['PRIMAL', 'ICE'], fav: ['SNOW'] },
+        { e: '👼', sprite: 'img/boss/arcanjo_caido.png', name: 'Arcanjo Caído', hp: 200, atk: 35, mp: 5, range: 2, abilities: ['flying', 'lifesteal'], minLevel: 4, maxLevel: 4, filter: 'none', tags: ['CELESTIAL', 'UMBRAL'], fav: ['PLAINS'] },
+        { e: '🐉', sprite: 'img/boss/leviata.png', name: 'Leviatã Umbral', hp: 400, atk: 40, mp: 4, range: 3, abilities: ['dive', 'corte_amplo', 'crystal_skin'], minLevel: 5, maxLevel: 99, filter: 'none', tags: ['ABYSSAL', 'UMBRAL', 'MYSTIC'], fav: ['WATER', 'ASHES'] }
+    ]};
 const ALL_BEASTS = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW, ...BEASTS.BOSSES];
 
 const ARTIFACTS = [

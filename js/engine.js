@@ -387,9 +387,32 @@ class Game {
         if (Math.random() > 0.4 && wH.length > 2) { let idx1 = Math.floor(Math.random() * wH.length); this.items.set(wH.splice(idx1, 1)[0].getKey(), 'CHEST'); let idx2 = Math.floor(Math.random() * wH.length); this.items.set(wH.splice(idx2, 1)[0].getKey(), 'KEY'); }
         for (let i = 0; i < numI; i++) { if (wH.length > 0) { let idx = Math.floor(Math.random() * wH.length); this.items.set(wH.splice(idx, 1)[0].getKey(), itP[Math.floor(Math.random() * itP.length)]); } }
 
-        let numW = 4 + act; const vC = wH.sort((a, b) => Math.abs(Hex.distance(a, pS) - Hex.distance(a, aS)) - Math.abs(Hex.distance(b, pS) - Hex.distance(b, aS)));
-        if (vC.length > 0 && typeof BEASTS !== 'undefined') { let bDef = BEASTS.BOSSES.find(b => act >= b.minLevel && act <= b.maxLevel) || BEASTS.BOSSES[BEASTS.BOSSES.length - 1]; this.units.push(new Unit({ q: vC[0].q, r: vC[0].r, faction: 0, name: bDef.name, baseName: bDef.name, emoji: bDef.e, hp: Math.floor(bDef.hp * sFac), maxHp: Math.floor(bDef.hp * sFac), mp: bDef.mp, maxMp: bDef.mp, atk: Math.floor(bDef.atk * sFac), range: bDef.range, abilities: [...(bDef.abilities || [])], filter: bDef.filter || 'none', tags: bDef.tags || [], fav: bDef.fav || [], isBoss: true, level: act })); wH = wH.filter(h => h !== vC[0]); }
+        let numW = 4 + act; 
+        const vC = wH.sort((a, b) => Math.abs(Hex.distance(a, pS) - Hex.distance(a, aS)) - Math.abs(Hex.distance(b, pS) - Hex.distance(b, aS)));
+        
+        if (vC.length > 0 && typeof BEASTS !== 'undefined') { 
+            // Filtra os Bosses aptos para este Ato
+            let validBosses = BEASTS.BOSSES.filter(b => act >= b.minLevel && act <= b.maxLevel);
+            // Sorteia um Boss entre as opções válidas
+            let bDef = validBosses.length > 0 ? validBosses[Math.floor(Math.random() * validBosses.length)] : BEASTS.BOSSES[BEASTS.BOSSES.length - 1];
+            
+            // GARANTIA MÁXIMA: Se for a região do Ômega (Ato 5+), força a vinda do Leviatã
+            if (this.currentRegionId === 'CENTER' || act >= 5) {
+                bDef = BEASTS.BOSSES.find(b => b.name === 'Leviatã Umbral') || bDef;
+            }
 
+            this.units.push(new Unit({ 
+                q: vC[0].q, r: vC[0].r, faction: 0, 
+                name: bDef.name, baseName: bDef.name, emoji: bDef.e, 
+                sprite: bDef.sprite, // <-- ISSO AQUI FAZ A ARTE DO CHEFE APARECER!
+                hp: Math.floor(bDef.hp * sFac), maxHp: Math.floor(bDef.hp * sFac), 
+                mp: bDef.mp, maxMp: bDef.mp, 
+                atk: Math.floor(bDef.atk * sFac), range: bDef.range, 
+                abilities: [...(bDef.abilities || [])], filter: bDef.filter || 'none', 
+                tags: bDef.tags || [], fav: bDef.fav || [], isBoss: true, level: act 
+            })); 
+            wH = wH.filter(h => h !== vC[0]); 
+        }
         // ========================================================
         // FILTRO DE LORE: FERAS SELVAGENS BASEADAS NA REGIÃO
         // ========================================================
@@ -1278,7 +1301,7 @@ class Renderer {
             if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && hex.terrain && hex.terrain.variations) {
 
                 // Configuração exata da imagem gerada pelo ChatGPT (4 colunas, 11 linhas)
-                const colunasNaImagem = 4;
+                const colunasNaImagem = 6;
                 const linhasNaImagem = 11;
 
                 let tileW = this.tileset.naturalWidth / colunasNaImagem;
@@ -1566,7 +1589,7 @@ class KingdomRenderer {
             ctx.clip();
 
             if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && terrainData.variations) {
-                const colunasNaImagem = 4;
+                const colunasNaImagem = 6;
                 const linhasNaImagem = 11;
 
                 let tileW = this.tileset.naturalWidth / colunasNaImagem;
