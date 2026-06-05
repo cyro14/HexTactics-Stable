@@ -14,13 +14,21 @@ class Hex {
 class Unit {
     constructor(d) {
         let lDef = typeof LEADERS !== 'undefined' ? LEADERS.find(x => x.name === (d.baseName || d.name)) : null;
-        let finalSprite = d.sprite || (lDef ? lDef.sprite : null);
+        
+        // INTERCEPTOR INTELIGENTE: Se não for herói, varre todas as listas de criaturas atrás do sprite!
+        let bDef = null;
+        if (!lDef && typeof BEASTS !== 'undefined') {
+            let masterPool = [...(BEASTS.LAND || []), ...(BEASTS.WATER || []), ...(BEASTS.SNOW || []), ...(BEASTS.BOSSES || []), ...(BEASTS.ELITES || [])];
+            bDef = masterPool.find(x => x.name === (d.baseName || d.name));
+        }
+        
+        let finalSprite = d.sprite || (lDef ? lDef.sprite : (bDef ? bDef.sprite : null));
 
         Object.assign(this, {
             q: d.q, r: d.r, vq: d.q, vr: d.r, faction: d.faction,
             isLeader: d.isLeader || false, name: d.name, baseName: d.baseName || d.name,
             emoji: d.emoji,
-            sprite: finalSprite, // <--- Puxando a imagem à força aqui!
+            sprite: finalSprite, 
             hp: d.hp, maxHp: d.maxHp, mp: d.mp, maxMp: d.maxMp,
             atk: d.atk, range: d.range, level: d.level || 1, xp: d.xp || 0,
             starLevel: d.starLevel || 1,
@@ -404,7 +412,7 @@ class Game {
         let currentRegionTags = REGION_TAGS[this.currentRegionId] || ['PRIMAL', 'SILVESTRE'];
 
         // ========================================================
-        // SPAWN DO CHEFE OU ELITE (LÓGICA SEGURO V5)
+        // SPAWN DO CHEFE OU ELITE (SISTEMA DE ALERTA E REGIAO FIXADO)
         // ========================================================
         let numW = 4 + act; 
         const vC = wH.sort((a, b) => Math.abs(Hex.distance(a, pS) - Hex.distance(a, aS)) - Math.abs(Hex.distance(b, pS) - Hex.distance(b, aS)));
@@ -414,7 +422,6 @@ class Game {
             let isBossUnit = false;
             let isEliteUnit = false;
 
-            // Garante que os arrays existam mesmo se houver erro de colagem no data.js
             let bossesSource = BEASTS.BOSSES || window.BOSSES || [];
             let elitesSource = BEASTS.ELITES || window.ELITES || [];
 
@@ -429,16 +436,24 @@ class Game {
             } 
             // 2. É NÓ DE ELITE?
             else if (this.currentRouteType === 'ELITE') {
+                // Tenta filtrar por nível E tags da região atual
                 let validElites = elitesSource.filter(b => (!b.minLevel || act >= b.minLevel) && b.tags && b.tags.some(t => currentRegionTags.includes(t)));
+                
+                // CORREÇÃO DO IFRIT: Se não houver elite do nível do Ato (ex: Ato 1), ignora o nível e força o bioma da região!
+                if (validElites.length === 0) {
+                    validElites = elitesSource.filter(b => b.tags && b.tags.some(t => currentRegionTags.includes(t)));
+                }
+                
                 if (validElites.length > 0) {
                     bDef = validElites[Math.floor(Math.random() * validElites.length)];
                 } else {
-                    bDef = elitesSource[0] || bossesSource[0];
+                    // Failsafe: Sorteia um aleatório da lista em vez de travar sempre no primeiro
+                    bDef = elitesSource[Math.floor(Math.random() * elitesSource.length)] || bossesSource[0];
                 }
                 isEliteUnit = true;
             }
 
-            // SE TEM CHEFE OU ELITE, COLOCA NO MAPA BEM NO FUNDO!
+            // SE ENCONTROU O MONSTRO, INJETA NO TABULEIRO
             if (bDef) {
                 let epicUnit = new Unit({ 
                     q: vC[0].q, r: vC[0].r, faction: 0, 
@@ -448,9 +463,11 @@ class Game {
                     mp: bDef.mp, maxMp: bDef.mp, 
                     atk: Math.floor(bDef.atk * sFac), range: bDef.range, 
                     abilities: [...(bDef.abilities || [])], filter: bDef.filter || 'none', 
-                    tags: bDef.tags || [], fav: bDef.fav || [], isBoss: isBossUnit, level: act 
+                    tags: bDef.tags || [], fav: bDef.fav || [], 
+                    isBoss: true, // CORREÇÃO DO ALERTA: Força true para ativar o raio de aggro da IA!
+                    level: act 
                 });
-                epicUnit.isElite = isEliteUnit; 
+                epicUnit.isElite = isEliteUnit; // Mantém a flag para o tamanho correto e cinemática
                 this.units.push(epicUnit); 
                 wH = wH.filter(h => h !== vC[0]); 
             }
@@ -1407,12 +1424,17 @@ class Renderer {
 
         this.game.units.forEach(u => {
             const p = this.getPos(u.vq, u.vr);
-            // Cores mais nobres e intensas: Azul (Jogador), Vermelho (Inimigo), Verde (Selvagem)
             const fColor = u.faction === 1 ? '#3498db' : u.faction === 2 ? '#e74c3c' : '#2ecc71';
 
-            let sMod = u.isBoss ? 1.35 : 1.0;
-            if (u.level > 1 && !u.isLeader) sMod += 0.20;
-            if (u.isLeader && u.faction === 1) sMod = 1.4;
+            // DETECTOR SUPREMO: Verifica se o nome da unidade pertence ao panteão de Bosses Reais
+            let isRealBoss = typeof BEASTS !== 'undefined' && BEASTS.BOSSES && BEASTS.BOSSES.some(b => b.name === u.name);
+            
+            // Define as escalas perfeitas: Boss Real = 1.38, Elite = 1.22, Heróis/Líderes comuns = 1.30, Outros = 1.0
+            let sMod = isRealBoss ? 1.38 : (u.isElite ? 1.22 : (u.isLeader ? 1.30 : 1.0));
+            
+            // Bônus de tamanho para capangas comuns que sobem de nível
+            if (u.level > 1 && !u.isLeader && !isRealBoss && !u.isElite) sMod += 0.10;
+            
             const r = this.hexSize * 0.6 * sMod;
 
             // ==========================================
@@ -1469,22 +1491,24 @@ class Renderer {
                 }
                 let img = window.imageCache[u.sprite];
                 if (img.complete && img.naturalWidth > 0) {
-                    // Caixa limite para o Sprite (Estreita para não vazar para os lados!)
-                    let maxW = this.hexSize * 1.25 * sMod; // Largura contida no próprio hexágono
-                    let maxH = this.hexSize * 1.5 * sMod;  // Altura um pouco maior para a cabeça sair
+                    
+                    // CAIXA AJUSTADA: Só expande muito se for um monstro gigante real (não-líder)
+                    let isEpicMonster = (u.isBoss && !u.isLeader) || u.isElite;
+                    
+                    let maxW = this.hexSize * (isEpicMonster ? 2.1 : 1.25) * sMod; 
+                    let maxH = this.hexSize * (isEpicMonster ? 2.4 : 1.5) * sMod;  
 
-                    // Matemática de Encaixe Perfeito - O sprite cresce até bater no teto ou nas paredes
                     let scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
 
                     let drawW = img.naturalWidth * scale;
                     let drawH = img.naturalHeight * scale;
 
-                    // ANCORAGEM: Mantivemos no fundo do hexágono para a base ficar firme
-                    let spriteY = p.y + (this.hexSize * 0.60) - drawH;
+                    // Ancoragem firme no chão para o monstro crescer para cima
+                    let spriteY = p.y + (this.hexSize * 0.70) - drawH;
 
                     ctx.drawImage(img, p.x - (drawW / 2), spriteY, drawW, drawH);
 
-                    uiTopY = spriteY - 5; // A coroa acompanha a descida automaticamente!
+                    uiTopY = spriteY - 5; 
                 } else {
                     ctx.fillText(u.emoji, p.x, p.y + 1);
                 }
