@@ -378,7 +378,7 @@ class Game {
         }
 
         // ========================================================
-        // GERAÇÃO DE ITENS E BOSS NEUTRO
+        // GERAÇÃO DE ITENS NO MAPA
         // ========================================================
         let wH = Array.from(this.map.values()).filter(h => h.terrain.id !== 'CASTLE' && Hex.distance(h, pS) > 3 && !this.getUnitAt(h.q, h.r));
         let itP = ['COIN', 'COIN', 'COIN', 'GEM', 'GEM', 'POTION', 'POTION', 'BANDAGE', 'BANDAGE', 'MEAT', 'MEAT', 'RUSTY_SWORD', 'RUSTY_SWORD', 'WOODEN_SHIELD', 'WOODEN_SHIELD', 'SCROLL'];
@@ -387,34 +387,8 @@ class Game {
         if (Math.random() > 0.4 && wH.length > 2) { let idx1 = Math.floor(Math.random() * wH.length); this.items.set(wH.splice(idx1, 1)[0].getKey(), 'CHEST'); let idx2 = Math.floor(Math.random() * wH.length); this.items.set(wH.splice(idx2, 1)[0].getKey(), 'KEY'); }
         for (let i = 0; i < numI; i++) { if (wH.length > 0) { let idx = Math.floor(Math.random() * wH.length); this.items.set(wH.splice(idx, 1)[0].getKey(), itP[Math.floor(Math.random() * itP.length)]); } }
 
-        let numW = 4 + act; 
-        const vC = wH.sort((a, b) => Math.abs(Hex.distance(a, pS) - Hex.distance(a, aS)) - Math.abs(Hex.distance(b, pS) - Hex.distance(b, aS)));
-        
-        if (vC.length > 0 && typeof BEASTS !== 'undefined') { 
-            // Filtra os Bosses aptos para este Ato
-            let validBosses = BEASTS.BOSSES.filter(b => act >= b.minLevel && act <= b.maxLevel);
-            // Sorteia um Boss entre as opções válidas
-            let bDef = validBosses.length > 0 ? validBosses[Math.floor(Math.random() * validBosses.length)] : BEASTS.BOSSES[BEASTS.BOSSES.length - 1];
-            
-            // GARANTIA MÁXIMA: Se for a região do Ômega (Ato 5+), força a vinda do Leviatã
-            if (this.currentRegionId === 'CENTER' || act >= 5) {
-                bDef = BEASTS.BOSSES.find(b => b.name === 'Leviatã Umbral') || bDef;
-            }
-
-            this.units.push(new Unit({ 
-                q: vC[0].q, r: vC[0].r, faction: 0, 
-                name: bDef.name, baseName: bDef.name, emoji: bDef.e, 
-                sprite: bDef.sprite, // <-- ISSO AQUI FAZ A ARTE DO CHEFE APARECER!
-                hp: Math.floor(bDef.hp * sFac), maxHp: Math.floor(bDef.hp * sFac), 
-                mp: bDef.mp, maxMp: bDef.mp, 
-                atk: Math.floor(bDef.atk * sFac), range: bDef.range, 
-                abilities: [...(bDef.abilities || [])], filter: bDef.filter || 'none', 
-                tags: bDef.tags || [], fav: bDef.fav || [], isBoss: true, level: act 
-            })); 
-            wH = wH.filter(h => h !== vC[0]); 
-        }
         // ========================================================
-        // FILTRO DE LORE: FERAS SELVAGENS BASEADAS NA REGIÃO
+        // FILTRO DE LORE: TAGS DA REGIÃO
         // ========================================================
         const REGION_TAGS = {
             'WEST': ['SILVESTRE', 'WING', 'STALKER'],
@@ -427,33 +401,77 @@ class Game {
             'SW': ['ABYSSAL', 'ICE', 'VENOM'],
             'CENTER': ['FIRE', 'UMBRAL', 'CELESTIAL', 'PRIMAL']
         };
-        
         let currentRegionTags = REGION_TAGS[this.currentRegionId] || ['PRIMAL', 'SILVESTRE'];
 
+        // ========================================================
+        // SPAWN DO CHEFE OU ELITE (LÓGICA SEGURO V5)
+        // ========================================================
+        let numW = 4 + act; 
+        const vC = wH.sort((a, b) => Math.abs(Hex.distance(a, pS) - Hex.distance(a, aS)) - Math.abs(Hex.distance(b, pS) - Hex.distance(b, aS)));
+        
+        if (vC.length > 0 && typeof BEASTS !== 'undefined') { 
+            let bDef = null;
+            let isBossUnit = false;
+            let isEliteUnit = false;
+
+            // Garante que os arrays existam mesmo se houver erro de colagem no data.js
+            let bossesSource = BEASTS.BOSSES || window.BOSSES || [];
+            let elitesSource = BEASTS.ELITES || window.ELITES || [];
+
+            // 1. É NÓ DE CHEFE?
+            if (this.currentRouteType === 'BOSS' || this.isBossStage) {
+                let validBosses = bossesSource.filter(b => b.spawnRegion === this.currentRegionId);
+                bDef = validBosses.length > 0 ? validBosses[0] : bossesSource[0];
+                if (this.currentRegionId === 'CENTER' || act >= 5) {
+                    bDef = bossesSource.find(b => b.name === 'Leviatã Umbral') || bDef;
+                }
+                isBossUnit = true;
+            } 
+            // 2. É NÓ DE ELITE?
+            else if (this.currentRouteType === 'ELITE') {
+                let validElites = elitesSource.filter(b => (!b.minLevel || act >= b.minLevel) && b.tags && b.tags.some(t => currentRegionTags.includes(t)));
+                if (validElites.length > 0) {
+                    bDef = validElites[Math.floor(Math.random() * validElites.length)];
+                } else {
+                    bDef = elitesSource[0] || bossesSource[0];
+                }
+                isEliteUnit = true;
+            }
+
+            // SE TEM CHEFE OU ELITE, COLOCA NO MAPA BEM NO FUNDO!
+            if (bDef) {
+                let epicUnit = new Unit({ 
+                    q: vC[0].q, r: vC[0].r, faction: 0, 
+                    name: bDef.name, baseName: bDef.name, emoji: bDef.e, 
+                    sprite: bDef.sprite, 
+                    hp: Math.floor(bDef.hp * sFac), maxHp: Math.floor(bDef.hp * sFac), 
+                    mp: bDef.mp, maxMp: bDef.mp, 
+                    atk: Math.floor(bDef.atk * sFac), range: bDef.range, 
+                    abilities: [...(bDef.abilities || [])], filter: bDef.filter || 'none', 
+                    tags: bDef.tags || [], fav: bDef.fav || [], isBoss: isBossUnit, level: act 
+                });
+                epicUnit.isElite = isEliteUnit; 
+                this.units.push(epicUnit); 
+                wH = wH.filter(h => h !== vC[0]); 
+            }
+        }
+
+        // ========================================================
+        // FERAS SELVAGENS COMUNS (MINIONS DA BATALHA)
+        // ========================================================
         while (numW > 0 && wH.length > 0 && typeof BEASTS !== 'undefined') {
             const hex = wH.splice(Math.floor(Math.random() * wH.length), 1)[0];
-            
-            // Mistura todos os monstros do jogo em uma grande piscina
             let masterPool = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW];
             
-            // 1. Filtra as feras pelas TAGS exatas da Região Atual
             let pool = masterPool.filter(b => {
-                if (b.minLevel && act < b.minLevel) return false; // Nível exigido
-                
-                // A criatura PRECISA ter pelo menos uma das tags nativas daquela região
+                if (b.minLevel && act < b.minLevel) return false;
                 if (!b.tags || !b.tags.some(t => currentRegionTags.includes(t))) return false;
-                
-                // 2. Respeita a lógica de terreno exato (Água só pra quem gosta de água)
                 if (hex.terrain.id === 'WATER' && (!b.fav.includes('WATER') && !b.tags.includes('ABYSSAL'))) return false;
                 if (hex.terrain.id === 'SNOW' && (!b.fav.includes('SNOW') && !b.tags.includes('ICE'))) return false;
-                
-                // Impede que peixes puros (sem ser anfíbios) nasçam na terra
                 if (hex.terrain.id !== 'WATER' && b.tags.includes('ABYSSAL') && !b.fav.includes(hex.terrain.id)) return false;
-                
                 return true;
             });
 
-            // Fallback (Plano B): Se o filtro for muito rigoroso e não sobrar bicho, pega os normais daquele terreno
             if (pool.length === 0) {
                 if (hex.terrain.id === 'WATER') pool = BEASTS.WATER.filter(b => !b.minLevel || act >= b.minLevel);
                 else if (hex.terrain.id === 'SNOW') pool = BEASTS.SNOW.filter(b => !b.minLevel || act >= b.minLevel);

@@ -1286,26 +1286,32 @@ $('btn-full-log')?.addEventListener('click', () => {
 });
 
 // ==========================================
-// SISTEMA DE DROPS DE MATERIAIS (LOOT)
+// SISTEMA DE DROPS DE MATERIAIS (LOOT COM POPUP)
 // ==========================================
 const origHandleDeath = Game.prototype.handleDeath;
-Game.prototype.handleDeath = function (deadUnit, killerUnit) {
+Game.prototype.handleDeath = function(deadUnit, killerUnit) {
     if (deadUnit && deadUnit.faction !== 1) { // Se um inimigo morrer
         if (!this.resources) this.resources = {};
-
-        // Verifica o tipo biológico (TAG) da criatura abatida e gera o drop correspondente!
+        
         let tags = deadUnit.tags || [];
+        let dropMsg = []; // Guarda o que caiu para mostrar na tela
+        
         tags.forEach(t => {
-            if (t === 'PRIMAL' || t === 'STALKER') this.resources.garras = (this.resources.garras || 0) + 1;
-            if (t === 'WING') this.resources.asas = (this.resources.asas || 0) + 1;
-            if (t === 'SILVESTRE') this.resources.ervas = (this.resources.ervas || 0) + 1;
-            if (t === 'ROCK' || t === 'CARAPACE') this.resources.ferro = (this.resources.ferro || 0) + 1;
-            if (t === 'VENOM') this.resources.veneno = (this.resources.veneno || 0) + 1;
-            if (t === 'MYSTIC' || t === 'UMBRAL' || t === 'CELESTIAL') this.resources.po_magico = (this.resources.po_magico || 0) + 1;
-            if (t === 'FIRE') this.resources.brasa = (this.resources.brasa || 0) + 1;
+            if (t === 'PRIMAL' || t === 'STALKER') { this.resources.garras = (this.resources.garras || 0) + 1; dropMsg.push("🐾 Garra"); }
+            if (t === 'WING') { this.resources.asas = (this.resources.asas || 0) + 1; dropMsg.push("🪽 Asa"); }
+            if (t === 'SILVESTRE') { this.resources.ervas = (this.resources.ervas || 0) + 1; dropMsg.push("🌿 Erva"); }
+            if (t === 'ROCK' || t === 'CARAPACE') { this.resources.ferro = (this.resources.ferro || 0) + 1; dropMsg.push("🪨 Ferro"); }
+            if (t === 'VENOM') { this.resources.veneno = (this.resources.veneno || 0) + 1; dropMsg.push("☠️ Veneno"); }
+            if (t === 'MYSTIC' || t === 'UMBRAL' || t === 'CELESTIAL') { this.resources.po_magico = (this.resources.po_magico || 0) + 1; dropMsg.push("✨ Pó Mágico"); }
+            if (t === 'FIRE') { this.resources.brasa = (this.resources.brasa || 0) + 1; dropMsg.push("🔥 Brasa"); }
         });
+        
+        // Exibe o popup na cabeça do bicho morto com um pequeno atraso para não misturar com o dano!
+        if (dropMsg.length > 0 && typeof showPopup === 'function') {
+            setTimeout(() => showPopup(dropMsg.join(" + "), deadUnit, '#f1c40f'), 500); 
+        }
     }
-
+    
     // Continua a morte normal
     if (origHandleDeath) origHandleDeath.call(this, deadUnit, killerUnit);
-};
+};  

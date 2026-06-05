@@ -326,28 +326,28 @@ const LEADERS = [
     { id: 'mage', name: 'Arquimago', loreFaction: 'ORDEM', emoji: '🧙🏻‍♂️', hp: 60, atk: 12, mp: 4, range: 2, limit: 3, desc: 'Consegue utilizar duas magias por turno.', tags: ['MYSTIC'], sprite: 'img/lideres/arquimago.png' },
     { id: 'orc', name: 'Chefe Orc', loreFaction: 'PRIMORDIAL', emoji: '👹', hp: 80, atk: 15, mp: 5, range: 1, limit: 6, abilities: ['leadership'], desc: 'Líder de Horda (+10% ATK por aliado).', tags: ['PRIMAL'], sprite: 'img/lideres/chefe_orc.png' },
     { id: 'necro', name: 'Necromante', loreFaction: 'SOMBRAS', emoji: '💀', hp: 55, atk: 10, mp: 4, range: 2, limit: 6, desc: 'Exército Morto (Domina como Umbral ao matar).', tags: ['UMBRAL'], sprite: 'img/lideres/necromante.png' },
-    { id: 'paladin', name: 'Paladina',loreFaction: 'ORDEM', emoji: '🛡️', hp: 85, atk: 10, mp: 4, range: 1, limit: 3, abilities: ['leadership'], desc: 'Unidades compradas ganham a tag Celestial. Aliados até 2 hexes curam 2 HP por turno.', tags: ['CELESTIAL', 'CARAPACE'], sprite: 'img/lideres/paladina.png' },
-    { id: 'ranger', name: 'Arqueira',loreFaction: 'SILVESTRE', emoji: '🏹', hp: 65, atk: 14, mp: 5, range: 3, limit: 3, abilities: ['camouflage'], desc: 'Alcance longo e Doma feras Silvestres facilmente. Silvestres adjacentes a ela recebem +1 de Alcance.', tags: ['SILVESTRE', 'STALKER'], fav: ['FOREST'], sprite: 'img/lideres/arqueira.png' },
-    { id: 'pyro', name: 'Piromante',loreFaction: 'ORDEM', emoji: '🔥', hp: 50, atk: 16, mp: 4, range: 2, limit: 3, desc: 'Feras compradas e domadas vêm com queimadura e ganham a tag Ígnea.', tags: ['FIRE'], abilities: ['burn'], sprite: 'img/lideres/piromante.png' },
-    { id: 'admiral', name: 'Almirante', loreFaction: 'ABISSAL',emoji: '🏴‍☠️', hp: 65, atk: 13, mp: 5, range: 1, limit: 3, desc: 'Custo de movimento na Água é livre (1). Encontra e doma mais feras Abissais.', tags: ['ABYSSAL'], fav: ['WATER'], sprite: 'img/lideres/almirante.png' },
-    { id: 'vampire', name: 'Lord Vampiro',loreFaction: 'SOMBRAS', emoji: '🧛🏻‍♂️', hp: 65, atk: 16, mp: 6, range: 1, limit: 5, desc: 'Roubo de vida. Doma feras abatidas transformando em Rastreadores. Fome se não atacar.', tags: ['UMBRAL', 'STALKER'], abilities: ['lifesteal'], sprite: 'img/lideres/lord_vampiro.png' },
-    { id: 'L_CENTAUR', name: 'Centauro Espectral',loreFaction: 'SILVESTRE', emoji: '🏇', hp: 70, maxHp: 70, mp: 6, maxMp: 6, limit: 3, atk: 6, range: 1, tags: ['MYSTIC', 'SILVESTRE'], fav: ['PLAINS'], desc: 'Ganha +10% de ATK Base por cada hexágono percorrido antes de atacar no turno.' },
-    { id: 'L_ANUBIS', name: 'Anubis',loreFaction: 'DESERTO', emoji: '🐕‍🦺', hp: 80, maxHp: 80, mp: 3, maxMp: 3, atk: 14, range: 1, limit: 3, tags: ['UMBRAL', 'SAND'], fav: ['DESERT'], desc: 'Sempre que elimina um inimigo, ganha +1 ATK permanentemente (Acumula na run).', sprite: 'img/lideres/anubis.png' },
-    { id: 'L_SHAPESHIFTER', name: 'Metamorfo',loreFaction: 'SILVESTRE', emoji: '🕵️‍♂️', hp: 85, maxHp: 85, mp: 4, maxMp: 4, atk: 8, limit: 3, range: 1, tags: ['PRIMAL', 'SILVESTRE'], fav: ['FOREST'], desc: 'Alterna posturas sem custo de mana. Urso (+Defesa, Alc:1) ou Falcão (-Defesa, Perfurante, Alc:3).', sprite: 'img/lideres/metamorfo.png' },
-    { id: 'L_EXECUTIONER', name: 'Carrasco',loreFaction: 'SOMBRAS', emoji: '🪓', hp: 90, maxHp: 90, mp: 3, maxMp: 3, atk: 14, limit: 3, range: 1, tags: ['STALKER'], fav: ['MOUNTAIN'], desc: 'Possui o ataque especial Execução. Se matar o alvo, recupera a ação e o movimento.', sprite: 'img/lideres/carrasco.png' },
-    { id: 'L_SUMMONER', name: 'Invocador',loreFaction: 'ORDEM', emoji: '👨‍🎨', hp: 60, maxHp: 60, mp: 3, maxMp: 3, atk: 8, limit: 3, range: 2, tags: ['MYSTIC'], desc: 'Mestre dos tokens. Usa mana para evocar criaturas como o Dragão Ígneo direto no tabuleiro.', sprite: 'img/lideres/invocador.png' },
-    { id: 'L_GENIE', name: 'Gênia',loreFaction: 'FORASTEIROS', emoji: '🧞‍♀️', hp: 75, maxHp: 75, mp: 5, maxMp: 4, atk: 12, limit: 3, range: 2, tags: ['MYSTIC', 'SAND'], fav: ['DESERT'], desc: 'Possui "Três Desejos". Ao iniciar a fase, escolha entre injetar Ouro, Recursos ou ganhar um Item Épico.', sprite: 'img/lideres/genia.png' },
-    { id: 'L_TROLL', name: 'Troll',loreFaction: 'SILVESTRE', emoji: '🧌', hp: 130, maxHp: 130, mp: 3, maxMp: 3, atk: 14, range: 1, limit: 3, tags: ['PRIMAL', 'SILVESTRE'], fav: ['MOUNTAIN', 'FOREST'], desc: 'O Tanque Absoluto. Recupera 15% do HP se passar o turno sem atacar em Montanhas/Florestas.', sprite: 'img/lideres/troll.png' },
-    { id: 'L_SIREN', name: 'Sereia',loreFaction: 'ABISSAL', emoji: '🧜🏻‍♀️', hp: 70, maxHp: 70, mp: 3, maxMp: 3, atk: 10, range: 2, limit: 3, abilities: ['dive'], tags: ['ABYSSAL', 'MYSTIC'], fav: ['WATER'], desc: 'Usa a Canção da Sereia para puxar inimigos para perto e atordoá-los.', sprite: 'img/lideres/sereia.png' },
-    { id: 'L_FAIRY', name: 'Fada',loreFaction: 'SILVESTRE', emoji: '🧚🏻‍♀️', hp: 60, maxHp: 50, mp: 5, maxMp: 5, atk: 6, range: 2, limit: 3, tags: ['MYSTIC', 'SILVESTRE'], fav: ['FOREST'], desc: 'Maga de Suporte. Suas magias curam aliados em área ou concedem turnos extras.', sprite: 'img/lideres/fada.png' },
-    { id: 'L_WITCH', name: 'Bruxa',loreFaction: 'SOMBRAS', emoji: '🧙🏼‍♀️', hp: 65, maxHp: 65, mp: 3, maxMp: 3, atk: 12, range: 2, limit: 3, tags: ['VENOM', 'UMBRAL'], fav: ['FOREST'], desc: 'Alquimista. Pode sacrificar um aliado com a magia Caldeirão para curar toda a equipe massivamente.', sprite: 'img/lideres/bruxa.png' },
-    { id: 'L_BARBARIAN', name: 'Rei Bárbaro',loreFaction: 'PRIMORDIAL', emoji: '🤴', hp: 80, maxHp: 80, mp: 4, maxMp: 4, atk: 12, limit: 3, range: 1, tags: ['PRIMAL', 'ICE'], fav: ['SNOW'], desc: 'Fúria Imortal: Quanto mais HP perder, mais forte ele fica.', sprite: 'img/lideres/rei_barbaro.png' },
-    { id: 'L_TREX', name: 'T-Rex',loreFaction: 'PRIMORDIAL', emoji: '🦖', hp: 150, maxHp: 150, mp: 3, maxMp: 2, atk: 25, range: 1, limit: 3, tags: ['PRIMAL', 'ROCK', 'STALKER'], fav: ['DIRT'], desc: 'Kaiju. Bate em todos à frente. A cada passo, esmaga florestas e vilas, tornando-as planícies.' },
-    { id: 'L_ICE_QUEEN', name: 'Rainha do Gelo',loreFaction: 'ORDEM', emoji: '👸🏼', hp: 75, maxHp: 75, mp: 3, maxMp: 3, atk: 12, limit: 3, range: 2, tags: ['ICE'], fav: ['SNOW'], filter: 'hue-rotate(180deg)', abilities: ['frost_armor', 'freeze'], desc: 'Magia glacial. Inimigos que a atacam corpo-a-corpo sofrem Congelamento (Chilled) instantâneo.', sprite: 'img/lideres/rainha_gelo.png' },
-    { id: 'L_HARPY', name: 'Matriarca Harpia', loreFaction: 'SILVESTRE',emoji: '🦅', hp: 65, maxHp: 65, mp: 5, maxMp: 5, atk: 14, limit: 3, range: 1, tags: ['WING', 'STALKER'], fav: ['MOUNTAIN'], filter: 'saturate(150%)', abilities: ['flying', 'dodge'], desc: 'Senhora dos ventos. Ignora custos de terreno pesado (sempre move por 1 MP) e possui esquiva natural alta.' },
-    { id: 'shaman', name: 'Xamã da Tempestade', loreFaction: 'TEMPESTADE',emoji: '🧙‍♂️', desc: 'Mestre dos raios. Seus feitiços ricocheteiam e causam caos nas fileiras inimigas.', limit: 3, hp: 75, mp: 4, atk: 12, range: 2, limit: 6, tags: ['ELECTRIC', 'MYSTIC'], fav: ['MOUNTAIN'], filter: 'hue-rotate(45deg) saturate(200%)', knownSpells: ['sl_furia_tempestade'], sprite: 'img/lideres/xama_tempestade.png' },
+    { id: 'paladin', name: 'Paladina', loreFaction: 'ORDEM', emoji: '🛡️', hp: 85, atk: 10, mp: 4, range: 1, limit: 3, abilities: ['leadership'], desc: 'Unidades compradas ganham a tag Celestial. Aliados até 2 hexes curam 2 HP por turno.', tags: ['CELESTIAL', 'CARAPACE'], sprite: 'img/lideres/paladina.png' },
+    { id: 'ranger', name: 'Arqueira', loreFaction: 'SILVESTRE', emoji: '🏹', hp: 65, atk: 14, mp: 5, range: 3, limit: 3, abilities: ['camouflage'], desc: 'Alcance longo e Doma feras Silvestres facilmente. Silvestres adjacentes a ela recebem +1 de Alcance.', tags: ['SILVESTRE', 'STALKER'], fav: ['FOREST'], sprite: 'img/lideres/arqueira.png' },
+    { id: 'pyro', name: 'Piromante', loreFaction: 'ORDEM', emoji: '🔥', hp: 50, atk: 16, mp: 4, range: 2, limit: 3, desc: 'Feras compradas e domadas vêm com queimadura e ganham a tag Ígnea.', tags: ['FIRE'], abilities: ['burn'], sprite: 'img/lideres/piromante.png' },
+    { id: 'admiral', name: 'Almirante', loreFaction: 'ABISSAL', emoji: '🏴‍☠️', hp: 65, atk: 13, mp: 5, range: 1, limit: 3, desc: 'Custo de movimento na Água é livre (1). Encontra e doma mais feras Abissais.', tags: ['ABYSSAL'], fav: ['WATER'], sprite: 'img/lideres/almirante.png' },
+    { id: 'vampire', name: 'Lord Vampiro', loreFaction: 'SOMBRAS', emoji: '🧛🏻‍♂️', hp: 65, atk: 16, mp: 6, range: 1, limit: 5, desc: 'Roubo de vida. Doma feras abatidas transformando em Rastreadores. Fome se não atacar.', tags: ['UMBRAL', 'STALKER'], abilities: ['lifesteal'], sprite: 'img/lideres/lord_vampiro.png' },
+    { id: 'L_CENTAUR', name: 'Centauro Espectral', loreFaction: 'SILVESTRE', emoji: '🏇', hp: 70, maxHp: 70, mp: 6, maxMp: 6, limit: 3, atk: 6, range: 1, tags: ['MYSTIC', 'SILVESTRE'], fav: ['PLAINS'], desc: 'Ganha +10% de ATK Base por cada hexágono percorrido antes de atacar no turno.' },
+    { id: 'L_ANUBIS', name: 'Anubis', loreFaction: 'DESERTO', emoji: '🐕‍🦺', hp: 80, maxHp: 80, mp: 3, maxMp: 3, atk: 14, range: 1, limit: 3, tags: ['UMBRAL', 'SAND'], fav: ['DESERT'], desc: 'Sempre que elimina um inimigo, ganha +1 ATK permanentemente (Acumula na run).', sprite: 'img/lideres/anubis.png' },
+    { id: 'L_SHAPESHIFTER', name: 'Metamorfo', loreFaction: 'SILVESTRE', emoji: '🕵️‍♂️', hp: 85, maxHp: 85, mp: 4, maxMp: 4, atk: 8, limit: 3, range: 1, tags: ['PRIMAL', 'SILVESTRE'], fav: ['FOREST'], desc: 'Alterna posturas sem custo de mana. Urso (+Defesa, Alc:1) ou Falcão (-Defesa, Perfurante, Alc:3).', sprite: 'img/lideres/metamorfo.png' },
+    { id: 'L_EXECUTIONER', name: 'Carrasco', loreFaction: 'SOMBRAS', emoji: '🪓', hp: 90, maxHp: 90, mp: 3, maxMp: 3, atk: 14, limit: 3, range: 1, tags: ['STALKER'], fav: ['MOUNTAIN'], desc: 'Possui o ataque especial Execução. Se matar o alvo, recupera a ação e o movimento.', sprite: 'img/lideres/carrasco.png' },
+    { id: 'L_SUMMONER', name: 'Invocador', loreFaction: 'ORDEM', emoji: '👨‍🎨', hp: 60, maxHp: 60, mp: 3, maxMp: 3, atk: 8, limit: 3, range: 2, tags: ['MYSTIC'], desc: 'Mestre dos tokens. Usa mana para evocar criaturas como o Dragão Ígneo direto no tabuleiro.', sprite: 'img/lideres/invocador.png' },
+    { id: 'L_GENIE', name: 'Gênia', loreFaction: 'FORASTEIROS', emoji: '🧞‍♀️', hp: 75, maxHp: 75, mp: 5, maxMp: 4, atk: 12, limit: 3, range: 2, tags: ['MYSTIC', 'SAND'], fav: ['DESERT'], desc: 'Possui "Três Desejos". Ao iniciar a fase, escolha entre injetar Ouro, Recursos ou ganhar um Item Épico.', sprite: 'img/lideres/genia.png' },
+    { id: 'L_TROLL', name: 'Troll', loreFaction: 'SILVESTRE', emoji: '🧌', hp: 130, maxHp: 130, mp: 3, maxMp: 3, atk: 14, range: 1, limit: 3, tags: ['PRIMAL', 'SILVESTRE'], fav: ['MOUNTAIN', 'FOREST'], desc: 'O Tanque Absoluto. Recupera 15% do HP se passar o turno sem atacar em Montanhas/Florestas.', sprite: 'img/lideres/troll.png' },
+    { id: 'L_SIREN', name: 'Sereia', loreFaction: 'ABISSAL', emoji: '🧜🏻‍♀️', hp: 70, maxHp: 70, mp: 3, maxMp: 3, atk: 10, range: 2, limit: 3, abilities: ['dive'], tags: ['ABYSSAL', 'MYSTIC'], fav: ['WATER'], desc: 'Usa a Canção da Sereia para puxar inimigos para perto e atordoá-los.', sprite: 'img/lideres/sereia.png' },
+    { id: 'L_FAIRY', name: 'Fada', loreFaction: 'SILVESTRE', emoji: '🧚🏻‍♀️', hp: 60, maxHp: 50, mp: 5, maxMp: 5, atk: 6, range: 2, limit: 3, tags: ['MYSTIC', 'SILVESTRE'], fav: ['FOREST'], desc: 'Maga de Suporte. Suas magias curam aliados em área ou concedem turnos extras.', sprite: 'img/lideres/fada.png' },
+    { id: 'L_WITCH', name: 'Bruxa', loreFaction: 'SOMBRAS', emoji: '🧙🏼‍♀️', hp: 65, maxHp: 65, mp: 3, maxMp: 3, atk: 12, range: 2, limit: 3, tags: ['VENOM', 'UMBRAL'], fav: ['FOREST'], desc: 'Alquimista. Pode sacrificar um aliado com a magia Caldeirão para curar toda a equipe massivamente.', sprite: 'img/lideres/bruxa.png' },
+    { id: 'L_BARBARIAN', name: 'Rei Bárbaro', loreFaction: 'PRIMORDIAL', emoji: '🤴', hp: 80, maxHp: 80, mp: 4, maxMp: 4, atk: 12, limit: 3, range: 1, tags: ['PRIMAL', 'ICE'], fav: ['SNOW'], desc: 'Fúria Imortal: Quanto mais HP perder, mais forte ele fica.', sprite: 'img/lideres/rei_barbaro.png' },
+    { id: 'L_TREX', name: 'T-Rex', loreFaction: 'PRIMORDIAL', emoji: '🦖', hp: 150, maxHp: 150, mp: 3, maxMp: 2, atk: 25, range: 1, limit: 3, tags: ['PRIMAL', 'ROCK', 'STALKER'], fav: ['DIRT'], desc: 'Kaiju. Bate em todos à frente. A cada passo, esmaga florestas e vilas, tornando-as planícies.' },
+    { id: 'L_ICE_QUEEN', name: 'Rainha do Gelo', loreFaction: 'ORDEM', emoji: '👸🏼', hp: 75, maxHp: 75, mp: 3, maxMp: 3, atk: 12, limit: 3, range: 2, tags: ['ICE'], fav: ['SNOW'], filter: 'hue-rotate(180deg)', abilities: ['frost_armor', 'freeze'], desc: 'Magia glacial. Inimigos que a atacam corpo-a-corpo sofrem Congelamento (Chilled) instantâneo.', sprite: 'img/lideres/rainha_gelo.png' },
+    { id: 'L_HARPY', name: 'Matriarca Harpia', loreFaction: 'SILVESTRE', emoji: '🦅', hp: 65, maxHp: 65, mp: 5, maxMp: 5, atk: 14, limit: 3, range: 1, tags: ['WING', 'STALKER'], fav: ['MOUNTAIN'], filter: 'saturate(150%)', abilities: ['flying', 'dodge'], desc: 'Senhora dos ventos. Ignora custos de terreno pesado (sempre move por 1 MP) e possui esquiva natural alta.' },
+    { id: 'shaman', name: 'Xamã da Tempestade', loreFaction: 'TEMPESTADE', emoji: '🧙‍♂️', desc: 'Mestre dos raios. Seus feitiços ricocheteiam e causam caos nas fileiras inimigas.', limit: 3, hp: 75, mp: 4, atk: 12, range: 2, limit: 6, tags: ['ELECTRIC', 'MYSTIC'], fav: ['MOUNTAIN'], filter: 'hue-rotate(45deg) saturate(200%)', knownSpells: ['sl_furia_tempestade'], sprite: 'img/lideres/xama_tempestade.png' },
     {
-        id: 'ld_dragao_galatico', name: 'Dragão Galático',loreFaction: 'FORASTEIROS', emoji: '🌌',
+        id: 'ld_dragao_galatico', name: 'Dragão Galático', loreFaction: 'FORASTEIROS', emoji: '🌌',
         maxHp: 180, hp: 180, mp: 5, maxMp: 5, atk: 45, range: 1, limit: 3,
         tags: ['CELESTIAL', 'FIRE'], abilities: ['flying'],
         sprite: 'img/lideres/dragao_galatico.png',
@@ -484,14 +484,65 @@ const BEASTS = {
         { e: '🐧', name: 'Pinguim', hp: 30, atk: 8, mp: 4, range: 1, abilities: [], minLevel: 1, filter: 'none', tags: ['ABYSSAL', 'ICE'], fav: ['WATER', 'SNOW'] }],
 
     BOSSES: [
-        { e: '🦁', sprite: 'img/boss/rei_leao.png', name: 'Rei Leão', hp: 120, atk: 20, mp: 4, range: 1, abilities: ['leadership'], minLevel: 1, maxLevel: 2, filter: 'none', tags: ['PRIMAL', 'SAND'], fav: ['DESERT', 'SAVANNA'] },
-        { e: '🔥', sprite: 'img/boss/fornalha.png', name: 'Fornalha', hp: 150, atk: 25, mp: 3, range: 2, abilities: ['burn', 'carapace'], minLevel: 2, maxLevel: 3, filter: 'none', tags: ['FIRE', 'ROCK'], fav: ['MOUNTAIN', 'ASHES'] },
-        { e: '🌳', sprite: 'img/boss/arvore_umbralina.png', name: 'Árvore Umbralina', hp: 180, atk: 18, mp: 2, range: 1, abilities: ['poison', 'lifesteal'], minLevel: 2, maxLevel: 3, filter: 'none', tags: ['SILVESTRE', 'UMBRAL'], fav: ['FOREST', 'SWAMP'] },
-        { e: '🪲', sprite: 'img/boss/centopeia-metalica.png', name: 'Centopeia Metálica', hp: 160, atk: 28, mp: 5, range: 1, abilities: ['electric', 'pierce'], minLevel: 3, maxLevel: 4, filter: 'none', tags: ['CARAPACE', 'ELECTRIC'], fav: ['DESERT', 'PLAINS'] },
-        { e: '🦣', sprite: 'img/boss/mamute.png', name: 'Mamute Ancestral', hp: 220, atk: 30, mp: 3, range: 1, abilities: ['stun'], minLevel: 3, maxLevel: 4, filter: 'none', tags: ['PRIMAL', 'ICE'], fav: ['SNOW'] },
-        { e: '👼', sprite: 'img/boss/arcanjo_caido.png', name: 'Arcanjo Caído', hp: 200, atk: 35, mp: 5, range: 2, abilities: ['flying', 'lifesteal'], minLevel: 4, maxLevel: 4, filter: 'none', tags: ['CELESTIAL', 'UMBRAL'], fav: ['PLAINS'] },
-        { e: '🐉', sprite: 'img/boss/leviata.png', name: 'Leviatã Umbral', hp: 400, atk: 40, mp: 4, range: 3, abilities: ['dive', 'corte_amplo', 'crystal_skin'], minLevel: 5, maxLevel: 99, filter: 'none', tags: ['ABYSSAL', 'UMBRAL', 'MYSTIC'], fav: ['WATER', 'ASHES'] }
-    ]};
+        // LESTE (Deserto)
+        { e: '🦁', sprite: 'img/boss/rei_leao.png', name: 'Rei Leão', hp: 200, atk: 25, mp: 4, range: 1, abilities: ['leadership', 'hit_run'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['PRIMAL', 'SAND'], fav: ['DESERT'], spawnRegion: 'EAST' },
+
+        // SUDESTE (Fogo/Cinzas)
+        { e: '🔥', sprite: 'img/boss/fornalha.png', name: 'Fornalha', hp: 220, atk: 28, mp: 3, range: 2, abilities: ['burn', 'carapace'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['FIRE', 'ROCK'], fav: ['ASHES', 'MOUNTAIN'], spawnRegion: 'SE' },
+
+        // SUL (Pântano Tóxico)
+        { e: '🪲', sprite: 'img/boss/centopeia-metalica.png', name: 'Centopeia Metálica', hp: 210, atk: 30, mp: 5, range: 1, abilities: ['poison', 'carapace'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['VENOM', 'CARAPACE'], fav: ['SWAMP', 'PLAINS'], spawnRegion: 'SOUTH' },
+
+        // SUDOESTE (Costa Abissal)
+        { e: '🐉', sprite: 'img/boss/hidra_venenosa.png', name: 'Hidra Venenosa', hp: 250, atk: 26, mp: 3, range: 2, abilities: ['poison', 'lifesteal'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['ABYSSAL', 'VENOM'], fav: ['WATER'], spawnRegion: 'SW' },
+
+        // OESTE (Floresta)
+        { e: '🌳', sprite: 'img/boss/arvore_umbralina.png', name: 'Árvore Umbralina', hp: 280, atk: 22, mp: 2, range: 1, abilities: ['lifesteal', 'bind'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['SILVESTRE', 'UMBRAL'], fav: ['FOREST'], spawnRegion: 'WEST' },
+
+        // NOROESTE (Montanha)
+        { e: '🐲', sprite: 'img/boss/wyvern_pedra2.png', name: 'Wyvern Ancião', hp: 230, atk: 32, mp: 5, range: 1, abilities: ['flying', 'pierce'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['ROCK', 'WING'], fav: ['MOUNTAIN'], spawnRegion: 'NW' },
+
+        // NORTE (Neve)
+        { e: '❄️', sprite: 'img/boss/wendigo.png', name: 'Wendigo', hp: 240, atk: 35, mp: 5, range: 1, abilities: ['freeze', 'lifesteal'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['ICE', 'UMBRAL'], fav: ['SNOW'], spawnRegion: 'NORTH' },
+
+        // NORDESTE (Planície / Tormenta)
+        { e: '👼', sprite: 'img/boss/arcanjo_caido.png', name: 'Arcanjo Caído', hp: 200, atk: 38, mp: 5, range: 2, abilities: ['flying', 'electric'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['CELESTIAL', 'ELECTRIC'], fav: ['PLAINS'], spawnRegion: 'NE' },
+
+        // CENTRO (Chefe Final Supremo)
+        { e: '🌌', sprite: 'img/boss/leviata.png', name: 'Leviatã Umbral', hp: 600, atk: 50, mp: 4, range: 3, abilities: ['corte_amplo', 'crystal_skin'], minLevel: 5, maxLevel: 99, filter: 'none', tags: ['ABYSSAL', 'UMBRAL', 'MYSTIC'], fav: ['WATER', 'ASHES'], spawnRegion: 'CENTER' }
+    ],
+    ELITES: [
+        // Fogo / Vulcânico
+        { e: '🧞‍♂️', sprite: 'img/boss/ifrit.png', name: 'Ifrit', hp: 120, atk: 22, mp: 4, range: 2, abilities: ['burn', 'dodge'], minLevel: 2, filter: 'none', tags: ['FIRE', 'MYSTIC'], fav: ['ASHES'] },
+        { e: '🦅', sprite: 'img/boss/fenix.png', name: 'Fênix', hp: 90, atk: 18, mp: 5, range: 2, abilities: ['flying', 'burn'], minLevel: 2, filter: 'none', tags: ['FIRE', 'WING'], fav: ['ASHES'] },
+        { e: '🔥', sprite: 'img/boss/mula.png', name: 'Mula sem Cabeça', hp: 130, atk: 20, mp: 6, range: 1, abilities: ['hit_run', 'burn'], minLevel: 2, filter: 'none', tags: ['FIRE', 'STALKER'], fav: ['ASHES', 'PLAINS'] },
+        { e: '🐍', sprite: 'img/boss/boitata.png', name: 'Boitatá', hp: 140, atk: 24, mp: 4, range: 1, abilities: ['burn', 'camouflage'], minLevel: 3, filter: 'none', tags: ['FIRE', 'VENOM'], fav: ['SWAMP', 'FOREST'] },
+
+        // Neve
+        { e: '🐻‍❄️', sprite: 'img/boss/urso_polar_guerra.png', name: 'Urso de Guerra', hp: 160, atk: 25, mp: 3, range: 1, abilities: ['carapace', 'stun'], minLevel: 2, filter: 'none', tags: ['ICE', 'PRIMAL'], fav: ['SNOW'] },
+        { e: '🦍', sprite: 'img/boss/yeti.png', name: 'Yeti', hp: 180, atk: 22, mp: 3, range: 1, abilities: ['freeze', 'corte_amplo'], minLevel: 2, filter: 'none', tags: ['ICE', 'ROCK'], fav: ['SNOW'] },
+        { e: '🐺', sprite: 'img/boss/werewolf.png', name: 'Lobisomem', hp: 110, atk: 28, mp: 5, range: 1, abilities: ['lifesteal', 'swift'], minLevel: 2, filter: 'none', tags: ['ICE', 'STALKER'], fav: ['SNOW', 'FOREST'] },
+
+        // Floresta / Pântano
+        { e: '🐊', sprite: 'img/boss/cuca.png', name: 'Cuca', hp: 110, atk: 15, mp: 3, range: 3, abilities: ['poison', 'bind'], minLevel: 2, filter: 'none', tags: ['VENOM', 'MYSTIC'], fav: ['SWAMP'] },
+        { e: '🦅', sprite: 'img/boss/grifo.png', name: 'Grifo', hp: 130, atk: 20, mp: 5, range: 1, abilities: ['flying', 'swift'], minLevel: 2, filter: 'none', tags: ['WING', 'SILVESTRE'], fav: ['FOREST', 'MOUNTAIN'] },
+        { e: '👻', sprite: 'img/boss/banshee.png', name: 'Banshee', hp: 95, atk: 18, mp: 4, range: 2, abilities: ['dodge', 'bind'], minLevel: 2, filter: 'none', tags: ['UMBRAL', 'MYSTIC'], fav: ['SWAMP'] },
+
+        // Deserto / Planície / Tempestade
+        { e: '🪱', sprite: 'img/boss/verme_areia.png', name: 'Verme de Areia', hp: 150, atk: 26, mp: 3, range: 1, abilities: ['camouflage', 'stun'], minLevel: 2, filter: 'none', tags: ['SAND', 'STALKER'], fav: ['DESERT'] },
+        { e: '🐎', sprite: 'img/boss/pegaso.png', name: 'Pégaso', hp: 100, atk: 16, mp: 6, range: 1, abilities: ['flying', 'hit_run'], minLevel: 2, filter: 'none', tags: ['WING', 'CELESTIAL'], fav: ['PLAINS'] },
+        { e: '🦅', sprite: 'img/boss/ziz.png', name: 'Ziz', hp: 140, atk: 22, mp: 5, range: 2, abilities: ['flying', 'electric'], minLevel: 3, filter: 'none', tags: ['WING', 'ELECTRIC'], fav: ['PLAINS', 'MOUNTAIN'] },
+        { e: '🐂', sprite: 'img/boss/mino.png', name: 'Minotauro da Tormenta', hp: 170, atk: 28, mp: 4, range: 1, abilities: ['corte_amplo', 'electric'], minLevel: 3, filter: 'none', tags: ['PRIMAL', 'ELECTRIC'], fav: ['PLAINS'] },
+
+        // Abissal / Montanha / Umbral
+        { e: '🦕', sprite: 'img/boss/plessiossauro.png', name: 'Plessiossauro', hp: 160, atk: 22, mp: 4, range: 1, abilities: ['dive', 'swift'], minLevel: 2, filter: 'none', tags: ['ABYSSAL', 'PRIMAL'], fav: ['WATER'] },
+        { e: '🐉', sprite: 'img/boss/wyvern_pedra.png', name: 'Wyvern de Pedra', hp: 150, atk: 20, mp: 4, range: 1, abilities: ['flying', 'carapace'], minLevel: 2, filter: 'none', tags: ['ROCK', 'WING'], fav: ['MOUNTAIN'] },
+        { e: '🎃', sprite: 'img/boss/cavaleiro_cabeça.png', name: 'Cavaleiro Sem Cabeça', hp: 140, atk: 25, mp: 5, range: 1, abilities: ['hit_run', 'lifesteal'], minLevel: 3, filter: 'none', tags: ['UMBRAL', 'STALKER'], fav: ['DESERT', 'ASHES'] }
+    ]
+};
+
+
+
 const ALL_BEASTS = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW, ...BEASTS.BOSSES];
 
 const ARTIFACTS = [

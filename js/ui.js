@@ -1360,7 +1360,7 @@ async function openLaboratory() {
         if (rosterMemory.includes(sac)) rosterMemory.splice(rosterMemory.indexOf(sac), 1);
         if (deployedRoster.includes(sac)) deployedRoster.splice(deployedRoster.indexOf(sac), 1);
 
-        alert(`Fusão Concluída! ${base.name} devorou ${sac.name}.`);
+        alert(`Fusão Concluída! ${base.name} absorveu ${sac.name}.`);
         openLaboratory();
     };
     opts.appendChild(btnFus);
@@ -1756,9 +1756,9 @@ function triggerStageEnd(win) {
 }
 
 function advanceCampaign() {
-    game.isAnimating = false;
+    game.isAnimating = true; // Trava o jogo imediatamente!
     const tb = $('turn-blocker');
-    if (tb) tb.style.display = 'none';
+    if (tb) tb.style.display = 'block'; // Impede ações do usuário
     lastState = null;
     const undoBtn = $('btn-undo');
     if (undoBtn) undoBtn.disabled = true;
@@ -1769,21 +1769,92 @@ function advanceCampaign() {
     }
 
     game.spellCooldowns = {};
-
-    // BLINDAGEM MÁXIMA DE TELAS: Esconde todas as interfaces falsas
+    
+    // BLINDAGEM MÁXIMA DE TELAS
     hide('management-screen');
     hide('route-map-screen');
     hide('event-screen');
-    hide('continent-map-screen');
-    hide('kingdom-screen');
-    show('game-container'); // Revela a arena!
+    hide('continent-map-screen'); 
+    hide('kingdom-screen');       
+    show('game-container'); 
 
-    setTimeout(() => {
+    setTimeout(async () => {
         const r = deployedRoster.map(m => new Unit({ ...m, q: 0, r: 0, hasAttacked: false, status: null, isNew: false }));
         game.generateCampaignMap(r);
         renderer.initCamera(true);
         updateUI();
         autoSave();
+
+        // ========================================================
+        // CINEMÁTICA DE AURA: BOSS E ELITE
+        // ========================================================
+        let epicUnit = game.units.find(u => u.faction === 0 && (u.isBoss || u.isElite));
+        
+        if (epicUnit) {
+            game.isAnimating = true;
+            // 1. Foca a câmera brutalmente no monstrão
+            renderer.centerOn(epicUnit.q, epicUnit.r);
+            
+            // 2. Injeta CSS das animações (Tremor e FadeIn 3D) se não existir
+            if (!document.getElementById('cinematic-styles')) {
+                let style = document.createElement('style');
+                style.id = 'cinematic-styles';
+                style.innerHTML = `
+                    @keyframes cineFade {
+                        0% { opacity: 0; transform: scale(0.8) translateY(-20px) rotateX(20deg); filter: blur(10px); }
+                        15% { opacity: 1; transform: scale(1) translateY(0) rotateX(0deg); filter: blur(0px); }
+                        85% { opacity: 1; transform: scale(1.05) translateY(0); filter: blur(0px); }
+                        100% { opacity: 0; transform: scale(1.1) translateY(30px); filter: blur(10px); }
+                    }
+                    @keyframes screenShake {
+                        0%, 100% { transform: translate(0, 0); }
+                        10%, 50%, 90% { transform: translate(-3px, 2px); }
+                        30%, 70% { transform: translate(3px, -2px); }
+                    }
+                    .shake-active { animation: screenShake 0.4s ease-in-out infinite; }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // 3. Fundo escurecendo com Vignette
+            let overlay = document.createElement('div');
+            overlay.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:radial-gradient(circle, transparent 20%, rgba(0,0,0,0.8) 80%); z-index:9998; opacity:0; transition: opacity 0.5s; pointer-events:none;`;
+            document.body.appendChild(overlay);
+            setTimeout(() => overlay.style.opacity = '1', 50);
+
+            // 4. Texto Épico flutuando na tela
+            let cine = document.createElement('div');
+            let titleType = epicUnit.isBoss ? "GUARDIÃO DO DOMÍNIO" : "AMEAÇA ELITE";
+            let titleColor = epicUnit.isBoss ? "var(--gold)" : "#e74c3c";
+            
+            cine.style.cssText = `position:fixed; top:35%; left:0; width:100%; text-align:center; z-index:9999; pointer-events:none; animation: cineFade 4s cubic-bezier(0.1, 0.8, 0.2, 1) forwards; perspective: 500px;`;
+            cine.innerHTML = `
+                <div style="font-family: 'Cinzel', serif; font-size: 16px; letter-spacing: 10px; color: ${titleColor}; text-shadow: 0 0 10px rgba(0,0,0,0.8); margin-bottom: -15px; opacity:0.8;">${titleType}</div>
+                <div style="font-family: 'Cinzel', serif; font-size: 70px; font-weight: bold; color: #fff; text-shadow: 0px 5px 30px ${titleColor}, 0 0 50px #000; letter-spacing: 3px; text-transform: uppercase;">${epicUnit.name}</div>
+            `;
+            document.body.appendChild(cine);
+            
+            // 5. O Impacto: Treme a tela (Canvas) levemente!
+            let canvas = $('gameCanvas');
+            canvas.classList.add('shake-active');
+            setTimeout(() => canvas.classList.remove('shake-active'), 800); // Treme só no impacto inicial da leitura do nome
+            
+            // 6. Espera os 4 segundos da glória
+            await sleep(4000);
+            
+            // Limpa a tela
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 500);
+            cine.remove();
+            
+            // Volta a câmera focando no Herói do jogador
+            let pL = game.units.find(u => u.isLeader && u.faction === 1);
+            if (pL) renderer.centerOn(pL.q, pL.r);
+        }
+
+        // Libera as travas pro jogador jogar
+        game.isAnimating = false;
+        if (tb) tb.style.display = 'none';
     }, 50);
 }
 
@@ -2308,10 +2379,14 @@ function renderBuildingMenu() {
                              <button id="btn-barracks" class="btn-success" style="flex:2; font-size:10px; padding:6px;">Recrutar (-20💰)</button>
                              <button id="btn-barracks-pool" class="btn-primary" style="flex:1; font-size:10px; padding:6px; background:#2980b9;">Ver Tropas</button>
                          </div>`;
-        } else if (bData.id === 'BLACKSMITH') { // O VELHO FERREIRO COM OURO
-            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">`;
-            let fCost = 25;
-            actsHtml += `<button id="btn-forge-gold" class="btn-warning" style="width:100%; font-size:10px; padding:6px;">Forjar Equipamento Aleatório (-25💰)</button>`;
+        } else if (bData.id === 'BLACKSMITH') { // O FERREIRO COM OURO
+            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
+                <div style="font-size:9px; color:var(--gold-light); text-transform:uppercase; margin:4px 0;">Forja a Ouro</div>
+                <button onclick="craftGoldItem('RUSTY_SWORD', 10)" class="btn-warning" style="margin-bottom:4px;width:100%;font-size:10px;">🗡️ Espada Enferrujada (-10💰)</button>
+                <button onclick="craftGoldItem('WOODEN_SHIELD', 10)" class="btn-warning" style="margin-bottom:4px;width:100%;font-size:10px;">🛡️ Escudo de Madeira (-10💰)</button>
+                <button onclick="craftGoldItem('SWORD', 25)" class="btn-warning" style="margin-bottom:4px;width:100%;font-size:10px;">🗡️ Espada Longa (-25💰)</button>
+                <button onclick="craftGoldItem('SHIELD', 25)" class="btn-warning" style="margin-bottom:4px;width:100%;font-size:10px;">🛡️ Escudo de Aço (-25💰)</button>
+            `;
 
         } else if (bData.id === 'FORGE') { // A NOVA FORJA DE MONSTROS (CRAFT ESTRATÉGICO)
             actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
@@ -2396,6 +2471,15 @@ function renderBuildingMenu() {
             updateKingdomResourcesUI(); autoSave();
         };
 
+        // Crafting exclusivo do Ferreiro (Usa apenas Ouro)
+        window.craftGoldItem = function(itemId, goldCost) {
+            if ((game.gold || 0) < goldCost) { alert(`Ouro insuficiente! Você precisa de ${goldCost}💰.`); return; }
+            game.gold -= goldCost;
+            game.inventory.push({ id: itemId, level: 1 });
+            window.showKingdomPopup("Equipamento Comprado!", kRenderer.selectedHex, '#f1c40f');
+            updateKingdomResourcesUI(); autoSave();
+        };
+
         window.craftFieldItem = function (itemId, costObj) {
             for (let [res, amt] of Object.entries(costObj)) {
                 if ((game.resources[res] || 0) < amt) { alert(`Falta ${res.toUpperCase()}! Você precisa de ${amt}.`); return; }
@@ -2407,22 +2491,24 @@ function renderBuildingMenu() {
             updateKingdomResourcesUI(); autoSave();
         };
 
-        // A MÁGICA DO BIOTÉRIO (Descanso e Mutação Genética Baseada no Terreno!)
+        // BIOTÉRIO
         if ($('btn-bioterium')) {
             $('btn-bioterium').onclick = async () => {
-                let m = rosterMemory; // Puxa as feras que estão na Box
-                if (m.length === 0) { alert("Sua Box está vazia! Nenhuma fera para alocar."); return; }
+                // Junta a Box e a Equipe Ativa (excluindo apenas o Líder)
+                let m = [...rosterMemory, ...deployedRoster.filter(u => !u.isLeader)]; 
+                
+                if (m.length === 0) { alert("Nenhuma fera disponível para alocar!"); return; }
                 let u = await window.promptSelectUnit("Selecione a fera para o Biotério", m);
                 if (u) {
                     u.hp = u.maxHp; // Cura Máxima
-
+                    
                     // Adquire a passiva de Terreno Baseado no Chão da Construção
-                    let tId = hex.terrain.id || hex.terrain;
+                    let tId = hex.terrain.id || hex.terrain; 
                     if (!u.fav) u.fav = [];
                     if (!u.fav.includes(tId)) {
                         u.fav.push(tId);
                     }
-
+                    
                     window.showKingdomPopup(`🐾 Adaptou-se a ${tId}!`, hex, '#2ecc71');
                     kRenderer.animateHex(hex, "build");
                     if (typeof showZeldaPopup === 'function') await showZeldaPopup(u.emoji, "Mutação Genética!", `${u.name} descansou e agora possui afinidade com: ${tId}`);
