@@ -780,6 +780,19 @@ class Game {
         const hex = this.map.get(`${d.q},${d.r}`); if (!hex) return 1;
         let sysA = this.getSynergies(a.faction); let sysD = this.getSynergies(d.faction);
         let def = a.abilities.includes('pierce') ? 0 : hex.terrain.def;
+        // ========================================================
+        // ARTEFATOS ÔMEGA: ALTERAÇÕES DE DEFESA
+        // ========================================================
+        let omegaArts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
+
+        // ☠️ MANDÍBULA FERRUGÍNEA: Atacante ignora terreno inimigo
+        if (a.faction === 1 && omegaArts.includes('art_omega_south')) {
+            def = 0;
+        }
+        // ⛰️ PLACA TECTÔNICA: Defensor ganha armadura pesada (+40% Def) se não voar
+        if (d.faction === 1 && omegaArts.includes('art_omega_nw')) {
+            if (!d.abilities.includes('flying')) def += 0.40;
+        }
 
         if (d.fav.includes(hex.terrain.id)) def += 0.2;
         if (d.name === 'Almirante' && hex.terrain.id !== 'WATER') def -= 0.30;
@@ -833,7 +846,70 @@ class Game {
             let dodgeC = d.abilities.includes('dodge') ? 0.3 : 0; if (d.tags.includes('ABYSSAL') && sysD['ABYSSAL'] >= 3) dodgeC += 0.2; if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_wind')) dodgeC += 0.2;
             if (Math.random() < dodgeC) { if (typeof showPopup === 'function') showPopup("💨 Esquivou!", d, '#aaa'); if (typeof addLog === 'function') addLog(`💨 ${d.name} esquivou!`, '#aaa'); a.hasAttacked = true; if (!a.abilities.includes('hit_run') && !(a.tags.includes('SAND') && sysA['SAND'] >= 3)) a.mp = 0; await this.processRevide(a, d); if (typeof sleep === 'function') await sleep(600); return; }
 
-            const dmg = this.calcDmg(a, d); d.hp -= dmg; a.hasAttacked = true; if (!a.abilities.includes('hit_run') && !(a.tags.includes('SAND') && sysA['SAND'] >= 3)) a.mp = 0; if (a.faction === 1) a.addXp(15);
+            const dmg = this.calcDmg(a, d);
+            d.hp -= dmg;
+            // ========================================================
+            // ARTEFATOS ÔMEGA: REAÇÕES AO COMBATE
+            // ========================================================
+            let activeArts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
+
+            // 🧊 PRESA DO ZERO ABSOLUTO: Congela o inimigo instantaneamente se ele te atacar!
+            if (d.faction === 1 && activeArts.includes('art_omega_north')) {
+                a.status = 'chilled';
+                a.mp = 0; // O frio congela as pernas
+                if (typeof showPopup === 'function') showPopup("❄️ Zero Absoluto!", a, '#00ffff');
+            }
+
+            // EFEITOS QUANDO O JOGADOR É O ATACANTE
+            if (a.faction === 1) {
+                // 🌊 PÉROLA DAS PROFUNDEZAS: Lifesteal massivo se estiver atacando a partir da água
+                if (activeArts.includes('art_omega_sw')) {
+                    let hexA = this.map.get(`${a.q},${a.r}`);
+                    if (hexA && (hexA.terrain.id === 'WATER' || hexA.terrain.id === 'SEA' || hexA.terrain.id === 'ELECTRIC_WATER')) {
+                        let heal = Math.floor(dmg * 0.50);
+                        a.hp = Math.min(a.maxHp, a.hp + heal);
+                        if (typeof showPopup === 'function') showPopup(`+${heal} 💧`, a, '#3498db');
+                    }
+                }
+                // ☠️ MANDÍBULA FERRUGÍNEA: Aplica Veneno e Choque (Zera o MP) simultaneamente
+                if (activeArts.includes('art_omega_south') && d.hp > 0) {
+                    d.status = 'poison';
+                    d.mp = 0; // Isso simula o atordoamento/choque sem apagar a string 'poison'
+                    if (typeof showPopup === 'function') showPopup("Veneno Elétrico!", d, '#2ecc71');
+                }
+                // ⚡ AURÉOLA DA TORMENTA: Ataques à distância rebatem como raios!
+                if (activeArts.includes('art_omega_ne') && Hex.distance(a, d) > 1) {
+                    Hex.getNeighbors(d.q, d.r).forEach(n => {
+                        let t = this.getUnitAt(n.q, n.r);
+                        if (t && t.faction !== a.faction && t !== d && t.hp > 0) {
+                            let cDmg = Math.max(1, Math.floor(dmg * 0.30));
+                            t.hp -= cDmg;
+                            if (typeof showPopup === 'function') showPopup(`⚡ -${cDmg}`, t, '#00ffff');
+                            if (t.hp <= 0) this.handleDeath(t, a);
+                        }
+                    });
+                }
+            }
+
+            // ========================================================
+            // ARTEFATOS ÔMEGA: ATAQUE DUPLO DA COROA (CORREÇÃO)
+            // ========================================================
+            let hasCrown = activeArts.includes('art_omega_east');
+            let hexAtk = this.map.get(`${a.q},${a.r}`);
+            let onSand = hexAtk && (hexAtk.terrain.id === 'DESERT' || hexAtk.terrain.id === 'SAVANNA');
+
+            if (a.faction === 1 && hasCrown && onSand && !a.bonusAttackUsed) {
+                // Não gasta a ação de ataque e ativa a flag do bônus!
+                a.hasAttacked = false;
+                a.bonusAttackUsed = true;
+                if (typeof showPopup === 'function') showPopup("Ataque Duplo!", a, '#f1c40f');
+                if (typeof addLog === 'function') addLog(`👑 ${a.name} usou o poder da Areia para continuar atacando!`, '#f1c40f');
+            } else {
+                a.hasAttacked = true;
+            }
+
+            if (!a.abilities.includes('hit_run') && !(a.tags.includes('SAND') && sysA['SAND'] >= 3)) a.mp = 0; if (a.faction === 1) a.addXp(15);
+
             if (d.hp <= 0 && d.baseName === 'Rei Bárbaro' && (d.undyingTurns === undefined || d.undyingTurns === 0) && !d._hasUsedUndying) {
                 d.hp = 1;
                 d.undyingTurns = 2;
@@ -1261,7 +1337,6 @@ class Game {
                 if (hex) {
                     let resGained = null, icon = '', color = '';
 
-                    // O SEGREDO AQUI: (this.resources.wood || 0) garante que o NaN nunca exista!
                     if (hex.terrain.id === 'FOREST') { this.resources.wood = (this.resources.wood || 0) + 1; resGained = '+1 Madeira'; icon = '🌲'; color = '#27ae60'; }
                     else if (hex.terrain.id === 'MOUNTAIN') { this.resources.stone = (this.resources.stone || 0) + 1; resGained = '+1 Pedra'; icon = '⛰️'; color = '#95a5a6'; }
                     else if (hex.terrain.id === 'WATER') { this.resources.scales = (this.resources.scales || 0) + 1; resGained = '+1 Escama'; icon = '🐟'; color = '#3498db'; }
@@ -1285,7 +1360,87 @@ class Game {
             this.currentTurn = 0; this.updateTurnUI("Turno: Feras", 'var(--wild-color)'); this.processStatus(0);
             if (!this.gameOver) { try { if (typeof sleep === 'function') await sleep(600); if (typeof window.runWildTurn === 'function') await window.runWildTurn(); if (!this.gameOver) this.startNextTurn(); } catch (e) { console.error("ERRO NO TURNO FERAS:", e); if (typeof sleep === 'function') await sleep(1000); this.startNextTurn(); } }
         } else {
-            this.currentTurn = 1; this.turnCount++; const tb = document.getElementById('turn-blocker'); if (tb) tb.style.display = 'none'; this.updateTurnUI("Turno: Jogador", 'var(--player-color)'); this.processStatus(1);
+            this.currentTurn = 1;
+            this.turnCount++;
+            const tb = document.getElementById('turn-blocker');
+
+            // ========================================================
+            // CICLO DE DIA E NOITE
+            // ========================================================
+            let cycle = this.turnCount % 6;
+            if (typeof showMessage === 'function') {
+                if (cycle === 2) showMessage("O Pôr do Sol se aproxima...", "#e67e22");
+                if (cycle === 3) showMessage("A Noite Caiu...", "#8e44ad");
+                if (cycle === 5) showMessage("O Sol começa a nascer...", "#f1c40f");
+                if (cycle === 0 && this.turnCount > 0) showMessage("O Dia raiou!", "#3498db");
+            }
+            // ========================================================
+
+            if (tb) tb.style.display = 'none';
+            this.updateTurnUI("Turno: Jogador", 'var(--player-color)');
+            this.processStatus(1);
+            // ========================================================
+            // ARTEFATOS ÔMEGA: EFEITOS DE INÍCIO DE TURNO (PLAYER)
+            // ========================================================
+            let omegaArts = typeof getActiveArtifacts === 'function' ? getActiveArtifacts() : [];
+            if (omegaArts.length > 0) {
+                let hasRoot = omegaArts.includes('art_omega_west');
+                let hasCrown = omegaArts.includes('art_omega_east');
+                let hasCore = omegaArts.includes('art_omega_se');
+                let hasPearl = omegaArts.includes('art_omega_sw');
+                let hasHalo = omegaArts.includes('art_omega_ne');
+
+                // 1. APLICA OS BUFFS NAS SUAS FERAS VIVAS
+                this.units.filter(u => u.faction === 1).forEach(u => {
+                    u.bonusAttackUsed = false; // Reseta a trava de ataque duplo do turno anterior
+                    
+                    // 🌋 NÚCLEO DERRETIDO: Imunidade a Fogo passiva
+                    if (hasCore && !u.tags.includes('FIRE')) u.tags.push('FIRE');
+                    
+                    // 🌊 PÉROLA DAS PROFUNDEZAS: Concede Mergulho global
+                    if (hasPearl && !u.abilities.includes('dive')) u.abilities.push('dive');
+                    
+                    // ⚡ AURÉOLA DA TORMENTA: Concede Voo global
+                    if (hasHalo && !u.abilities.includes('flying')) u.abilities.push('flying');
+
+                    // 🍃 RAIZ DO MUNDO SOMBRIO: Regeneração em massa
+                    if (hasRoot) {
+                        let hex = this.map.get(`${u.q},${u.r}`);
+                        let isNature = hex && (hex.terrain.id === 'FOREST' || hex.terrain.id === 'SWAMP');
+                        let healAmount = Math.floor(u.maxHp * (isNature ? 0.50 : 0.25));
+                        if (u.hp < u.maxHp && u.hp > 0) {
+                            u.hp = Math.min(u.maxHp, u.hp + healAmount);
+                            if (typeof showPopup === 'function') showPopup(`+${healAmount} HP 🍃`, u, '#2ecc71');
+                        }
+                    }
+
+                    // 👑 COROA DO SOL ESCALDANTE: +2 Movimento, Bater e Correr e Secar o Solo!
+                    if (hasCrown) {
+                        if (!u.baseMaxMpOriginal) u.baseMaxMpOriginal = u.maxMp;
+                        u.maxMp = u.baseMaxMpOriginal + 2;
+                        u.mp = u.maxMp; 
+                        if (!u.abilities) u.abilities = [];
+                        if (!u.abilities.includes('hit_run')) u.abilities.push('hit_run');
+
+                        let hex = this.map.get(`${u.q},${u.r}`);
+                        if (hex && hex.terrain.id !== 'DESERT' && hex.terrain.id !== 'SAVANNA' && hex.terrain.id !== 'CASTLE') {
+                            hex.terrain = TERRAINS.DESERT;
+                            hex.timer = 0; 
+                        }
+                    }
+                });
+
+                // 2. APLICA O MODO INFELIZ NOS INIMIGOS (🌋 NÚCLEO DERRETIDO)
+                if (hasCore) {
+                    this.units.filter(u => u.faction !== 1 && !u.abilities.includes('flying')).forEach(e => {
+                        let hexE = this.map.get(`${e.q},${e.r}`);
+                        if (hexE && hexE.terrain.id !== 'BURNING_FOREST' && hexE.terrain.id !== 'WATER' && hexE.terrain.id !== 'SEA') {
+                            hexE.terrain = TERRAINS.BURNING_FOREST;
+                            hexE.timer = 3; // O chão queima por 3 rodadas
+                        }
+                    });
+                }
+            }
             if (typeof resetSpentMana === 'function') resetSpentMana(); if (typeof collectMana === 'function') collectMana();
             for (let sid in this.spellCooldowns) { if (this.spellCooldowns[sid] > 0) this.spellCooldowns[sid]--; }
             this.selectPlayerLeader(); if (this.selectedUnit && renderer) renderer.centerOn(this.selectedUnit.vq, this.selectedUnit.vr);
@@ -1715,6 +1870,83 @@ class Renderer {
                 ctx.fillText(`Lv${u.level}${starIcon}`, p.x - (this.hexSize * 0.65), p.y + (this.hexSize * 0.25));
             }
         });
+
+        // ========================================================
+        // FILTROS VISUAIS E ILUMINAÇÃO DINÂMICA (CORRIGIDO 2.0)
+        // ========================================================
+        let cycle = (this.game && this.game.turnCount !== undefined) ? (this.game.turnCount % 6) : 0;
+        let overlayColor = null;
+        
+        // Define a cor da atmosfera baseada no relógio
+        if (cycle === 2) overlayColor = 'rgba(211, 84, 0, 0.25)'; // Pôr do Sol (Laranja)
+        else if (cycle === 3 || cycle === 4) overlayColor = 'rgba(10, 15, 30, 0.75)'; // Noite (Escuro)
+        else if (cycle === 5) overlayColor = 'rgba(241, 196, 15, 0.15)'; // Amanhecer (Amarelo)
+
+        if (overlayColor) {
+            // Cria um "Canvas Fantasma" na memória apenas para a película do clima
+            if (!this.lightCanvas) {
+                this.lightCanvas = document.createElement('canvas');
+                this.lightCtx = this.lightCanvas.getContext('2d');
+            }
+            if (this.lightCanvas.width !== this.canvas.width || this.lightCanvas.height !== this.canvas.height) {
+                this.lightCanvas.width = this.canvas.width;
+                this.lightCanvas.height = this.canvas.height;
+            }
+
+            let lctx = this.lightCtx;
+            
+            // 1. Pinta o canvas fantasma com a escuridão
+            lctx.globalCompositeOperation = 'source-over';
+            lctx.clearRect(0, 0, this.lightCanvas.width, this.lightCanvas.height);
+            lctx.fillStyle = overlayColor;
+            lctx.fillRect(0, 0, this.lightCanvas.width, this.lightCanvas.height);
+
+            // 2. Transforma o pincel na Borracha Mágica (Mas agora só fura a película!)
+            lctx.globalCompositeOperation = 'destination-out';
+
+            // 3. FONTES DE LUZ DAS UNIDADES
+            this.game.units.forEach(u => {
+                if (u.faction === 1 || (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL') || u.tags.includes('ELECTRIC')))) {
+                    const p = this.getPos(u.vq, u.vr);
+                    
+                    let lightRadius = this.hexSize * 2.5; 
+                    if (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL'))) lightRadius = this.hexSize * 3.5;
+                    
+                    let grad = lctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, lightRadius);
+                    grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+                    grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.8)');
+                    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                    lctx.fillStyle = grad;
+                    lctx.beginPath();
+                    lctx.arc(p.x, p.y, lightRadius, 0, Math.PI * 2);
+                    lctx.fill();
+                }
+            });
+
+            // 4. FONTES DE LUZ DO CENÁRIO
+            this.game.map.forEach(h => {
+                if (h.terrain && (h.terrain.id === 'LAVA_RIFT' || h.terrain.id === 'BURNING_FOREST')) {
+                    const p = this.getPos(h.q, h.r);
+                    let lightRadius = this.hexSize * 2.5;
+                    let grad = lctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, lightRadius);
+                    grad.addColorStop(0, 'rgba(0, 0, 0, 0.9)');
+                    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                    
+                    lctx.fillStyle = grad;
+                    lctx.beginPath();
+                    lctx.arc(p.x, p.y, lightRadius, 0, Math.PI * 2);
+                    lctx.fill();
+                }
+            });
+
+            // 5. Carimba a película perfurada por cima do jogo real!
+            ctx.save();
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.drawImage(this.lightCanvas, 0, 0);
+            ctx.restore();
+        }
+
     }
 }
 
@@ -1746,7 +1978,7 @@ class KingdomRenderer {
 
         this.ctx.imageSmoothingEnabled = false;
         this.ctx.webkitImageSmoothingEnabled = false;
-        
+
         const mapW = 13 * Math.sqrt(3);
         const mapH = 9 * 1.5 + 0.5;
         this.hexSize = Math.max(Math.min(this.canvas.width / mapW, this.canvas.height / mapH) * 0.85, 30);
