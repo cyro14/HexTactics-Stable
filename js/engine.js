@@ -230,7 +230,47 @@ class Game {
     getNearestEnemy(unit, maxRange) { return this.units.filter(u => u.faction !== unit.faction && u.hp > 0 && Hex.distance(unit, u) <= maxRange).sort((a, b) => Hex.distance(unit, a) - Hex.distance(unit, b))[0] || null; }
     getUnitLvl(b) { if (b.isBoss) return this.currentLevel; let isS = b.hp >= 50 || b.atk >= 12; return Math.max(1, this.currentLevel - (isS ? 1 : 2)); }
     getSynergies(factionId) { return typeof calculateSynergies === 'function' ? calculateSynergies(this.units.filter(u => u.faction === factionId)) : {}; }
+    updateFogOfWar() {
+        let cycle = this.turnCount % 6;
+        let isNight = (cycle === 3 || cycle === 4);
 
+        this.units.forEach(u => {
+            // O jogador sempre vê as próprias tropas
+            if (u.faction === 1) return;
+
+            let inLight = false;
+
+            // Se for de dia, ou se a própria fera emitir luz (fogo/celestial), ela é visível
+            if (!isNight || (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL') || u.tags.includes('ELECTRIC')))) {
+                inLight = true;
+            } else {
+                // Checa se está sendo iluminado por uma unidade do jogador
+                for (let light of this.units) {
+                    if (light.faction === 1 || (light.tags && (light.tags.includes('FIRE') || light.tags.includes('CELESTIAL') || light.tags.includes('ELECTRIC')))) {
+                        let r = (light.tags && (light.tags.includes('FIRE') || light.tags.includes('CELESTIAL'))) ? 3 : 2;
+                        if (Hex.distance(u, light) <= r) { inLight = true; break; }
+                    }
+                }
+                // Checa se está pisando perto de lava ou floresta em chamas
+                if (!inLight) {
+                    for (let [key, hex] of this.map.entries()) {
+                        if (hex.terrain && (hex.terrain.id === 'LAVA_RIFT' || hex.terrain.id === 'BURNING_FOREST')) {
+                            if (Hex.distance(u, hex) <= 2) { inLight = true; break; }
+                        }
+                    }
+                }
+            }
+
+            u.isHiddenByNight = !inLight;
+
+            // INTEGRAÇÃO PERFEITA: Preserva o status do monstro que já estava camuflado no mato!
+            if (u.isHiddenByNight) {
+                u.isHidden = true; // A noite engole a fera
+            } else if (!u.abilities || (!u.abilities.includes('camouflage') && !u.abilities.includes('dive'))) {
+                u.isHidden = false; // A luz revela a fera (a menos que ela esteja mergulhada/camuflada)
+            }
+        });
+    }
     generateCampaignMap(savedRoster = []) {
         if (!this.eventFlags) this.eventFlags = {};
         let act = this.currentLevel; let depth = Math.max(0, this.currentFloor);
@@ -756,6 +796,8 @@ class Game {
                     }
                 } else { if (iDef.type !== 'equip') { let r = await iDef.f(u, this); if (r !== false) this.items.delete(k); } }
             }
+            this.updateFogOfWar(); // ATUALIZA A LUZ APÓS O PASSO!
+            if (typeof updateUI === 'function') updateUI(); if (renderer) renderer.draw();
             if (typeof updateUI === 'function') updateUI(); if (renderer) renderer.draw();
         }
 
@@ -812,6 +854,11 @@ class Game {
         if (d) Hex.getNeighbors(d.q, d.r).forEach(n => { let al = this.getUnitAt(n.q, n.r); if (al && al.faction === d.faction && al.abilities.includes('leadership') && al !== d) def += 0.2; });
 
         let baseAtk = a.getEffectiveAtk(this);
+        // Bônus Ofensivo da Noite
+        let cycle = this.turnCount % 6;
+        if ((cycle === 3 || cycle === 4) && a.tags && (a.tags.includes('STALKER') || a.tags.includes('UMBRAL'))) {
+            baseAtk = Math.floor(baseAtk * 1.30); // 30% mais forte no escuro!
+        }
         if (isFlanking) baseAtk *= 2;
 
         // Passivas Ofensivas de Líderes
@@ -843,8 +890,26 @@ class Game {
             if (d.faction === 1 && !d.isLeader) { let paladin = this.units.find(u => u.name === 'Paladina' && u.isLeader && u.faction === d.faction && Hex.distance(u, d) === 1 && u.hp > 0); if (paladin && paladin !== d && Math.random() < 0.20) { if (typeof showPopup === 'function') showPopup("🛡️ Proteção!", paladin, '#fffbc2'); if (typeof addLog === 'function') addLog(`🛡️ ${paladin.name} interceptou o ataque!`, '#fffbc2'); d = paladin; d._paladinDefending = true; } }
 
             if (d.faction === 0) d.alerted = true;
-            let dodgeC = d.abilities.includes('dodge') ? 0.3 : 0; if (d.tags.includes('ABYSSAL') && sysD['ABYSSAL'] >= 3) dodgeC += 0.2; if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_wind')) dodgeC += 0.2;
-            if (Math.random() < dodgeC) { if (typeof showPopup === 'function') showPopup("💨 Esquivou!", d, '#aaa'); if (typeof addLog === 'function') addLog(`💨 ${d.name} esquivou!`, '#aaa'); a.hasAttacked = true; if (!a.abilities.includes('hit_run') && !(a.tags.includes('SAND') && sysA['SAND'] >= 3)) a.mp = 0; await this.processRevide(a, d); if (typeof sleep === 'function') await sleep(600); return; }
+            let dodgeC = d.abilities.includes('dodge') ? 0.3 : 0;
+            // Bônus de Esquiva da Noite
+            let cycle = this.turnCount % 6;
+            if ((cycle === 3 || cycle === 4) && d.tags && (d.tags.includes('UMBRAL'))) {
+                dodgeC += 0.10; // 10% mais esquiva no escuro!
+            }
+            if (d.tags.includes('ABYSSAL') && sysD['ABYSSAL'] >= 3) dodgeC += 0.2;
+            if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_wind')) dodgeC += 0.2;
+            if (Math.random() < dodgeC) {
+                if (typeof showPopup === 'function') showPopup("💨 Esquivou!", d, '#aaa');
+                if (typeof addLog === 'function') addLog(`💨 ${d.name} esquivou!`, '#aaa'); a.hasAttacked = true;
+                if (!a.abilities.includes('hit_run') && !(a.tags.includes('SAND') && sysA['SAND'] >= 3)) a.mp = 0;
+                await this.processRevide(a, d);
+                let cycle = this.turnCount % 6;
+                if ((cycle === 3 || cycle === 4) && a.tags && (a.tags.includes('UMBRAL'))) {
+                    dodgeC += 0.10; // 10% mais esquiva no escuro!
+                }
+                if (typeof sleep === 'function') await sleep(600);
+                return;
+            }
 
             const dmg = this.calcDmg(a, d);
             d.hp -= dmg;
@@ -1393,13 +1458,13 @@ class Game {
                 // 1. APLICA OS BUFFS NAS SUAS FERAS VIVAS
                 this.units.filter(u => u.faction === 1).forEach(u => {
                     u.bonusAttackUsed = false; // Reseta a trava de ataque duplo do turno anterior
-                    
+
                     // 🌋 NÚCLEO DERRETIDO: Imunidade a Fogo passiva
                     if (hasCore && !u.tags.includes('FIRE')) u.tags.push('FIRE');
-                    
+
                     // 🌊 PÉROLA DAS PROFUNDEZAS: Concede Mergulho global
                     if (hasPearl && !u.abilities.includes('dive')) u.abilities.push('dive');
-                    
+
                     // ⚡ AURÉOLA DA TORMENTA: Concede Voo global
                     if (hasHalo && !u.abilities.includes('flying')) u.abilities.push('flying');
 
@@ -1418,14 +1483,14 @@ class Game {
                     if (hasCrown) {
                         if (!u.baseMaxMpOriginal) u.baseMaxMpOriginal = u.maxMp;
                         u.maxMp = u.baseMaxMpOriginal + 2;
-                        u.mp = u.maxMp; 
+                        u.mp = u.maxMp;
                         if (!u.abilities) u.abilities = [];
                         if (!u.abilities.includes('hit_run')) u.abilities.push('hit_run');
 
                         let hex = this.map.get(`${u.q},${u.r}`);
                         if (hex && hex.terrain.id !== 'DESERT' && hex.terrain.id !== 'SAVANNA' && hex.terrain.id !== 'CASTLE') {
                             hex.terrain = TERRAINS.DESERT;
-                            hex.timer = 0; 
+                            hex.timer = 0;
                         }
                     }
                 });
@@ -1445,6 +1510,9 @@ class Game {
             for (let sid in this.spellCooldowns) { if (this.spellCooldowns[sid] > 0) this.spellCooldowns[sid]--; }
             this.selectPlayerLeader(); if (this.selectedUnit && renderer) renderer.centerOn(this.selectedUnit.vq, this.selectedUnit.vr);
         }
+
+        this.updateFogOfWar(); // ATUALIZA A LUZ QUANDO O TURNO VIRA!
+        if (typeof updateUI === 'function') updateUI(); if (renderer) renderer.draw();
         if (typeof updateUI === 'function') updateUI(); if (renderer) renderer.draw();
         if (renderer) renderer.draw();
     }
@@ -1876,7 +1944,7 @@ class Renderer {
         // ========================================================
         let cycle = (this.game && this.game.turnCount !== undefined) ? (this.game.turnCount % 6) : 0;
         let overlayColor = null;
-        
+
         // Define a cor da atmosfera baseada no relógio
         if (cycle === 2) overlayColor = 'rgba(211, 84, 0, 0.25)'; // Pôr do Sol (Laranja)
         else if (cycle === 3 || cycle === 4) overlayColor = 'rgba(10, 15, 30, 0.75)'; // Noite (Escuro)
@@ -1894,7 +1962,7 @@ class Renderer {
             }
 
             let lctx = this.lightCtx;
-            
+
             // 1. Pinta o canvas fantasma com a escuridão
             lctx.globalCompositeOperation = 'source-over';
             lctx.clearRect(0, 0, this.lightCanvas.width, this.lightCanvas.height);
@@ -1908,10 +1976,10 @@ class Renderer {
             this.game.units.forEach(u => {
                 if (u.faction === 1 || (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL') || u.tags.includes('ELECTRIC')))) {
                     const p = this.getPos(u.vq, u.vr);
-                    
-                    let lightRadius = this.hexSize * 2.5; 
+
+                    let lightRadius = this.hexSize * 2.5;
                     if (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL'))) lightRadius = this.hexSize * 3.5;
-                    
+
                     let grad = lctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, lightRadius);
                     grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
                     grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.8)');
@@ -1932,7 +2000,7 @@ class Renderer {
                     let grad = lctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, lightRadius);
                     grad.addColorStop(0, 'rgba(0, 0, 0, 0.9)');
                     grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-                    
+
                     lctx.fillStyle = grad;
                     lctx.beginPath();
                     lctx.arc(p.x, p.y, lightRadius, 0, Math.PI * 2);
