@@ -14,14 +14,14 @@ class Hex {
 class Unit {
     constructor(d) {
         let lDef = typeof LEADERS !== 'undefined' ? LEADERS.find(x => x.name === (d.baseName || d.name)) : null;
-        
+
         // INTERCEPTOR INTELIGENTE: Se não for herói, varre todas as listas de criaturas atrás do sprite!
         let bDef = null;
         if (!lDef && typeof BEASTS !== 'undefined') {
             let masterPool = [...(BEASTS.LAND || []), ...(BEASTS.WATER || []), ...(BEASTS.SNOW || []), ...(BEASTS.BOSSES || []), ...(BEASTS.ELITES || [])];
             bDef = masterPool.find(x => x.name === (d.baseName || d.name));
         }
-        
+
         // FUNÇÃO AUXILIAR: Normaliza nomes (Remove acentos, espaços viram sublinhados)
         let normalizeName = (str) => {
             if (!str) return '';
@@ -38,9 +38,9 @@ class Unit {
                 finalSprite = lDef.sprite;
             } else if (bDef) {
                 // Se for Boss ou Elite, busca na pasta de bosses, se for lacaio comum, vai para img/units/
-                let isEpic = (typeof BEASTS !== 'undefined' && BEASTS.BOSSES && BEASTS.BOSSES.some(b => b.name === bDef.name)) || 
-                             (typeof BEASTS !== 'undefined' && BEASTS.ELITES && BEASTS.ELITES.some(e => e.name === bDef.name));
-                
+                let isEpic = (typeof BEASTS !== 'undefined' && BEASTS.BOSSES && BEASTS.BOSSES.some(b => b.name === bDef.name)) ||
+                    (typeof BEASTS !== 'undefined' && BEASTS.ELITES && BEASTS.ELITES.some(e => e.name === bDef.name));
+
                 let folder = isEpic ? 'img/boss/' : 'img/units/';
                 finalSprite = folder + normalizeName(bDef.name || d.name) + '.png';
             }
@@ -50,7 +50,7 @@ class Unit {
             q: d.q, r: d.r, vq: d.q, vr: d.r, faction: d.faction,
             isLeader: d.isLeader || false, name: d.name, baseName: d.baseName || d.name,
             emoji: d.emoji,
-            sprite: finalSprite, 
+            sprite: finalSprite,
             hp: d.hp, maxHp: d.maxHp, mp: d.mp, maxMp: d.maxMp,
             atk: d.atk, range: d.range, level: d.level || 1, xp: d.xp || 0,
             starLevel: d.starLevel || 1,
@@ -200,8 +200,8 @@ class Game {
         this.spellCooldowns = {}; this.activeSpell = null; this.lastDeadAlly = null; this.turnCount = 0;
         this.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
         this.kingdomMap = new Map();
-        this.conqueredRegions = []; 
-        this.currentRegionId = null; 
+        this.conqueredRegions = [];
+        this.currentRegionId = null;
     }
 
     generateKingdomMap() {
@@ -246,7 +246,7 @@ class Game {
         // ----------------------------------------------------
         let atoAtual = this.currentLevel || 1;
         let noAtual = this.currentFloor !== undefined ? this.currentFloor : 0;
-        
+
         let mapKey = `${this.currentRegionId}_NO${noAtual}`;
         let customMap = typeof CUSTOM_MAPS !== 'undefined' ? (CUSTOM_MAPS[mapKey] || CUSTOM_MAPS[`ATO${atoAtual}_NO${noAtual}`]) : null;
         let pS = null; let aS = null;
@@ -272,7 +272,7 @@ class Game {
                 if (h.terrain && h.terrain.id === 'CASTLE') bases.push(h);
             });
             if (bases.length >= 2) {
-                bases.sort((a, b) => a.q - b.q); 
+                bases.sort((a, b) => a.q - b.q);
                 pS = { q: bases[0].q, r: bases[0].r };
                 aS = { q: bases[bases.length - 1].q, r: bases[bases.length - 1].r };
             }
@@ -321,6 +321,23 @@ class Game {
                         else if (rnd > 0.52) t = TERRAINS.DESERT;
                         else if (rnd > 0.45) t = TERRAINS.VILLAGE;
                     }
+
+                    // ========================================================
+                    // GERAÇÃO DE TERRENOS ESPECIAIS (AGORA NO LUGAR CERTO!)
+                    // ========================================================
+                    let specRnd = Math.random();
+                    if (specRnd > 0.94) {
+                        let newT = null;
+                        if (t.id === 'WATER' || t.id === 'SEA') newT = TERRAINS.REEF;
+                        else if (t.id === 'DESERT' || t.id === 'SAVANNA') newT = Math.random() > 0.5 ? TERRAINS.QUICKSAND : TERRAINS.GOLD_DEPOSIT;
+                        else if (t.id === 'MOUNTAIN' || t.id === 'ASHES' || t.id === 'BURNING_FOREST') newT = Math.random() > 0.6 ? TERRAINS.LAVA_RIFT : (Math.random() > 0.5 ? TERRAINS.STONE_DEPOSIT : TERRAINS.MANA_RIFT);
+                        else if (t.id === 'FOREST' || t.id === 'SWAMP') newT = Math.random() > 0.5 ? TERRAINS.DNA_DEPOSIT : TERRAINS.MANA_RIFT;
+                        else if (t.id === 'PLAINS' || t.id === 'SNOW') newT = Math.random() > 0.85 ? TERRAINS.BLACK_MARKET : (Math.random() > 0.5 ? TERRAINS.GOLD_DEPOSIT : TERRAINS.DNA_DEPOSIT);
+
+                        if (newT !== undefined && newT !== null) t = newT;
+                    }
+
+                    // AGORA SIM, SALVAMOS O HEXÁGONO!
                     this.map.set(`${q},${r}`, new Hex(q, r, t));
                 }
             }
@@ -355,17 +372,17 @@ class Game {
         let sFac = 1 + ((act - 1) * 0.4) + (depth * 0.05);
         let targetLoreFac = (typeof LORE_FACTIONS !== 'undefined') ? Object.keys(LORE_FACTIONS).find(k => LORE_FACTIONS[k].startNode === this.currentRegionId) : null;
         let isCapitalRetake = (this.conqueredRegions && this.conqueredRegions.length === 0);
-        
+
         let aiPool = [];
         if (typeof LEADERS !== 'undefined' && this.leaderData) {
-            LEADERS.forEach(l => { 
+            LEADERS.forEach(l => {
                 if (l.id !== this.leaderData.id) {
                     if (isCapitalRetake) {
                         if (l.loreFaction !== this.leaderData.loreFaction) aiPool.push(l);
                     } else if (targetLoreFac) {
                         if (l.loreFaction === targetLoreFac) aiPool.push(l);
                     }
-                } 
+                }
             });
         }
 
@@ -373,38 +390,38 @@ class Game {
             aiPool = LEADERS.filter(l => l.id !== (this.leaderData ? this.leaderData.id : null));
         }
 
-        aiPool.sort(() => Math.random() - 0.5); 
-        let chosenAI = aiPool[0] || { name: 'Desconhecido', emoji: '💀', hp: 50, atk: 10, mp: 3, range: 1, tags: [], fav: [] }; 
-        let vHp = Math.floor(chosenAI.hp * sFac) + 20; 
+        aiPool.sort(() => Math.random() - 0.5);
+        let chosenAI = aiPool[0] || { name: 'Desconhecido', emoji: '💀', hp: 50, atk: 10, mp: 3, range: 1, tags: [], fav: [] };
+        let vHp = Math.floor(chosenAI.hp * sFac) + 20;
         let vAtk = Math.floor(chosenAI.atk * sFac) + 4;
-        
+
         let aiSpells = [];
         if (typeof SPELLS !== 'undefined') {
             SPELLS.forEach(s => {
                 if (s.level <= act && s.tags.some(t => (chosenAI.tags || []).includes(t))) aiSpells.push(s.id);
             });
         }
-        this.units.push(new Unit({ q: aS.q, r: aS.r, faction: 2, isLeader: true, name: chosenAI.name, baseName: chosenAI.name, emoji: chosenAI.emoji, hp: vHp, maxHp: vHp, mp: chosenAI.mp, maxMp: chosenAI.mp, atk: vAtk, range: chosenAI.range, isBoss: true, level: act, tags: chosenAI.tags || [], fav: chosenAI.fav || [], knownSpells: aiSpells })); 
-        
+        this.units.push(new Unit({ q: aS.q, r: aS.r, faction: 2, isLeader: true, name: chosenAI.name, baseName: chosenAI.name, emoji: chosenAI.emoji, hp: vHp, maxHp: vHp, mp: chosenAI.mp, maxMp: chosenAI.mp, atk: vAtk, range: chosenAI.range, isBoss: true, level: act, tags: chosenAI.tags || [], fav: chosenAI.fav || [], knownSpells: aiSpells }));
+
         let maxL = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) ? ((this.leaderData ? this.leaderData.limit : 6) + 1) : ((this.leaderData ? this.leaderData.limit : 6) || 6);
         const numAI = Math.min(maxL + 2, act + Math.floor(depth / 2));
-        const aN = Hex.getNeighbors(aS.q, aS.r); 
-        
+        const aN = Hex.getNeighbors(aS.q, aS.r);
+
         let lP = [];
         if (typeof BEASTS !== 'undefined') {
             lP = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW].filter(b => (!b.minLevel || act >= b.minLevel) && b.tags && b.tags.some(t => (chosenAI.tags || []).includes(t)));
-            if (lP.length === 0) lP = BEASTS.LAND; 
+            if (lP.length === 0) lP = BEASTS.LAND;
         }
 
-        for (let i = 0; i < numAI; i++) { 
+        for (let i = 0; i < numAI; i++) {
             if (lP.length === 0) break;
-            const b = lP[Math.floor(Math.random() * lP.length)]; 
-            const hn = aN[i]; 
-            let uLvl = this.getUnitLvl(b); 
-            let fFac = 1 + (uLvl - 1) * 0.2; 
-            if (hn && this.map.has(`${hn.q},${hn.r}`)) { 
-                this.units.push(new Unit({ q: hn.q, r: hn.r, faction: 2, name: b.name, baseName: b.name, emoji: b.e, hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac), mp: b.mp, maxMp: b.mp, atk: Math.floor(b.atk * fFac), range: b.range, abilities: [...(b.abilities || [])], filter: b.filter || 'none', tags: b.tags || [], fav: b.fav || [], level: uLvl })); 
-            } 
+            const b = lP[Math.floor(Math.random() * lP.length)];
+            const hn = aN[i];
+            let uLvl = this.getUnitLvl(b);
+            let fFac = 1 + (uLvl - 1) * 0.2;
+            if (hn && this.map.has(`${hn.q},${hn.r}`)) {
+                this.units.push(new Unit({ q: hn.q, r: hn.r, faction: 2, name: b.name, baseName: b.name, emoji: b.e, hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac), mp: b.mp, maxMp: b.mp, atk: Math.floor(b.atk * fFac), range: b.range, abilities: [...(b.abilities || [])], filter: b.filter || 'none', tags: b.tags || [], fav: b.fav || [], level: uLvl }));
+            }
         }
 
         // ========================================================
@@ -436,10 +453,10 @@ class Game {
         // ========================================================
         // SPAWN DO CHEFE OU ELITE (SISTEMA DE ALERTA E REGIAO FIXADO)
         // ========================================================
-        let numW = 4 + act; 
+        let numW = 4 + act;
         const vC = wH.sort((a, b) => Math.abs(Hex.distance(a, pS) - Hex.distance(a, aS)) - Math.abs(Hex.distance(b, pS) - Hex.distance(b, aS)));
-        
-        if (vC.length > 0 && typeof BEASTS !== 'undefined') { 
+
+        if (vC.length > 0 && typeof BEASTS !== 'undefined') {
             let bDef = null;
             let isBossUnit = false;
             let isEliteUnit = false;
@@ -455,17 +472,17 @@ class Game {
                     bDef = bossesSource.find(b => b.name === 'Leviatã Umbral') || bDef;
                 }
                 isBossUnit = true;
-            } 
+            }
             // 2. É NÓ DE ELITE?
             else if (this.currentRouteType === 'ELITE') {
                 // Tenta filtrar por nível E tags da região atual
                 let validElites = elitesSource.filter(b => (!b.minLevel || act >= b.minLevel) && b.tags && b.tags.some(t => currentRegionTags.includes(t)));
-                
+
                 // CORREÇÃO DO IFRIT: Se não houver elite do nível do Ato (ex: Ato 1), ignora o nível e força o bioma da região!
                 if (validElites.length === 0) {
                     validElites = elitesSource.filter(b => b.tags && b.tags.some(t => currentRegionTags.includes(t)));
                 }
-                
+
                 if (validElites.length > 0) {
                     bDef = validElites[Math.floor(Math.random() * validElites.length)];
                 } else {
@@ -477,21 +494,21 @@ class Game {
 
             // SE ENCONTROU O MONSTRO, INJETA NO TABULEIRO
             if (bDef) {
-                let epicUnit = new Unit({ 
-                    q: vC[0].q, r: vC[0].r, faction: 0, 
-                    name: bDef.name, baseName: bDef.name, emoji: bDef.e, 
-                    sprite: bDef.sprite, 
-                    hp: Math.floor(bDef.hp * sFac), maxHp: Math.floor(bDef.hp * sFac), 
-                    mp: bDef.mp, maxMp: bDef.mp, 
-                    atk: Math.floor(bDef.atk * sFac), range: bDef.range, 
-                    abilities: [...(bDef.abilities || [])], filter: bDef.filter || 'none', 
-                    tags: bDef.tags || [], fav: bDef.fav || [], 
+                let epicUnit = new Unit({
+                    q: vC[0].q, r: vC[0].r, faction: 0,
+                    name: bDef.name, baseName: bDef.name, emoji: bDef.e,
+                    sprite: bDef.sprite,
+                    hp: Math.floor(bDef.hp * sFac), maxHp: Math.floor(bDef.hp * sFac),
+                    mp: bDef.mp, maxMp: bDef.mp,
+                    atk: Math.floor(bDef.atk * sFac), range: bDef.range,
+                    abilities: [...(bDef.abilities || [])], filter: bDef.filter || 'none',
+                    tags: bDef.tags || [], fav: bDef.fav || [],
                     isBoss: true, // CORREÇÃO DO ALERTA: Força true para ativar o raio de aggro da IA!
-                    level: act 
+                    level: act
                 });
                 epicUnit.isElite = isEliteUnit; // Mantém a flag para o tamanho correto e cinemática
-                this.units.push(epicUnit); 
-                wH = wH.filter(h => h !== vC[0]); 
+                this.units.push(epicUnit);
+                wH = wH.filter(h => h !== vC[0]);
             }
         }
 
@@ -501,7 +518,7 @@ class Game {
         while (numW > 0 && wH.length > 0 && typeof BEASTS !== 'undefined') {
             const hex = wH.splice(Math.floor(Math.random() * wH.length), 1)[0];
             let masterPool = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW];
-            
+
             let pool = masterPool.filter(b => {
                 if (b.minLevel && act < b.minLevel) return false;
                 if (!b.tags || !b.tags.some(t => currentRegionTags.includes(t))) return false;
@@ -521,21 +538,20 @@ class Game {
                 const b = pool[Math.floor(Math.random() * pool.length)];
                 let uLvl = this.getUnitLvl(b);
                 let fFac = 1 + (uLvl - 1) * 0.2;
-                
-                this.units.push(new Unit({ 
-                    q: hex.q, r: hex.r, faction: 0, 
-                    name: b.name, baseName: b.name, emoji: b.e, 
-                    hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac), 
-                    mp: b.mp, maxMp: b.mp, 
-                    atk: Math.floor(b.atk * fFac), range: b.range, 
-                    abilities: [...(b.abilities || [])], filter: b.filter || 'none', 
-                    tags: b.tags || [], fav: b.fav || [], level: uLvl 
+
+                this.units.push(new Unit({
+                    q: hex.q, r: hex.r, faction: 0,
+                    name: b.name, baseName: b.name, emoji: b.e,
+                    hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac),
+                    mp: b.mp, maxMp: b.mp,
+                    atk: Math.floor(b.atk * fFac), range: b.range,
+                    abilities: [...(b.abilities || [])], filter: b.filter || 'none',
+                    tags: b.tags || [], fav: b.fav || [], level: uLvl
                 }));
             }
             numW--;
         }
 
-        if (this.eventFlags.forceSnow) { this.map.forEach(h => { h.terrain = TERRAINS.SNOW; }); }
         if (this.eventFlags.noVillages) { this.map.forEach(h => { if (h.terrain.id === 'VILLAGE') h.terrain = TERRAINS.PLAINS; }); }
         if (this.eventFlags.crystalHexes) { let keys = Array.from(this.map.keys()).sort(() => Math.random() - 0.5); for (let i = 0; i < 4; i++) if (keys[i]) this.map.get(keys[i]).isCrystal = true; }
         if (this.eventFlags.hauntedCurse) { this.units.filter(u => u.faction !== 1).forEach(u => { u.maxHp = Math.max(1, Math.floor(u.maxHp * 0.8)); u.hp = u.maxHp; }); }
@@ -666,6 +682,30 @@ class Game {
 
         u.q = tQ; u.r = tR; u.vq = tQ; u.vr = tR; this.checkVillageCapture(u); let k = `${tQ},${tR}`;
 
+        // ========================================================
+        // EFEITOS DE TERRENO (AO PISAR)
+        // ========================================================
+        let hInfo = this.map.get(k);
+        if (hInfo && hInfo.terrain) {
+            let isFlying = u.abilities.includes('flying');
+
+            // 🌀 Areia Movediça: Zera MP se não voar
+            if (hInfo.terrain.id === 'QUICKSAND' && !isFlying) {
+                u.mp = 0;
+                if (typeof showPopup === 'function') showPopup("Preso!", u, '#d4a373');
+            }
+            // 🌋 Fenda de Lava: Dano se não voar
+            if (hInfo.terrain.id === 'LAVA_RIFT' && !isFlying) {
+                u.hp -= 10;
+                if (typeof showPopup === 'function') showPopup("-10 🔥", u, '#c0392b');
+                if (u.hp <= 0) this.handleDeath(u);
+            }
+            // ⛺ Mercado Negro: Abre a loja se for o Líder
+            if (hInfo.terrain.id === 'BLACK_MARKET' && u.faction === 1 && u.isLeader) {
+                if (typeof openBlackMarket === 'function') openBlackMarket();
+            }
+        }
+
         // MECÂNICA T-REX: Esmaga o terreno e gera RECURSOS EM DOBRO
         if (u.baseName === 'T-Rex') {
             let h = this.map.get(k);
@@ -743,8 +783,9 @@ class Game {
 
         if (d.fav.includes(hex.terrain.id)) def += 0.2;
         if (d.name === 'Almirante' && hex.terrain.id !== 'WATER') def -= 0.30;
-        if (d.tags.includes('ABYSSAL') && hex.terrain.id === 'WATER') def += 0.30;
-
+        if (d.tags.includes('ABYSSAL') && (hex.terrain.id === 'WATER' || hex.terrain.id === 'REEF')) {
+            def += (hex.terrain.id === 'REEF' ? 0.50 : 0.30); // 50% de defesa no Recife!
+        }
         if (d.tags.includes('WING') && sysD['WING'] >= 2 && def < 0) def = 0;
         if (d.tags.includes('ROCK') && sysD['ROCK'] >= 3) def = Math.min(0.60, def + 0.30);
         if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_armor')) def += 0.15;
@@ -1225,6 +1266,10 @@ class Game {
                     else if (hex.terrain.id === 'MOUNTAIN') { this.resources.stone = (this.resources.stone || 0) + 1; resGained = '+1 Pedra'; icon = '⛰️'; color = '#95a5a6'; }
                     else if (hex.terrain.id === 'WATER') { this.resources.scales = (this.resources.scales || 0) + 1; resGained = '+1 Escama'; icon = '🐟'; color = '#3498db'; }
                     else if (hex.terrain.id === 'DESERT') { this.resources.sand = (this.resources.sand || 0) + 1; resGained = '+1 Areia'; icon = '⏳'; color = '#f1c40f'; }
+                    else if (hex.terrain.id === 'DNA_DEPOSIT') { this.dna = (this.dna || 0) + 1; resGained = '+1 DNA'; icon = '🧬'; color = '#2ecc71'; }
+                    else if (hex.terrain.id === 'GOLD_DEPOSIT') { this.gold = (this.gold || 0) + 5; resGained = '+5 Ouro'; icon = '💰'; color = '#f1c40f'; }
+                    else if (hex.terrain.id === 'STONE_DEPOSIT') { this.resources.stone = (this.resources.stone || 0) + 5; resGained = '+5 Pedra'; icon = '🪨'; color = '#7f8c8d'; }
+                    else if (hex.terrain.id === 'MANA_RIFT' && u.tags && u.tags.length > 0) { let primaryTag = u.tags[0]; this.manaPool[primaryTag] = (this.manaPool[primaryTag] || 0) + 1; resGained = '+1 Mana'; icon = '🔮'; color = '#9b59b6'; }
 
                     if (resGained && typeof showPopup === 'function') {
                         showPopup(`${icon} ${resGained}`, u, color);
@@ -1349,7 +1394,7 @@ class Renderer {
         this.game.map.forEach(hex => {
             const p = this.getPos(hex.q, hex.r);
 
-           // 1. APLICA A MÁSCARA (CLIP) PARA CORTAR O QUADRADO EM FORMATO HEXAGONAL
+            // 1. APLICA A MÁSCARA (CLIP) PARA CORTAR O QUADRADO EM FORMATO HEXAGONAL
             ctx.save();
             this.hexPath(ctx, p.x, p.y, this.hexSize - 0.5);
             ctx.clip();
@@ -1377,11 +1422,11 @@ class Renderer {
                     let varIndex = hash % tCols;
                     selectedTile = { x: varIndex, y: 0 };
                 }
-            } 
+            }
             // SE NÃO FOR INDIVIDUAL, USA O TILESET PRINCIPAL
             else if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && hex.terrain && hex.terrain.variations) {
                 drawCustom = true;
-                tCols = 6; 
+                tCols = 6;
                 tRows = 12;
                 let varIndex = hex.customVar !== undefined ? hex.customVar : (hash % hex.terrain.variations.length);
                 selectedTile = hex.terrain.variations[varIndex];
@@ -1399,7 +1444,7 @@ class Renderer {
                 let drawH = hexHeight * zoom;
 
                 // AJUSTE VERTICAL: Sobe a imagem em 15% para centralizar perfeitamente no Hexágono!
-                let offsetY = this.hexSize * 0.15; 
+                let offsetY = this.hexSize * 0.15;
 
                 ctx.drawImage(
                     currentImg,
@@ -1419,11 +1464,10 @@ class Renderer {
             if (this.game.reachableHexes.has(hex.getKey())) { ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3; ctx.stroke(); }
             else {
                 // Borda super suave (Espessura 0.5 e Opacidade 15%)
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-                ctx.lineWidth = 0.5;
-                //ctx.stroke();
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+                ctx.lineWidth = 3;
+                ctx.stroke();
 
-                // DICA: Se quiser remover a borda COMPLETAMENTE, basta apagar o "ctx.stroke();" da linha acima.
             }
             if (hex.hasPremiumLure) {
                 ctx.font = `${this.hexSize * 0.7}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1474,13 +1518,13 @@ class Renderer {
 
             // DETECTOR SUPREMO: Verifica se o nome da unidade pertence ao panteão de Bosses Reais
             let isRealBoss = typeof BEASTS !== 'undefined' && BEASTS.BOSSES && BEASTS.BOSSES.some(b => b.name === u.name);
-            
+
             // Define as escalas perfeitas: Boss Real = 1.38, Elite = 1.22, Heróis/Líderes comuns = 1.30, Outros = 1.0
             let sMod = isRealBoss ? 1.38 : (u.isElite ? 1.22 : (u.isLeader ? 1.30 : 1.0));
-            
+
             // Bônus de tamanho para capangas comuns que sobem de nível
             if (u.level > 1 && !u.isLeader && !isRealBoss && !u.isElite) sMod += 0.10;
-            
+
             const r = this.hexSize * 0.6 * sMod;
 
             // ==========================================
@@ -1529,35 +1573,35 @@ class Renderer {
 
             if (u.sprite) {
                 if (!window.imageCache) window.imageCache = {};
-                
+
                 if (!window.imageCache[u.sprite]) {
                     // Coloca uma trava temporária para evitar loops de carregamento
-                    window.imageCache[u.sprite] = "LOADING"; 
-                    
+                    window.imageCache[u.sprite] = "LOADING";
+
                     let img = new Image();
-                    img.onload = () => {                        
+                    img.onload = () => {
                         try {
                             let imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
                             let data = imgData.data;
-                            
+
                             // Coleta a cor exata do fundo lendo o primeiríssimo pixel (superior esquerdo)
                             let bgR = data[0];
                             let bgG = data[1];
                             let bgB = data[2];
-                            
+
                             // Margem de tolerância para pequenas variações do cinza
-                            let tolerance = 20; 
-                            
+                            let tolerance = 20;
+
                             // Varre a imagem inteira trocando a cor de fundo por transparência
                             for (let i = 0; i < data.length; i += 4) {
                                 let r = data[i];
-                                let g = data[i+1];
-                                let b = data[i+2];
-                                
-                                if (Math.abs(r - bgR) < tolerance && 
-                                    Math.abs(g - bgG) < tolerance && 
+                                let g = data[i + 1];
+                                let b = data[i + 2];
+
+                                if (Math.abs(r - bgR) < tolerance &&
+                                    Math.abs(g - bgG) < tolerance &&
                                     Math.abs(b - bgB) < tolerance) {
-                                    data[i+3] = 0; // Transparência absoluta!
+                                    data[i + 3] = 0; // Transparência absoluta!
                                 }
                             }
                             tempCtx.putImageData(imgData, 0, 0);
@@ -1574,15 +1618,15 @@ class Renderer {
                     };
                     img.src = u.sprite;
                 }
-                
+
                 let cachedAsset = window.imageCache[u.sprite];
                 // Verifica se o asset já foi processado e está pronto
                 if (cachedAsset && cachedAsset !== "LOADING" && cachedAsset !== "ERROR") {
                     let isRealBoss = typeof BEASTS !== 'undefined' && BEASTS.BOSSES && BEASTS.BOSSES.some(b => b.name === u.name);
                     let isEpicMonster = isRealBoss || u.isElite;
-                    
-                    let maxW = this.hexSize * (isEpicMonster ? 2.1 : 1.25) * sMod; 
-                    let maxH = this.hexSize * (isEpicMonster ? 2.4 : 1.5) * sMod;  
+
+                    let maxW = this.hexSize * (isEpicMonster ? 2.1 : 1.25) * sMod;
+                    let maxH = this.hexSize * (isEpicMonster ? 2.4 : 1.5) * sMod;
 
                     // Funciona perfeitamente tanto com Image quanto com Canvas processado
                     let naturalW = cachedAsset.naturalWidth || cachedAsset.width;
@@ -1595,9 +1639,19 @@ class Renderer {
 
                     let spriteY = p.y + (this.hexSize * 0.60) - drawH;
 
+                    // EFEITO DE DESTAQUE: Sombra projetada para descolar o sprite do cenário
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)'; // Sombra preta bem forte
+                    ctx.shadowBlur = 12; // Esfumaçado do contorno
+                    ctx.shadowOffsetY = 6; // Joga a sombra um pouco para baixo
+
+                    // Carimba o sprite (agora com sombra!)
                     ctx.drawImage(cachedAsset, p.x - (drawW / 2), spriteY, drawW, drawH);
 
-                    uiTopY = spriteY - 5; 
+                    // RESET DE SOMBRA: Muito importante para não sombrear o resto da interface!
+                    ctx.shadowColor = 'transparent';
+                    ctx.shadowBlur = 0;
+                    ctx.shadowOffsetY = 0;
+                    uiTopY = spriteY - 5;
                 } else if (cachedAsset !== "LOADING") {
                     ctx.fillText(u.emoji, p.x, p.y + 1);
                 }
@@ -1618,7 +1672,7 @@ class Renderer {
 
             // --- BARRA DE HP VERTICAL (DIREITA DO HEXÁGONO) ---
             // Calcula a altura da barra baseada no HP Máximo (Cresce com a vida do personagem!)
-            const barHeight = Math.min(this.hexSize * 1.6, Math.max(this.hexSize * 0.6, this.hexSize * 0.5 + (u.maxHp / 50) * 12)); 
+            const barHeight = Math.min(this.hexSize * 1.6, Math.max(this.hexSize * 0.6, this.hexSize * 0.5 + (u.maxHp / 50) * 12));
             const barWidth = 5;
             const barX = p.x + (this.hexSize * 0.65); // Empurrado para a direita
             const barY = p.y - (barHeight / 2) + (this.hexSize * 0.1);
@@ -1714,7 +1768,7 @@ class KingdomRenderer {
             const terrainData = typeof hex.terrain === 'string' ? TERRAINS[hex.terrain] : hex.terrain;
             if (!terrainData) return;
 
-           // 1. APLICA A MÁSCARA (CLIP) PARA CORTAR O QUADRADO EM FORMATO HEXAGONAL
+            // 1. APLICA A MÁSCARA (CLIP) PARA CORTAR O QUADRADO EM FORMATO HEXAGONAL
             ctx.save();
             this.hexPath(ctx, p.x, p.y, this.hexSize - 0.5);
             ctx.clip();
@@ -1742,11 +1796,11 @@ class KingdomRenderer {
                     let varIndex = hash % tCols;
                     selectedTile = { x: varIndex, y: 0 };
                 }
-            } 
+            }
             // SE NÃO FOR INDIVIDUAL, USA O TILESET PRINCIPAL
             else if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && hex.terrain && hex.terrain.variations) {
                 drawCustom = true;
-                tCols = 6; 
+                tCols = 6;
                 tRows = 12;
                 let varIndex = hex.customVar !== undefined ? hex.customVar : (hash % hex.terrain.variations.length);
                 selectedTile = hex.terrain.variations[varIndex];
@@ -1764,7 +1818,7 @@ class KingdomRenderer {
                 let drawH = hexHeight * zoom;
 
                 // AJUSTE VERTICAL: Sobe a imagem em 15% para centralizar perfeitamente no Hexágono!
-                let offsetY = this.hexSize * 0.15; 
+                let offsetY = this.hexSize * 0.15;
 
                 ctx.drawImage(
                     currentImg,

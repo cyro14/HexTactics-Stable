@@ -3320,58 +3320,228 @@ window.openContinentMap = function () {
                              animation:${anim}; transition:transform 0.2s;`;
 
         pin.innerHTML = reg.icon;
+        pin.removeAttribute('disabled'); 
+        pin.classList.remove('locked', 'disabled');
+        pin.style.setProperty('pointer-events', 'auto', 'important');
+        pin.style.setProperty('cursor', 'pointer', 'important');
 
-        if (canAttack || isConquered) {
-            pin.onmouseover = () => pin.style.transform = 'translate(-50%, -50%) scale(1.15)';
-            pin.onmouseout = () => pin.style.transform = 'translate(-50%, -50%) scale(1)';
+        pin.onclick = () => {
+            $('macro-region-title').innerText = reg.name;
+            $('macro-region-info').innerHTML = `
+                <i>${reg.desc}</i><br><br>
+                <b>Bioma Predominante:</b> ${reg.biome}
+            `;
 
-            pin.onclick = () => {
-                $('macro-region-name').innerText = reg.name;
-                $('macro-region-icon').innerText = reg.icon;
-                $('macro-region-biome').innerText = reg.biome === 'FOREST' ? 'Florestas densas e antigas' :
-                    reg.biome === 'SNOW' ? 'Montanhas gélidas' :
-                        reg.biome === 'WATER' ? 'Pântanos e lagos perigosos' :
-                            reg.biome === 'MOUNTAIN' ? 'Penhascos e pedreiras' :
-                                reg.biome === 'PLAINS' ? 'Planícies varridas por ventos' :
-                                    reg.biome === 'ASHES' ? 'Cinzas e magia instável' : 'Desertos e terras áridas';
+            const btnStart = $('btn-macro-start');
 
-                let btnStart = $('btn-start-incursion');
-                if (isConquered) {
-                    $('macro-region-status').innerText = '✅ Purificado (Seu Território)';
-                    $('macro-region-status').style.color = 'var(--player-color)';
-                    $('macro-region-threat').innerHTML = 'Ameaça Rival: <span style="color:#aaa">Nenhuma. Região segura.</span>';
-                    btnStart.innerText = 'ÁREA PURIFICADA';
-                    btnStart.className = 'btn-primary';
-                    btnStart.disabled = true;
-                } else {
-                    $('macro-region-status').innerText = '⚠️ Dominado pelo Rival';
-                    $('macro-region-status').style.color = 'var(--enemy-color)';
-                    let bossHint = reg.id === 'CENTER' ? 'Ameaça Suprema: O Leviatã Umbral aguarda.' : 'Ameaça Rival: Forças inimigas controlam este setor.';
-                    $('macro-region-threat').innerHTML = bossHint;
+            if (isUnlocked) {
+                $('macro-region-status').innerText = '✅ Setor Seguro / Liberado';
+                $('macro-region-status').style.color = 'var(--player-color)';
+                $('macro-region-threat').innerHTML = 'Região pacificada. Seus aliados patrulham esta área.';
+                
+                btnStart.innerText = 'VOLTAR A ESTA REGIÃO';
+                btnStart.className = 'btn-secondary';
+                btnStart.disabled = false;
+                btnStart.onclick = () => {
+                    game.currentRegionId = reg.id;
+                    hide('continent-map-screen');
+                    generateRouteMap();
+                    renderRouteMap();
+                };
+            } else if (isNextTarget) {
+                $('macro-region-status').innerText = '⚠️ Dominado pelo Rival';
+                $('macro-region-status').style.color = 'var(--enemy-color)';
+                let bossHint = reg.id === 'CENTER' ? 'Ameaça Suprema: O Leviatã Umbral aguarda.' : 'Ameaça Rival: Forças inimigas controlam este setor.';
+                $('macro-region-threat').innerHTML = bossHint;
 
-                    // Texto especial para o seu primeiro combate!
-                    btnStart.innerText = game.conqueredRegions.length === 0 ? 'RETOMAR CAPITAL' : 'INICIAR INCURSÃO';
-                    btnStart.className = 'btn-success';
-                    btnStart.disabled = false;
+                btnStart.innerText = game.conqueredRegions.length === 0 ? 'RETOMAR CAPITAL' : 'INICIAR INCURSÃO';
+                btnStart.className = 'btn-success';
+                btnStart.disabled = false;
+                btnStart.onclick = () => {
+                    game.currentRegionId = reg.id;
+                    game.currentLevel = game.conqueredRegions.length + 1;
 
-                    btnStart.onclick = () => {
-                        game.currentRegionId = reg.id;
-                        game.currentLevel = game.conqueredRegions.length + 1;
+                    if (!game.eventFlags) game.eventFlags = {};
+                    if (reg.biome === 'SNOW') game.eventFlags.forceSnow = true;
 
-                        if (!game.eventFlags) game.eventFlags = {};
-                        if (reg.biome === 'SNOW') game.eventFlags.forceSnow = true;
+                    hide('continent-map-screen');
+                    generateRouteMap();
+                    renderRouteMap();
+                };
+            } else {
+                $('macro-region-status').innerText = '🔒 Setor Bloqueado (Névoa de Guerra)';
+                $('macro-region-status').style.color = '#7f8c8d';
+                $('macro-region-threat').innerHTML = 'Você precisa conquistar as regiões adjacentes antes de marchar para cá.';
+                
+                btnStart.innerText = 'CAMINHO BLOQUEADO';
+                btnStart.className = 'btn-danger';
+                btnStart.disabled = true; 
+                btnStart.onclick = null;
+            }
 
-                        hide('continent-map-screen'); // <-- NOVA LINHA PARA FECHAR O MAPA
-                        generateRouteMap();
-                        renderRouteMap();
-                    };
-                }
-
-                $('macro-info-panel').style.opacity = '1';
-                $('macro-info-panel').style.pointerEvents = 'auto';
-            };
-        }
+            $('macro-info-panel').style.opacity = '1';
+            $('macro-info-panel').style.pointerEvents = 'auto';
+        };
 
         container.appendChild(pin);
     });
+};
+
+window.openBlackMarket = function() {
+    // Blindagem: Garante que a mochila de recursos exista
+    if (!game.resources) game.resources = {};
+
+    // 1. POOL DE CONSUMÍVEIS (Sorteia 5)
+    const consumablesPool = [
+        { id: 'POTION', name: 'Poção', icon: '🧪', price: 10, desc: 'Cura HP' },
+        { id: 'BANDAGE', name: 'Bandagem', icon: '🩹', price: 5, desc: 'Cura sangramento' },
+        { id: 'MEAT', name: 'Isca de Carne', icon: '🍖', price: 15, desc: 'Atrai feras' },
+        { id: 'APPLE', name: 'Maçã', icon: '🍎', price: 8, desc: 'Cura leve' },
+        { id: 'MAGIC', name: 'Esfera Mágica', icon: '🔮', price: 20, desc: 'Recupera Mana' },
+        { id: 'SCROLL', name: 'Pergaminho', icon: '📜', price: 25, desc: 'Magia aleatória' }
+    ];
+    let shopItems = consumablesPool.sort(() => 0.5 - Math.random()).slice(0, 5);
+
+    // 2. LISTA DE RECURSOS PARA CONTRABANDO (Cotação Fixa)
+    const resourceList = [
+        { id: 'wood', name: 'Madeira', icon: '🌲', buy: 4, sell: 1 },
+        { id: 'stone', name: 'Pedra', icon: '🪨', buy: 4, sell: 1 },
+        { id: 'scales', name: 'Escamas', icon: '🐟', buy: 6, sell: 2 },
+        { id: 'sand', name: 'Areia', icon: '⏳', buy: 4, sell: 1 },
+        { id: 'garras', name: 'Garras', icon: '🐾', buy: 10, sell: 4 },
+        { id: 'asas', name: 'Asas', icon: '🪽', buy: 15, sell: 6 },
+        { id: 'ervas', name: 'Ervas', icon: '🌿', buy: 8, sell: 3 },
+        { id: 'ferro', name: 'Ferro', icon: '🛡️', buy: 12, sell: 5 },
+        { id: 'veneno', name: 'Veneno', icon: '☠️', buy: 15, sell: 6 },
+        { id: 'po_magico', name: 'Pó Mágico', icon: '✨', buy: 20, sell: 8 },
+        { id: 'brasa', name: 'Brasa', icon: '🔥', buy: 15, sell: 6 }
+    ];
+
+    // 3. CONSTRUÇÃO DO HTML DA LOJA
+    let overlay = document.createElement('div');
+    overlay.id = 'black-market-overlay';
+    // O overflow-y:auto garante que o jogador possa rolar a tela se a lista ficar muito grande!
+    overlay.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.92); z-index:10000; display:flex; justify-content:flex-start; align-items:center; flex-direction:column; color:white; font-family:Arial, sans-serif; overflow-y:auto; padding: 40px 20px; box-sizing:border-box;`;
+
+    let html = `
+        <h1 style="color:#f1c40f; text-shadow: 0 0 15px #f1c40f; margin-bottom: 5px;">⛺ Mercado Negro</h1>
+        <p style="margin-bottom: 20px; color:#bdc3c7;">"Seja bem-vindo. Nós compramos de tudo."</p>
+        <div style="font-size: 26px; color:var(--gold); margin-bottom: 30px; font-weight:bold; background:#2c3e50; padding:10px 20px; border-radius:10px; border:2px solid #f1c40f;">Seu Ouro: <span id="bm-gold">${game.gold}</span>💰</div>
+        
+        <h3 style="color:#e74c3c; border-bottom: 1px solid #e74c3c; padding-bottom:5px; margin-bottom: 15px; width:100%; max-width:800px; text-transform:uppercase; letter-spacing:2px;">Suprimentos Ilícitos</h3>
+        <div style="display:flex; gap: 15px; flex-wrap:wrap; justify-content:center; max-width: 800px; margin-bottom: 40px;">
+    `;
+
+    // Renderiza os Itens de Campo
+    shopItems.forEach((item, index) => {
+        html += `
+            <div style="background:#2c3e50; border:2px solid #34495e; border-radius:10px; padding:15px; text-align:center; width:130px; box-shadow: 0 4px 8px rgba(0,0,0,0.4);">
+                <div style="font-size:35px; margin-bottom:5px;">${item.icon}</div>
+                <h4 style="margin:0 0 5px 0; font-size:14px; color:#ecf0f1;">${item.name}</h4>
+                <div style="font-size:11px; color:#95a5a6; margin-bottom:15px; height: 30px;">${item.desc}</div>
+                <button id="bm-btn-${index}" style="background:#f1c40f; color:#000; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; font-weight:bold; width:100%; transition:0.2s;">Comprar ${item.price}💰</button>
+            </div>
+        `;
+    });
+
+    html += `</div>
+        <h3 style="color:#9b59b6; border-bottom: 1px solid #9b59b6; padding-bottom:5px; margin-bottom: 15px; width:100%; max-width:800px; text-transform:uppercase; letter-spacing:2px;">Contrabando de Recursos</h3>
+        <div style="display:flex; gap: 15px; flex-wrap:wrap; justify-content:center; max-width: 900px; margin-bottom: 40px;">
+    `;
+
+    // Renderiza os Recursos (Bolsa de Valores do Mercado)
+    resourceList.forEach(res => {
+        let currentAmt = game.resources[res.id] || 0;
+        html += `
+            <div style="background:#1a252f; border:1px solid #9b59b6; border-radius:8px; padding:12px; text-align:center; width:140px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">
+                <div style="font-size:25px;">${res.icon}</div>
+                <div style="font-size:14px; font-weight:bold; margin:5px 0; color:#ecf0f1;">${res.name}</div>
+                <div style="font-size:12px; color:#3498db; margin-bottom:12px;">Estoque: <span id="bm-res-${res.id}" style="font-weight:bold; font-size:14px;">${currentAmt}</span></div>
+                
+                <div style="display:flex; justify-content:space-between; gap:6px;">
+                    <button id="bm-buy-${res.id}" style="flex:1; background:#c0392b; color:white; border:none; padding:6px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold; transition:0.1s;" title="Pagar ${res.buy} Ouro por 1">-${res.buy}💰</button>
+                    <button id="bm-sell-${res.id}" style="flex:1; background:#27ae60; color:white; border:none; padding:6px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold; transition:0.1s;" title="Vender 1 por ${res.sell} Ouro">+${res.sell}💰</button>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div><button id="bm-close" style="margin-bottom:60px; background:#e74c3c; color:white; border:none; padding:15px 40px; font-size:18px; font-weight:bold; border-radius:8px; cursor:pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition:0.2s;">Sair da Tenda</button>`;
+    
+    overlay.innerHTML = html;
+    document.body.appendChild(overlay);
+
+    // ==========================================
+    // LÓGICA DOS BOTÕES
+    // ==========================================
+    
+    // 1. Botões de Itens Consumíveis
+    shopItems.forEach((item, index) => {
+        let btn = document.getElementById(`bm-btn-${index}`);
+        btn.onclick = () => {
+            if (game.gold >= item.price) {
+                game.gold -= item.price;
+                document.getElementById('bm-gold').innerText = game.gold;
+                if (typeof updateUI === 'function') updateUI();
+                
+                const mapping = { 'MEAT': 'isca', 'MAGIC': 'sphere', 'POTION': 'potion', 'BANDAGE': 'bandage', 'SCROLL': 'scroll', 'APPLE': 'apple' };
+                let mapped = mapping[item.id];
+                if (mapped) {
+                    if (!game.fieldItems) game.fieldItems = { isca: 0, rede: 0, potion: 0, bandage: 0, scroll: 0, sphere: 0, apple: 0 };
+                    game.fieldItems[mapped] = (game.fieldItems[mapped] || 0) + 1;
+                }
+                
+                btn.innerText = "Comprado!";
+                btn.style.background = "#27ae60";
+                btn.style.color = "white";
+                btn.disabled = true;
+            } else {
+                btn.innerText = "Pobre!";
+                btn.style.background = "#e74c3c";
+                setTimeout(() => { if (!btn.disabled) { btn.innerText = `Comprar ${item.price}💰`; btn.style.background = "#f1c40f"; } }, 1000);
+            }
+        };
+    });
+
+    // 2. Botões de Compra e Venda de Recursos (Bolsa de Valores)
+    resourceList.forEach(res => {
+        let btnBuy = document.getElementById(`bm-buy-${res.id}`);
+        let btnSell = document.getElementById(`bm-sell-${res.id}`);
+        let qtySpan = document.getElementById(`bm-res-${res.id}`);
+
+        // Ação de Comprar
+        btnBuy.onclick = () => {
+            if (game.gold >= res.buy) {
+                game.gold -= res.buy;
+                game.resources[res.id] = (game.resources[res.id] || 0) + 1;
+                document.getElementById('bm-gold').innerText = game.gold;
+                qtySpan.innerText = game.resources[res.id];
+                qtySpan.style.color = "#2ecc71"; // Pisca verde rápido
+                setTimeout(() => qtySpan.style.color = "#3498db", 200);
+                if (typeof updateUI === 'function') updateUI();
+            } else {
+                btnBuy.style.background = "#000"; // Feedback de falha
+                setTimeout(() => btnBuy.style.background = "#c0392b", 200);
+            }
+        };
+
+        // Ação de Vender
+        btnSell.onclick = () => {
+            if ((game.resources[res.id] || 0) > 0) {
+                game.resources[res.id] -= 1;
+                game.gold += res.sell;
+                document.getElementById('bm-gold').innerText = game.gold;
+                qtySpan.innerText = game.resources[res.id];
+                qtySpan.style.color = "#e74c3c"; // Pisca vermelho rápido
+                setTimeout(() => qtySpan.style.color = "#3498db", 200);
+                if (typeof updateUI === 'function') updateUI();
+            } else {
+                btnSell.style.background = "#000"; // Feedback de falha (Não tem o recurso)
+                setTimeout(() => btnSell.style.background = "#27ae60", 200);
+            }
+        };
+    });
+
+    // 3. Fechar Loja
+    document.getElementById('bm-close').onclick = () => overlay.remove();
 };

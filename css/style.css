@@ -1689,3 +1689,11 @@ button.btn-success {
 .editor-palette-btn:hover {
     border-color: #888;
 }
+
+.macro-region-pin,
+.macro-region-pin[disabled],
+.macro-region-pin.locked,
+.macro-region-pin.disabled {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
