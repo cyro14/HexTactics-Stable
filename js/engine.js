@@ -1380,7 +1380,24 @@ class Renderer {
         window.addEventListener('resize', () => this.initCamera(false));
     }
 
-    initCamera(force = false) { this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight; if (force || this.hexSize < 35) { const mapW = this.game.cols * Math.sqrt(3); const mapH = this.game.rows * 1.5 + 0.5; this.hexSize = Math.max(Math.min(this.canvas.width / mapW, this.canvas.height / mapH) * 0.75, 40); } let pL = this.game.units.find(u => u.isLeader && u.faction === 1); if (pL) this.centerOn(pL.vq, pL.vr); else this.draw(); }
+    initCamera(force = false) {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+
+        // ==========================================
+        // MÁGICA PIXEL ART: Deixa os sprites nítidos!
+        // ==========================================
+        this.ctx.imageSmoothingEnabled = false;
+        this.ctx.webkitImageSmoothingEnabled = false;
+
+        if (force || this.hexSize < 35) {
+            const mapW = this.game.cols * Math.sqrt(3);
+            const mapH = this.game.rows * 1.5 + 0.5;
+            this.hexSize = Math.max(Math.min(this.canvas.width / mapW, this.canvas.height / mapH) * 0.75, 40);
+        }
+        let pL = this.game.units.find(u => u.isLeader && u.faction === 1);
+        if (pL) this.centerOn(pL.vq, pL.vr); else this.draw();
+    }
     getPosUnscaled(q, r) { return { x: this.hexSize * Math.sqrt(3) * (q + r / 2) + this.hexSize, y: this.hexSize * 1.5 * r + this.hexSize }; }
     getPos(q, r) { const u = this.getPosUnscaled(q, r); return { x: u.x + this.offsetX, y: u.y + this.offsetY }; }
     centerOn(q, r) { const p = this.getPosUnscaled(q, r); this.offsetX = (this.canvas.width / 2) - p.x; this.offsetY = (this.canvas.height / 2) - p.y; this.draw(); }
@@ -1727,6 +1744,9 @@ class KingdomRenderer {
         this.canvas.width = container.clientWidth;
         this.canvas.height = container.clientHeight;
 
+        this.ctx.imageSmoothingEnabled = false;
+        this.ctx.webkitImageSmoothingEnabled = false;
+        
         const mapW = 13 * Math.sqrt(3);
         const mapH = 9 * 1.5 + 0.5;
         this.hexSize = Math.max(Math.min(this.canvas.width / mapW, this.canvas.height / mapH) * 0.85, 30);
