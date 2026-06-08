@@ -579,6 +579,24 @@ const ARTIFACTS = [
     { id: 'art_omega', name: 'Coração do Infinito', icon: '🌌', desc: '+20 HP, +5 ATK e +1 Limite de Exército.', cost: 999, rarity: 'legendary', color: '#ff00ff' },
     { id: 'art_predator_lasso', name: 'O Laço do Predador', icon: '➰', desc: '+30% chance de Domar. Falha: O alvo revida com DANO DUPLO e fica imune à doma no turno.', cost: 30, rarity: 'epic', color: 'var(--rarity-epic)' },
     { id: 'art_bandit_badge', name: 'Insígnia do Bandido', icon: '🦹', desc: 'Recebe +2 de Ouro ao abater unidades inimigas.', cost: 20, rarity: 'rare', color: 'var(--rarity-rare)' },
+    // ==========================================
+    // ARTEFATOS ÔMEGA (Drop Exclusivo de Chefes de Região)
+    // ==========================================
+    { id: 'art_omega_east', name: 'Coroa do Sol Escaldante', icon: '👑', desc: 'Relíquia do Rei Leão. Suas feras ganham Bater e Correr e +2 de Movimento. Se o terreno for Areia, atacam duas vezes.', tier: 'omega', region: 'EAST' },
+    
+    { id: 'art_omega_se', name: 'Núcleo Derretido', icon: '🌋', desc: 'Relíquia da Fornalha. Aliados ficam imunes a Fogo. O chão sob os inimigos sempre conta como Floresta em Chamas (dano por turno).', tier: 'omega', region: 'SE' },
+    
+    { id: 'art_omega_south', name: 'Mandíbula Ferrugínea', icon: '☠️', desc: 'Relíquia da Centopeia. Seus ataques ignoram a defesa do terreno inimigo e aplicam Veneno e Choque simultaneamente.', tier: 'omega', region: 'SOUTH' },
+    
+    { id: 'art_omega_sw', name: 'Pérola das Profundezas', icon: '🌊', desc: 'Relíquia da Hidra Venenosa. Suas unidades ganham Mergulho. Atacar a partir da água cura o atacante em 50% do dano causado.', tier: 'omega', region: 'SW' },
+    
+    { id: 'art_omega_west', name: 'Raiz do Mundo Sombrio', icon: '🍃', desc: 'Relíquia da Árvore Umbralina. No final do turno, seu exército cura 25% do HP Máximo (50% se estiverem em Floresta/Pântano).', tier: 'omega', region: 'WEST' },
+    
+    { id: 'art_omega_nw', name: 'Placa Tectônica', icon: '⛰️', desc: 'Relíquia do Wyvern Ancião. Suas unidades terrestres ganham +40% de Defesa Permanente e imunidade a empurrões.', tier: 'omega', region: 'NW' },
+    
+    { id: 'art_omega_north', name: 'Presa do Zero Absoluto', icon: '🧊', desc: 'Relíquia do Wendigo. Qualquer inimigo que causar dano às suas unidades sofrerá Congelamento instantâneo.', tier: 'omega', region: 'NORTH' },
+    
+    { id: 'art_omega_ne', name: 'Auréola da Tormenta', icon: '⚡', desc: 'Relíquia do Arcanjo Caído. Todo seu exército ganha Voo. Seus ataques à distância disparam raios em inimigos adjacentes.', tier: 'omega', region: 'NE' }
 ];
 
 const ITEMS = {

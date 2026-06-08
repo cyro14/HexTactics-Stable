@@ -1652,6 +1652,47 @@ function triggerStageEnd(win) {
             localStorage.removeItem(game.isRoguelite ? 'ht_save_rogue' : 'ht_save_camp');
         }
 
+        // ========================================================
+        // DROP DO ARTEFATO ÔMEGA (SE FOR NÓ DE CHEFE)
+        // ========================================================
+        if (game.currentRouteType === 'BOSS' || game.isBossStage) {
+            let omegaArt = ARTIFACTS.find(a => a.tier === 'omega' && a.region === game.currentRegionId);
+            
+            if (omegaArt) {
+                // BLINDAGEM 1: Cria a mochila da partida atual se ela não existir
+                if (!game.activeArtifacts) game.activeArtifacts = [];
+                
+                // Verifica se o jogador já não tem esse artefato
+                if (!game.activeArtifacts.includes(omegaArt.id)) {
+                    game.activeArtifacts.push(omegaArt.id);
+                    
+                    // BLINDAGEM 2: Cria o inventário global (Hall da Fama) se não existir
+                    if (typeof stats !== 'undefined') {
+                        if (!stats.unlockedArtifacts) stats.unlockedArtifacts = [];
+                        
+                        if (!stats.unlockedArtifacts.includes(omegaArt.id)) {
+                            stats.unlockedArtifacts.push(omegaArt.id);
+                            localStorage.setItem('ht_stats', JSON.stringify(stats));
+                        }
+                    }
+
+                    // Dispara um alerta visual ÉPICO para o jogador
+                    setTimeout(() => {
+                        let div = document.createElement('div');
+                        div.style.cssText = `position:fixed; top:40%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.9); border:2px solid var(--gold); padding:30px; text-align:center; z-index:10000; color:white; border-radius:10px; box-shadow: 0 0 30px var(--gold); animation: cineFade 4s forwards; pointer-events:none;`;
+                        div.innerHTML = `
+                            <h3 style="color:var(--gold); margin:0 0 10px 0; font-family:'Cinzel', serif;">ARTEFATO ÔMEGA OBTIDO!</h3>
+                            <div style="font-size:40px; margin-bottom:10px;">${omegaArt.icon}</div>
+                            <h2 style="margin:0 0 10px 0;">${omegaArt.name}</h2>
+                            <p style="color:#ccc; font-size:14px; max-width:300px; margin:0 auto;">${omegaArt.desc}</p>
+                        `;
+                        document.body.appendChild(div);
+                        setTimeout(() => div.remove(), 4500);
+                    }, 1000);
+                }
+            }
+        }
+
         if (typeof countKingdomBuildings === 'function' && game.kingdomMap) {
             let pWood = window.countKingdomBuildings('LUMBERMILL') * 3;
             let pStone = 0, pFerro = 0, pMineGold = 0;
