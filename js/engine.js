@@ -22,7 +22,29 @@ class Unit {
             bDef = masterPool.find(x => x.name === (d.baseName || d.name));
         }
         
-        let finalSprite = d.sprite || (lDef ? lDef.sprite : (bDef ? bDef.sprite : null));
+        // FUNÇÃO AUXILIAR: Normaliza nomes (Remove acentos, espaços viram sublinhados)
+        let normalizeName = (str) => {
+            if (!str) return '';
+            return str.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos
+                .replace(/\s+/g, '_')                            // Espaço vira _
+                .replace(/[^a-z0-9_]/g, '');                     // Remove caracteres especiais
+        };
+
+        // Define o caminho correto baseado no tipo da criatura
+        let finalSprite = d.sprite;
+        if (!finalSprite) {
+            if (lDef) {
+                finalSprite = lDef.sprite;
+            } else if (bDef) {
+                // Se for Boss ou Elite, busca na pasta de bosses, se for lacaio comum, vai para img/units/
+                let isEpic = (typeof BEASTS !== 'undefined' && BEASTS.BOSSES && BEASTS.BOSSES.some(b => b.name === bDef.name)) || 
+                             (typeof BEASTS !== 'undefined' && BEASTS.ELITES && BEASTS.ELITES.some(e => e.name === bDef.name));
+                
+                let folder = isEpic ? 'img/boss/' : 'img/units/';
+                finalSprite = folder + normalizeName(bDef.name || d.name) + '.png';
+            }
+        }
 
         Object.assign(this, {
             q: d.q, r: d.r, vq: d.q, vr: d.r, faction: d.faction,
@@ -1327,38 +1349,62 @@ class Renderer {
         this.game.map.forEach(hex => {
             const p = this.getPos(hex.q, hex.r);
 
-            // 1. APLICA A MÁSCARA (CLIP) PARA CORTAR O QUADRADO EM FORMATO HEXAGONAL
+           // 1. APLICA A MÁSCARA (CLIP) PARA CORTAR O QUADRADO EM FORMATO HEXAGONAL
             ctx.save();
             this.hexPath(ctx, p.x, p.y, this.hexSize - 0.5);
             ctx.clip();
 
-            // Se o tileset carregou e o terreno possui o array de variações
-            if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && hex.terrain && hex.terrain.variations) {
+            let drawCustom = false;
+            let currentImg = this.tileset;
+            let tCols = 6, tRows = 12;
+            let selectedTile = { x: 0, y: 0 };
+            let hash = Math.abs((hex.q * 101) + (hex.r * 37));
 
-                // Configuração exata da imagem gerada pelo ChatGPT (4 colunas, 11 linhas)
-                const colunasNaImagem = 6;
-                const linhasNaImagem = 11;
+            // CHECA SE É UM TERRENO COM SPRITE INDIVIDUAL
+            if (hex.terrain && hex.terrain.customSprite) {
+                if (!window.terrainCache) window.terrainCache = {};
+                if (!window.terrainCache[hex.terrain.customSprite]) {
+                    let img = new Image();
+                    img.onload = () => { this.draw(); };
+                    img.src = hex.terrain.customSprite;
+                    window.terrainCache[hex.terrain.customSprite] = img;
+                }
+                currentImg = window.terrainCache[hex.terrain.customSprite];
+                if (currentImg && currentImg.complete && currentImg.naturalWidth > 0) {
+                    drawCustom = true;
+                    tCols = hex.terrain.cols || 6;
+                    tRows = 1; // Sprites individuais têm apenas 1 linha
+                    let varIndex = hash % tCols;
+                    selectedTile = { x: varIndex, y: 0 };
+                }
+            } 
+            // SE NÃO FOR INDIVIDUAL, USA O TILESET PRINCIPAL
+            else if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && hex.terrain && hex.terrain.variations) {
+                drawCustom = true;
+                tCols = 6; 
+                tRows = 12;
+                let varIndex = hex.customVar !== undefined ? hex.customVar : (hash % hex.terrain.variations.length);
+                selectedTile = hex.terrain.variations[varIndex];
+            }
 
-                let tileW = this.tileset.naturalWidth / colunasNaImagem;
-                let tileH = this.tileset.naturalHeight / linhasNaImagem;
+            if (drawCustom) {
+                let tileW = currentImg.naturalWidth / tCols;
+                let tileH = currentImg.naturalHeight / tRows;
 
                 let hexWidth = this.hexSize * Math.sqrt(3);
                 let hexHeight = this.hexSize * 2;
 
-                let hash = Math.abs((hex.q * 101) + (hex.r * 37));
-                // Lê a variação customizada ou, se não houver, usa o hash matemático
-                let varIndex = hex.customVar !== undefined ? hex.customVar : (hash % hex.terrain.variations.length);
-                let selectedTile = hex.terrain.variations[varIndex];
-
-                // ZOOM de 15% (1.15) para esticar a arte e esconder a grade preta da IA
                 let zoom = 1.15;
                 let drawW = hexWidth * zoom;
                 let drawH = hexHeight * zoom;
 
+                // AJUSTE VERTICAL: Sobe a imagem em 15% para centralizar perfeitamente no Hexágono!
+                let offsetY = this.hexSize * 0.15; 
+
                 ctx.drawImage(
-                    this.tileset,
+                    currentImg,
                     selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
-                    p.x - (drawW / 2), p.y - (drawH / 2), drawW, drawH
+                    p.x - (drawW / 2), p.y - (drawH / 2) - offsetY, drawW, drawH
                 );
             } else {
                 ctx.fillStyle = (hex.terrain && hex.terrain.color) ? hex.terrain.color : '#000';
@@ -1483,33 +1529,76 @@ class Renderer {
 
             if (u.sprite) {
                 if (!window.imageCache) window.imageCache = {};
+                
                 if (!window.imageCache[u.sprite]) {
-                    let img = new Image();
-                    img.onload = () => { this.draw(); };
-                    img.src = u.sprite;
-                    window.imageCache[u.sprite] = img;
-                }
-                let img = window.imageCache[u.sprite];
-                if (img.complete && img.naturalWidth > 0) {
+                    // Coloca uma trava temporária para evitar loops de carregamento
+                    window.imageCache[u.sprite] = "LOADING"; 
                     
-                    // CAIXA AJUSTADA: Só expande muito se for um monstro gigante real (não-líder)
-                    let isEpicMonster = (u.isBoss && !u.isLeader) || u.isElite;
+                    let img = new Image();
+                    img.onload = () => {                        
+                        try {
+                            let imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                            let data = imgData.data;
+                            
+                            // Coleta a cor exata do fundo lendo o primeiríssimo pixel (superior esquerdo)
+                            let bgR = data[0];
+                            let bgG = data[1];
+                            let bgB = data[2];
+                            
+                            // Margem de tolerância para pequenas variações do cinza
+                            let tolerance = 20; 
+                            
+                            // Varre a imagem inteira trocando a cor de fundo por transparência
+                            for (let i = 0; i < data.length; i += 4) {
+                                let r = data[i];
+                                let g = data[i+1];
+                                let b = data[i+2];
+                                
+                                if (Math.abs(r - bgR) < tolerance && 
+                                    Math.abs(g - bgG) < tolerance && 
+                                    Math.abs(b - bgB) < tolerance) {
+                                    data[i+3] = 0; // Transparência absoluta!
+                                }
+                            }
+                            tempCtx.putImageData(imgData, 0, 0);
+                            // Guarda o canvas processado e limpo no cache do jogo
+                            window.imageCache[u.sprite] = tempCanvas;
+                        } catch (e) {
+                            // Caso dê erro de CORS local, mantém a imagem original como fallback
+                            window.imageCache[u.sprite] = img;
+                        }
+                        this.draw();
+                    };
+                    img.onerror = () => {
+                        window.imageCache[u.sprite] = "ERROR";
+                    };
+                    img.src = u.sprite;
+                }
+                
+                let cachedAsset = window.imageCache[u.sprite];
+                // Verifica se o asset já foi processado e está pronto
+                if (cachedAsset && cachedAsset !== "LOADING" && cachedAsset !== "ERROR") {
+                    let isRealBoss = typeof BEASTS !== 'undefined' && BEASTS.BOSSES && BEASTS.BOSSES.some(b => b.name === u.name);
+                    let isEpicMonster = isRealBoss || u.isElite;
                     
                     let maxW = this.hexSize * (isEpicMonster ? 2.1 : 1.25) * sMod; 
                     let maxH = this.hexSize * (isEpicMonster ? 2.4 : 1.5) * sMod;  
 
-                    let scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
+                    // Funciona perfeitamente tanto com Image quanto com Canvas processado
+                    let naturalW = cachedAsset.naturalWidth || cachedAsset.width;
+                    let naturalH = cachedAsset.naturalHeight || cachedAsset.height;
 
-                    let drawW = img.naturalWidth * scale;
-                    let drawH = img.naturalHeight * scale;
+                    let scale = Math.min(maxW / naturalW, maxH / naturalH);
 
-                    // Ancoragem firme no chão para o monstro crescer para cima
-                    let spriteY = p.y + (this.hexSize * 0.70) - drawH;
+                    let drawW = naturalW * scale;
+                    let drawH = naturalH * scale;
 
-                    ctx.drawImage(img, p.x - (drawW / 2), spriteY, drawW, drawH);
+                    let spriteY = p.y + (this.hexSize * 0.60) - drawH;
+
+                    ctx.drawImage(cachedAsset, p.x - (drawW / 2), spriteY, drawW, drawH);
 
                     uiTopY = spriteY - 5; 
-                } else {
+                } else if (cachedAsset !== "LOADING") {
                     ctx.fillText(u.emoji, p.x, p.y + 1);
                 }
             } else {
@@ -1625,36 +1714,65 @@ class KingdomRenderer {
             const terrainData = typeof hex.terrain === 'string' ? TERRAINS[hex.terrain] : hex.terrain;
             if (!terrainData) return;
 
-            // 1. APLICA A MÁSCARA (CLIP) NO REINO
+           // 1. APLICA A MÁSCARA (CLIP) PARA CORTAR O QUADRADO EM FORMATO HEXAGONAL
             ctx.save();
-            this.hexPath(ctx, p.x, p.y, this.hexSize - 1);
+            this.hexPath(ctx, p.x, p.y, this.hexSize - 0.5);
             ctx.clip();
 
-            if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && terrainData.variations) {
-                const colunasNaImagem = 6;
-                const linhasNaImagem = 11;
+            let drawCustom = false;
+            let currentImg = this.tileset;
+            let tCols = 6, tRows = 12;
+            let selectedTile = { x: 0, y: 0 };
+            let hash = Math.abs((hex.q * 101) + (hex.r * 37));
 
-                let tileW = this.tileset.naturalWidth / colunasNaImagem;
-                let tileH = this.tileset.naturalHeight / linhasNaImagem;
+            // CHECA SE É UM TERRENO COM SPRITE INDIVIDUAL
+            if (hex.terrain && hex.terrain.customSprite) {
+                if (!window.terrainCache) window.terrainCache = {};
+                if (!window.terrainCache[hex.terrain.customSprite]) {
+                    let img = new Image();
+                    img.onload = () => { this.draw(); };
+                    img.src = hex.terrain.customSprite;
+                    window.terrainCache[hex.terrain.customSprite] = img;
+                }
+                currentImg = window.terrainCache[hex.terrain.customSprite];
+                if (currentImg && currentImg.complete && currentImg.naturalWidth > 0) {
+                    drawCustom = true;
+                    tCols = hex.terrain.cols || 6;
+                    tRows = 1; // Sprites individuais têm apenas 1 linha
+                    let varIndex = hash % tCols;
+                    selectedTile = { x: varIndex, y: 0 };
+                }
+            } 
+            // SE NÃO FOR INDIVIDUAL, USA O TILESET PRINCIPAL
+            else if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && hex.terrain && hex.terrain.variations) {
+                drawCustom = true;
+                tCols = 6; 
+                tRows = 12;
+                let varIndex = hex.customVar !== undefined ? hex.customVar : (hash % hex.terrain.variations.length);
+                selectedTile = hex.terrain.variations[varIndex];
+            }
+
+            if (drawCustom) {
+                let tileW = currentImg.naturalWidth / tCols;
+                let tileH = currentImg.naturalHeight / tRows;
 
                 let hexWidth = this.hexSize * Math.sqrt(3);
                 let hexHeight = this.hexSize * 2;
-
-                let hash = Math.abs((hex.q * 101) + (hex.r * 37));
-                let varIndex = hash % terrainData.variations.length;
-                let selectedTile = terrainData.variations[varIndex];
 
                 let zoom = 1.15;
                 let drawW = hexWidth * zoom;
                 let drawH = hexHeight * zoom;
 
+                // AJUSTE VERTICAL: Sobe a imagem em 15% para centralizar perfeitamente no Hexágono!
+                let offsetY = this.hexSize * 0.15; 
+
                 ctx.drawImage(
-                    this.tileset,
+                    currentImg,
                     selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
-                    p.x - (drawW / 2), p.y - (drawH / 2), drawW, drawH
+                    p.x - (drawW / 2), p.y - (drawH / 2) - offsetY, drawW, drawH
                 );
             } else {
-                ctx.fillStyle = terrainData.color || '#333';
+                ctx.fillStyle = (hex.terrain && hex.terrain.color) ? hex.terrain.color : '#000';
                 ctx.fill();
             }
             ctx.restore(); // Finaliza a máscara
