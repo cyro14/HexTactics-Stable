@@ -234,42 +234,42 @@ class Game {
         let cycle = this.turnCount % 10;
         if (cycle >= 6 && cycle <= 8) // ...e se for noite (ciclo 6-8), esconde as unidades inimigas que não estão iluminadas
 
-        this.units.forEach(u => {
-            // O jogador sempre vê as próprias tropas
-            if (u.faction === 1) return;
+            this.units.forEach(u => {
+                // O jogador sempre vê as próprias tropas
+                if (u.faction === 1) return;
 
-            let inLight = false;
+                let inLight = false;
 
-            // Se for de dia, ou se a própria fera emitir luz (fogo/celestial), ela é visível
-            if (!isNight || (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL') || u.tags.includes('ELECTRIC')))) {
-                inLight = true;
-            } else {
-                // Checa se está sendo iluminado por uma unidade do jogador
-                for (let light of this.units) {
-                    if (light.faction === 1 || (light.tags && (light.tags.includes('FIRE') || light.tags.includes('CELESTIAL') || light.tags.includes('ELECTRIC')))) {
-                        let r = (light.tags && (light.tags.includes('FIRE') || light.tags.includes('CELESTIAL'))) ? 3 : 2;
-                        if (Hex.distance(u, light) <= r) { inLight = true; break; }
+                // Se for de dia, ou se a própria fera emitir luz (fogo/celestial), ela é visível
+                if (!isNight || (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL') || u.tags.includes('ELECTRIC')))) {
+                    inLight = true;
+                } else {
+                    // Checa se está sendo iluminado por uma unidade do jogador
+                    for (let light of this.units) {
+                        if (light.faction === 1 || (light.tags && (light.tags.includes('FIRE') || light.tags.includes('CELESTIAL') || light.tags.includes('ELECTRIC')))) {
+                            let r = (light.tags && (light.tags.includes('FIRE') || light.tags.includes('CELESTIAL'))) ? 3 : 2;
+                            if (Hex.distance(u, light) <= r) { inLight = true; break; }
+                        }
                     }
-                }
-                // Checa se está pisando perto de lava ou floresta em chamas
-                if (!inLight) {
-                    for (let [key, hex] of this.map.entries()) {
-                        if (hex.terrain && (hex.terrain.id === 'LAVA_RIFT' || hex.terrain.id === 'BURNING_FOREST')) {
-                            if (Hex.distance(u, hex) <= 2) { inLight = true; break; }
+                    // Checa se está pisando perto de lava ou floresta em chamas
+                    if (!inLight) {
+                        for (let [key, hex] of this.map.entries()) {
+                            if (hex.terrain && (hex.terrain.id === 'LAVA_RIFT' || hex.terrain.id === 'BURNING_FOREST')) {
+                                if (Hex.distance(u, hex) <= 2) { inLight = true; break; }
+                            }
                         }
                     }
                 }
-            }
 
-            u.isHiddenByNight = !inLight;
+                u.isHiddenByNight = !inLight;
 
-            // INTEGRAÇÃO PERFEITA: Preserva o status do monstro que já estava camuflado no mato!
-            if (u.isHiddenByNight) {
-                u.isHidden = true; // A noite engole a fera
-            } else if (!u.abilities || (!u.abilities.includes('camouflage') && !u.abilities.includes('dive'))) {
-                u.isHidden = false; // A luz revela a fera (a menos que ela esteja mergulhada/camuflada)
-            }
-        });
+                // INTEGRAÇÃO PERFEITA: Preserva o status do monstro que já estava camuflado no mato!
+                if (u.isHiddenByNight) {
+                    u.isHidden = true; // A noite engole a fera
+                } else if (!u.abilities || (!u.abilities.includes('camouflage') && !u.abilities.includes('dive'))) {
+                    u.isHidden = false; // A luz revela a fera (a menos que ela esteja mergulhada/camuflada)
+                }
+            });
     }
     generateCampaignMap(savedRoster = []) {
         if (!this.eventFlags) this.eventFlags = {};
@@ -1892,15 +1892,34 @@ class Renderer {
 
                     let spriteY = p.y + (this.hexSize * 0.60) - drawH;
 
-                    // EFEITO DE DESTAQUE: Sombra projetada para descolar o sprite do cenário
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)'; // Sombra preta bem forte
-                    ctx.shadowBlur = 12; // Esfumaçado do contorno
-                    ctx.shadowOffsetY = 6; // Joga a sombra um pouco para baixo
+                    // ==========================================
+                    // SISTEMA DE ESCALA INDIVIDUAL DO SPRITE (AO VIVO)
+                    // ==========================================
+                    // 1. Vasculha o banco de dados em tempo real atrás da ficha original do monstro
+                    let masterPool = typeof BEASTS !== 'undefined' ? [...(BEASTS.LAND||[]), ...(BEASTS.WATER||[]), ...(BEASTS.SNOW||[]), ...(BEASTS.BOSSES||[])] : [];
+                    let template = masterPool.find(x => x.name === (u.baseName || u.name));
+                    if (!template && u.isLeader && typeof LEADERS !== 'undefined') template = LEADERS.find(x => x.name === (u.baseName || u.name));
+                    
+                    // 2. Aplica a escala direto do data.js (substitui o save antigo!)
+                    let customScale = (template && template.scale) ? template.scale : (u.scale || 1);
+                    
+                    let finalW = drawW * customScale;
+                    let finalH = drawH * customScale;
 
-                    // Carimba o sprite (agora com sombra!)
-                    ctx.drawImage(cachedAsset, p.x - (drawW / 2), spriteY, drawW, drawH);
+                    // Ajuste matemático vital: Faz o sprite crescer "para cima" e pros lados, 
+                    // mantendo a base (os pés) presa no chão do hexágono!
+                    let finalX = p.x - (finalW / 2);
+                    let finalY = spriteY - (finalH - drawH);
 
-                    // RESET DE SOMBRA: Muito importante para não sombrear o resto da interface!
+                    // EFEITO DE DESTAQUE (Sombra)
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+                    ctx.shadowBlur = 12;
+                    ctx.shadowOffsetY = 6;
+
+                    // Carimba o sprite com o tamanho e posições corrigidas!
+                    ctx.drawImage(cachedAsset, finalX, finalY, finalW, finalH);
+
+                    // RESET DE SOMBRA
                     ctx.shadowColor = 'transparent';
                     ctx.shadowBlur = 0;
                     ctx.shadowOffsetY = 0;
@@ -1958,7 +1977,7 @@ class Renderer {
         let cycle = (this.game && this.game.turnCount !== undefined) ? (this.game.turnCount % 10) : 1;
         let overlayColor = null;
         let isDarkPhase = false;
-        
+
         // 1 a 3: Dia | 4 a 5: Pôr do Sol | 6 a 8: Noite | 9 e 0: Amanhecer
         if (cycle >= 1 && cycle <= 3) { overlayColor = 'rgba(255, 245, 220, 0.05)'; } // Dia (Filtro quente e suave)
         else if (cycle === 4 || cycle === 5) { overlayColor = 'rgba(211, 84, 0, 0.25)'; isDarkPhase = true; } // Pôr do Sol
@@ -1976,7 +1995,7 @@ class Renderer {
             }
 
             let lctx = this.lightCtx;
-            
+
             // 1. Pinta o canvas fantasma com a atmosfera
             lctx.globalCompositeOperation = 'source-over';
             lctx.clearRect(0, 0, this.lightCanvas.width, this.lightCanvas.height);
@@ -1990,9 +2009,9 @@ class Renderer {
                 this.game.units.forEach(u => {
                     if (u.faction === 1 || (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL') || u.tags.includes('ELECTRIC')))) {
                         const p = this.getPos(u.vq, u.vr);
-                        let lightRadius = this.hexSize * 2.5; 
+                        let lightRadius = this.hexSize * 2.5;
                         if (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL'))) lightRadius = this.hexSize * 3.5;
-                        
+
                         let grad = lctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, lightRadius);
                         grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
                         grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.8)');

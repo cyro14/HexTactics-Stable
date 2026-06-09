@@ -224,75 +224,32 @@ const SPELLS = [
         }
     },
     //Spells de Líder
-    { id: 'sl_mordida_vamp', name: 'Mordida Vampírica', icon: '🦇', cost: { 'UMBRAL': 2 }, level: 1, type: 'atk', range: 1, tags: ['UMBRAL'], desc: 'Causa dano e cura o Lord Vampiro.', effect: async (game, caster, target) => { if (!target) return false; let dmg = 20; target.hp -= dmg; caster.hp = Math.min(caster.maxHp, caster.hp + dmg); showPopup("-20 HP", target, '#fff'); showPopup("+20 HP", caster, '#2ecc71'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
-    { id: 'sl_bencao_paladina', name: 'Bênção Divina', icon: '✨', cost: { 'CELESTIAL': 2 }, level: 1, type: 'def', range: 2, tags: ['CELESTIAL'], desc: 'Cura um aliado em 40 HP e remove debuffs.', effect: async (game, caster, target) => { if (!target || target.faction !== 1) return false; target.hp = Math.min(target.maxHp, target.hp + 40); target.status = null; showPopup("+40 HP", target, '#f1c40f'); return true; } },
-    { id: 'sl_bombardeio', name: 'Bombardeio Naval', icon: '💣', cost: { 'ABYSSAL': 3 }, level: 1, type: 'atk', range: 3, tags: ['ABYSSAL'], desc: 'Causa 25 de dano a um inimigo distante.', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 25; showPopup("-25 💣", target, '#e74c3c'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
-    { id: 'sl_tiro_preciso', name: 'Tiro Preciso', icon: '🏹', cost: { 'STALKER': 2 }, level: 1, type: 'atk', range: 4, tags: ['STALKER'], desc: 'Causa 30 de dano perfurante de longa distância.', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 30; showPopup("-30 🏹", target, '#e74c3c'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
-    { id: 'sl_bola_fogo', name: 'Bola de Fogo', icon: '🔥', cost: { 'FIRE': 2 }, level: 1, type: 'atk', range: 2, tags: ['FIRE'], targetTerrain: true, desc: 'Causa 25 de dano e queima o inimigo.', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 25; target.status = 'burn'; showPopup("-25 🔥", target, '#e67e22'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
-    { id: 'sl_grito_orc', name: 'Grito de Guerra', icon: '📯', cost: { 'PRIMAL': 2 }, level: 1, type: 'def', range: 0, tags: ['PRIMAL'], desc: 'Concede Ação Extra para o Chefe Orc.', effect: async (game, caster) => { caster.hasAttacked = false; caster.mp = caster.maxMp; showPopup("Ação Extra!", caster, '#e74c3c'); return true; } },
-    { id: 'sl_erguer_esq', name: 'Erguer Esqueleto', icon: '💀', cost: { 'UMBRAL': 2 }, level: 1, type: 'def', range: 1, tags: ['UMBRAL'], desc: 'Invoca um Esqueleto para lutar por você.', effect: async (game, caster, target, targetHex) => { if (target) return false; let d = new Unit({ q: targetHex.q, r: targetHex.r, faction: 1, name: "Esqueleto", emoji: "💀", hp: 25, maxHp: 25, mp: 3, maxMp: 3, atk: 8, range: 1, abilities: [], tags: ['UMBRAL', 'MYSTIC'], isNew: false }); game.units.push(d); showPopup("Erguido!", d, '#8e44ad'); return true; } },
-    { id: 'sl_explosao_arcana', name: 'Explosão Arcana', icon: '🎇', cost: { 'MYSTIC': 2 }, level: 1, type: 'atk', range: 2, tags: ['MYSTIC'], desc: 'Dano mágico alto no alvo (35 Dano).', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 35; showPopup("-35 🎇", target, '#9b59b6'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
+    { id: 'sl_mordida_vamp', name: 'Mordida Vampírica', icon: '🦇', cost: { 'UMBRAL': 4 }, level: 1, type: 'atk', range: 1, tags: ['UMBRAL'], desc: 'Causa dano e cura o Lord Vampiro.', effect: async (game, caster, target) => { if (!target) return false; let dmg = 20; target.hp -= dmg; caster.hp = Math.min(caster.maxHp, caster.hp + dmg); showPopup("-20 HP", target, '#fff'); showPopup("+20 HP", caster, '#2ecc71'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
+    { id: 'sl_bencao_paladina', name: 'Bênção Divina', icon: '✨', cost: { 'CELESTIAL': 4 }, level: 1, type: 'def', range: 2, tags: ['CELESTIAL'], desc: 'Cura um aliado em 40 HP e remove debuffs.', effect: async (game, caster, target) => { if (!target || target.faction !== 1) return false; target.hp = Math.min(target.maxHp, target.hp + 40); target.status = null; showPopup("+40 HP", target, '#f1c40f'); return true; } },
+    { id: 'sl_bombardeio', name: 'Bombardeio Naval', icon: '💣', cost: { 'ABYSSAL': 5 }, level: 1, type: 'atk', range: 3, tags: ['ABYSSAL'], desc: 'Causa 25 de dano a um inimigo distante.', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 25; showPopup("-25 💣", target, '#e74c3c'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
+    { id: 'sl_tiro_preciso', name: 'Tiro Preciso', icon: '🏹', cost: { 'STALKER': 4 }, level: 1, type: 'atk', range: 4, tags: ['STALKER'], desc: 'Causa 30 de dano perfurante de longa distância.', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 30; showPopup("-30 🏹", target, '#e74c3c'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
+    { id: 'sl_bola_fogo', name: 'Bola de Fogo', icon: '🔥', cost: { 'FIRE': 4 }, level: 1, type: 'atk', range: 2, tags: ['FIRE'], targetTerrain: true, desc: 'Causa 25 de dano e queima o inimigo.', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 25; target.status = 'burn'; showPopup("-25 🔥", target, '#e67e22'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
+    { id: 'sl_grito_orc', name: 'Grito de Guerra', icon: '📯', cost: { 'PRIMAL': 4 }, level: 1, type: 'def', range: 0, tags: ['PRIMAL'], desc: 'Concede Ação Extra para o Chefe Orc.', effect: async (game, caster) => { caster.hasAttacked = false; caster.mp = caster.maxMp; showPopup("Ação Extra!", caster, '#e74c3c'); return true; } },
+    { id: 'sl_erguer_esq', name: 'Erguer Esqueleto', icon: '💀', cost: { 'UMBRAL': 4 }, level: 1, type: 'def', range: 1, tags: ['UMBRAL'], desc: 'Invoca um Esqueleto para lutar por você.', effect: async (game, caster, target, targetHex) => { if (target) return false; let d = new Unit({ q: targetHex.q, r: targetHex.r, faction: 1, name: "Esqueleto", emoji: "💀", hp: 25, maxHp: 25, mp: 3, maxMp: 3, atk: 8, range: 1, abilities: [], tags: ['UMBRAL', 'MYSTIC'], isNew: false }); game.units.push(d); showPopup("Erguido!", d, '#8e44ad'); return true; } },
+    { id: 'sl_explosao_arcana', name: 'Explosão Arcana', icon: '🎇', cost: { 'MYSTIC': 6 }, level: 1, type: 'atk', range: 2, tags: ['MYSTIC'], desc: 'Dano mágico alto no alvo (35 Dano).', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 35; showPopup("-35 🎇", target, '#9b59b6'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
     { id: 'sl_forma_urso', name: 'Postura do Urso', icon: '🐻', cost: {}, level: 1, type: 'def', range: 0, tags: ['PRIMAL'], desc: 'Gratuito. Alterna para Urso: Alcance 1, mais HP e ataque e mais lento.', effect: async (game, caster) => { if (caster.emoji === '🐻') return false; if (caster.emoji === '🦅') { caster.maxHp -= 20; caster.hp = Math.min(caster.maxHp, caster.hp); caster.abilities = caster.abilities.filter(a => a !== 'pierce', 'flying'); } caster.emoji = '🐻'; caster.range = 1; caster.maxMp = Math.max(1, caster.maxMp - 1); caster.mp = Math.max(0, caster.mp - 1); caster.atk += 10; showPopup("Forma Urso!", caster, '#f39c12'); return true; } },
     { id: 'sl_forma_falcao', name: 'Postura do Falcão', icon: '🦅', cost: {}, level: 1, type: 'def', range: 0, tags: ['PRIMAL'], desc: 'Gratuito. Alterna para Falcão: Perde o ataque do Urso, ganha 3 de Alcance, ataques Perfurantes e voar.', effect: async (game, caster) => { if (caster.emoji === '🦅') return false; if (caster.emoji === '🐻') { caster.maxHp -= 20; caster.hp = Math.min(caster.maxHp, caster.hp); caster.maxMp += 2; caster.mp += 2; caster.atk = Math.max(1, caster.atk - 5); } caster.emoji = '🦅'; caster.range = 3; if (!caster.abilities.includes('pierce', 'flying')) caster.abilities.push('pierce', 'flying'); showPopup("Forma Falcão!", caster, '#3498db'); return true; } },
-    { id: 'sl_forma_dragao', name: 'Postura do Dragao', icon: '🐉', cost: { 'PRIMAL': 5, 'SILVESTRE': 3 }, level: 5, type: 'def', range: 0, tags: ['PRIMAL'], desc: 'Transformação Suprema! +Ataque e HP, Voo e Dano em Área.', effect: async (game, caster) => { caster.emoji = '🐉'; caster.name = "Dragão Supremo"; caster.maxHp += 50; caster.hp += 50; caster.atk += 30; caster.maxMp += 1; caster.mp += 1; if (!caster.abilities.includes('flying')) caster.abilities.push('flying'); if (!caster.abilities.includes('corte_amplo')) caster.abilities.push('corte_amplo'); if (typeof showPopup === 'function') showPopup("DRAGÃO DESPERTO!", caster, '#c0392b'); return true; } },
+    { id: 'sl_forma_dragao', name: 'Postura do Dragao', icon: '🐉', cost: { 'PRIMAL': 10, 'SILVESTRE': 7 }, level: 5, type: 'def', range: 0, tags: ['PRIMAL'], desc: 'Transformação Suprema! +Ataque e HP, Voo e Dano em Área.', effect: async (game, caster) => { caster.emoji = '🐉'; caster.name = "Dragão Supremo"; caster.maxHp += 50; caster.hp += 50; caster.atk += 30; caster.maxMp += 1; caster.mp += 1; if (!caster.abilities.includes('flying')) caster.abilities.push('flying'); if (!caster.abilities.includes('corte_amplo')) caster.abilities.push('corte_amplo'); if (typeof showPopup === 'function') showPopup("DRAGÃO DESPERTO!", caster, '#c0392b'); return true; } },
     { id: 'sl_execucao', name: 'Execução', icon: '🪓', cost: { 'STALKER': 2 }, level: 1, type: 'atk', range: 1, tags: ['STALKER'], desc: 'Ataque fatal. Se o alvo morrer, você recupera seu turno e movimento.', effect: async (game, caster, target) => { if (!target) return false; caster._isExecuting = true; await game.executeCombat(caster, target); caster._isExecuting = false; return true; } },
-    { id: 'sl_evocar_dragao', name: 'Evocar Dragão Ígneo', icon: '🐉', cost: { 'MYSTIC': 3, 'FIRE': 2 }, level: 2, type: 'def', range: 1, tags: ['MYSTIC'], desc: 'Invoca um Dragão no campo que dura até o fim da batalha.', effect: async (game, caster, target, targetHex) => { if (target) return false; let d = new Unit({ q: targetHex.q, r: targetHex.r, faction: 1, name: "Dragão Evocado", emoji: "🐉", hp: 60, maxHp: 60, mp: 4, maxMp: 4, atk: 18, range: 2, abilities: ['burn'], tags: ['FIRE'], isNew: false }); game.units.push(d); showPopup("Invocado!", d, '#e74c3c'); return true; } },
-    { id: 'sl_evocar_lobo', name: 'Evocar Lobo de Mana', icon: '🐺', cost: { 'MYSTIC': 2 }, level: 1, type: 'def', range: 1, tags: ['MYSTIC'], desc: 'Invoca um Lobo espiritual (Fera) para lutar ao seu lado.', effect: async (game, caster, target, targetHex) => { if (target) return false; let d = new Unit({ q: targetHex.q, r: targetHex.r, faction: 1, name: "Lobo de Mana", emoji: "🐺", hp: 35, maxHp: 35, mp: 4, maxMp: 4, atk: 12, range: 1, abilities: ['dodge'], tags: ['MYSTIC'], isNew: false }); game.units.push(d); showPopup("Invocado!", d, '#9b59b6'); return true; } },
+    { id: 'sl_evocar_dragao', name: 'Evocar Dragão Ígneo', icon: '🐉', cost: { 'MYSTIC': 8, 'FIRE': 8 }, level: 2, type: 'def', range: 1, tags: ['MYSTIC'], desc: 'Invoca um Dragão no campo que dura até o fim da batalha.', effect: async (game, caster, target, targetHex) => { if (target) return false; let d = new Unit({ q: targetHex.q, r: targetHex.r, faction: 1, name: "Dragão Evocado", emoji: "🐉", hp: 60, maxHp: 60, mp: 4, maxMp: 4, atk: 18, range: 2, abilities: ['burn'], tags: ['FIRE'], isNew: false }); game.units.push(d); showPopup("Invocado!", d, '#e74c3c'); return true; } },
+    { id: 'sl_evocar_lobo', name: 'Evocar Lobo de Mana', icon: '🐺', cost: { 'MYSTIC': 4 }, level: 1, type: 'def', range: 1, tags: ['MYSTIC'], desc: 'Invoca um Lobo espiritual (Fera) para lutar ao seu lado.', effect: async (game, caster, target, targetHex) => { if (target) return false; let d = new Unit({ q: targetHex.q, r: targetHex.r, faction: 1, name: "Lobo de Mana", emoji: "🐺", hp: 35, maxHp: 35, mp: 4, maxMp: 4, atk: 12, range: 1, abilities: ['dodge'], tags: ['MYSTIC'], isNew: false }); game.units.push(d); showPopup("Invocado!", d, '#9b59b6'); return true; } },
     { id: 'sl_evocar_golem', name: 'Evocar Golem de Pedra', icon: '🪨', cost: { 'MYSTIC': 2, 'ROCK': 2 }, level: 1, type: 'def', range: 1, tags: ['MYSTIC'], desc: 'Invoca um Golem resistente de Pedra.', effect: async (game, caster, target, targetHex) => { if (target) return false; let d = new Unit({ q: targetHex.q, r: targetHex.r, faction: 1, name: "Golem de Pedra", emoji: "🪨", hp: 80, maxHp: 80, mp: 2, maxMp: 2, atk: 10, range: 1, abilities: ['carapace'], tags: ['ROCK'], isNew: false }); game.units.push(d); showPopup("Invocado!", d, '#95a5a6'); return true; } },
-    { id: 'sl_cancao_sereia', name: 'Canção da Sereia', icon: '🎵', cost: { 'ABYSSAL': 2 }, level: 2, type: 'atk', range: 3, tags: ['ABYSSAL'], desc: 'Atrai o inimigo 1 casa para perto e aplica Encantar (Atordoado).', effect: async (game, caster, target) => { if (!target) return false; target.status = 'stun'; let path = Hex.getNeighbors(target.q, target.r).sort((a, b) => Hex.distance(a, caster) - Hex.distance(b, caster)); for (let h of path) { if (game.map.has(`${h.q},${h.r}`) && !game.getUnitAt(h.q, h.r)) { await game.moveUnit(target, h.q, h.r); break; } } showPopup("Encantado!", target, '#ff69b4'); return true; } },
-    { id: 'sl_turno_extra', name: 'Pó de Fada', icon: '✨', cost: { 'MYSTIC': 3 }, level: 2, type: 'def', range: 2, tags: ['SILVESTRE'], desc: 'Zera o cooldown de um aliado, permitindo que ele ande e ataque novamente.', effect: async (game, caster, target) => { if (!target || target === caster || target.faction !== 1) return false; target.hasAttacked = false; target.mp = target.maxMp; showPopup("Turno Extra!", target, '#f1c40f'); return true; } },
+    { id: 'sl_cancao_sereia', name: 'Canção da Sereia', icon: '🎵', cost: { 'ABYSSAL': 5 }, level: 2, type: 'atk', range: 3, tags: ['ABYSSAL'], desc: 'Atrai o inimigo 1 casa para perto e aplica Encantar (Atordoado).', effect: async (game, caster, target) => { if (!target) return false; target.status = 'stun'; let path = Hex.getNeighbors(target.q, target.r).sort((a, b) => Hex.distance(a, caster) - Hex.distance(b, caster)); for (let h of path) { if (game.map.has(`${h.q},${h.r}`) && !game.getUnitAt(h.q, h.r)) { await game.moveUnit(target, h.q, h.r); break; } } showPopup("Encantado!", target, '#ff69b4'); return true; } },
+    { id: 'sl_turno_extra', name: 'Pó de Fada', icon: '✨', cost: { 'MYSTIC': 5 }, level: 2, type: 'def', range: 2, tags: ['SILVESTRE'], desc: 'Zera o cooldown de um aliado, permitindo que ele ande e ataque novamente.', effect: async (game, caster, target) => { if (!target || target === caster || target.faction !== 1) return false; target.hasAttacked = false; target.mp = target.maxMp; showPopup("Turno Extra!", target, '#f1c40f'); return true; } },
     { id: 'sl_caldeirao', name: 'Caldeirão Sombrio', icon: '🍲', cost: { 'UMBRAL': 2 }, level: 2, type: 'def', range: 1, tags: ['VENOM'], desc: 'Sacrifica um aliado adjacente para curar todo o exército em 30 HP.', effect: async (game, caster, target) => { if (!target || target.faction !== 1 || target.isLeader) return false; game.handleDeath(target, caster); game.units.filter(u => u.faction === 1).forEach(u => { u.hp = Math.min(u.maxHp, u.hp + 30); showPopup("+30 HP", u, '#2ecc71'); }); return true; } },
     { id: 'sl_barreira_gelo', name: 'Barreira de Gelo', icon: '🧊', cost: { 'ICE': 3 }, level: 1, type: 'def', range: 0, tags: ['ICE'], desc: 'Cria uma armadura gélida: ganha escudo imediato e cura 15 HP.', effect: async (game, caster) => { caster.status = 'shielded'; caster.hp = Math.min(caster.maxHp, caster.hp + 15); showPopup("Barreira Ativa!", caster, '#00ffff'); return true; } },
-    { id: 'sl_vendaval', name: 'Vendaval Rasante', icon: '🌪️', cost: { 'WING': 3 }, level: 1, type: 'atk', range: 2, tags: ['WING'], desc: 'Causa 20 de dano a um alvo e zera o próprio custo de movimento para fugir (Hit & Run).', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 20; caster.hasAttacked = false; caster.mp = caster.maxMp; showPopup("-20 🌪️", target, '#aaa'); showPopup("Vento a Favor!", caster, '#f1c40f'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
+    { id: 'sl_vendaval', name: 'Vendaval Rasante', icon: '🌪️', cost: { 'WING': 4 }, level: 1, type: 'atk', range: 2, tags: ['WING'], desc: 'Causa 20 de dano a um alvo e zera o próprio custo de movimento para fugir (Hit & Run).', effect: async (game, caster, target) => { if (!target) return false; target.hp -= 20; caster.hasAttacked = false; caster.mp = caster.maxMp; showPopup("-20 🌪️", target, '#aaa'); showPopup("Vento a Favor!", caster, '#f1c40f'); if (target.hp <= 0) game.handleDeath(target, caster); return true; } },
+    { id: 'sl_furia_tempestade', name: 'Fúria da Tempestade', icon: '🌩️', desc: 'Lança um raio colossal que causa 25 de Dano. Todos os inimigos adjacentes ao alvo também recebem o dano e ficam Atordoados!', level: 1, type: 'atk', targetTerrain: true, range: 3, tags: ['ELECTRIC'], cost: { 'ELECTRIC': 4 }, effect: async (game, caster, target, targetHex) => { target.hp -= 25; if (typeof showPopup === 'function') showPopup("-25 ⚡", target, '#f1c40f'); if (target.hp <= 0) game.handleDeath(target, caster); let neighbors = Hex.getNeighbors(target.q, target.r); for (let n of neighbors) { let u = game.getUnitAt(n.q, n.r); if (u && u.faction !== caster.faction && u !== target && u.hp > 0) { u.hp -= 25; u.status = 'stun'; if (typeof showPopup === 'function') showPopup("Zzz ⚡", u, '#f1c40f'); if (u.hp <= 0) game.handleDeath(u, caster); } } return true; } },
     {
-        id: 'sl_furia_tempestade',
-        name: 'Fúria da Tempestade',
-        icon: '🌩️',
-        desc: 'Lança um raio colossal que causa 25 de Dano. Todos os inimigos adjacentes ao alvo também recebem o dano e ficam Atordoados!',
-        level: 1,
-        type: 'atk',
-        targetTerrain: true,
-        range: 3,
-        tags: ['ELECTRIC'],
-        cost: { 'ELECTRIC': 2 },
-        effect: async (game, caster, target, targetHex) => {
-            target.hp -= 25;
-            if (typeof showPopup === 'function') showPopup("-25 ⚡", target, '#f1c40f');
-            if (target.hp <= 0) game.handleDeath(target, caster);
-
-            // Dano em Cadeia
-            let neighbors = Hex.getNeighbors(target.q, target.r);
-            for (let n of neighbors) {
-                let u = game.getUnitAt(n.q, n.r);
-                if (u && u.faction !== caster.faction && u !== target && u.hp > 0) {
-                    u.hp -= 25;
-                    u.status = 'stun';
-                    if (typeof showPopup === 'function') showPopup("Zzz ⚡", u, '#f1c40f');
-                    if (u.hp <= 0) game.handleDeath(u, caster);
-                }
-            }
-            return true;
-        }
-    },
-
-    {
-        id: 'sl_miasma_curativo', name: 'Miasma Alquímico', icon: '🧪',
-        desc: 'Nuvem tóxica em área 1. Inimigos recebem 20 de dano. Aliados com a tag POISON recuperam 30 HP.',
-        level: 1, type: 'atk', range: 3, tags: ['VENOM'], cost: { 'VENOM': 2 }, targetTerrain: true,
-        effect: async (game, caster, target, targetHex) => {
-            // Pega todos no raio de 1 hexágono do alvo/chão clicado
-            let affectedHexes = [targetHex, ...Hex.getNeighbors(targetHex.q, targetHex.r).map(n => game.map.get(`${n.q},${n.r}`))].filter(Boolean);
-
-            for (let h of affectedHexes) {
-                let u = game.getUnitAt(h.q, h.r);
-                if (u && u.hp > 0) {
-                    if (u.faction === caster.faction) {
-                        // Se for aliado E tiver a tag de veneno, cura!
-                        if (u.tags && u.tags.includes('POISON')) {
-                            u.hp = Math.min(u.maxHp, u.hp + 30);
-                            if (typeof showPopup === 'function') showPopup("+30 🧪", u, '#2ecc71');
-                        }
-                    } else {
+        id: 'sl_miasma_curativo', name: 'Miasma Alquímico', icon: '🧪', desc: 'Nuvem tóxica em área 1. Inimigos recebem 20 de dano. Aliados com a tag POISON recuperam 30 HP.', level: 1, type: 'atk', range: 3, tags: ['VENOM'], cost: { 'VENOM': 4 }, targetTerrain: true, effect: async (game, caster, target, targetHex) => {
+            let affectedHexes = [targetHex, ...Hex.getNeighbors(targetHex.q, targetHex.r).map(n => game.map.get(`${n.q},${n.r}`))].filter(Boolean); for (let h of affectedHexes) {
+                let u = game.getUnitAt(h.q, h.r); if (u && u.hp > 0) {
+                    if (u.faction === caster.faction) { if (u.tags && u.tags.includes('POISON')) { u.hp = Math.min(u.maxHp, u.hp + 30); if (typeof showPopup === 'function') showPopup("+30 🧪", u, '#2ecc71'); } } else {
                         // Se for inimigo, dano neles!
                         u.hp -= 20;
                         if (typeof showPopup === 'function') showPopup("-20 ☠️", u, '#9b59b6');
@@ -304,7 +261,6 @@ const SPELLS = [
         }
     }
 ];
-
 
 
 const LEADER_GRIMOIRE_TAGS = {
@@ -347,7 +303,7 @@ const LEADERS = [
     { id: 'pyro', name: 'Piromante', loreFaction: 'ORDEM', emoji: '🔥', hp: 50, atk: 16, mp: 4, range: 2, limit: 3, desc: 'Feras compradas e domadas vêm com queimadura e ganham a tag Ígnea.', tags: ['FIRE'], abilities: ['burn'], sprite: 'img/lideres/piromante.png' },
     { id: 'admiral', name: 'Almirante', loreFaction: 'ABISSAL', emoji: '🏴‍☠️', hp: 65, atk: 13, mp: 5, range: 1, limit: 3, desc: 'Custo de movimento na Água é livre (1). Encontra e doma mais feras Abissais.', tags: ['ABYSSAL'], fav: ['WATER'], sprite: 'img/lideres/almirante.png' },
     { id: 'vampire', name: 'Lord Vampiro', loreFaction: 'SOMBRAS', emoji: '🧛🏻‍♂️', hp: 65, atk: 16, mp: 6, range: 1, limit: 5, desc: 'Roubo de vida. Doma feras abatidas transformando em Rastreadores. Fome se não atacar.', tags: ['UMBRAL', 'STALKER'], abilities: ['lifesteal'], sprite: 'img/lideres/lord_vampiro.png' },
-    { id: 'L_CENTAUR', name: 'Centauro Espectral', loreFaction: 'SILVESTRE', emoji: '🏇', hp: 70, maxHp: 70, mp: 6, maxMp: 6, limit: 3, atk: 6, range: 1, tags: ['MYSTIC', 'SILVESTRE'], fav: ['PLAINS'], desc: 'Ganha +10% de ATK Base por cada hexágono percorrido antes de atacar no turno.' , sprite: 'img/lideres/centauro.png' },
+    { id: 'L_CENTAUR', name: 'Centauro Espectral', scale: 1.2, loreFaction: 'SILVESTRE', emoji: '🏇', hp: 70, maxHp: 70, mp: 6, maxMp: 6, limit: 3, atk: 6, range: 1, tags: ['MYSTIC', 'SILVESTRE'], fav: ['PLAINS'], desc: 'Ganha +10% de ATK Base por cada hexágono percorrido antes de atacar no turno.', sprite: 'img/lideres/centauro.png' },
     { id: 'L_ANUBIS', name: 'Anubis', loreFaction: 'DESERTO', emoji: '🐕‍🦺', hp: 80, maxHp: 80, mp: 3, maxMp: 3, atk: 14, range: 1, limit: 3, tags: ['UMBRAL', 'SAND'], fav: ['DESERT'], desc: 'Sempre que elimina um inimigo, ganha +1 ATK permanentemente (Acumula na run).', sprite: 'img/lideres/anubis.png' },
     { id: 'L_SHAPESHIFTER', name: 'Metamorfo', loreFaction: 'SILVESTRE', emoji: '🕵️‍♂️', hp: 85, maxHp: 85, mp: 4, maxMp: 4, atk: 8, limit: 3, range: 1, tags: ['PRIMAL', 'SILVESTRE'], fav: ['FOREST'], desc: 'Alterna posturas sem custo de mana. Urso (+Defesa, Alc:1) ou Falcão (-Defesa, Perfurante, Alc:3).', sprite: 'img/lideres/metamorfo.png' },
     { id: 'L_EXECUTIONER', name: 'Carrasco', loreFaction: 'SOMBRAS', emoji: '🪓', hp: 90, maxHp: 90, mp: 3, maxMp: 3, atk: 14, limit: 3, range: 1, tags: ['STALKER'], fav: ['MOUNTAIN'], desc: 'Possui o ataque especial Execução. Se matar o alvo, recupera a ação e o movimento.', sprite: 'img/lideres/carrasco.png' },
@@ -358,52 +314,16 @@ const LEADERS = [
     { id: 'L_FAIRY', name: 'Fada', loreFaction: 'SILVESTRE', emoji: '🧚🏻‍♀️', hp: 60, maxHp: 50, mp: 5, maxMp: 5, atk: 6, range: 2, limit: 3, tags: ['MYSTIC', 'SILVESTRE'], fav: ['FOREST'], desc: 'Maga de Suporte. Suas magias curam aliados em área ou concedem turnos extras.', sprite: 'img/lideres/fada.png' },
     { id: 'L_WITCH', name: 'Bruxa', loreFaction: 'SOMBRAS', emoji: '🧙🏼‍♀️', hp: 65, maxHp: 65, mp: 3, maxMp: 3, atk: 12, range: 2, limit: 3, tags: ['VENOM', 'UMBRAL'], fav: ['FOREST'], desc: 'Alquimista. Pode sacrificar um aliado com a magia Caldeirão para curar toda a equipe massivamente.', sprite: 'img/lideres/bruxa.png' },
     { id: 'L_BARBARIAN', name: 'Rei Bárbaro', loreFaction: 'PRIMORDIAL', emoji: '🤴', hp: 80, maxHp: 80, mp: 4, maxMp: 4, atk: 12, limit: 3, range: 1, tags: ['PRIMAL', 'ICE'], fav: ['SNOW'], desc: 'Fúria Imortal: Quanto mais HP perder, mais forte ele fica.', sprite: 'img/lideres/rei_barbaro.png' },
-    { id: 'L_TREX', name: 'T-Rex', loreFaction: 'PRIMORDIAL', emoji: '🦖', hp: 150, maxHp: 150, mp: 3, maxMp: 2, atk: 25, range: 1, limit: 3, tags: ['PRIMAL', 'ROCK', 'STALKER'], fav: ['DIRT'], desc: 'Kaiju. Bate em todos à frente. A cada passo, esmaga florestas e vilas, tornando-as planícies.' , sprite: 'img/lideres/trex.png' },
+    { id: 'L_TREX', name: 'T-Rex', loreFaction: 'PRIMORDIAL', scale: 2, emoji: '🦖', hp: 150, maxHp: 150, mp: 3, maxMp: 2, atk: 25, range: 1, limit: 3, tags: ['PRIMAL', 'ROCK', 'STALKER'], fav: ['DIRT'], desc: 'Kaiju. Bate em todos à frente. A cada passo, esmaga florestas e vilas, tornando-as planícies.', sprite: 'img/lideres/trex.png' },
     { id: 'L_ICE_QUEEN', name: 'Rainha do Gelo', loreFaction: 'ORDEM', emoji: '👸🏼', hp: 75, maxHp: 75, mp: 3, maxMp: 3, atk: 12, limit: 3, range: 2, tags: ['ICE'], fav: ['SNOW'], filter: 'hue-rotate(180deg)', abilities: ['frost_armor', 'freeze'], desc: 'Magia glacial. Inimigos que a atacam corpo-a-corpo sofrem Congelamento (Chilled) instantâneo.', sprite: 'img/lideres/rainha_gelo.png' },
-    { id: 'L_HARPY', name: 'Matriarca Harpia', loreFaction: 'SILVESTRE', emoji: '🦅', hp: 65, maxHp: 65, mp: 5, maxMp: 5, atk: 14, limit: 3, range: 1, tags: ['WING', 'STALKER'], fav: ['MOUNTAIN'], filter: 'saturate(150%)', abilities: ['flying', 'dodge'], desc: 'Senhora dos ventos. Ignora custos de terreno pesado (sempre move por 1 MP) e possui esquiva natural alta.' , sprite: 'img/lideres/harpia.png' },
-    { id: 'shaman', name: 'Xamã da Tempestade', loreFaction: 'TEMPESTADE', emoji: '🧙‍♂️', desc: 'Mestre dos raios. Seus feitiços ricocheteiam e causam caos nas fileiras inimigas.', limit: 3, hp: 75, mp: 4, atk: 12, range: 2, limit: 6, tags: ['ELECTRIC', 'MYSTIC'], fav: ['MOUNTAIN'], filter: 'hue-rotate(45deg) saturate(200%)', knownSpells: ['sl_furia_tempestade'], sprite: 'img/lideres/xama_tempestade.png' },
-    {
-        id: 'ld_dragao_galatico', name: 'Dragão Galático', loreFaction: 'FORASTEIROS', emoji: '🌌',
-        maxHp: 180, hp: 180, mp: 5, maxMp: 5, atk: 45, range: 1, limit: 3,
-        tags: ['CELESTIAL', 'FIRE'], abilities: ['flying'],
-        sprite: 'img/lideres/dragao_galatico.png',
-        desc: 'Uma entidade cósmica. Sobrevoa os perigos e incendeia o campo.',
-    },
-    {
-        id: 'ld_gargula', name: 'Gárgula Anciã', loreFaction: 'FORASTEIROS', emoji: '🗿',
-        maxHp: 200, hp: 200, mp: 3, maxMp: 3, atk: 35, range: 1, limit: 3, fav: 'MOUNTAIN',
-        tags: ['ROCK', 'WING'], abilities: ['flying', 'counter'],
-        desc: 'Estátua viva de altíssima defesa. Voa e pune quem a ataca de perto.',
-        sprite: 'img/lideres/gargula.png'
-    },
-    {
-        id: 'ld_golem_gelo', name: 'Golem de Gelo', loreFaction: 'FORASTEIROS', emoji: '🧊',
-        maxHp: 250, hp: 250, mp: 3, maxMp: 3, atk: 30, range: 1, limit: 3, fav: 'SNOW',
-        tags: ['ROCK', 'ICE'], abilities: [],
-        desc: 'Um colosso glacial. Caminha devagar, mas congela os mares.',
-        sprite: 'img/lideres/golem_gelo.png'
-    },
-    {
-        id: 'ld_porco_eletrico', name: 'Porco-Espinho Elétrico', loreFaction: 'TEMPESTADE', emoji: '🦔',
-        maxHp: 140, hp: 140, mp: 7, maxMp: 7, atk: 25, range: 1, limit: 3,
-        tags: ['CARAPACE', 'ELECTRIC'], abilities: ['counter', 'eletric'],
-        desc: 'Agulhas carregadas. Eletrocuta a água para criar armadilhas pelo mapa.',
-        sprite: 'img/lideres/espinho_eletrico.png'
-    },
-    {
-        id: 'ld_escaravelho', name: 'Escaravelho das Pragas', loreFaction: 'DESERTO', emoji: '🪲',
-        maxHp: 160, hp: 160, mp: 4, maxMp: 4, atk: 35, range: 1, limit: 3,
-        tags: ['SAND', 'VENOM'], abilities: ['poison'], fav: 'DESERT', sprite: 'img/lideres/escaravelho.png',
-        desc: 'Emerge das areias espalhando toxinas mortais pelo campo.',
-    },
-    {
-        id: 'ld_doutor_praga', name: 'Doutor da Praga', loreFaction: 'SOMBRAS', emoji: '🐦‍⬛',
-        maxHp: 130, hp: 130, mp: 4, maxMp: 4, atk: 20, range: 2, limit: 3,
-        tags: ['VENOM'], abilities: ['poison'],
-        sprite: 'img/lideres/doutor_praga.png',
-        desc: 'Mestre alquimista. Todas as feras aliadas compradas se tornam Venenosas.',
-        knownSpells: ['sl_miasma_curativo'] // Magia nova abaixo!
-    }
+    { id: 'L_HARPY', name: 'Matriarca Harpia', loreFaction: 'SILVESTRE', emoji: '🦅', hp: 65, maxHp: 65, mp: 5, maxMp: 5, atk: 14, limit: 3, range: 1, tags: ['WING', 'STALKER'], fav: ['MOUNTAIN'], filter: 'saturate(150%)', abilities: ['flying', 'dodge'], desc: 'Senhora dos ventos. Ignora custos de terreno pesado (sempre move por 1 MP) e possui esquiva natural alta.', sprite: 'img/lideres/harpia.png' },
+    { id: 'shaman', name: 'Xamã da Tempestade', loreFaction: 'TEMPESTADE', scale: 1.4, emoji: '🧙‍♂️', desc: 'Mestre dos raios. Seus feitiços ricocheteiam e causam caos nas fileiras inimigas.', limit: 3, hp: 75, mp: 4, atk: 12, range: 2, limit: 6, tags: ['ELECTRIC', 'MYSTIC'], fav: ['MOUNTAIN'], filter: 'hue-rotate(45deg) saturate(200%)', knownSpells: ['sl_furia_tempestade'], sprite: 'img/lideres/xama_tempestade.png' },
+    { id: 'ld_dragao_galatico', name: 'Dragão Galático', loreFaction: 'FORASTEIROS', emoji: '🌌', maxHp: 180, hp: 180, mp: 5, maxMp: 5, atk: 45, range: 1, limit: 3, scale: 1.5, fav: 'MOUNTAIN', tags: ['CELESTIAL', 'FIRE'], abilities: ['flying'], sprite: 'img/lideres/dragao_galatico.png', desc: 'Uma entidade cósmica. Sobrevoa os perigos e incendeia o campo.', },
+    { id: 'ld_gargula', name: 'Gárgula Anciã', loreFaction: 'FORASTEIROS', emoji: '🗿', maxHp: 200, hp: 200, mp: 3, maxMp: 3, atk: 35, range: 1, limit: 3, fav: 'MOUNTAIN', tags: ['ROCK', 'WING'], abilities: ['flying', 'counter'], desc: 'Estátua viva de altíssima defesa. Voa e pune quem a ataca de perto.', sprite: 'img/lideres/gargula.png' },
+    { id: 'ld_golem_gelo', name: 'Golem de Gelo', loreFaction: 'FORASTEIROS', emoji: '🧊', maxHp: 250, hp: 250, mp: 3, maxMp: 3, atk: 30, range: 1, limit: 3, fav: 'SNOW', tags: ['ROCK', 'ICE'], abilities: [], desc: 'Um colosso glacial. Caminha devagar, mas congela os mares.', sprite: 'img/lideres/golem_gelo.png' },
+    { id: 'ld_porco_eletrico', name: 'Porco-Espinho Elétrico', loreFaction: 'TEMPESTADE', emoji: '🦔', maxHp: 140, hp: 140, mp: 7, maxMp: 7, atk: 25, range: 1, limit: 3, tags: ['CARAPACE', 'ELECTRIC'], abilities: ['counter', 'eletric'], desc: 'Agulhas carregadas. Eletrocuta a água para criar armadilhas pelo mapa.', sprite: 'img/lideres/espinho_eletrico.png' },
+    { id: 'ld_escaravelho', name: 'Escaravelho das Pragas', loreFaction: 'DESERTO', emoji: '🪲', maxHp: 160, hp: 160, mp: 4, maxMp: 4, atk: 35, range: 1, limit: 3, scale: 1.2, tags: ['SAND', 'VENOM'], abilities: ['poison'], fav: 'DESERT', sprite: 'img/lideres/escaravelho.png', desc: 'Emerge das areias espalhando toxinas mortais pelo campo.', },
+    { id: 'ld_doutor_praga', name: 'Doutor da Praga', loreFaction: 'SOMBRAS', emoji: '🐦‍⬛', maxHp: 130, hp: 130, mp: 4, maxMp: 4, atk: 20, range: 2, limit: 3, tags: ['VENOM'], abilities: ['poison'], sprite: 'img/lideres/doutor_praga.png', desc: 'Mestre alquimista. Todas as feras aliadas compradas se tornam Venenosas.', knownSpells: ['sl_miasma_curativo'] }
 ];
 
 const FACTIONS = { WILD: { id: 0 }, PLAYER: { id: 1 }, AI: { id: 2 } };
@@ -462,13 +382,13 @@ const BEASTS = {
         { e: '🐭', name: 'Rato', hp: 20, atk: 5, mp: 5, range: 1, abilities: [], minLevel: 1, filter: 'none', tags: ['STALKER', 'SILVESTRE'], fav: ['PLAINS'] },
         { e: '🐦', name: 'Pássaro', hp: 30, atk: 9, mp: 5, range: 1, abilities: [], minLevel: 1, filter: 'none', tags: ['WING', 'SILVESTRE'], fav: ['FOREST'] },
         { e: '🐢', name: 'Tartaruga', hp: 70, atk: 6, mp: 2, range: 1, abilities: [], minLevel: 1, filter: 'none', tags: ['PRIMAL', 'ROCK'], fav: ['WATER', 'PLAINS'] },
-        { e: '🐇', name: 'Coelho', hp: 25, atk: 4, mp: 6, range: 1, abilities: ['swift'], minLevel: 1, filter: 'none', tags: ['SILVESTRE'], fav: ['PLAINS'] },
+        { e: '🐇', name: 'Coelho', hp: 25, atk: 4, mp: 6, range: 1, scale: 0.8, abilities: ['swift'], minLevel: 1, filter: 'none', tags: ['SILVESTRE'], fav: ['PLAINS'] },
         { e: '🐴', name: 'Cavalo', hp: 45, atk: 7, mp: 6, range: 1, abilities: ['hit_run'], minLevel: 1, filter: 'none', tags: ['ROCK'], fav: ['PLAINS'] },
         { e: '🦇', name: 'Morcego', hp: 25, atk: 8, mp: 4, range: 1, abilities: ['lifesteal'], minLevel: 1, filter: 'none', tags: ['WING', 'UMBRAL'], fav: ['FOREST'] },
         { e: '🐍', name: 'Cobra', hp: 25, atk: 10, mp: 3, range: 1, abilities: ['poison', 'camouflage'], minLevel: 1, filter: 'none', tags: ['VENOM', 'SAND'], fav: ['DESERT'] },
         { e: '🦂', name: 'Escorpião', hp: 30, atk: 11, mp: 3, range: 1, abilities: ['poison'], minLevel: 1, filter: 'none', tags: ['VENOM', 'SAND', 'CARAPACE'], fav: ['DESERT'] },
         { e: '🐒', name: 'Macaco', hp: 35, atk: 10, mp: 4, range: 1, abilities: ['dodge'], minLevel: 1, filter: 'none', tags: ['SILVESTRE', 'PRIMAL'], fav: ['FOREST'] },
-        { e: '🦊', name: 'Raposa', hp: 25, atk: 12, mp: 5, range: 1, abilities: ['swift'], minLevel: 1, filter: 'none', tags: ['SILVESTRE', 'MYSTIC'], fav: ['FOREST'] },
+        { e: '🦊', name: 'Raposa', hp: 25, atk: 12, mp: 5, range: 1, scale: 1.5, abilities: ['swift'], minLevel: 1, filter: 'none', tags: ['SILVESTRE', 'MYSTIC'], fav: ['FOREST'] },
         { e: '🐺', name: 'Lobo', hp: 35, atk: 12, mp: 4, range: 1, abilities: [], minLevel: 2, filter: 'none', tags: ['STALKER', 'ICE'], fav: ['SNOW'] },
         { e: '🐗', name: 'Javali', hp: 50, atk: 8, mp: 3, range: 1, abilities: [], minLevel: 2, filter: 'none', tags: ['STALKER', 'ROCK'], fav: ['PLAINS'] },
         { e: '🐻', name: 'Urso', hp: 65, atk: 15, mp: 3, range: 1, abilities: ['stun'], minLevel: 2, filter: 'none', tags: ['MYSTIC', 'SILVESTRE'], fav: ['FOREST'] },
@@ -479,10 +399,10 @@ const BEASTS = {
         { e: '🪨', name: 'Golem de Pedra', hp: 100, atk: 10, mp: 2, range: 1, abilities: ['pierce'], minLevel: 4, filter: 'none', tags: ['ROCK', 'CARAPACE'], fav: ['MOUNTAIN'] },
         { e: '🦘', name: 'Canguru', hp: 45, mp: 4, atk: 12, range: 1, abilities: ['dodge'], filter: 'none', tags: ['SILVESTRE', 'SAND'], fav: ['DESERT', 'PLAINS'] },
         { e: '🦌', name: 'Cervo', hp: 35, mp: 5, atk: 10, range: 1, abilities: ['swift'], filter: 'brightness(120%) drop-shadow(0 0 2px yellow)', tags: ['CELESTIAL', 'SILVESTRE'], fav: ['FOREST'] },
-        { e: '🦎', name: 'Salamandra', hp: 40, mp: 3, atk: 14, range: 1, abilities: ['burn'], filter: 'hue-rotate(-50deg) saturate(200%)', tags: ['FIRE', 'CARAPACE'], fav: ['MOUNTAIN', 'DESERT'] },
+        { e: '🦎', name: 'Salamandra', hp: 40, mp: 3, atk: 14, range: 1, scale: 1.2, abilities: ['burn'], filter: 'hue-rotate(-50deg) saturate(200%)', tags: ['FIRE', 'CARAPACE'], fav: ['MOUNTAIN', 'DESERT'] },
         { e: '🐕‍🦺', name: 'Cão Infernal', hp: 50, mp: 4, atk: 16, range: 1, abilities: ['swift'], filter: 'brightness(70%) sepia(100%) hue-rotate(330deg) saturate(300%)', tags: ['FIRE', 'UMBRAL'], fav: ['MOUNTAIN'] },
         { e: '🦉', name: 'Coruja', hp: 30, mp: 5, atk: 12, range: 2, abilities: ['flying', 'pierce'], filter: 'none', tags: ['UMBRAL', 'WING'], fav: ['FOREST'] },
-        { e: '🦅', name: 'Pássaro Trovão', hp: 45, mp: 6, atk: 18, range: 2, abilities: ['flying', 'electric'], filter: 'hue-rotate(200deg) saturate(300%) drop-shadow(0 0 5px yellow)', tags: ['WING', 'ELECTRIC'], fav: ['MOUNTAIN'] }
+        { e: '🦅', name: 'Pássaro Trovão', hp: 45, mp: 6, atk: 18, range: 2, scale: 1.2, abilities: ['flying', 'electric'], filter: 'hue-rotate(200deg) saturate(300%) drop-shadow(0 0 5px yellow)', tags: ['WING', 'ELECTRIC'], fav: ['MOUNTAIN'] }
     ],
     WATER: [
         { e: '🐊', name: 'Crocodilo', hp: 55, atk: 14, mp: 3, range: 1, abilities: ['dive'], minLevel: 2, filter: 'none', tags: ['PRIMAL', 'ABYSSAL'], fav: ['WATER'] },
@@ -497,7 +417,7 @@ const BEASTS = {
         { e: '🐐', name: 'Bode da Neve', hp: 40, atk: 9, mp: 4, range: 2, abilities: [], minLevel: 1, filter: 'none', tags: ['ROCK', 'ICE'], fav: ['MOUNTAIN', 'SNOW'] },
         { e: '☃️', name: 'Yeti Atirador', hp: 45, atk: 11, mp: 2, range: 2, abilities: ['freeze'], minLevel: 2, filter: 'none', tags: ['MYSTIC', 'ICE'], fav: ['SNOW'] },
         { e: '🐺', name: 'Lobo do Inverno', hp: 50, atk: 14, mp: 4, range: 1, abilities: ['freeze'], minLevel: 3, filter: 'brightness(200%) grayscale(100%)', tags: ['STALKER', 'ICE'], fav: ['SNOW'] },
-        { e: '🐧', name: 'Pinguim', hp: 30, atk: 8, mp: 4, range: 1, abilities: [], minLevel: 1, filter: 'none', tags: ['ABYSSAL', 'ICE'], fav: ['WATER', 'SNOW'] }],
+        { e: '🐧', name: 'Pinguim', hp: 30, atk: 8, mp: 4, range: 1, scale: 0.8, abilities: [], minLevel: 1, filter: 'none', tags: ['ABYSSAL', 'ICE'], fav: ['WATER', 'SNOW'] }],
 
     BOSSES: [
         // LESTE (Deserto)
@@ -579,25 +499,51 @@ const ARTIFACTS = [
     { id: 'art_omega', name: 'Coração do Infinito', icon: '🌌', desc: '+20 HP, +5 ATK e +1 Limite de Exército.', cost: 999, rarity: 'legendary', color: '#ff00ff' },
     { id: 'art_predator_lasso', name: 'O Laço do Predador', icon: '➰', desc: '+30% chance de Domar. Falha: O alvo revida com DANO DUPLO e fica imune à doma no turno.', cost: 30, rarity: 'epic', color: 'var(--rarity-epic)' },
     { id: 'art_bandit_badge', name: 'Insígnia do Bandido', icon: '🦹', desc: 'Recebe +2 de Ouro ao abater unidades inimigas.', cost: 20, rarity: 'rare', color: 'var(--rarity-rare)' },
+
     // ==========================================
     // ARTEFATOS ÔMEGA (Drop Exclusivo de Chefes de Região)
     // ==========================================
     { id: 'art_omega_east', name: 'Coroa do Sol Escaldante', icon: '👑', desc: 'Relíquia do Rei Leão. Suas feras ganham Bater e Correr e +2 de Movimento. Se o terreno for Areia, atacam duas vezes.', tier: 'omega', region: 'EAST' },
-    
+
     { id: 'art_omega_se', name: 'Núcleo Derretido', icon: '🌋', desc: 'Relíquia da Fornalha. Aliados ficam imunes a Fogo. O chão sob os inimigos sempre conta como Floresta em Chamas (dano por turno).', tier: 'omega', region: 'SE' },
-    
+
     { id: 'art_omega_south', name: 'Mandíbula Ferrugínea', icon: '☠️', desc: 'Relíquia da Centopeia. Seus ataques ignoram a defesa do terreno inimigo e aplicam Veneno e Choque simultaneamente.', tier: 'omega', region: 'SOUTH' },
-    
+
     { id: 'art_omega_sw', name: 'Pérola das Profundezas', icon: '🌊', desc: 'Relíquia da Hidra Venenosa. Suas unidades ganham Mergulho. Atacar a partir da água cura o atacante em 50% do dano causado.', tier: 'omega', region: 'SW' },
-    
+
     { id: 'art_omega_west', name: 'Raiz do Mundo Sombrio', icon: '🍃', desc: 'Relíquia da Árvore Umbralina. No final do turno, seu exército cura 25% do HP Máximo (50% se estiverem em Floresta/Pântano).', tier: 'omega', region: 'WEST' },
-    
+
     { id: 'art_omega_nw', name: 'Placa Tectônica', icon: '⛰️', desc: 'Relíquia do Wyvern Ancião. Suas unidades terrestres ganham +40% de Defesa Permanente e imunidade a empurrões.', tier: 'omega', region: 'NW' },
-    
+
     { id: 'art_omega_north', name: 'Presa do Zero Absoluto', icon: '🧊', desc: 'Relíquia do Wendigo. Qualquer inimigo que causar dano às suas unidades sofrerá Congelamento instantâneo.', tier: 'omega', region: 'NORTH' },
-    
+
     { id: 'art_omega_ne', name: 'Auréola da Tormenta', icon: '⚡', desc: 'Relíquia do Arcanjo Caído. Todo seu exército ganha Voo. Seus ataques à distância disparam raios em inimigos adjacentes.', tier: 'omega', region: 'NE' }
 ];
+
+// ==========================================
+// SISTEMA DE CRAFTING E INFUSÃO
+// ==========================================
+
+const RECIPES = {
+    'CARAPACE_SHIELD': {
+        name: 'Escudo de Carapaça', icon: '🛡️',
+        cost: { stone: 4, ferro: 5, gold: 20 },
+        resultItem: 'CARAPACE_SHIELD',
+        desc: 'Concede +15 HP e +2 ATK.'
+    },
+    'HUNTER_BOW': {
+        name: 'Arco do Predador', icon: '🏹',
+        cost: { wood: 5, garras: 3, gold: 15 },
+        resultItem: 'HUNTER_BOW',
+        desc: 'Concede +1 Alcance e +5 ATK.'
+    }
+};
+
+// Mapa de "Polimerização" (Item Base + Catalisador = Novo Item)
+const INFUSIONS = {
+    'SWORD_brasa': 'FLAME_SWORD',
+    'SWORD_veneno': 'VENOM_DAGGER'
+};
 
 const ITEMS = {
     'SWORD': { icon: '🗡️', name: 'Espada', desc: '+3 ATK (Multiplica por Nível).', type: 'equip', onEquip: (u, lvl) => { u.atk += 3 * lvl; }, onUnequip: (u, lvl) => { u.atk -= 3 * lvl; } },
@@ -621,6 +567,10 @@ const ITEMS = {
     'EGG': { icon: '🪺', name: 'Ovo', desc: 'Ovo de Monstro.', type: 'instant', f: async (u, g) => { if (u.faction === 1) { g.hasEgg = true; return true; } return false; } },
     'POTION': { icon: '🧪', name: 'Poção Menor', desc: 'Cura 30 HP.', type: 'instant', f: async (u, g) => { u.hp = Math.min(u.maxHp, u.hp + 30); return true; } },
     'WINGS_ICARUS': { icon: '🪽', name: 'Asas de Ícaro', desc: 'Ganha atributo Voador, mas recebe 5 de dano puro todo turno.', type: 'equip', onEquip: (u, lvl) => { if (!u.abilities.includes('flying')) u.abilities.push('flying'); }, onUnequip: (u, lvl) => { u.abilities = u.abilities.filter(a => a !== 'flying'); } },
+    CARAPACE_SHIELD: { id: 'CARAPACE_SHIELD', name: 'Escudo de Carapaça', icon: '🛡️', desc: '+15 HP, +2 ATK.', onEquip: (u, lvl) => { u.maxHp += 15 * lvl; u.hp += 15 * lvl; u.atk += 2 * lvl; }, onUnequip: (u, lvl) => { u.maxHp -= 15 * lvl; u.hp = Math.min(u.hp, u.maxHp); u.atk -= 2 * lvl; } },
+    HUNTER_BOW: { id: 'HUNTER_BOW', name: 'Arco do Predador', icon: '🏹', desc: '+1 Alcance, +5 ATK.', onEquip: (u, lvl) => { u.range += 1; u.atk += 5 * lvl; }, onUnequip: (u, lvl) => { u.range -= 1; u.atk -= 5 * lvl; } },
+    FLAME_SWORD: { id: 'FLAME_SWORD', name: 'Espada de Fogo', icon: '🗡️', desc: '+10 ATK. Aplica Queimadura.', onEquip: (u, lvl) => { u.atk += 10 * lvl; if (!u.abilities.includes('burn')) u.abilities.push('burn'); }, onUnequip: (u, lvl) => { u.atk -= 10 * lvl; let idx = u.abilities.indexOf('burn'); if(idx > -1) u.abilities.splice(idx, 1); } },
+    VENOM_DAGGER: { id: 'VENOM_DAGGER', name: 'Adaga Tóxica', icon: '☠️', desc: '+6 ATK. Aplica Veneno.', onEquip: (u, lvl) => { u.atk += 6 * lvl; if (!u.abilities.includes('poison')) u.abilities.push('poison'); }, onUnequip: (u, lvl) => { u.atk -= 6 * lvl; let idx = u.abilities.indexOf('poison'); if(idx > -1) u.abilities.splice(idx, 1); } },
     'CATALYST': {
         icon: '💠', name: 'Catalisador', desc: 'Desperta uma habilidade extra baseada na tag da fera.', type: 'equip', onEquip: (u, lvl) => {
             let tagMap = { 'FIRE': 'burn', 'ICE': 'freeze', 'VENOM': 'poison', 'ROCK': 'counter', 'SAND': 'dodge', 'CARAPACE': 'counter', 'WING': 'swift', 'SILVESTRE': 'swift', 'UMBRAL': 'lifesteal', 'CELESTIAL': 'leadership', 'PRIMAL': 'corte_amplo', 'STALKER': 'hit_run', 'ABYSSAL': 'dodge' };

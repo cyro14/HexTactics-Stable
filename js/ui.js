@@ -1031,10 +1031,10 @@ function renderManagement(mode = 'prep') {
 
                 let existingEq = u.equipment.find(eq => eq.id === invItem.id);
                 if (existingEq) {
-                    if (iDef.onUnequip) iDef.onUnequip(u, existingEq.level);
-                    existingEq.level++;
-                    if (iDef.onEquip) iDef.onEquip(u, existingEq.level);
-                    showPopup(`✨ Fusão Lv${existingEq.level}!`, u, '#c9a227');
+                    showMessage("Este monstro já possui este item! Use a Forja Arcana para fundi-lo.", '#f39c12');
+                    selectedInventoryIndex = null;
+                    renderManagement(mode);
+                    return;
                 } else {
                     u.equipment.push({ ...invItem });
                     if (iDef.onEquip) iDef.onEquip(u, invItem.level);
@@ -2397,12 +2397,11 @@ function renderBuildingMenu() {
                              <button onclick="executeMarketTrade('scales', 2, -10)" class="btn-warning" style="flex:1; padding:4px 0; font-size:11px;">🐟</button>
                              <button onclick="executeMarketTrade('sand', 2, -10)" class="btn-warning" style="flex:1; padding:4px 0; font-size:11px;">⏳</button>
                          </div>`;
-        } else if (bData.id === 'FORGE') {
-            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">`;
-            let fCost = checkAdjacency('FORGE', 'MINE') ? 15 : 25;
-            let fTxt = fCost === 15 ? "Forjar Equipamento (-15💰) [Bônus da Mina]" : "Forjar Equipamento (-25💰)";
-            actsHtml += `<button id="btn-forge" data-cost="${fCost}" class="btn-warning" style="width:100%; font-size:10px; padding:6px;">${fTxt}</button>`;
-
+        } else if (bData.id === 'FORGE') { 
+            actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
+                <div style="font-size:9px; color:var(--gold-dark); text-transform:uppercase; margin:4px 0;">O Coração da Indústria</div>
+                <button onclick="openArcaneForge()" class="btn-warning" style="width:100%; padding:10px; font-weight:bold; letter-spacing:1px; box-shadow:0 0 10px rgba(243, 156, 18, 0.5);">🔨 ABRIR FORJA ARCANA</button>
+            `;
         } else if (bData.id === 'BARRACKS') {
             actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">`;
 
@@ -3546,4 +3545,191 @@ window.openBlackMarket = function () {
 
     // 3. Fechar Loja
     document.getElementById('bm-close').onclick = () => overlay.remove();
+};
+
+window.openArcaneForge = function() {
+    let forgeState = { slot1: null, slot2: null, result: null, mode: 'MERGE' }; // mode: 'MERGE' ou 'CRAFT'
+
+    let overlay = document.createElement('div');
+    overlay.id = 'forge-overlay';
+    overlay.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(5,5,10,0.95); z-index:10000; display:flex; justify-content:center; align-items:center; color:white; font-family:'Cinzel', serif;`;
+
+    const renderForge = () => {
+        let html = `
+            <div style="background:var(--bg-panel); border:2px solid var(--gold-dark); border-radius:8px; width:95%; max-width:800px; height:80vh; display:flex; flex-direction:column; box-shadow:0 0 30px rgba(201, 162, 39, 0.2);">
+                <div style="text-align:center; padding:15px; border-bottom:1px solid #444;">
+                    <h2 style="color:var(--gold); margin:0;">🔨 FORJA ARCANA</h2>
+                    <div style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
+                        <button class="btn-${forgeState.mode === 'MERGE' ? 'success' : 'secondary'}" onclick="document.getElementById('forge-overlay').__setMode('MERGE')">Síntese (Inventário)</button>
+                        <button class="btn-${forgeState.mode === 'CRAFT' ? 'success' : 'secondary'}" onclick="document.getElementById('forge-overlay').__setMode('CRAFT')">Forjar (Receitas)</button>
+                    </div>
+                </div>
+
+                <div style="display:flex; flex:1; overflow:hidden;">
+                    <div style="width:50%; border-right:1px solid #444; padding:15px; overflow-y:auto; background:rgba(0,0,0,0.3);">
+                        <h4 style="color:#aaa; text-transform:uppercase; margin-top:0;">${forgeState.mode === 'MERGE' ? 'Seu Inventário & Materiais' : 'Plantas de Biomante'}</h4>
+                        <div id="forge-list-container" style="display:flex; flex-direction:column; gap:8px;"></div>
+                    </div>
+
+                    <div style="width:50%; padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(circle, rgba(40,30,10,0.8) 0%, transparent 80%);">
+                        <div style="display:flex; align-items:center; gap:15px; margin-bottom:40px;">
+                            <div id="f-slot-1" style="width:70px; height:70px; border:2px dashed #777; border-radius:10px; display:flex; justify-content:center; align-items:center; font-size:35px; background:rgba(0,0,0,0.6); cursor:pointer;" onclick="document.getElementById('forge-overlay').__clearSlot(1)">
+                                ${forgeState.slot1 ? forgeState.slot1.icon : ''}
+                            </div>
+                            <div style="font-size:24px; color:#777;">+</div>
+                            <div id="f-slot-2" style="width:70px; height:70px; border:2px dashed #777; border-radius:10px; display:flex; justify-content:center; align-items:center; font-size:35px; background:rgba(0,0,0,0.6); cursor:pointer;" onclick="document.getElementById('forge-overlay').__clearSlot(2)">
+                                ${forgeState.slot2 ? forgeState.slot2.icon : (forgeState.mode === 'CRAFT' ? '🔒' : '')}
+                            </div>
+                            <div style="font-size:24px; color:var(--gold);">➔</div>
+                            <div id="f-slot-3" style="width:90px; height:90px; border:2px solid ${forgeState.result ? 'var(--gold)' : '#444'}; border-radius:10px; display:flex; flex-direction:column; justify-content:center; align-items:center; background:${forgeState.result ? 'rgba(201, 162, 39, 0.2)' : 'rgba(0,0,0,0.8)'}; box-shadow:${forgeState.result ? '0 0 20px var(--gold)' : 'none'};">
+                                <span style="font-size:40px;">${forgeState.result ? forgeState.result.icon : '❓'}</span>
+                            </div>
+                        </div>
+
+                        <div style="height:60px; text-align:center; margin-bottom:20px;">
+                            ${forgeState.result ? `<strong style="color:var(--gold); font-size:18px;">${forgeState.result.name}</strong><br><span style="font-size:12px; color:#ccc;">${forgeState.result.desc}</span>` : '<span style="color:#777;">Preencha os slots para ver o resultado...</span>'}
+                        </div>
+
+                        <button id="btn-synthesize" class="btn-success" style="padding:15px 40px; font-size:18px; font-weight:bold; letter-spacing:2px; ${!forgeState.result ? 'opacity:0.3; pointer-events:none;' : 'box-shadow:0 0 15px var(--success);'}" onclick="document.getElementById('forge-overlay').__synthesize()">SINTETIZAR</button>
+                    </div>
+                </div>
+                <div style="padding:10px; border-top:1px solid #444; text-align:right;">
+                    <button class="btn-danger" onclick="document.getElementById('forge-overlay').remove()">Sair da Forja</button>
+                </div>
+            </div>
+        `;
+        overlay.innerHTML = html;
+
+        // Preenche a lista da esquerda
+        let listContainer = document.getElementById('forge-list-container');
+        
+        if (forgeState.mode === 'CRAFT') {
+            Object.values(RECIPES).forEach(rec => {
+                // Checa se o jogador tem os recursos
+                let canAfford = Object.entries(rec.cost).every(([r, a]) => r === 'gold' ? game.gold >= a : (game.resources[r] || 0) >= a);
+                
+                let btn = document.createElement('div');
+                // Se não tiver recurso, o cursor vira o símbolo de 🚫
+                btn.style.cssText = `background:rgba(20,20,30,0.8); border:1px solid ${canAfford ? 'var(--gold-dark)' : '#444'}; padding:10px; border-radius:6px; cursor:${canAfford ? 'pointer' : 'not-allowed'}; opacity:${canAfford ? 1 : 0.4};`;
+                
+                let costStr = Object.entries(rec.cost).map(([r, a]) => `${a} ${r.toUpperCase()}`).join(' | ');
+                btn.innerHTML = `<strong>${rec.icon} ${rec.name}</strong><br><small style="color:${canAfford ? '#aaa' : '#e74c3c'};">Custo: ${costStr}</small>`;
+                
+                btn.onclick = () => {
+                    // ==========================================
+                    // A TRAVA DE SEGURANÇA QUE FALTAVA!
+                    // ==========================================
+                    if (!canAfford) {
+                        if (typeof showMessage === 'function') showMessage("Recursos insuficientes!", "#e74c3c");
+                        return; // O código morre aqui e não deixa a receita ir pro slot!
+                    }
+                    
+                    forgeState.slot1 = { type: 'RECIPE', icon: '📜', data: rec };
+                    forgeState.slot2 = null; // Craft não usa slot 2
+                    forgeState.result = { icon: rec.icon, name: rec.name, desc: rec.desc };
+                    renderForge();
+                };
+                listContainer.appendChild(btn);
+            });
+        } else {
+            // Modo MERGE (Inventário + Materiais)
+            game.inventory.forEach((item, invIdx) => {
+                let iDef = ITEMS[item.id];
+                let btn = document.createElement('div');
+                btn.style.cssText = `background:rgba(20,20,30,0.8); border:1px solid #444; padding:10px; border-radius:6px; cursor:pointer; display:flex; justify-content:space-between;`;
+                btn.innerHTML = `<span>${iDef.icon} ${iDef.name}</span> <span style="color:var(--gold);">Lv${item.level}</span>`;
+                btn.onclick = () => {
+                    let obj = { type: 'ITEM', icon: iDef.icon, name: iDef.name, data: item, invIdx: invIdx };
+                    if (!forgeState.slot1) forgeState.slot1 = obj;
+                    else if (!forgeState.slot2 && forgeState.slot1.invIdx !== invIdx) forgeState.slot2 = obj;
+                    calculateResult(); renderForge();
+                };
+                listContainer.appendChild(btn);
+            });
+
+            // Materiais Biológicos
+            ['brasa', 'veneno', 'asas', 'garras'].forEach(mat => {
+                if ((game.resources[mat] || 0) > 0) {
+                    let btn = document.createElement('div');
+                    btn.style.cssText = `background:rgba(30,10,10,0.8); border:1px dashed #e74c3c; padding:10px; border-radius:6px; cursor:pointer; display:flex; justify-content:space-between;`;
+                    let icons = { brasa: '🔥', veneno: '☠️', asas: '🪽', garras: '🐾' };
+                    btn.innerHTML = `<span>${icons[mat]} Catalisador: ${mat.toUpperCase()}</span> <span>x${game.resources[mat]}</span>`;
+                    btn.onclick = () => {
+                        let obj = { type: 'MAT', icon: icons[mat], name: mat, data: mat };
+                        if (!forgeState.slot1) forgeState.slot1 = obj;
+                        else if (!forgeState.slot2) forgeState.slot2 = obj;
+                        calculateResult(); renderForge();
+                    };
+                    listContainer.appendChild(btn);
+                }
+            });
+        }
+    };
+
+    const calculateResult = () => {
+        forgeState.result = null;
+        if (forgeState.slot1 && forgeState.slot2) {
+            let s1 = forgeState.slot1, s2 = forgeState.slot2;
+            // REGRA 1: Fusão de Level (Item Igual)
+            if (s1.type === 'ITEM' && s2.type === 'ITEM' && s1.data.id === s2.data.id && s1.data.level === s2.data.level) {
+                let nLvl = s1.data.level + 1;
+                forgeState.result = { icon: s1.icon, name: `${s1.name} +1`, desc: `Aumenta para o Nível ${nLvl}` };
+            }
+            // REGRA 2: Infusão Arcana (Item + Material)
+            else if (s1.type === 'ITEM' && s2.type === 'MAT') {
+                let comboKey = `${s1.data.id}_${s2.data}`;
+                if (INFUSIONS[comboKey]) {
+                    let rDef = ITEMS[INFUSIONS[comboKey]];
+                    forgeState.result = { icon: rDef.icon, name: rDef.name, desc: rDef.desc, infusionId: INFUSIONS[comboKey] };
+                }
+            } else if (s2.type === 'ITEM' && s1.type === 'MAT') {
+                let comboKey = `${s2.data.id}_${s1.data}`;
+                if (INFUSIONS[comboKey]) {
+                    let rDef = ITEMS[INFUSIONS[comboKey]];
+                    forgeState.result = { icon: rDef.icon, name: rDef.name, desc: rDef.desc, infusionId: INFUSIONS[comboKey] };
+                }
+            }
+        }
+    };
+
+    overlay.__setMode = (m) => { forgeState.mode = m; forgeState.slot1 = null; forgeState.slot2 = null; forgeState.result = null; renderForge(); };
+    overlay.__clearSlot = (s) => { if(s===1) forgeState.slot1 = null; else forgeState.slot2 = null; calculateResult(); renderForge(); };
+    
+    overlay.__synthesize = async () => {
+        if (!forgeState.result) return;
+        
+        // Efeito Visual de Colisão
+        document.getElementById('f-slot-1').style.transform = 'translateX(50px)';
+        document.getElementById('f-slot-2').style.transform = 'translateX(-50px)';
+        await sleep(200);
+
+        if (forgeState.mode === 'CRAFT') {
+            let rec = forgeState.slot1.data;
+            Object.entries(rec.cost).forEach(([r, a]) => { if (r === 'gold') game.gold -= a; else game.resources[r] -= a; });
+            game.inventory.push({ id: rec.resultItem, level: 1 });
+            if (typeof showZeldaPopup === 'function') await showZeldaPopup(rec.icon, "Item Forjado!", rec.name);
+        } else {
+            let s1 = forgeState.slot1, s2 = forgeState.slot2;
+            
+            // Consome do inventário (remove do fim para o começo para não bugar os index)
+            if (s1.type === 'ITEM' && s2.type === 'ITEM') {
+                let idxs = [s1.invIdx, s2.invIdx].sort((a,b) => b-a);
+                game.inventory.splice(idxs[0], 1); game.inventory.splice(idxs[1], 1);
+                game.inventory.push({ id: s1.data.id, level: s1.data.level + 1 });
+            } else {
+                let itmSlot = s1.type === 'ITEM' ? s1 : s2;
+                let matSlot = s1.type === 'MAT' ? s1 : s2;
+                game.inventory.splice(itmSlot.invIdx, 1);
+                game.resources[matSlot.data] -= 1;
+                game.inventory.push({ id: forgeState.result.infusionId, level: itmSlot.data.level });
+            }
+            if (typeof showZeldaPopup === 'function') await showZeldaPopup(forgeState.result.icon, "Síntese Concluída!", forgeState.result.name);
+        }
+        
+        updateKingdomResourcesUI();
+        overlay.__setMode(forgeState.mode); // Reseta a tela
+    };
+
+    document.body.appendChild(overlay);
+    renderForge();
 };
