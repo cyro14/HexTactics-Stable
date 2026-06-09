@@ -231,8 +231,8 @@ class Game {
     getUnitLvl(b) { if (b.isBoss) return this.currentLevel; let isS = b.hp >= 50 || b.atk >= 12; return Math.max(1, this.currentLevel - (isS ? 1 : 2)); }
     getSynergies(factionId) { return typeof calculateSynergies === 'function' ? calculateSynergies(this.units.filter(u => u.faction === factionId)) : {}; }
     updateFogOfWar() {
-        let cycle = this.turnCount % 6;
-        let isNight = (cycle === 3 || cycle === 4);
+        let cycle = this.turnCount % 10;
+        if (cycle >= 6 && cycle <= 8) // ...e se for noite (ciclo 6-8), esconde as unidades inimigas que não estão iluminadas
 
         this.units.forEach(u => {
             // O jogador sempre vê as próprias tropas
@@ -855,8 +855,8 @@ class Game {
 
         let baseAtk = a.getEffectiveAtk(this);
         // Bônus Ofensivo da Noite
-        let cycle = this.turnCount % 6;
-        if ((cycle === 3 || cycle === 4) && a.tags && (a.tags.includes('STALKER') || a.tags.includes('UMBRAL'))) {
+        let cycle = this.turnCount % 10;
+        if ((cycle >= 6 && cycle <= 8) && a.tags && (a.tags.includes('STALKER') || a.tags.includes('UMBRAL'))) {
             baseAtk = Math.floor(baseAtk * 1.30); // 30% mais forte no escuro!
         }
         if (isFlanking) baseAtk *= 2;
@@ -892,8 +892,8 @@ class Game {
             if (d.faction === 0) d.alerted = true;
             let dodgeC = d.abilities.includes('dodge') ? 0.3 : 0;
             // Bônus de Esquiva da Noite
-            let cycle = this.turnCount % 6;
-            if ((cycle === 3 || cycle === 4) && d.tags && (d.tags.includes('UMBRAL'))) {
+            let cycle = this.turnCount % 10;
+            if ((cycle >= 6 && cycle <= 8) && d.tags && (d.tags.includes('UMBRAL'))) {
                 dodgeC += 0.10; // 10% mais esquiva no escuro!
             }
             if (d.tags.includes('ABYSSAL') && sysD['ABYSSAL'] >= 3) dodgeC += 0.2;
@@ -903,8 +903,8 @@ class Game {
                 if (typeof addLog === 'function') addLog(`💨 ${d.name} esquivou!`, '#aaa'); a.hasAttacked = true;
                 if (!a.abilities.includes('hit_run') && !(a.tags.includes('SAND') && sysA['SAND'] >= 3)) a.mp = 0;
                 await this.processRevide(a, d);
-                let cycle = this.turnCount % 6;
-                if ((cycle === 3 || cycle === 4) && a.tags && (a.tags.includes('UMBRAL'))) {
+                let cycle = this.turnCount % 10;
+                if ((cycle >= 6 && cycle <= 8) && a.tags && (a.tags.includes('UMBRAL'))) {
                     dodgeC += 0.10; // 10% mais esquiva no escuro!
                 }
                 if (typeof sleep === 'function') await sleep(600);
@@ -1418,8 +1418,22 @@ class Game {
             });
 
             this.units.filter(u => u.faction === 1).forEach(u => { if (u.status === 'shielded') u.status = null; });
-            this.units.forEach(u => { if (u._mcDuration !== undefined) { u._mcDuration--; if (u._mcDuration <= 0) { u.faction = u._origFaction; delete u._origFaction; delete u._mcDuration; if (typeof showPopup === 'function') showPopup("Controle Perdido!", u, '#9b59b6'); } } });
-            this.currentTurn = 2; const tb = document.getElementById('turn-blocker'); if (tb) tb.style.display = 'block'; this.updateTurnUI("Turno: Inimigo", 'var(--enemy-color)'); this.processStatus(2);
+            this.units.forEach(u => {
+                if (u._mcDuration !== undefined) {
+                    u._mcDuration--;
+                    if (u._mcDuration <= 0) {
+                        u.faction = u._origFaction;
+                        delete u._origFaction;
+                        delete u._mcDuration;
+                        if (typeof showPopup === 'function') showPopup("Controle Perdido!", u, '#9b59b6');
+                    }
+                }
+            });
+            this.currentTurn = 2;
+            const tb = document.getElementById('turn-blocker');
+            if (tb) tb.style.display = 'block';
+            this.updateTurnUI(`Turno ${this.turnCount}: Inimigo`, 'var(--enemy-color)');
+            this.processStatus(2);
             if (!this.gameOver) { try { if (typeof sleep === 'function') await sleep(800); if (typeof window.runAITurn === 'function') await window.runAITurn(); if (!this.gameOver) this.startNextTurn(); } catch (e) { console.error("ERRO NO TURNO INIMIGO:", e); if (typeof sleep === 'function') await sleep(1000); this.startNextTurn(); } }
         } else if (this.currentTurn === 2) {
             this.currentTurn = 0; this.updateTurnUI("Turno: Feras", 'var(--wild-color)'); this.processStatus(0);
@@ -1430,19 +1444,18 @@ class Game {
             const tb = document.getElementById('turn-blocker');
 
             // ========================================================
-            // CICLO DE DIA E NOITE
+            // CICLO ÉPICO DE 10 TURNOS
             // ========================================================
-            let cycle = this.turnCount % 6;
+            let cycle = this.turnCount % 10;
             if (typeof showMessage === 'function') {
-                if (cycle === 2) showMessage("O Pôr do Sol se aproxima...", "#e67e22");
-                if (cycle === 3) showMessage("A Noite Caiu...", "#8e44ad");
-                if (cycle === 5) showMessage("O Sol começa a nascer...", "#f1c40f");
-                if (cycle === 0 && this.turnCount > 0) showMessage("O Dia raiou!", "#3498db");
+                if (cycle === 4) showMessage("O Pôr do Sol se aproxima...", "#e67e22");
+                if (cycle === 6) showMessage("A Noite Caiu...", "#8e44ad");
+                if (cycle === 9) showMessage("O Sol começa a nascer...", "#f1c40f");
+                if (cycle === 1 && this.turnCount > 1) showMessage("O Dia está no ápice!", "#3498db");
             }
-            // ========================================================
 
             if (tb) tb.style.display = 'none';
-            this.updateTurnUI("Turno: Jogador", 'var(--player-color)');
+            this.updateTurnUI(`Turno ${this.turnCount}: Jogador`, 'var(--player-color)');
             this.processStatus(1);
             // ========================================================
             // ARTEFATOS ÔMEGA: EFEITOS DE INÍCIO DE TURNO (PLAYER)
@@ -1940,18 +1953,19 @@ class Renderer {
         });
 
         // ========================================================
-        // FILTROS VISUAIS E ILUMINAÇÃO DINÂMICA (CORRIGIDO 2.0)
+        // FILTROS VISUAIS E ILUMINAÇÃO DINÂMICA (CICLO DE 10 TURNOS)
         // ========================================================
-        let cycle = (this.game && this.game.turnCount !== undefined) ? (this.game.turnCount % 6) : 0;
+        let cycle = (this.game && this.game.turnCount !== undefined) ? (this.game.turnCount % 10) : 1;
         let overlayColor = null;
-
-        // Define a cor da atmosfera baseada no relógio
-        if (cycle === 2) overlayColor = 'rgba(211, 84, 0, 0.25)'; // Pôr do Sol (Laranja)
-        else if (cycle === 3 || cycle === 4) overlayColor = 'rgba(10, 15, 30, 0.75)'; // Noite (Escuro)
-        else if (cycle === 5) overlayColor = 'rgba(241, 196, 15, 0.15)'; // Amanhecer (Amarelo)
+        let isDarkPhase = false;
+        
+        // 1 a 3: Dia | 4 a 5: Pôr do Sol | 6 a 8: Noite | 9 e 0: Amanhecer
+        if (cycle >= 1 && cycle <= 3) { overlayColor = 'rgba(255, 245, 220, 0.05)'; } // Dia (Filtro quente e suave)
+        else if (cycle === 4 || cycle === 5) { overlayColor = 'rgba(211, 84, 0, 0.25)'; isDarkPhase = true; } // Pôr do Sol
+        else if (cycle >= 6 && cycle <= 8) { overlayColor = 'rgba(10, 15, 30, 0.75)'; isDarkPhase = true; } // Noite
+        else if (cycle === 9 || cycle === 0) { overlayColor = 'rgba(241, 196, 15, 0.15)'; } // Amanhecer
 
         if (overlayColor) {
-            // Cria um "Canvas Fantasma" na memória apenas para a película do clima
             if (!this.lightCanvas) {
                 this.lightCanvas = document.createElement('canvas');
                 this.lightCtx = this.lightCanvas.getContext('2d');
@@ -1962,53 +1976,43 @@ class Renderer {
             }
 
             let lctx = this.lightCtx;
-
-            // 1. Pinta o canvas fantasma com a escuridão
+            
+            // 1. Pinta o canvas fantasma com a atmosfera
             lctx.globalCompositeOperation = 'source-over';
             lctx.clearRect(0, 0, this.lightCanvas.width, this.lightCanvas.height);
             lctx.fillStyle = overlayColor;
             lctx.fillRect(0, 0, this.lightCanvas.width, this.lightCanvas.height);
 
-            // 2. Transforma o pincel na Borracha Mágica (Mas agora só fura a película!)
-            lctx.globalCompositeOperation = 'destination-out';
+            // 2. A Borracha Mágica SÓ entra em ação se estiver escurecendo!
+            if (isDarkPhase) {
+                lctx.globalCompositeOperation = 'destination-out';
 
-            // 3. FONTES DE LUZ DAS UNIDADES
-            this.game.units.forEach(u => {
-                if (u.faction === 1 || (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL') || u.tags.includes('ELECTRIC')))) {
-                    const p = this.getPos(u.vq, u.vr);
+                this.game.units.forEach(u => {
+                    if (u.faction === 1 || (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL') || u.tags.includes('ELECTRIC')))) {
+                        const p = this.getPos(u.vq, u.vr);
+                        let lightRadius = this.hexSize * 2.5; 
+                        if (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL'))) lightRadius = this.hexSize * 3.5;
+                        
+                        let grad = lctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, lightRadius);
+                        grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+                        grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.8)');
+                        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                        lctx.fillStyle = grad; lctx.beginPath(); lctx.arc(p.x, p.y, lightRadius, 0, Math.PI * 2); lctx.fill();
+                    }
+                });
 
-                    let lightRadius = this.hexSize * 2.5;
-                    if (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL'))) lightRadius = this.hexSize * 3.5;
+                this.game.map.forEach(h => {
+                    if (h.terrain && (h.terrain.id === 'LAVA_RIFT' || h.terrain.id === 'BURNING_FOREST')) {
+                        const p = this.getPos(h.q, h.r);
+                        let lightRadius = this.hexSize * 2.5;
+                        let grad = lctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, lightRadius);
+                        grad.addColorStop(0, 'rgba(0, 0, 0, 0.9)'); grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                        lctx.fillStyle = grad; lctx.beginPath(); lctx.arc(p.x, p.y, lightRadius, 0, Math.PI * 2); lctx.fill();
+                    }
+                });
+            }
 
-                    let grad = lctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, lightRadius);
-                    grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
-                    grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.8)');
-                    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-                    lctx.fillStyle = grad;
-                    lctx.beginPath();
-                    lctx.arc(p.x, p.y, lightRadius, 0, Math.PI * 2);
-                    lctx.fill();
-                }
-            });
-
-            // 4. FONTES DE LUZ DO CENÁRIO
-            this.game.map.forEach(h => {
-                if (h.terrain && (h.terrain.id === 'LAVA_RIFT' || h.terrain.id === 'BURNING_FOREST')) {
-                    const p = this.getPos(h.q, h.r);
-                    let lightRadius = this.hexSize * 2.5;
-                    let grad = lctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, lightRadius);
-                    grad.addColorStop(0, 'rgba(0, 0, 0, 0.9)');
-                    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-                    lctx.fillStyle = grad;
-                    lctx.beginPath();
-                    lctx.arc(p.x, p.y, lightRadius, 0, Math.PI * 2);
-                    lctx.fill();
-                }
-            });
-
-            // 5. Carimba a película perfurada por cima do jogo real!
+            // 3. Carimba por cima do jogo
             ctx.save();
             ctx.globalCompositeOperation = 'source-over';
             ctx.drawImage(this.lightCanvas, 0, 0);
