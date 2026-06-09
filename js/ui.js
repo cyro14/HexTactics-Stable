@@ -98,6 +98,8 @@ function autoSave() {
             manaPool: game.manaPool, spentMana: game.spentMana, spellCooldowns: game.spellCooldowns,
             fieldItems: game.fieldItems,
             routeMap: game.routeMap, currentFloor: game.currentFloor, inventory: game.inventory,
+            isBossStage: game.isBossStage || false,
+            currentRouteType: game.currentRouteType || 'BATTLE'
         };
         localStorage.setItem(sk, JSON.stringify(sv));
     }
@@ -1657,19 +1659,19 @@ function triggerStageEnd(win) {
         // ========================================================
         if (game.currentRouteType === 'BOSS' || game.isBossStage) {
             let omegaArt = ARTIFACTS.find(a => a.tier === 'omega' && a.region === game.currentRegionId);
-            
+
             if (omegaArt) {
                 // BLINDAGEM 1: Cria a mochila da partida atual se ela não existir
                 if (!game.activeArtifacts) game.activeArtifacts = [];
-                
+
                 // Verifica se o jogador já não tem esse artefato
                 if (!game.activeArtifacts.includes(omegaArt.id)) {
                     game.activeArtifacts.push(omegaArt.id);
-                    
+
                     // BLINDAGEM 2: Cria o inventário global (Hall da Fama) se não existir
                     if (typeof stats !== 'undefined') {
                         if (!stats.unlockedArtifacts) stats.unlockedArtifacts = [];
-                        
+
                         if (!stats.unlockedArtifacts.includes(omegaArt.id)) {
                             stats.unlockedArtifacts.push(omegaArt.id);
                             localStorage.setItem('ht_stats', JSON.stringify(stats));
@@ -1750,7 +1752,7 @@ function triggerStageEnd(win) {
         btn.parentNode.replaceChild(novoBtn, btn);
         btn = novoBtn;
 
-        if (game.isBossStage) {
+        if (game.isBossStage || game.currentRouteType === 'BOSS') {
             // MARCA A REGIÃO COMO DOMINADA!
             if (game.currentRegionId && !game.conqueredRegions.includes(game.currentRegionId)) {
                 game.conqueredRegions.push(game.currentRegionId);
@@ -1810,14 +1812,14 @@ function advanceCampaign() {
     }
 
     game.spellCooldowns = {};
-    
+
     // BLINDAGEM MÁXIMA DE TELAS
     hide('management-screen');
     hide('route-map-screen');
     hide('event-screen');
-    hide('continent-map-screen'); 
-    hide('kingdom-screen');       
-    show('game-container'); 
+    hide('continent-map-screen');
+    hide('kingdom-screen');
+    show('game-container');
 
     setTimeout(async () => {
         const r = deployedRoster.map(m => new Unit({ ...m, q: 0, r: 0, hasAttacked: false, status: null, isNew: false }));
@@ -1830,12 +1832,12 @@ function advanceCampaign() {
         // CINEMÁTICA DE AURA: BOSS E ELITE
         // ========================================================
         let epicUnit = game.units.find(u => u.faction === 0 && (u.isBoss || u.isElite));
-        
+
         if (epicUnit) {
             game.isAnimating = true;
             // 1. Foca a câmera brutalmente no monstrão
             renderer.centerOn(epicUnit.q, epicUnit.r);
-            
+
             // 2. Injeta CSS das animações (Tremor e FadeIn 3D) se não existir
             if (!document.getElementById('cinematic-styles')) {
                 let style = document.createElement('style');
@@ -1856,7 +1858,7 @@ function advanceCampaign() {
                 `;
                 document.head.appendChild(style);
             }
-            
+
             // 3. Fundo escurecendo com Vignette
             let overlay = document.createElement('div');
             overlay.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:radial-gradient(circle, transparent 20%, rgba(0,0,0,0.8) 80%); z-index:9998; opacity:0; transition: opacity 0.5s; pointer-events:none;`;
@@ -1867,27 +1869,27 @@ function advanceCampaign() {
             let cine = document.createElement('div');
             let titleType = epicUnit.isBoss ? "GUARDIÃO DO DOMÍNIO" : "AMEAÇA ELITE";
             let titleColor = epicUnit.isBoss ? "var(--gold)" : "#e74c3c";
-            
+
             cine.style.cssText = `position:fixed; top:35%; left:0; width:100%; text-align:center; z-index:9999; pointer-events:none; animation: cineFade 4s cubic-bezier(0.1, 0.8, 0.2, 1) forwards; perspective: 500px;`;
             cine.innerHTML = `
                 <div style="font-family: 'Cinzel', serif; font-size: 16px; letter-spacing: 10px; color: ${titleColor}; text-shadow: 0 0 10px rgba(0,0,0,0.8); margin-bottom: -15px; opacity:0.8;">${titleType}</div>
                 <div style="font-family: 'Cinzel', serif; font-size: 70px; font-weight: bold; color: #fff; text-shadow: 0px 5px 30px ${titleColor}, 0 0 50px #000; letter-spacing: 3px; text-transform: uppercase;">${epicUnit.name}</div>
             `;
             document.body.appendChild(cine);
-            
+
             // 5. O Impacto: Treme a tela (Canvas) levemente!
             let canvas = $('gameCanvas');
             canvas.classList.add('shake-active');
             setTimeout(() => canvas.classList.remove('shake-active'), 800); // Treme só no impacto inicial da leitura do nome
-            
+
             // 6. Espera os 4 segundos da glória
             await sleep(4000);
-            
+
             // Limpa a tela
             overlay.style.opacity = '0';
             setTimeout(() => overlay.remove(), 500);
             cine.remove();
-            
+
             // Volta a câmera focando no Herói do jogador
             let pL = game.units.find(u => u.isLeader && u.faction === 1);
             if (pL) renderer.centerOn(pL.q, pL.r);
@@ -2513,7 +2515,7 @@ function renderBuildingMenu() {
         };
 
         // Crafting exclusivo do Ferreiro (Usa apenas Ouro)
-        window.craftGoldItem = function(itemId, goldCost) {
+        window.craftGoldItem = function (itemId, goldCost) {
             if ((game.gold || 0) < goldCost) { alert(`Ouro insuficiente! Você precisa de ${goldCost}💰.`); return; }
             game.gold -= goldCost;
             game.inventory.push({ id: itemId, level: 1 });
@@ -2536,20 +2538,20 @@ function renderBuildingMenu() {
         if ($('btn-bioterium')) {
             $('btn-bioterium').onclick = async () => {
                 // Junta a Box e a Equipe Ativa (excluindo apenas o Líder)
-                let m = [...rosterMemory, ...deployedRoster.filter(u => !u.isLeader)]; 
-                
+                let m = [...rosterMemory, ...deployedRoster.filter(u => !u.isLeader)];
+
                 if (m.length === 0) { alert("Nenhuma fera disponível para alocar!"); return; }
                 let u = await window.promptSelectUnit("Selecione a fera para o Biotério", m);
                 if (u) {
                     u.hp = u.maxHp; // Cura Máxima
-                    
+
                     // Adquire a passiva de Terreno Baseado no Chão da Construção
-                    let tId = hex.terrain.id || hex.terrain; 
+                    let tId = hex.terrain.id || hex.terrain;
                     if (!u.fav) u.fav = [];
                     if (!u.fav.includes(tId)) {
                         u.fav.push(tId);
                     }
-                    
+
                     window.showKingdomPopup(`🐾 Adaptou-se a ${tId}!`, hex, '#2ecc71');
                     kRenderer.animateHex(hex, "build");
                     if (typeof showZeldaPopup === 'function') await showZeldaPopup(u.emoji, "Mutação Genética!", `${u.name} descansou e agora possui afinidade com: ${tId}`);
@@ -3320,7 +3322,7 @@ window.openContinentMap = function () {
                              animation:${anim}; transition:transform 0.2s;`;
 
         pin.innerHTML = reg.icon;
-        pin.removeAttribute('disabled'); 
+        pin.removeAttribute('disabled');
         pin.classList.remove('locked', 'disabled');
         pin.style.setProperty('pointer-events', 'auto', 'important');
         pin.style.setProperty('cursor', 'pointer', 'important');
@@ -3338,7 +3340,7 @@ window.openContinentMap = function () {
                 $('macro-region-status').innerText = '✅ Setor Seguro / Liberado';
                 $('macro-region-status').style.color = 'var(--player-color)';
                 $('macro-region-threat').innerHTML = 'Região pacificada. Seus aliados patrulham esta área.';
-                
+
                 btnStart.innerText = 'VOLTAR A ESTA REGIÃO';
                 btnStart.className = 'btn-secondary';
                 btnStart.disabled = false;
@@ -3372,10 +3374,10 @@ window.openContinentMap = function () {
                 $('macro-region-status').innerText = '🔒 Setor Bloqueado (Névoa de Guerra)';
                 $('macro-region-status').style.color = '#7f8c8d';
                 $('macro-region-threat').innerHTML = 'Você precisa conquistar as regiões adjacentes antes de marchar para cá.';
-                
+
                 btnStart.innerText = 'CAMINHO BLOQUEADO';
                 btnStart.className = 'btn-danger';
-                btnStart.disabled = true; 
+                btnStart.disabled = true;
                 btnStart.onclick = null;
             }
 
@@ -3387,7 +3389,7 @@ window.openContinentMap = function () {
     });
 };
 
-window.openBlackMarket = function() {
+window.openBlackMarket = function () {
     // Blindagem: Garante que a mochila de recursos exista
     if (!game.resources) game.resources = {};
 
@@ -3467,14 +3469,14 @@ window.openBlackMarket = function() {
     });
 
     html += `</div><button id="bm-close" style="margin-bottom:60px; background:#e74c3c; color:white; border:none; padding:15px 40px; font-size:18px; font-weight:bold; border-radius:8px; cursor:pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition:0.2s;">Sair da Tenda</button>`;
-    
+
     overlay.innerHTML = html;
     document.body.appendChild(overlay);
 
     // ==========================================
     // LÓGICA DOS BOTÕES
     // ==========================================
-    
+
     // 1. Botões de Itens Consumíveis
     shopItems.forEach((item, index) => {
         let btn = document.getElementById(`bm-btn-${index}`);
@@ -3483,14 +3485,14 @@ window.openBlackMarket = function() {
                 game.gold -= item.price;
                 document.getElementById('bm-gold').innerText = game.gold;
                 if (typeof updateUI === 'function') updateUI();
-                
+
                 const mapping = { 'MEAT': 'isca', 'MAGIC': 'sphere', 'POTION': 'potion', 'BANDAGE': 'bandage', 'SCROLL': 'scroll', 'APPLE': 'apple' };
                 let mapped = mapping[item.id];
                 if (mapped) {
                     if (!game.fieldItems) game.fieldItems = { isca: 0, rede: 0, potion: 0, bandage: 0, scroll: 0, sphere: 0, apple: 0 };
                     game.fieldItems[mapped] = (game.fieldItems[mapped] || 0) + 1;
                 }
-                
+
                 btn.innerText = "Comprado!";
                 btn.style.background = "#27ae60";
                 btn.style.color = "white";
