@@ -536,13 +536,36 @@ const RECIPES = {
         cost: { wood: 5, garras: 3, gold: 15 },
         resultItem: 'HUNTER_BOW',
         desc: 'Concede +1 Alcance e +5 ATK.'
+    },
+    'VAMPIRIC_FANGS': {
+        name: 'Presas Vampíricas', icon: '🧛',
+        cost: { garras: 5, po_magico: 4, gold: 35 },
+        resultItem: 'VAMPIRIC_FANGS',
+        desc: 'Concede +8 ATK e roubo de vida de 30% do dano causado.',
+        isLocked: true // Começa bloqueada! Precisa achar o pergaminho.
+    },
+    'THUNDER_AMULET': {
+        name: 'Amuleto da Tormenta', icon: '⚡',
+        cost: { ferro: 3, po_magico: 6, gold: 40 },
+        resultItem: 'THUNDER_AMULET',
+        desc: 'Concede +10% de acerto crítico e aplica Choque (reduz MP do alvo para 0).',
+        isLocked: true
+    },
+    'FROST_ARMOR': {
+        name: 'Manto do Zero Absoluto', icon: '❄️',
+        cost: { ferro: 6, ervas: 4, gold: 50 },
+        resultItem: 'FROST_ARMOR',
+        desc: 'Concede +30 HP e congela/desacelera inimigos adjacentes no início do turno.',
+        isLocked: true
     }
 };
 
 // Mapa de "Polimerização" (Item Base + Catalisador = Novo Item)
 const INFUSIONS = {
     'SWORD_brasa': 'FLAME_SWORD',
-    'SWORD_veneno': 'VENOM_DAGGER'
+    'SWORD_veneno': 'VENOM_DAGGER',
+    'HUNTER_BOW_brasa': 'HELLFIRE_BOW',     // Arco + Brasa = Arco do Inferno
+    'CARAPACE_SHIELD_asas': 'WINGED_SHIELD' // Escudo + Asa = Escudo Alado (Ganha esquiva)
 };
 
 const ITEMS = {
@@ -567,17 +590,13 @@ const ITEMS = {
     'EGG': { icon: '🪺', name: 'Ovo', desc: 'Ovo de Monstro.', type: 'instant', f: async (u, g) => { if (u.faction === 1) { g.hasEgg = true; return true; } return false; } },
     'POTION': { icon: '🧪', name: 'Poção Menor', desc: 'Cura 30 HP.', type: 'instant', f: async (u, g) => { u.hp = Math.min(u.maxHp, u.hp + 30); return true; } },
     'WINGS_ICARUS': { icon: '🪽', name: 'Asas de Ícaro', desc: 'Ganha atributo Voador, mas recebe 5 de dano puro todo turno.', type: 'equip', onEquip: (u, lvl) => { if (!u.abilities.includes('flying')) u.abilities.push('flying'); }, onUnequip: (u, lvl) => { u.abilities = u.abilities.filter(a => a !== 'flying'); } },
-    CARAPACE_SHIELD: { id: 'CARAPACE_SHIELD', name: 'Escudo de Carapaça', icon: '🛡️', desc: '+15 HP, +2 ATK.', onEquip: (u, lvl) => { u.maxHp += 15 * lvl; u.hp += 15 * lvl; u.atk += 2 * lvl; }, onUnequip: (u, lvl) => { u.maxHp -= 15 * lvl; u.hp = Math.min(u.hp, u.maxHp); u.atk -= 2 * lvl; } },
-    HUNTER_BOW: { id: 'HUNTER_BOW', name: 'Arco do Predador', icon: '🏹', desc: '+1 Alcance, +5 ATK.', onEquip: (u, lvl) => { u.range += 1; u.atk += 5 * lvl; }, onUnequip: (u, lvl) => { u.range -= 1; u.atk -= 5 * lvl; } },
-    FLAME_SWORD: { id: 'FLAME_SWORD', name: 'Espada de Fogo', icon: '🗡️', desc: '+10 ATK. Aplica Queimadura.', onEquip: (u, lvl) => { u.atk += 10 * lvl; if (!u.abilities.includes('burn')) u.abilities.push('burn'); }, onUnequip: (u, lvl) => { u.atk -= 10 * lvl; let idx = u.abilities.indexOf('burn'); if(idx > -1) u.abilities.splice(idx, 1); } },
-    VENOM_DAGGER: { id: 'VENOM_DAGGER', name: 'Adaga Tóxica', icon: '☠️', desc: '+6 ATK. Aplica Veneno.', onEquip: (u, lvl) => { u.atk += 6 * lvl; if (!u.abilities.includes('poison')) u.abilities.push('poison'); }, onUnequip: (u, lvl) => { u.atk -= 6 * lvl; let idx = u.abilities.indexOf('poison'); if(idx > -1) u.abilities.splice(idx, 1); } },
-    'CATALYST': {
-        icon: '💠', name: 'Catalisador', desc: 'Desperta uma habilidade extra baseada na tag da fera.', type: 'equip', onEquip: (u, lvl) => {
-            let tagMap = { 'FIRE': 'burn', 'ICE': 'freeze', 'VENOM': 'poison', 'ROCK': 'counter', 'SAND': 'dodge', 'CARAPACE': 'counter', 'WING': 'swift', 'SILVESTRE': 'swift', 'UMBRAL': 'lifesteal', 'CELESTIAL': 'leadership', 'PRIMAL': 'corte_amplo', 'STALKER': 'hit_run', 'ABYSSAL': 'dodge' };
-            let t = u.tags && u.tags[0]; let ab = t ? tagMap[t] : 'dodge';
-            if (ab && !u.abilities.includes(ab)) u.abilities.push(ab); u._catalystAb = ab;
-        }, onUnequip: (u, lvl) => { if (u._catalystAb) u.abilities = u.abilities.filter(a => a !== u._catalystAb); }
-    },
+    'CARAPACE_SHIELD': { id: 'CARAPACE_SHIELD', name: 'Escudo de Carapaça', icon: '🛡️', desc: '+15 HP, +2 ATK.', onEquip: (u, lvl) => { u.maxHp += 15 * lvl; u.hp += 15 * lvl; u.atk += 2 * lvl; }, onUnequip: (u, lvl) => { u.maxHp -= 15 * lvl; u.hp = Math.min(u.hp, u.maxHp); u.atk -= 2 * lvl; } },
+    HUNTER_BOW: { id: 'HUNTER_BOW', name: 'Arco do Predador', icon: '🏹', desc: '+1 Alcance, +5 ATK.', onEquip: (u, lvl) => { u.range = (u.range || 1) + 1; u.atk += 5 * lvl; }, onUnequip: (u, lvl) => { u.range -= 1; u.atk -= 5 * lvl; } }, 'FLAME_SWORD': { id: 'FLAME_SWORD', name: 'Espada de Fogo', icon: '🗡️', desc: '+10 ATK. Aplica Queimadura.', onEquip: (u, lvl) => { u.atk += 10 * lvl; if (!u.abilities.includes('burn')) u.abilities.push('burn'); }, onUnequip: (u, lvl) => { u.atk -= 10 * lvl; let idx = u.abilities.indexOf('burn'); if (idx > -1) u.abilities.splice(idx, 1); } },
+    'VENOM_DAGGER': { id: 'VENOM_DAGGER', name: 'Adaga Tóxica', icon: '☠️', desc: '+6 ATK. Aplica Veneno.', onEquip: (u, lvl) => { u.atk += 6 * lvl; if (!u.abilities.includes('poison')) u.abilities.push('poison'); }, onUnequip: (u, lvl) => { u.atk -= 6 * lvl; let idx = u.abilities.indexOf('poison'); if (idx > -1) u.abilities.splice(idx, 1); } },
+    'CATALYST': { icon: '💠', name: 'Catalisador', desc: 'Desperta uma habilidade extra baseada na tag da fera.', type: 'equip', onEquip: (u, lvl) => { let tagMap = { 'FIRE': 'burn', 'ICE': 'freeze', 'VENOM': 'poison', 'ROCK': 'counter', 'SAND': 'dodge', 'CARAPACE': 'counter', 'WING': 'swift', 'SILVESTRE': 'swift', 'UMBRAL': 'lifesteal', 'CELESTIAL': 'leadership', 'PRIMAL': 'corte_amplo', 'STALKER': 'hit_run', 'ABYSSAL': 'dodge' }; let t = u.tags && u.tags[0]; let ab = t ? tagMap[t] : 'dodge'; if (ab && !u.abilities.includes(ab)) u.abilities.push(ab); u._catalystAb = ab; }, onUnequip: (u, lvl) => { if (u._catalystAb) u.abilities = u.abilities.filter(a => a !== u._catalystAb); } },
+    'VAMPIRIC_FANGS': { id: 'VAMPIRIC_FANGS', name: 'Presas Vampíricas', icon: '🧛', desc: '+8 ATK, 30% Lifesteal.', onEquip: (u, lvl) => { u.atk += 8 * lvl; if (!u.abilities.includes('lifesteal')) u.abilities.push('lifesteal'); }, onUnequip: (u, lvl) => { u.atk -= 8 * lvl; let idx = u.abilities.indexOf('lifesteal'); if (idx > -1) u.abilities.splice(idx, 1); } },
+    THUNDER_AMULET: { id: 'THUNDER_AMULET', name: 'Amuleto da Tormenta', icon: '⚡', desc: '+10% Crítico. Ataques zeram MP inimigo.', onEquip: (u, lvl) => { u.critChance = (u.critChance || 0) + 0.10; if (!u.abilities.includes('shock')) u.abilities.push('shock'); }, onUnequip: (u, lvl) => { u.critChance -= 0.10; let idx = u.abilities.indexOf('shock'); if (idx > -1) u.abilities.splice(idx, 1); } }, 'FROST_ARMOR': { id: 'FROST_ARMOR', name: 'Manto do Zero Absoluto', icon: '❄️', desc: '+30 HP. Aura Congelante.', onEquip: (u, lvl) => { u.maxHp += 30 * lvl; u.hp += 30 * lvl; if (!u.abilities.includes('frost_aura')) u.abilities.push('frost_aura'); }, onUnequip: (u, lvl) => { u.maxHp -= 30 * lvl; u.hp = Math.min(u.hp, u.maxHp); let idx = u.abilities.indexOf('frost_aura'); if (idx > -1) u.abilities.splice(idx, 1); } },
+    HELLFIRE_BOW: { id: 'HELLFIRE_BOW', name: 'Arco do Inferno', icon: '🏹🔥', desc: '+1 Alcance, +12 ATK. Incendeia alvos.', onEquip: (u, lvl) => { u.range = (u.range || 1) + 1; u.atk += 12 * lvl; if (!u.abilities.includes('burn')) u.abilities.push('burn'); }, onUnequip: (u, lvl) => { u.range -= 1; u.atk -= 12 * lvl; let idx = u.abilities.indexOf('burn'); if (idx > -1) u.abilities.splice(idx, 1); } }, 'WINGED_SHIELD': { id: 'WINGED_SHIELD', name: 'Escudo Alado', icon: '🛡️', desc: '+15 HP, +25% Esquiva.', onEquip: (u, lvl) => { u.maxHp += 15 * lvl; u.hp += 15 * lvl; if (!u.abilities.includes('dodge')) u.abilities.push('dodge'); }, onUnequip: (u, lvl) => { u.maxHp -= 15 * lvl; u.hp = Math.min(u.hp, u.maxHp); } }
 };
 
 const NODE_TYPES = {

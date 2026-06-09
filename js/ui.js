@@ -101,6 +101,11 @@ function autoSave() {
             isBossStage: game.isBossStage || false,
             currentRouteType: game.currentRouteType || 'BATTLE'
         };
+        //Salva os pergaminhos aprendidos
+        if (typeof RECIPES !== 'undefined') {
+            sv.unlockedRecipes = {};
+            Object.keys(RECIPES).forEach(k => { sv.unlockedRecipes[k] = RECIPES[k].isLocked; });
+        }
         localStorage.setItem(sk, JSON.stringify(sv));
     }
 }
@@ -906,6 +911,33 @@ function generateShopItems() {
                     return true;
                 }
             });
+            // ==========================================
+            // NOVO: PERGAMINHOS DE RECEITA NO MERCADO (CORRIGIDO)
+            // ==========================================
+            if (typeof RECIPES !== 'undefined') {
+                Object.keys(RECIPES).forEach(key => {
+                    let rec = RECIPES[key];
+
+                    // TRAVA DE SEGURANÇA: Só tenta ler a mochila se o jogo e a mochila já existirem!
+                    let hasInBag = false;
+                    if (typeof game !== 'undefined' && game && game.inventory) {
+                        hasInBag = game.inventory.some(i => i.isScroll && i.recipeKey === key);
+                    }
+
+                    if (rec.isLocked && !hasInBag && Math.random() < 0.4) {
+                        shopItems.push({
+                            name: `Planta: ${rec.name}`, icon: '📜', desc: `Aprenda a forjar: ${rec.name}`, cost: 40, rarity: 'rare', color: 'var(--rarity-rare)', type: 'consumable', filter: 'none',
+                            action: async () => {
+                                // Garante que a mochila existe na hora de entregar o item
+                                if (typeof game !== 'undefined' && game && game.inventory) {
+                                    game.inventory.push({ id: `SCROLL_${key}`, isScroll: true, recipeKey: key, level: 1 });
+                                }
+                                return true;
+                            }
+                        });
+                    }
+                });
+            }
         }
     });
 
@@ -964,20 +996,58 @@ function renderManagement(mode = 'prep') {
 
     const invGrid = $('mgmt-inv-grid');
     if (invGrid) {
-        invGrid.innerHTML = '';
         game.inventory.forEach((item, idx) => {
-            let iDef = ITEMS[item.id];
+            // Puxa a definição correta do item ou pergaminho
+            let iDef = item.isScroll ? { icon: '📜', name: `Planta: ${RECIPES[item.recipeKey].name}` } : ITEMS[item.id];
+            if (!iDef) return;
+
             let el = document.createElement('div');
             el.className = 'beast-card unlocked';
             el.style.padding = '8px';
             if (selectedInventoryIndex === idx) el.style.borderColor = 'var(--success)';
-            el.innerHTML = `<span style="font-size:24px;">${iDef.icon}</span><div style="font-size:9px; color:var(--gold);">Lv${item.level}</div>`;
+
+            // Renderiza o visual na grade
+            let lvlStr = item.isScroll ? `<span style="color:#aaa;">Consumível</span>` : `Lv${item.level}`;
+            el.innerHTML = `<span style="font-size:24px;">${iDef.icon}</span><div style="font-size:9px; color:var(--gold);">${lvlStr}</div>`;
+
             el.onclick = () => {
-                if (readOnly) return;
+                if (typeof readOnly !== 'undefined' && readOnly) return;
+
+                // 1. AÇÃO DE PERGAMINHO: Consome e aprende a receita
+                if (item.isScroll) {
+                    if (typeof useRecipeScroll === 'function') useRecipeScroll(item.recipeKey, idx);
+                    return;
+                }
+
+                // 2. AÇÃO DE EQUIPAR (A grande correção!)
+                // Se houver um monstro selecionado, tenta equipar o item nele
+                if (typeof selectedUnitIndex !== 'undefined' && selectedUnitIndex !== null && game.roster[selectedUnitIndex]) {
+                    let u = game.roster[selectedUnitIndex];
+                    let existingEq = u.equipment.find(eq => eq.id === item.id);
+
+                    if (existingEq) {
+                        // Trava do auto-merge!
+                        if (typeof showMessage === 'function') showMessage("Este monstro já possui este item! Use a Forja Arcana para fundi-lo.", '#f39c12');
+                        return;
+                    } else {
+                        // Remove o item do inventário (Acaba com a clonagem!)
+                        game.inventory.splice(idx, 1);
+                        // Coloca uma cópia do item na mochila da fera
+                        u.equipment.push({ ...item });
+                        // Aplica o bônus de ataque/hp (Acaba com o Crash!)
+                        if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(u, item.level);
+
+                        renderManagement(mode);
+                        return;
+                    }
+                }
+
+                // 3. AÇÃO PADRÃO: Apenas selecionar o item
                 if (selectedInventoryIndex === idx) selectedInventoryIndex = null;
                 else selectedInventoryIndex = idx;
                 renderManagement(mode);
             };
+
             invGrid.appendChild(el);
         });
     }
@@ -1565,7 +1635,13 @@ async function activateNode(node) {
     }
     else if (node.type === 'EVENT') { showRandomEvent(); }
     else if (node.type === 'TREASURE') {
-        await window.giveRandomArtifact('rare');
+        let lockedKeys = typeof RECIPES !== 'undefined' ? Object.keys(RECIPES).filter(k => RECIPES[k].isLocked && !game.inventory.some(i => i.isScroll && i.recipeKey === k)) : []; if (lockedKeys.length > 0 && Math.random() < 0.5) { // 50% de chance de ser uma Planta
+            let rKey = lockedKeys[Math.floor(Math.random() * lockedKeys.length)];
+            game.inventory.push({ id: `SCROLL_${rKey}`, isScroll: true, recipeKey: rKey, level: 1 });
+            if (typeof showZeldaPopup === 'function') await showZeldaPopup('📜', "Planta Encontrada!", `Você achou o projeto arcano para: ${RECIPES[rKey].name}`);
+        } else {
+            await window.giveRandomArtifact('rare');
+        }
         renderRouteMap();
     }
     else if (node.type === 'SHOP') {
@@ -1931,6 +2007,13 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
         game.spellCooldowns = d.spellCooldowns || {};
         // <-- CARREGA A MOCHILA (ou cria vazia)
         game.fieldItems = d.fieldItems || { isca: 0, rede: 0, potion: 0, bandage: 0, scroll: 0, sphere: 0, picanha: 0, feromonio: 0, adrenalina: 0, apito: 0, trap_stun: 0, trap_teleport: 0, silence: 0 };
+
+        // Carrega os pergaminhos aprendidos
+        if (d.unlockedRecipes && typeof RECIPES !== 'undefined') {
+            Object.keys(d.unlockedRecipes).forEach(k => {
+                if (RECIPES[k]) RECIPES[k].isLocked = d.unlockedRecipes[k];
+            });
+        }
 
         const stInd = $('stage-indicator'); if (stInd) stInd.innerText = `ATO ${toRoman(game.currentLevel)} - NÓ ${game.currentFloor + 1}`;
         game.map.clear();
@@ -2397,7 +2480,7 @@ function renderBuildingMenu() {
                              <button onclick="executeMarketTrade('scales', 2, -10)" class="btn-warning" style="flex:1; padding:4px 0; font-size:11px;">🐟</button>
                              <button onclick="executeMarketTrade('sand', 2, -10)" class="btn-warning" style="flex:1; padding:4px 0; font-size:11px;">⏳</button>
                          </div>`;
-        } else if (bData.id === 'FORGE') { 
+        } else if (bData.id === 'FORGE') {
             actsHtml += `<hr style="border-color:#444; width:100%; margin:8px 0;">
                 <div style="font-size:9px; color:var(--gold-dark); text-transform:uppercase; margin:4px 0;">O Coração da Indústria</div>
                 <button onclick="openArcaneForge()" class="btn-warning" style="width:100%; padding:10px; font-weight:bold; letter-spacing:1px; box-shadow:0 0 10px rgba(243, 156, 18, 0.5);">🔨 ABRIR FORJA ARCANA</button>
@@ -3547,7 +3630,7 @@ window.openBlackMarket = function () {
     document.getElementById('bm-close').onclick = () => overlay.remove();
 };
 
-window.openArcaneForge = function() {
+window.openArcaneForge = function () {
     let forgeState = { slot1: null, slot2: null, result: null, mode: 'MERGE' }; // mode: 'MERGE' ou 'CRAFT'
 
     let overlay = document.createElement('div');
@@ -3602,19 +3685,20 @@ window.openArcaneForge = function() {
 
         // Preenche a lista da esquerda
         let listContainer = document.getElementById('forge-list-container');
-        
+
         if (forgeState.mode === 'CRAFT') {
             Object.values(RECIPES).forEach(rec => {
+                if (rec.isLocked) return;
                 // Checa se o jogador tem os recursos
                 let canAfford = Object.entries(rec.cost).every(([r, a]) => r === 'gold' ? game.gold >= a : (game.resources[r] || 0) >= a);
-                
+
                 let btn = document.createElement('div');
                 // Se não tiver recurso, o cursor vira o símbolo de 🚫
                 btn.style.cssText = `background:rgba(20,20,30,0.8); border:1px solid ${canAfford ? 'var(--gold-dark)' : '#444'}; padding:10px; border-radius:6px; cursor:${canAfford ? 'pointer' : 'not-allowed'}; opacity:${canAfford ? 1 : 0.4};`;
-                
+
                 let costStr = Object.entries(rec.cost).map(([r, a]) => `${a} ${r.toUpperCase()}`).join(' | ');
                 btn.innerHTML = `<strong>${rec.icon} ${rec.name}</strong><br><small style="color:${canAfford ? '#aaa' : '#e74c3c'};">Custo: ${costStr}</small>`;
-                
+
                 btn.onclick = () => {
                     // ==========================================
                     // A TRAVA DE SEGURANÇA QUE FALTAVA!
@@ -3623,7 +3707,7 @@ window.openArcaneForge = function() {
                         if (typeof showMessage === 'function') showMessage("Recursos insuficientes!", "#e74c3c");
                         return; // O código morre aqui e não deixa a receita ir pro slot!
                     }
-                    
+
                     forgeState.slot1 = { type: 'RECIPE', icon: '📜', data: rec };
                     forgeState.slot2 = null; // Craft não usa slot 2
                     forgeState.result = { icon: rec.icon, name: rec.name, desc: rec.desc };
@@ -3693,11 +3777,18 @@ window.openArcaneForge = function() {
     };
 
     overlay.__setMode = (m) => { forgeState.mode = m; forgeState.slot1 = null; forgeState.slot2 = null; forgeState.result = null; renderForge(); };
-    overlay.__clearSlot = (s) => { if(s===1) forgeState.slot1 = null; else forgeState.slot2 = null; calculateResult(); renderForge(); };
-    
+    overlay.__clearSlot = (s) => { if (s === 1) forgeState.slot1 = null; else forgeState.slot2 = null; calculateResult(); renderForge(); };
+
     overlay.__synthesize = async () => {
         if (!forgeState.result) return;
-        
+
+        let btnSynthesize = document.getElementById('btn-synthesize');
+        if (btnSynthesize) {
+            btnSynthesize.style.pointerEvents = 'none';
+            btnSynthesize.style.opacity = '0.3';
+            btnSynthesize.innerText = 'FORJANDO...';
+        }
+
         // Efeito Visual de Colisão
         document.getElementById('f-slot-1').style.transform = 'translateX(50px)';
         document.getElementById('f-slot-2').style.transform = 'translateX(-50px)';
@@ -3710,10 +3801,10 @@ window.openArcaneForge = function() {
             if (typeof showZeldaPopup === 'function') await showZeldaPopup(rec.icon, "Item Forjado!", rec.name);
         } else {
             let s1 = forgeState.slot1, s2 = forgeState.slot2;
-            
+
             // Consome do inventário (remove do fim para o começo para não bugar os index)
             if (s1.type === 'ITEM' && s2.type === 'ITEM') {
-                let idxs = [s1.invIdx, s2.invIdx].sort((a,b) => b-a);
+                let idxs = [s1.invIdx, s2.invIdx].sort((a, b) => b - a);
                 game.inventory.splice(idxs[0], 1); game.inventory.splice(idxs[1], 1);
                 game.inventory.push({ id: s1.data.id, level: s1.data.level + 1 });
             } else {
@@ -3725,11 +3816,28 @@ window.openArcaneForge = function() {
             }
             if (typeof showZeldaPopup === 'function') await showZeldaPopup(forgeState.result.icon, "Síntese Concluída!", forgeState.result.name);
         }
-        
+
         updateKingdomResourcesUI();
         overlay.__setMode(forgeState.mode); // Reseta a tela
     };
 
     document.body.appendChild(overlay);
     renderForge();
+};
+
+window.useRecipeScroll = async function (recipeKey, inventoryIndex) {
+    if (RECIPES[recipeKey]) {
+        RECIPES[recipeKey].isLocked = false; // Desbloqueia!
+
+        // Remove o pergaminho consumido da mochila
+        game.inventory.splice(inventoryIndex, 1);
+
+        // Popup estilo clássico
+        if (typeof showZeldaPopup === 'function') {
+            await showZeldaPopup('📜', "Nova Planta Aprendida!", RECIPES[recipeKey].name);
+        }
+
+        // Atualiza a tela de gerenciamento
+        if (typeof renderManagement === 'function') renderManagement('inventory');
+    }
 };
