@@ -2062,6 +2062,33 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
 // ==========================================
 // SISTEMA DE GERENCIAMENTO DO REINO 2.0
 // ==========================================
+
+window.buildingImageCache = window.buildingImageCache || {};
+
+window.getBuildingImage = function (id, level, rendererInstance) {
+    let key = `${id}_${level}`;
+    if (window.buildingImageCache[key]) return window.buildingImageCache[key];
+
+    let img = new Image();
+    let basePath = `img/buildings/${id.toLowerCase()}`;
+    img.src = `${basePath}_${level}.jpeg`;
+
+    img.onload = () => {
+        // Quando a imagem baixar pela primeira vez, força o canvas do reino a atualizar!
+        if (rendererInstance) rendererInstance.draw();
+    };
+
+    img.onerror = () => {
+        // Fallback Inteligente: Se não achar nv 2 ou 3, tenta forçar o nv 1
+        if (level > 1 && img.src.includes(`_${level}.jpeg`)) {
+            img.src = `${basePath}_1.jpeg`;
+        }
+    };
+
+    window.buildingImageCache[key] = img;
+    return img;
+};
+
 let kingdomHexSize = 45;
 let kingdomOffsetX = 0, kingdomOffsetY = 0;
 let selectedBuilding = null;
@@ -2169,17 +2196,56 @@ function openKingdom() {
                 }, 1000 / 30);
             };
 
-            // Injeta o renderizador de efeitos sobre o desenho do mapa original
+            // Injeta o renderizador de efeitos e imagens sobre o desenho do mapa original
             let originalDraw = kRenderer.draw.bind(kRenderer);
             kRenderer.draw = function () {
+                // 1. Oculta os emojis temporariamente pro motor base não desenhá-los!
+                let tempIcons = {};
+                game.kingdomMap.forEach((h, key) => {
+                    if (h.building && BUILDINGS[h.building]) {
+                        tempIcons[key] = BUILDINGS[h.building].icon;
+                        BUILDINGS[h.building].icon = '';
+                    }
+                });
+
+                // 2. Chama a renderização do fundo (A grama, fumaças, rios)
                 originalDraw();
+
+                // 3. Devolve os ícones imediatamente para não perder dados da memória
+                game.kingdomMap.forEach((h, key) => {
+                    if (h.building && tempIcons[key] !== undefined) {
+                        BUILDINGS[h.building].icon = tempIcons[key];
+                    }
+                });
+
+                let ctx = this.ctx;
+
+                // 4. Desenha nossos novos Sprites das Construções por cima!
+                game.kingdomMap.forEach(h => {
+                    if (h.building) {
+                        let p = this.getPos(h.q, h.r);
+                        let lvl = h.bLevel || 1;
+                        let img = window.getBuildingImage(h.building, lvl, this);
+
+                        if (img.complete && img.naturalWidth > 0) {
+                            let w = this.hexSize * 1.6; // Ajuste este valor se as casas ficarem muito grandes ou pequenas
+                            let hImg = w;
+                            ctx.drawImage(img, p.x - w / 2, p.y - hImg / 2 - (this.hexSize * 0.1), w, hImg);
+                        } else {
+                            // Se a imagem ainda está baixando, renderiza o Emoji padrão como "Loading"
+                            ctx.font = `${this.hexSize * 0.8}px Arial`;
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(BUILDINGS[h.building].icon, p.x, p.y);
+                        }
+                    }
+                });
+
+                // 5. Continua o efeito normal de expansão / shockwave verde ao construir (Seu código já existente)
                 if (this.currentEffect) {
                     let eff = this.currentEffect;
                     let p = this.getPos(eff.hex.q, eff.hex.r);
-                    let ctx = this.ctx;
                     ctx.save();
-
-                    // Onda de choque externa se expandindo
                     ctx.beginPath();
                     let radius = this.hexSize * (1 + eff.progress * 1.3);
                     ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
@@ -2188,13 +2254,11 @@ function openKingdom() {
                     ctx.globalAlpha = 1 - eff.progress;
                     ctx.stroke();
 
-                    // Brilho interno implodindo taticamente
                     ctx.beginPath();
                     ctx.arc(p.x, p.y, this.hexSize * (1 - eff.progress), 0, Math.PI * 2);
                     ctx.fillStyle = eff.color;
                     ctx.globalAlpha = (1 - eff.progress) * 0.2;
                     ctx.fill();
-
                     ctx.restore();
                 }
             };
@@ -2345,9 +2409,16 @@ function renderBuildingMenu() {
         let bLvl = hex.bLevel || 1;
         let maxLvl = bData.id === 'CASTLE' ? 1 : 3;
 
+        // URL das Imagens com Fallback HTML
+        let imgSrc = `img/buildings/${bData.id.toLowerCase()}_${bLvl}.png`;
+        let fallbackSrc = `img/buildings/${bData.id.toLowerCase()}_1.png`;
+
         let html = `<div style="display:flex; flex-direction:column; min-width:170px; background:rgba(15,15,20,0.95); border:1px solid var(--gold-dark); padding:8px 12px; border-radius:8px; box-shadow: 0 5px 15px rgba(0,0,0,0.9); backdrop-filter:blur(5px);">
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-                <span style="font-size:26px;">${bData.icon}</span>
+                <div style="position:relative; width:40px; height:40px; border-radius:5px; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; overflow:hidden;">
+                    <img src="${imgSrc}" onerror="this.onerror=null; this.src='${fallbackSrc}';" style="width:100%; height:100%; object-fit:contain; z-index:2;">
+                    <span style="font-size:26px; position:absolute; z-index:1; opacity:0.3;">${bData.icon}</span>
+                </div>
                 <div style="text-align:left; line-height:1.2;">
                     <span style="font-size:12px; color:var(--gold-light); font-weight:bold;">${bData.name}</span><br>
                     <span style="color:#fff; background:#444; padding:1px 4px; border-radius:4px; font-size:9px;">Nv ${bLvl}</span>
@@ -2704,11 +2775,17 @@ function renderBuildingMenu() {
                 return `<span style="color:${color}; font-size:9px; font-weight:bold;">${icon}${amt}</span>`;
             }).join(' ');
 
-        // Adicionando o ${b.desc} de volta no final, com uma fonte tamanho 8px para não estourar a tela!
-        btn.innerHTML = `<span style="font-size:24px; margin-bottom:2px;">${b.icon}</span>
+        let imgSrc = `img/buildings/${b.id.toLowerCase()}_1.png`;
+
+        btn.innerHTML = `<div style="position:relative; width:35px; height:35px; margin-bottom:2px; display:flex; justify-content:center; align-items:center;">
+                             <img src="${imgSrc}" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" style="width:100%; height:100%; object-fit:contain;">
+                             <span style="font-size:24px; display:none;">${b.icon}</span>
+                         </div>
                          <span style="font-size:10px; color:var(--gold-light); font-weight:bold; text-align:center; line-height:1.1;">${b.name}</span>
                          <div style="display:flex; gap:3px; margin:4px 0; flex-wrap:wrap; justify-content:center;">${costHtml}</div>
-                         <span style="font-size:8px; color:#aaa; margin-top:2px; text-align:center; line-height:1.2;">${b.desc}</span>`; if (opt.canAfford && !opt.alreadyHas) {
+                         <span style="font-size:8px; color:#aaa; margin-top:2px; text-align:center; line-height:1.2;">${b.desc}</span>`;
+
+        if (opt.canAfford && !opt.alreadyHas) {
             btn.onclick = async () => {
                 Object.entries(b.cost).forEach(([res, amt]) => game.resources[res] -= amt);
 
@@ -3792,9 +3869,9 @@ window.openCharacterScreen = function (u, isBox, mode) {
         }
 
         // 2. Renderiza a Mochila (Filtra pergaminhos)
-       let invHtml = '';
+        let invHtml = '';
         game.inventory.forEach((item, invIdx) => {
-            if (item.isScroll) return; 
+            if (item.isScroll) return;
             let iDef = ITEMS[item.id];
             if (!iDef) return;
             invHtml += `
