@@ -1013,39 +1013,12 @@ function renderManagement(mode = 'prep') {
             el.onclick = () => {
                 if (typeof readOnly !== 'undefined' && readOnly) return;
 
-                // 1. AÇÃO DE PERGAMINHO: Consome e aprende a receita
                 if (item.isScroll) {
                     if (typeof useRecipeScroll === 'function') useRecipeScroll(item.recipeKey, idx);
-                    return;
+                } else {
+                    // Direciona o jogador para a mecânica correta
+                    showMessage("Clique em um personagem para gerenciar equipamentos!", '#f39c12');
                 }
-
-                // 2. AÇÃO DE EQUIPAR (A grande correção!)
-                // Se houver um monstro selecionado, tenta equipar o item nele
-                if (typeof selectedUnitIndex !== 'undefined' && selectedUnitIndex !== null && game.roster[selectedUnitIndex]) {
-                    let u = game.roster[selectedUnitIndex];
-                    let existingEq = u.equipment.find(eq => eq.id === item.id);
-
-                    if (existingEq) {
-                        // Trava do auto-merge!
-                        if (typeof showMessage === 'function') showMessage("Este monstro já possui este item! Use a Forja Arcana para fundi-lo.", '#f39c12');
-                        return;
-                    } else {
-                        // Remove o item do inventário (Acaba com a clonagem!)
-                        game.inventory.splice(idx, 1);
-                        // Coloca uma cópia do item na mochila da fera
-                        u.equipment.push({ ...item });
-                        // Aplica o bônus de ataque/hp (Acaba com o Crash!)
-                        if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(u, item.level);
-
-                        renderManagement(mode);
-                        return;
-                    }
-                }
-
-                // 3. AÇÃO PADRÃO: Apenas selecionar o item
-                if (selectedInventoryIndex === idx) selectedInventoryIndex = null;
-                else selectedInventoryIndex = idx;
-                renderManagement(mode);
             };
 
             invGrid.appendChild(el);
@@ -1071,71 +1044,9 @@ function renderManagement(mode = 'prep') {
 
         card.onclick = (e) => {
             if (readOnly) return;
-
-            if (isBattle) {
-                if (e.target.closest('.equip-badge') || selectedInventoryIndex !== null) {
-                    showMessage("Equipamentos só podem ser alterados fora de combate!", '#f39c12');
-                    selectedInventoryIndex = null;
-                    renderManagement(mode);
-                    return;
-                }
-            }
-
-            let target = e.target.closest('.equip-badge');
-            if (target) {
-                let eqIdx = parseInt(target.getAttribute('data-idx'));
-                let eq = u.equipment[eqIdx];
-                let eqDef = ITEMS[eq.id];
-                if (eqDef.onUnequip) eqDef.onUnequip(u, eq.level);
-                u.equipment.splice(eqIdx, 1);
-                game.inventory.push(eq);
-                renderManagement(mode);
-                if (typeof updateUI === 'function') updateUI();
-                if (renderer) renderer.draw();
-                return;
-            }
-
-            if (selectedInventoryIndex !== null) {
-                let invItem = game.inventory[selectedInventoryIndex];
-                let iDef = ITEMS[invItem.id];
-
-                let existingEq = u.equipment.find(eq => eq.id === invItem.id);
-                if (existingEq) {
-                    showMessage("Este monstro já possui este item! Use a Forja Arcana para fundi-lo.", '#f39c12');
-                    selectedInventoryIndex = null;
-                    renderManagement(mode);
-                    return;
-                } else {
-                    u.equipment.push({ ...invItem });
-                    if (iDef.onEquip) iDef.onEquip(u, invItem.level);
-                }
-
-                game.inventory.splice(selectedInventoryIndex, 1);
-                selectedInventoryIndex = null;
-                renderManagement(mode);
-                if (typeof updateUI === 'function') updateUI();
-                if (renderer) renderer.draw();
-                return;
-            }
-
-            if (isBattle) {
-                showMessage("Não pode trocar de feras em combate!", '#e74c3c');
-                return;
-            }
-
-            if (isBox) {
-                if (deployedRoster.filter(x => !x.isLeader).length < maxLimit) {
-                    rosterMemory.splice(rosterMemory.indexOf(u), 1);
-                    deployedRoster.push(u);
-                } else { alert("Limite máximo em campo!"); }
-            } else {
-                if (!u.isLeader) {
-                    deployedRoster.splice(deployedRoster.indexOf(u), 1);
-                    rosterMemory.push(u);
-                } else { alert("O Líder não pode sair do campo."); }
-            }
-            renderManagement(mode);
-        };
+            // Agora o clique abre a interface de personagem ao invés de mover pro time automaticamente
+            openCharacterScreen(u, isBox, mode);
+        }
         container.appendChild(card);
     };
 
@@ -3840,4 +3751,144 @@ window.useRecipeScroll = async function (recipeKey, inventoryIndex) {
         // Atualiza a tela de gerenciamento
         if (typeof renderManagement === 'function') renderManagement('inventory');
     }
+};
+
+window.openCharacterScreen = function (u, isBox, mode) {
+    if (mode === 'readonly') return;
+
+    let overlay = document.getElementById('char-equip-modal');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'char-equip-modal';
+        overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,10,15,0.95); z-index:3000; display:flex; justify-content:center; align-items:center; backdrop-filter: blur(5px);';
+        document.body.appendChild(overlay);
+    }
+    overlay.classList.remove('hidden');
+
+    const renderModal = () => {
+        let btnTeamText = isBox ? 'Colocar no Time' : 'Tirar do Time';
+        let btnTeamColor = isBox ? 'var(--success)' : 'var(--danger)';
+        let disableTeamBtn = (u.isLeader) || (mode === 'battle');
+        let btnStyle = disableTeamBtn ? 'opacity: 0.5; cursor: not-allowed;' : '';
+
+        // 1. Renderiza os Equipamentos Atuais do Personagem
+        let equipSlotsHtml = '';
+        (u.equipment || []).forEach((eq, idx) => {
+            let eqDef = ITEMS[eq.id];
+            if (!eqDef) return;
+            equipSlotsHtml += `
+                <div onclick="unequipFromChar(${idx})" style="border: 1px solid var(--gold); padding: 10px; margin: 5px; cursor:pointer; background: rgba(0,0,0,0.6); border-radius: 8px;">
+                    <span style="font-size: 24px;">${eqDef.icon}</span>
+                    <div style="font-size: 10px; color: var(--gold);">Lv${eq.level}</div>
+                    <div style="font-size: 8px; color: #e74c3c; margin-top: 5px;">[Remover]</div>
+                </div>
+            `;
+        });
+        if (!u.equipment || u.equipment.length === 0) {
+            equipSlotsHtml = '<div style="color: #666; font-size: 12px; padding: 10px;">Nenhum equipamento.</div>';
+        }
+
+        // 2. Renderiza a Mochila (Filtra pergaminhos)
+        let invHtml = '';
+        game.inventory.forEach((item, invIdx) => {
+            if (item.isScroll) return;
+            let iDef = ITEMS[item.id];
+            if (!iDef) return;
+            invHtml += `
+                <div onclick="equipToChar(${invIdx})" style="border: 1px solid #444; padding: 8px; margin: 4px; display:inline-block; cursor:pointer; background: rgba(20,20,30,0.8); border-radius: 6px;">
+                    <span style="font-size: 20px;">${iDef.icon}</span> 
+                    <div style="font-size: 10px; color: #aaa;">Lv${item.level}</div>
+                </div>
+            `;
+        });
+        if (!invHtml) invHtml = '<span style="color:#666; font-size: 12px;">Mochila vazia</span>';
+
+        overlay.innerHTML = `
+            <div class="modal-card" style="width: 90%; max-width: 350px; background: #1a1a1a; border: 2px solid var(--gold-dark); border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 0 20px rgba(0,0,0,0.8);">
+                <h2 style="color: var(--gold-light); margin-bottom: 5px; font-family: Cinzel, serif;">${u.name}</h2>
+                <div style="font-size: 48px; filter: ${u.filter}; margin-bottom: 10px;">${u.emoji}</div>
+                <div style="color: #ddd; font-size: 14px; margin-bottom: 15px;">HP: ${u.hp}/${u.maxHp} &nbsp;|&nbsp; ATK: ${u.atk}</div>
+                
+                <h3 style="font-size: 12px; color: var(--gold); border-bottom: 1px solid #333; padding-bottom: 5px;">Equipado</h3>
+                <div style="display:flex; justify-content:center; flex-wrap: wrap; margin-bottom: 15px; min-height: 60px; align-items: center;">
+                    ${equipSlotsHtml}
+                </div>
+
+                <h3 style="font-size: 12px; color: var(--gold); border-bottom: 1px solid #333; padding-bottom: 5px;">Mochila</h3>
+                <div style="max-height: 120px; overflow-y: auto; padding: 5px; margin-bottom: 20px; border: 1px inset #222;">
+                    ${invHtml}
+                </div>
+
+                <div style="display:flex; gap: 10px; justify-content: space-between;">
+                    <button id="btn-toggle-team" style="flex:1; background: ${btnTeamColor}; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: bold; ${btnStyle}">${btnTeamText}</button>
+                    <button id="btn-close-equip" style="flex:1; background: #555; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: bold;">Fechar</button>
+                </div>
+            </div>
+        `;
+
+        // Lógica de fechar a tela
+        document.getElementById('btn-close-equip').onclick = () => {
+            overlay.classList.add('hidden');
+            renderManagement(mode); // Atualiza a tela de trás com as novas mudanças
+        };
+
+        // Lógica de adicionar/remover da Box
+        document.getElementById('btn-toggle-team').onclick = () => {
+            if (disableTeamBtn) {
+                if (u.isLeader) showMessage("O Líder não pode sair do campo.", '#e74c3c');
+                if (mode === 'battle') showMessage("Não pode trocar de feras em combate!", '#e74c3c');
+                return;
+            }
+            if (isBox) {
+                if (deployedRoster.filter(x => !x.isLeader).length < window.getMaxBoxLimit()) {
+                    rosterMemory.splice(rosterMemory.indexOf(u), 1);
+                    deployedRoster.push(u);
+                    overlay.classList.add('hidden');
+                    renderManagement(mode);
+                } else {
+                    alert("Limite máximo em campo!");
+                }
+            } else {
+                deployedRoster.splice(deployedRoster.indexOf(u), 1);
+                rosterMemory.push(u);
+                overlay.classList.add('hidden');
+                renderManagement(mode);
+            }
+        };
+
+        // Lógica de remover o equipamento e voltar pra mochila
+        window.unequipFromChar = (idx) => {
+            if (mode === 'battle') { showMessage("Equipamentos só podem ser alterados fora de combate!", '#f39c12'); return; }
+            let eq = u.equipment[idx];
+            if (!eq) return;
+            let eqDef = ITEMS[eq.id];
+            if (eqDef.onUnequip) eqDef.onUnequip(u, eq.level);
+
+            u.equipment.splice(idx, 1);
+            game.inventory.push(eq);
+            renderModal();
+        };
+
+        // Lógica blindada para equipar sem duplicar itens
+        window.equipToChar = (invIdx) => {
+            if (mode === 'battle') { showMessage("Equipamentos só podem ser alterados fora de combate!", '#f39c12'); return; }
+            let invItem = game.inventory[invIdx];
+            let iDef = ITEMS[invItem.id];
+
+            let existingEq = u.equipment.find(eq => eq.id === invItem.id);
+            if (existingEq) {
+                showMessage("Este monstro já possui este item! Use a Forja Arcana para fundi-lo.", '#f39c12');
+                return;
+            }
+
+            // O splice extrai permanentemente o item do inventário
+            let itemToEquip = game.inventory.splice(invIdx, 1)[0];
+            u.equipment.push(itemToEquip);
+            if (iDef && iDef.onEquip) iDef.onEquip(u, itemToEquip.level);
+
+            renderModal(); // Redesenha com o slot ocupado
+        };
+    };
+
+    renderModal();
 };
