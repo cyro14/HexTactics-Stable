@@ -3777,51 +3777,62 @@ window.openCharacterScreen = function (u, isBox, mode) {
             let eqDef = ITEMS[eq.id];
             if (!eqDef) return;
             equipSlotsHtml += `
-                <div onclick="unequipFromChar(${idx})" style="border: 1px solid var(--gold); padding: 10px; margin: 5px; cursor:pointer; background: rgba(0,0,0,0.6); border-radius: 8px;">
-                    <span style="font-size: 24px;">${eqDef.icon}</span>
-                    <div style="font-size: 10px; color: var(--gold);">Lv${eq.level}</div>
-                    <div style="font-size: 8px; color: #e74c3c; margin-top: 5px;">[Remover]</div>
+                <div onclick="unequipFromChar(${idx})" style="border: 1px solid var(--gold); padding: 8px; margin: 4px 0; cursor:pointer; background: rgba(0,0,0,0.6); border-radius: 8px; display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; text-align: left; transition: 0.2s;">
+                    <div style="font-size: 24px; flex-shrink: 0; filter: drop-shadow(0 0 2px var(--gold));">${eqDef.icon}</div>
+                    <div style="flex-grow: 1; line-height: 1.2;">
+                        <div style="font-size: 12px; color: var(--gold-light); font-weight: bold;">${eqDef.name} <span style="font-size: 10px; color: #fff;">Lv${eq.level}</span></div>
+                        <div style="font-size: 9px; color: #aaa; margin-top: 2px;">${eqDef.desc}</div>
+                    </div>
+                    <div style="font-size: 10px; color: #e74c3c; cursor: pointer; padding: 5px; font-weight: bold; text-transform: uppercase;">Remover</div>
                 </div>
             `;
         });
         if (!u.equipment || u.equipment.length === 0) {
-            equipSlotsHtml = '<div style="color: #666; font-size: 12px; padding: 10px;">Nenhum equipamento.</div>';
+            equipSlotsHtml = '<div style="color: #666; font-size: 12px; padding: 10px; text-align: center;">Nenhum equipamento.</div>';
         }
 
         // 2. Renderiza a Mochila (Filtra pergaminhos)
-        let invHtml = '';
+       let invHtml = '';
         game.inventory.forEach((item, invIdx) => {
-            if (item.isScroll) return;
+            if (item.isScroll) return; 
             let iDef = ITEMS[item.id];
             if (!iDef) return;
             invHtml += `
-                <div onclick="equipToChar(${invIdx})" style="border: 1px solid #444; padding: 8px; margin: 4px; display:inline-block; cursor:pointer; background: rgba(20,20,30,0.8); border-radius: 6px;">
-                    <span style="font-size: 20px;">${iDef.icon}</span> 
-                    <div style="font-size: 10px; color: #aaa;">Lv${item.level}</div>
+                <div onclick="equipToChar(${invIdx})" style="border: 1px solid #444; padding: 8px; margin: 4px 0; cursor:pointer; background: rgba(20,20,30,0.8); border-radius: 6px; display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; text-align: left; transition: 0.2s;">
+                    <div style="font-size: 24px; flex-shrink: 0;">${iDef.icon}</div>
+                    <div style="flex-grow: 1; line-height: 1.2;">
+                        <div style="font-size: 12px; color: #ddd; font-weight: bold;">${iDef.name} <span style="font-size: 10px; color: #fff;">Lv${item.level}</span></div>
+                        <div style="font-size: 9px; color: #aaa; margin-top: 2px;">${iDef.desc}</div>
+                    </div>
+                    <div style="font-size: 10px; color: var(--success); cursor: pointer; padding: 5px; font-weight: bold; text-transform: uppercase;">Equipar</div>
                 </div>
             `;
         });
-        if (!invHtml) invHtml = '<span style="color:#666; font-size: 12px;">Mochila vazia</span>';
+        if (!invHtml) invHtml = '<div style="color:#666; font-size: 12px; padding: 10px; text-align: center;">Mochila vazia</div>';
 
         overlay.innerHTML = `
-            <div class="modal-card" style="width: 90%; max-width: 350px; background: #1a1a1a; border: 2px solid var(--gold-dark); border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 0 20px rgba(0,0,0,0.8);">
-                <h2 style="color: var(--gold-light); margin-bottom: 5px; font-family: Cinzel, serif;">${u.name}</h2>
-                <div style="font-size: 48px; filter: ${u.filter}; margin-bottom: 10px;">${u.emoji}</div>
-                <div style="color: #ddd; font-size: 14px; margin-bottom: 15px;">HP: ${u.hp}/${u.maxHp} &nbsp;|&nbsp; ATK: ${u.atk}</div>
+            <div class="modal-card" style="width: 95%; max-width: 380px; background: #1a1a1a; border: 2px solid var(--gold-dark); border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 0 20px rgba(0,0,0,0.8);">
+                <div style="display:flex; align-items:center; gap: 15px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px;">
+                    <div style="font-size: 48px; filter: ${u.filter};">${u.emoji}</div>
+                    <div style="text-align: left;">
+                        <h2 style="color: var(--gold-light); margin: 0; font-family: Cinzel, serif;">${u.name}</h2>
+                        <div style="color: #ddd; font-size: 12px; margin-top: 5px;">HP: ${u.hp}/${u.maxHp} &nbsp;|&nbsp; ATK: ${u.atk}</div>
+                    </div>
+                </div>
                 
-                <h3 style="font-size: 12px; color: var(--gold); border-bottom: 1px solid #333; padding-bottom: 5px;">Equipado</h3>
-                <div style="display:flex; justify-content:center; flex-wrap: wrap; margin-bottom: 15px; min-height: 60px; align-items: center;">
+                <h3 style="font-size: 12px; color: var(--gold); border-bottom: 1px dashed #444; padding-bottom: 5px; text-align: left; margin: 0 0 5px 0;">Slot de Equipamentos</h3>
+                <div style="display:flex; flex-direction: column; margin-bottom: 15px; min-height: 60px;">
                     ${equipSlotsHtml}
                 </div>
 
-                <h3 style="font-size: 12px; color: var(--gold); border-bottom: 1px solid #333; padding-bottom: 5px;">Mochila</h3>
-                <div style="max-height: 120px; overflow-y: auto; padding: 5px; margin-bottom: 20px; border: 1px inset #222;">
+                <h3 style="font-size: 12px; color: var(--gold); border-bottom: 1px dashed #444; padding-bottom: 5px; text-align: left; margin: 0 0 5px 0;">Inventário Disponível</h3>
+                <div style="max-height: 180px; overflow-y: auto; padding-right: 5px; margin-bottom: 20px; display: flex; flex-direction: column;">
                     ${invHtml}
                 </div>
 
                 <div style="display:flex; gap: 10px; justify-content: space-between;">
-                    <button id="btn-toggle-team" style="flex:1; background: ${btnTeamColor}; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: bold; ${btnStyle}">${btnTeamText}</button>
-                    <button id="btn-close-equip" style="flex:1; background: #555; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: bold;">Fechar</button>
+                    <button id="btn-toggle-team" style="flex:2; background: ${btnTeamColor}; color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; ${btnStyle}">${btnTeamText}</button>
+                    <button id="btn-close-equip" style="flex:1; background: #555; color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold;">Fechar</button>
                 </div>
             </div>
         `;
