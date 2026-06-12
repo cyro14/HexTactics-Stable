@@ -638,8 +638,10 @@ const BUILDINGS = {
     CRYSTAL_TOWER: { id: 'CRYSTAL_TOWER', name: 'Torre de Cristal', icon: '🔮', cost: { stone: 0, sand: 0 }, desc: 'O líder inicia o 1º turno do combate com +1 de Mana.', terrains: ['MOUNTAIN', 'SNOW'] },
     SHADOW_ALTAR: { id: 'SHADOW_ALTAR', name: 'Altar das Sombras', icon: '🪦', cost: { stone: 0, scales: 0 }, desc: 'Sacrifica feras por recursos (Apenas Líderes Umbrais).', terrains: ['MOUNTAIN', 'DESERT', 'FOREST'] },
     BARRACKS: { id: 'BARRACKS', name: 'Quartel', icon: '⛺', cost: { wood: 0, stone: 0 }, desc: 'Recrute feras que compartilham a afinidade do seu Líder.', terrains: ['PLAINS', 'DESERT'] },
-    LIBRARY: { id: 'LIBRARY', name: 'Biblioteca', icon: '📚', desc: 'Gera 1 DNA 🧬 ao final de cada combate vencido.', terrains: ['PLAINS', 'SNOW'], cost: { wood: 0, stone: 0 } }, PORT: { id: 'PORT', name: 'Porto', icon: '⚓', cost: { wood: 0, stone: 0 }, desc: 'Gera +5 Ouro ao vencer batalhas.', terrains: ['WATER'] },
-    TRAP_MAKER: { id: 'TRAP_MAKER', name: 'Armadilheiro', icon: '🕸️', desc: 'Produz Iscas e Redes por batalha.', terrains: ['FOREST', 'PLAINS'], cost: { wood: 0, stone: 0 } }, RESIDENCE: { id: 'RESIDENCE', name: 'Residência', icon: '🏠', desc: 'Recupera 10% do HP perdido das feras a cada fase. Duas juntas formam uma Vila.', terrains: ['PLAINS', 'FOREST', 'SNOW', 'DESERT'], cost: { wood: 0, stone: 0 } },
+    LIBRARY: { id: 'LIBRARY', name: 'Biblioteca', icon: '📚', desc: 'Gera 1 DNA 🧬 ao final de cada combate vencido.', terrains: ['PLAINS', 'SNOW'], cost: { wood: 0, stone: 0 } },
+    PORT: { id: 'PORT', name: 'Porto', icon: '⚓', cost: { wood: 0, stone: 0 }, desc: 'Gera +5 Ouro ao vencer batalhas.', terrains: ['WATER'] },
+    TRAP_MAKER: { id: 'TRAP_MAKER', name: 'Armadilheiro', icon: '🕸️', desc: 'Produz Iscas e Redes por batalha.', terrains: ['FOREST', 'PLAINS'], cost: { wood: 0, stone: 0 } },
+    RESIDENCE: { id: 'RESIDENCE', name: 'Residência', icon: '🏠', desc: 'Recupera 10% do HP perdido das feras a cada fase. Duas juntas formam uma Vila.', terrains: ['PLAINS', 'FOREST', 'SNOW', 'DESERT'], cost: { wood: 0, stone: 0 } },
 };
 
 const LORE_FACTIONS = {

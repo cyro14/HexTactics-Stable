@@ -996,6 +996,8 @@ function renderManagement(mode = 'prep') {
 
     const invGrid = $('mgmt-inv-grid');
     if (invGrid) {
+        invGrid.innerHTML = ''; // <-- CORREÇÃO: Limpa a grade para acabar com a duplicação!
+
         game.inventory.forEach((item, idx) => {
             // Puxa a definição correta do item ou pergaminho
             let iDef = item.isScroll ? { icon: '📜', name: `Planta: ${RECIPES[item.recipeKey].name}` } : ITEMS[item.id];
@@ -1010,14 +1012,33 @@ function renderManagement(mode = 'prep') {
             let lvlStr = item.isScroll ? `<span style="color:#aaa;">Consumível</span>` : `Lv${item.level}`;
             el.innerHTML = `<span style="font-size:24px;">${iDef.icon}</span><div style="font-size:9px; color:var(--gold);">${lvlStr}</div>`;
 
-            el.onclick = () => {
+            el.onclick = async () => {
                 if (typeof readOnly !== 'undefined' && readOnly) return;
 
                 if (item.isScroll) {
                     if (typeof useRecipeScroll === 'function') useRecipeScroll(item.recipeKey, idx);
                 } else {
-                    // Direciona o jogador para a mecânica correta
-                    showMessage("Clique em um personagem para gerenciar equipamentos!", '#f39c12');
+                    // MÁGICA DO CLIQUE: Abre o modal para escolher qual fera vai receber o item
+                    let targets = [...deployedRoster, ...rosterMemory];
+                    let chosenUnit = await window.promptSelectUnit(`Equipar ${iDef.name} Lv${item.level} em quem?`, targets);
+
+                    if (chosenUnit) {
+                        let existingEq = (chosenUnit.equipment || []).find(eq => eq.id === item.id);
+                        if (existingEq) {
+                            showMessage("Esta fera já possui este item!", '#f39c12');
+                            return;
+                        }
+                        if (!chosenUnit.equipment) chosenUnit.equipment = [];
+
+                        // Retira da mochila e equipa
+                        let itemToEquip = game.inventory.splice(idx, 1)[0];
+                        chosenUnit.equipment.push(itemToEquip);
+                        if (iDef.onEquip) iDef.onEquip(chosenUnit, itemToEquip.level);
+
+                        // Atualiza a tela imediatamente
+                        renderManagement(mode);
+                        showMessage(`${iDef.name} equipado em ${chosenUnit.name}!`, '#2ecc71');
+                    }
                 }
             };
 
@@ -2355,6 +2376,35 @@ function openKingdom() {
             }
         }
 
+        // Injeta o botão de Gerenciamento na HUD inferior do Reino
+        let btnMgmt = document.getElementById('btn-kingdom-mgmt');
+        if (!btnMgmt) {
+            const bottomBar = document.querySelector('#kingdom-screen > div:last-child');
+            if (bottomBar) {
+                btnMgmt = document.createElement('button');
+                btnMgmt.id = 'btn-kingdom-mgmt';
+                btnMgmt.className = 'btn-primary';
+                btnMgmt.style.cssText = 'font-size: 12px !important; padding: 8px 20px !important; border-radius: 20px !important; box-shadow: 0 4px 10px rgba(0,0,0,0.8) !important;';
+                btnMgmt.innerText = '🛡️ Gerenciar Equipe';
+                bottomBar.insertBefore(btnMgmt, bottomBar.firstChild);
+            }
+        }
+        if (btnMgmt) {
+            btnMgmt.onclick = () => {
+                hide('kingdom-screen');
+                show('management-screen');
+                show('btn-close-team');
+                hide('btn-start-stage');
+
+                // Configura o botão de fechar do gerenciamento para retornar ao Reino perfeitamente
+                $('btn-close-team').onclick = () => {
+                    hide('management-screen');
+                    openKingdom();
+                };
+                renderManagement('prep');
+            };
+        }
+
         kRenderer.initCamera();
         kRenderer.draw();
         if ($('building-menu')) hide('building-menu');
@@ -3636,12 +3686,13 @@ window.openArcaneForge = function () {
                     </div>
                 </div>
 
-                <div style="display:flex; flex:1; overflow:hidden;">
-                    <div style="width:50%; border-right:1px solid #444; padding:15px; overflow-y:auto; background:rgba(0,0,0,0.3);">
+                <div class="forge-container">
+                    <div class="forge-panel-left">
                         <h4 style="color:#aaa; text-transform:uppercase; margin-top:0;">${forgeState.mode === 'MERGE' ? 'Seu Inventário & Materiais' : 'Plantas de Biomante'}</h4>
                         <div id="forge-list-container" style="display:flex; flex-direction:column; gap:8px;"></div>
                     </div>
 
+                 <div class="forge-panel-right">
                     <div style="width:50%; padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(circle, rgba(40,30,10,0.8) 0%, transparent 80%);">
                         <div style="display:flex; align-items:center; gap:15px; margin-bottom:40px;">
                             <div id="f-slot-1" style="width:70px; height:70px; border:2px dashed #777; border-radius:10px; display:flex; justify-content:center; align-items:center; font-size:35px; background:rgba(0,0,0,0.6); cursor:pointer;" onclick="document.getElementById('forge-overlay').__clearSlot(1)">
@@ -3704,16 +3755,59 @@ window.openArcaneForge = function () {
                 listContainer.appendChild(btn);
             });
         } else {
-            // Modo MERGE (Inventário + Materiais)
-            game.inventory.forEach((item, invIdx) => {
+            // Modo MERGE (Inventário da mochila + Itens Equipados nas Feras)
+            let validInventory = game.inventory.map((item, index) => ({ ...item, originalIndex: index, isEquipped: false, ownerUnit: null, equipIdx: null }));
+
+            // Varre as feras e injeta os itens equipados delas na lista da Forja
+            [...deployedRoster, ...rosterMemory].forEach(u => {
+                (u.equipment || []).forEach((eq, eqIdx) => {
+                    validInventory.push({
+                        ...eq,
+                        originalIndex: -1,
+                        isEquipped: true,
+                        ownerUnit: u,
+                        equipIdx: eqIdx
+                    });
+                });
+            });
+
+            // Filtro de Fusão (Mesmo nível e ID)
+            if (forgeState.slot1 && forgeState.slot1.type === 'ITEM') {
+                validInventory = validInventory.filter(item => {
+                    let isSameId = item.id === forgeState.slot1.data.id;
+                    let isSameLevel = item.level === forgeState.slot1.data.level;
+
+                    let isSameInstance = false;
+                    if (forgeState.slot1.isEquipped && item.isEquipped) {
+                        isSameInstance = (forgeState.slot1.ownerUnit === item.ownerUnit && forgeState.slot1.equipIdx === item.equipIdx);
+                    } else if (!forgeState.slot1.isEquipped && !item.isEquipped) {
+                        isSameInstance = (forgeState.slot1.invIdx === item.originalIndex);
+                    }
+                    return isSameId && isSameLevel && !isSameInstance;
+                });
+            }
+
+            validInventory.forEach((item) => {
                 let iDef = ITEMS[item.id];
                 let btn = document.createElement('div');
                 btn.style.cssText = `background:rgba(20,20,30,0.8); border:1px solid #444; padding:10px; border-radius:6px; cursor:pointer; display:flex; justify-content:space-between;`;
-                btn.innerHTML = `<span>${iDef.icon} ${iDef.name}</span> <span style="color:var(--gold);">Lv${item.level}</span>`;
+
+                let eqLabel = item.isEquipped ? `<span style="color:#e74c3c; font-size:9px;">[E: ${item.ownerUnit.name}]</span>` : '';
+                btn.innerHTML = `<span>${iDef.icon} ${iDef.name} ${eqLabel}</span> <span style="color:var(--gold);">Lv${item.level}</span>`;
+
                 btn.onclick = () => {
-                    let obj = { type: 'ITEM', icon: iDef.icon, name: iDef.name, data: item, invIdx: invIdx };
+                    let obj = {
+                        type: 'ITEM', icon: iDef.icon, name: iDef.name, data: item,
+                        invIdx: item.originalIndex, isEquipped: item.isEquipped,
+                        ownerUnit: item.ownerUnit, equipIdx: item.equipIdx
+                    };
                     if (!forgeState.slot1) forgeState.slot1 = obj;
-                    else if (!forgeState.slot2 && forgeState.slot1.invIdx !== invIdx) forgeState.slot2 = obj;
+                    else {
+                        let isSame = forgeState.slot1.isEquipped && obj.isEquipped ?
+                            (forgeState.slot1.ownerUnit === obj.ownerUnit && forgeState.slot1.equipIdx === obj.equipIdx) :
+                            (forgeState.slot1.invIdx === obj.invIdx);
+                        if (!isSame) forgeState.slot2 = obj;
+                    }
                     calculateResult(); renderForge();
                 };
                 listContainer.appendChild(btn);
@@ -3790,15 +3884,34 @@ window.openArcaneForge = function () {
         } else {
             let s1 = forgeState.slot1, s2 = forgeState.slot2;
 
-            // Consome do inventário (remove do fim para o começo para não bugar os index)
+            // Função interna e segura de extração e desequipamento automático
+            const consumeItem = (slot) => {
+                if (slot.isEquipped) {
+                    let unit = slot.ownerUnit;
+                    let eqItem = unit.equipment[slot.equipIdx];
+                    if (eqItem && ITEMS[eqItem.id]?.onUnequip) {
+                        ITEMS[eqItem.id].onUnequip(unit, eqItem.level);
+                    }
+                    unit.equipment.splice(slot.equipIdx, 1);
+                } else {
+                    let actualIdx = game.inventory.findIndex((it, i) => i === slot.invIdx || (it.id === slot.data.id && it.level === slot.data.level));
+                    if (actualIdx !== -1) game.inventory.splice(actualIdx, 1);
+                }
+            };
+
             if (s1.type === 'ITEM' && s2.type === 'ITEM') {
-                let idxs = [s1.invIdx, s2.invIdx].sort((a, b) => b - a);
-                game.inventory.splice(idxs[0], 1); game.inventory.splice(idxs[1], 1);
+                // Ordena remoção se forem do mesmo boneco para evitar quebra de índice array
+                if (s1.isEquipped && s2.isEquipped && s1.ownerUnit === s2.ownerUnit) {
+                    if (s1.equipIdx > s2.equipIdx) { consumeItem(s1); consumeItem(s2); }
+                    else { consumeItem(s2); consumeItem(s1); }
+                } else {
+                    consumeItem(s1); consumeItem(s2);
+                }
                 game.inventory.push({ id: s1.data.id, level: s1.data.level + 1 });
             } else {
                 let itmSlot = s1.type === 'ITEM' ? s1 : s2;
                 let matSlot = s1.type === 'MAT' ? s1 : s2;
-                game.inventory.splice(itmSlot.invIdx, 1);
+                consumeItem(itmSlot);
                 game.resources[matSlot.data] -= 1;
                 game.inventory.push({ id: forgeState.result.infusionId, level: itmSlot.data.level });
             }

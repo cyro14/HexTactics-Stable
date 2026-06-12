@@ -1697,3 +1697,47 @@ button.btn-success {
     pointer-events: auto !important;
     cursor: pointer !important;
 }
+
+/* =========================================
+   FORJA ARCANA RESPONSIVA
+========================================= */
+.forge-container {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    overflow: hidden;
+}
+
+.forge-panel-left {
+    width: 50%;
+    border-right: 1px solid #444;
+    padding: 15px;
+    overflow-y: auto;
+    background: rgba(0,0,0,0.3);
+}
+
+.forge-panel-right {
+    width: 50%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, rgba(40,30,10,0.8) 0%, transparent 80%);
+}
+
+/* No celular, empilhamos: a Forja fica em cima e o Inventário rola embaixo */
+@media (max-width: 768px) {
+    .forge-container {
+        flex-direction: column-reverse; 
+        overflow-y: auto;
+    }
+    .forge-panel-left, .forge-panel-right {
+        width: 100%;
+        border-right: none;
+    }
+    .forge-panel-left {
+        border-top: 1px solid #444;
+        overflow-y: visible;
+    }
+}
