@@ -2476,8 +2476,8 @@ function renderBuildingMenu() {
         let maxLvl = bData.id === 'CASTLE' ? 1 : 3;
 
         // URL das Imagens com Fallback HTML
-        let imgSrc = `img/buildings/${bData.id.toLowerCase()}_${bLvl}.png`;
-        let fallbackSrc = `img/buildings/${bData.id.toLowerCase()}_1.png`;
+        let imgSrc = `img/buildings/${bData.id.toLowerCase()}_${bLvl}.speg `;
+        let fallbackSrc = `img/buildings/${bData.id.toLowerCase()}_1.jpeg`;
 
         let html = `<div style="display:flex; flex-direction:column; min-width:170px; background:rgba(15,15,20,0.95); border:1px solid var(--gold-dark); padding:8px 12px; border-radius:8px; box-shadow: 0 5px 15px rgba(0,0,0,0.9); backdrop-filter:blur(5px);">
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
@@ -2841,7 +2841,7 @@ function renderBuildingMenu() {
                 return `<span style="color:${color}; font-size:9px; font-weight:bold;">${icon}${amt}</span>`;
             }).join(' ');
 
-        let imgSrc = `img/buildings/${b.id.toLowerCase()}_1.png`;
+        let imgSrc = `img/buildings/${b.id.toLowerCase()}_1.jpeg`;
 
         btn.innerHTML = `<div style="position:relative; width:35px; height:35px; margin-bottom:2px; display:flex; justify-content:center; align-items:center;">
                              <img src="${imgSrc}" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" style="width:100%; height:100%; object-fit:contain;">
