@@ -232,9 +232,9 @@ class Game {
     getSynergies(factionId) { return typeof calculateSynergies === 'function' ? calculateSynergies(this.units.filter(u => u.faction === factionId)) : {}; }
     updateFogOfWar() {
         let cycle = this.turnCount % 10;
-        if (cycle >= 6 && cycle <= 8) // ...e se for noite (ciclo 6-8), esconde as unidades inimigas que não estão iluminadas
+        let isNight = (cycle >= 6 && cycle <= 8);
 
-            this.units.forEach(u => {
+        this.units.forEach(u => {
                 // O jogador sempre vê as próprias tropas
                 if (u.faction === 1) return;
 
@@ -1766,6 +1766,11 @@ class Renderer {
         } else if (!su && this.game.selectedHex) { const sh = this.getPos(this.game.selectedHex.q, this.game.selectedHex.r); this.hexPath(ctx, sh.x, sh.y, this.hexSize - 1); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2; ctx.stroke(); }
 
         this.game.units.forEach(u => {
+            // Se o jogo tem uma matriz de Hexágonos Visíveis, se o inimigo não estiver nela, oculta!
+            if (u.faction !== 1 && this.game.visibleHexes && !this.game.visibleHexes.has(`${u.q},${u.r}`)) {
+                return; // Pula a renderização desta unidade
+            }
+
             const p = this.getPos(u.vq, u.vr);
             const fColor = u.faction === 1 ? '#3498db' : u.faction === 2 ? '#e74c3c' : '#2ecc71';
 

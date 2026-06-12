@@ -3472,7 +3472,8 @@ window.openContinentMap = function () {
 
             const btnStart = $('btn-macro-start');
 
-            if (isUnlocked) {
+            // CORREÇÃO: Usando as variáveis corretamente declaradas no escopo!
+            if (isConquered) {
                 $('macro-region-status').innerText = '✅ Setor Seguro / Liberado';
                 $('macro-region-status').style.color = 'var(--player-color)';
                 $('macro-region-threat').innerHTML = 'Região pacificada. Seus aliados patrulham esta área.';
@@ -3486,7 +3487,7 @@ window.openContinentMap = function () {
                     generateRouteMap();
                     renderRouteMap();
                 };
-            } else if (isNextTarget) {
+            } else if (canAttack) {
                 $('macro-region-status').innerText = '⚠️ Dominado pelo Rival';
                 $('macro-region-status').style.color = 'var(--enemy-color)';
                 let bossHint = reg.id === 'CENTER' ? 'Ameaça Suprema: O Leviatã Umbral aguarda.' : 'Ameaça Rival: Forças inimigas controlam este setor.';
@@ -3906,12 +3907,12 @@ window.openArcaneForge = function () {
                     let unit = slot.ownerUnit;
                     let eqItem = unit.equipment[slot.equipIdx];
                     let iDef = ITEMS[eqItem.id];
-                    
+
                     // Blindagem: Só executa se onUnequip existir E for uma função válida
                     if (eqItem && iDef && typeof iDef.onUnequip === 'function') {
                         iDef.onUnequip(unit, eqItem.level);
                     }
-                    
+
                     unit.equipment.splice(slot.equipIdx, 1);
                 } else {
                     let actualIdx = game.inventory.findIndex((it, i) => i === slot.invIdx || (it.id === slot.data.id && it.level === slot.data.level));
@@ -3986,7 +3987,7 @@ window.openCharacterScreen = function (u, isBox, mode) {
         (u.equipment || []).forEach((eq, idx) => {
             let eqDef = ITEMS[eq.id];
             if (!eqDef) return;
-            
+
             // Dicionário visual para os slots
             let slotNames = { 'weapon': 'Arma', 'shield': 'Escudo', 'boots': 'Botas', 'armor': 'Armadura', 'accessory': 'Acessório' };
             let slotStr = slotNames[eqDef.equipSlot] || 'Equip';
@@ -4095,45 +4096,42 @@ window.openCharacterScreen = function (u, isBox, mode) {
             renderModal();
         };
 
-        // Lógica blindada para equipar sem duplicar itens
+        // Lógica limpa usando a propriedade oficial do data.js
         window.equipToChar = (invIdx) => {
             if (mode === 'battle') { showMessage("Equipamentos só podem ser alterados fora de combate!", '#f39c12'); return; }
             let invItem = game.inventory[invIdx];
             let iDef = ITEMS[invItem.id];
 
-            if (!iDef.equipSlot) {
-                showMessage("Este item não pode ser equipado na equipe!", '#e74c3c');
+            // Puxa a sua variável oficial
+            let itemSlot = iDef.equipSlot;
+
+            if (!itemSlot) {
+                showMessage("Este item não possui um slot equipável!", '#e74c3c');
                 return;
             }
 
-            // O splice extrai permanentemente o item novo do inventário ANTES de mexer no resto
+            // O splice extrai permanentemente o item novo do inventário
             let itemToEquip = game.inventory.splice(invIdx, 1)[0];
 
-            // Busca se já existe um equipamento ocupando o mesmo slot (Ex: Duas armas)
-            let existingEqIdx = u.equipment.findIndex(eq => ITEMS[eq.id] && ITEMS[eq.id].equipSlot === iDef.equipSlot);
-            
+            // Busca se já existe um equipamento ocupando o mesmo slot exato
+            let existingEqIdx = u.equipment.findIndex(eq => ITEMS[eq.id] && ITEMS[eq.id].equipSlot === itemSlot);
+
             if (existingEqIdx !== -1) {
-                // Desequipa o item atual (Auto-Swap)
+                // Auto-Swap: Remove o equipamento velho
                 let eq = u.equipment[existingEqIdx];
                 let eqDef = ITEMS[eq.id];
-                
-                // Blindagem do Unequip
-                if (eqDef && typeof eqDef.onUnequip === 'function') {
-                    eqDef.onUnequip(u, eq.level);
-                }
-                
+                if (eqDef && typeof eqDef.onUnequip === 'function') eqDef.onUnequip(u, eq.level);
+
                 u.equipment.splice(existingEqIdx, 1);
-                game.inventory.push(eq); // Devolve o antigo pra mochila
+                game.inventory.push(eq); // Devolve o velho pra mochila
                 showMessage(`Trocou ${eqDef.name} por ${iDef.name}!`, '#3498db');
             }
 
-            // Equipa o novo e Blinda o Equip
+            // Equipa o novo
             u.equipment.push(itemToEquip);
-            if (iDef && typeof iDef.onEquip === 'function') {
-                iDef.onEquip(u, itemToEquip.level);
-            }
+            if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(u, itemToEquip.level);
 
-            renderModal(); 
+            renderModal();
         };
     };
 
