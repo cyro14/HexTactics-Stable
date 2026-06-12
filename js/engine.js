@@ -768,10 +768,42 @@ class Game {
                 if (u.faction === 1) {
                     let accepted = typeof showZeldaPopup === 'function' ? await showZeldaPopup(iDef.icon, `Encontrou: ${iDef.name}`, iDef.desc, true) : true;
                     if (accepted) {
-                        if (iDef.type === 'equip') {
+                        // Aceita tanto a tag antiga type: 'equip' quanto os novos itens com equipSlot
+                        if (iDef.equipSlot || iDef.type === 'equip') {
                             let existingEq = u.equipment.find(eq => eq.id === iType);
-                            if (existingEq) { if (iDef.onUnequip) iDef.onUnequip(u, existingEq.level); existingEq.level++; if (iDef.onEquip) iDef.onEquip(u, existingEq.level); if (typeof showPopup === 'function') showPopup(`✨ Fusão Lv${existingEq.level}!`, u, '#c9a227'); }
-                            else { u.equipment.push({ id: iType, level: 1 }); if (iDef.onEquip) iDef.onEquip(u, 1); }
+                            
+                            // 1. O monstro já tem este EXATO item? Funde para o próximo nível
+                            if (existingEq) { 
+                                if (iDef && typeof iDef.onUnequip === 'function') iDef.onUnequip(u, existingEq.level); 
+                                existingEq.level++; 
+                                if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(u, existingEq.level); 
+                                if (typeof showPopup === 'function') showPopup(`✨ Fusão Lv${existingEq.level}!`, u, '#c9a227'); 
+                            } 
+                            // 2. O monstro não tem esse item. Vamos checar a restrição de Slots!
+                            else { 
+                                let itemSlot = iDef.equipSlot;
+                                let existingSlotIdx = itemSlot ? u.equipment.findIndex(eq => ITEMS[eq.id] && ITEMS[eq.id].equipSlot === itemSlot) : -1;
+                                
+                                // AUTO-SWAP: Se já tem algo ocupando o slot, desequipa primeiro
+                                if (existingSlotIdx !== -1) {
+                                    let oldEq = u.equipment[existingSlotIdx];
+                                    let oldDef = ITEMS[oldEq.id];
+                                    
+                                    if (oldDef && typeof oldDef.onUnequip === 'function') oldDef.onUnequip(u, oldEq.level);
+                                    
+                                    u.equipment.splice(existingSlotIdx, 1);
+                                    
+                                    // Devolve o item velho pra mochila global do jogo
+                                    if (!this.inventory) this.inventory = [];
+                                    this.inventory.push(oldEq); 
+                                    
+                                    if (typeof showPopup === 'function') showPopup(`Trocou: ${oldDef.name}`, u, '#3498db');
+                                }
+                                
+                                // Equipa o item novo que estava no chão
+                                u.equipment.push({ id: iType, level: 1 }); 
+                                if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(u, 1); 
+                            }
                             this.items.delete(k);
                         } else {
                             // SE FOR UM ITEM DE CAMPO, VAI PARA A MOCHILA

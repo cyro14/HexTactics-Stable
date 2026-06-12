@@ -580,7 +580,7 @@ const INFUSIONS = {
     'SWORD_veneno': 'VENOM_DAGGER',
     'HUNTER_BOW_brasa': 'HELLFIRE_BOW',     // Arco + Brasa = Arco do Inferno
     'CARAPACE_SHIELD_asas': 'WINGED_SHIELD', // Escudo + Asa = Escudo Alado (Ganha esquiva)
-    
+    'BOOTS_asas': 'WINGED_BOOTS'
 };
 
 const ITEMS = {
