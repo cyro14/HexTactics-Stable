@@ -2476,7 +2476,7 @@ function renderBuildingMenu() {
         let maxLvl = bData.id === 'CASTLE' ? 1 : 3;
 
         // URL das Imagens com Fallback HTML
-        let imgSrc = `img/buildings/${bData.id.toLowerCase()}_${bLvl}.speg `;
+        let imgSrc = `img/buildings/${bData.id.toLowerCase()}_${bLvl}.jpeg `;
         let fallbackSrc = `img/buildings/${bData.id.toLowerCase()}_1.jpeg`;
 
         let html = `<div style="display:flex; flex-direction:column; min-width:170px; background:rgba(15,15,20,0.95); border:1px solid var(--gold-dark); padding:8px 12px; border-radius:8px; box-shadow: 0 5px 15px rgba(0,0,0,0.9); backdrop-filter:blur(5px);">
