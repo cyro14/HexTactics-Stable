@@ -51,6 +51,8 @@ function saveSnapshot() {
 
 function showZeldaPopup(icon, title, desc, showCancel = false) {
     return new Promise(r => {
+        let popupEl = $('item-popup');
+        if (popupEl) popupEl.style.zIndex = '15000';
         $('item-popup-icon').innerText = icon;
         $('item-popup-title').innerText = title;
         $('item-popup-desc').innerText = desc;
@@ -1109,6 +1111,17 @@ function openTeamView() {
     show('management-screen');
     hide('btn-start-stage');
     show('btn-close-team');
+
+    // Reseta o comportamento do botão especificamente para o modo de Batalha
+    const btnClose = $('btn-close-team');
+    if (btnClose) {
+        btnClose.onclick = () => {
+            hide('management-screen');
+            // Como o canvas do jogo (combate) já está rodando no fundo, 
+            // basta esconder a tela de gerenciamento que ele volta pra luta normalmente!
+        };
+    }
+
     renderManagement('battle');
 }
 
@@ -1727,10 +1740,13 @@ function triggerStageEnd(win) {
             game.resources.stone = (game.resources.stone || 0) + pStone;
             game.resources.scales = (game.resources.scales || 0) + pScales;
             game.resources.sand = (game.resources.sand || 0) + pSand;
+            game.resources.ferro = (game.resources.ferro || 0) + pFerro;
             game.gold = (game.gold || 0) + pGold;
 
             game.dna = (game.dna || 0) + pDna;
 
+            let mineMsg = `${pStone}⛰️`;
+            if (pFerro > 0) mineMsg += ` ${pFerro}🛡️`;
             let extraMsg = "";
             if (pDna > 0) extraMsg += ` | +${pDna} 🧬`;
             if (pTraps > 0) {
@@ -3889,9 +3905,13 @@ window.openArcaneForge = function () {
                 if (slot.isEquipped) {
                     let unit = slot.ownerUnit;
                     let eqItem = unit.equipment[slot.equipIdx];
-                    if (eqItem && ITEMS[eqItem.id]?.onUnequip) {
-                        ITEMS[eqItem.id].onUnequip(unit, eqItem.level);
+                    let iDef = ITEMS[eqItem.id];
+                    
+                    // Blindagem: Só executa se onUnequip existir E for uma função válida
+                    if (eqItem && iDef && typeof iDef.onUnequip === 'function') {
+                        iDef.onUnequip(unit, eqItem.level);
                     }
+                    
                     unit.equipment.splice(slot.equipIdx, 1);
                 } else {
                     let actualIdx = game.inventory.findIndex((it, i) => i === slot.invIdx || (it.id === slot.data.id && it.level === slot.data.level));
@@ -3966,11 +3986,16 @@ window.openCharacterScreen = function (u, isBox, mode) {
         (u.equipment || []).forEach((eq, idx) => {
             let eqDef = ITEMS[eq.id];
             if (!eqDef) return;
+            
+            // Dicionário visual para os slots
+            let slotNames = { 'weapon': 'Arma', 'shield': 'Escudo', 'boots': 'Botas', 'armor': 'Armadura', 'accessory': 'Acessório' };
+            let slotStr = slotNames[eqDef.equipSlot] || 'Equip';
+
             equipSlotsHtml += `
                 <div onclick="unequipFromChar(${idx})" style="border: 1px solid var(--gold); padding: 8px; margin: 4px 0; cursor:pointer; background: rgba(0,0,0,0.6); border-radius: 8px; display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; text-align: left; transition: 0.2s;">
                     <div style="font-size: 24px; flex-shrink: 0; filter: drop-shadow(0 0 2px var(--gold));">${eqDef.icon}</div>
                     <div style="flex-grow: 1; line-height: 1.2;">
-                        <div style="font-size: 12px; color: var(--gold-light); font-weight: bold;">${eqDef.name} <span style="font-size: 10px; color: #fff;">Lv${eq.level}</span></div>
+                        <div style="font-size: 12px; color: var(--gold-light); font-weight: bold;"><span style="color:#aaa; font-size:9px;">[${slotStr}]</span> ${eqDef.name} <span style="font-size: 10px; color: #fff;">Lv${eq.level}</span></div>
                         <div style="font-size: 9px; color: #aaa; margin-top: 2px;">${eqDef.desc}</div>
                     </div>
                     <div style="font-size: 10px; color: #e74c3c; cursor: pointer; padding: 5px; font-weight: bold; text-transform: uppercase;">Remover</div>
@@ -4076,18 +4101,39 @@ window.openCharacterScreen = function (u, isBox, mode) {
             let invItem = game.inventory[invIdx];
             let iDef = ITEMS[invItem.id];
 
-            let existingEq = u.equipment.find(eq => eq.id === invItem.id);
-            if (existingEq) {
-                showMessage("Este monstro já possui este item! Use a Forja Arcana para fundi-lo.", '#f39c12');
+            if (!iDef.equipSlot) {
+                showMessage("Este item não pode ser equipado na equipe!", '#e74c3c');
                 return;
             }
 
-            // O splice extrai permanentemente o item do inventário
+            // O splice extrai permanentemente o item novo do inventário ANTES de mexer no resto
             let itemToEquip = game.inventory.splice(invIdx, 1)[0];
-            u.equipment.push(itemToEquip);
-            if (iDef && iDef.onEquip) iDef.onEquip(u, itemToEquip.level);
 
-            renderModal(); // Redesenha com o slot ocupado
+            // Busca se já existe um equipamento ocupando o mesmo slot (Ex: Duas armas)
+            let existingEqIdx = u.equipment.findIndex(eq => ITEMS[eq.id] && ITEMS[eq.id].equipSlot === iDef.equipSlot);
+            
+            if (existingEqIdx !== -1) {
+                // Desequipa o item atual (Auto-Swap)
+                let eq = u.equipment[existingEqIdx];
+                let eqDef = ITEMS[eq.id];
+                
+                // Blindagem do Unequip
+                if (eqDef && typeof eqDef.onUnequip === 'function') {
+                    eqDef.onUnequip(u, eq.level);
+                }
+                
+                u.equipment.splice(existingEqIdx, 1);
+                game.inventory.push(eq); // Devolve o antigo pra mochila
+                showMessage(`Trocou ${eqDef.name} por ${iDef.name}!`, '#3498db');
+            }
+
+            // Equipa o novo e Blinda o Equip
+            u.equipment.push(itemToEquip);
+            if (iDef && typeof iDef.onEquip === 'function') {
+                iDef.onEquip(u, itemToEquip.level);
+            }
+
+            renderModal(); 
         };
     };
 
