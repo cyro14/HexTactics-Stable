@@ -998,48 +998,64 @@ function renderManagement(mode = 'prep') {
 
     const invGrid = $('mgmt-inv-grid');
     if (invGrid) {
-        invGrid.innerHTML = ''; // <-- CORREÇÃO: Limpa a grade para acabar com a duplicação!
+        invGrid.innerHTML = ''; // Limpa a grade para evitar duplicações
 
         game.inventory.forEach((item, idx) => {
-            // Puxa a definição correta do item ou pergaminho
             let iDef = item.isScroll ? { icon: '📜', name: `Planta: ${RECIPES[item.recipeKey].name}` } : ITEMS[item.id];
             if (!iDef) return;
 
             let el = document.createElement('div');
             el.className = 'beast-card unlocked';
             el.style.padding = '8px';
-            if (selectedInventoryIndex === idx) el.style.borderColor = 'var(--success)';
-
-            // Renderiza o visual na grade
+            
             let lvlStr = item.isScroll ? `<span style="color:#aaa;">Consumível</span>` : `Lv${item.level}`;
             el.innerHTML = `<span style="font-size:24px;">${iDef.icon}</span><div style="font-size:9px; color:var(--gold);">${lvlStr}</div>`;
 
+            // === O TRECHO DO CLIQUE QUE VOCÊ ESTAVA PROCURANDO EXATAMENTE AQUI ===
             el.onclick = async () => {
                 if (typeof readOnly !== 'undefined' && readOnly) return;
 
                 if (item.isScroll) {
                     if (typeof useRecipeScroll === 'function') useRecipeScroll(item.recipeKey, idx);
                 } else {
-                    // MÁGICA DO CLIQUE: Abre o modal para escolher qual fera vai receber o item
+                    // 1. Validação usando a propriedade oficial equipSlot do seu data.js
+                    let itemSlot = iDef.equipSlot;
+                    if (!itemSlot) {
+                        showMessage("Este item não pode ser equipado na equipe!", '#e74c3c');
+                        return;
+                    }
+
                     let targets = [...deployedRoster, ...rosterMemory];
                     let chosenUnit = await window.promptSelectUnit(`Equipar ${iDef.name} Lv${item.level} em quem?`, targets);
-
+                    
                     if (chosenUnit) {
-                        let existingEq = (chosenUnit.equipment || []).find(eq => eq.id === item.id);
-                        if (existingEq) {
-                            showMessage("Esta fera já possui este item!", '#f39c12');
-                            return;
-                        }
                         if (!chosenUnit.equipment) chosenUnit.equipment = [];
+                        
+                        let realIdx = game.inventory.indexOf(item);
+                        if (realIdx === -1) return; 
 
-                        // Retira da mochila e equipa
-                        let itemToEquip = game.inventory.splice(idx, 1)[0];
+                        let itemToEquip = game.inventory.splice(realIdx, 1)[0];
+                        
+                        // 2. Procura se a unidade já tem algo equipado no mesmo slot
+                        let existingEqIdx = chosenUnit.equipment.findIndex(eq => ITEMS[eq.id] && ITEMS[eq.id].equipSlot === itemSlot);
+                        
+                        if (existingEqIdx !== -1) {
+                            // Auto-Swap seguro
+                            let eq = chosenUnit.equipment[existingEqIdx];
+                            let eqDef = ITEMS[eq.id];
+                            if (eqDef && typeof eqDef.onUnequip === 'function') eqDef.onUnequip(chosenUnit, eq.level);
+                            
+                            chosenUnit.equipment.splice(existingEqIdx, 1);
+                            game.inventory.push(eq);
+                            showMessage(`Trocou ${eqDef.name} por ${iDef.name}!`, '#3498db');
+                        } else {
+                            showMessage(`${iDef.name} equipado em ${chosenUnit.name}!`, '#2ecc71');
+                        }
+
                         chosenUnit.equipment.push(itemToEquip);
-                        if (iDef.onEquip) iDef.onEquip(chosenUnit, itemToEquip.level);
-
-                        // Atualiza a tela imediatamente
+                        if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(chosenUnit, itemToEquip.level);
+                        
                         renderManagement(mode);
-                        showMessage(`${iDef.name} equipado em ${chosenUnit.name}!`, '#2ecc71');
                     }
                 }
             };
