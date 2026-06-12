@@ -557,6 +557,20 @@ const RECIPES = {
         resultItem: 'FROST_ARMOR',
         desc: 'Concede +30 HP e congela/desacelera inimigos adjacentes no início do turno.',
         isLocked: true
+    },
+    'recipe_winged_boots': {
+        name: 'Planta: Botas Aladas',
+        icon: '🪽',
+        resultItem: 'WINGED_BOOTS',
+        isLocked: true,
+        cost: { gold: 50, asas: 1, boots: 1 } // Exige ouro, o recurso 'asas' coletado e a bota base
+    },
+    'recipe_spiked_shield': {
+        name: 'Planta: Escudo Espinhoso',
+        icon: '🌵',
+        resultItem: 'SPIKED_SHIELD',
+        isLocked: true,
+        cost: { gold: 60, veneno: 2, wooden_shield: 1 }
     }
 };
 
@@ -565,7 +579,8 @@ const INFUSIONS = {
     'SWORD_brasa': 'FLAME_SWORD',
     'SWORD_veneno': 'VENOM_DAGGER',
     'HUNTER_BOW_brasa': 'HELLFIRE_BOW',     // Arco + Brasa = Arco do Inferno
-    'CARAPACE_SHIELD_asas': 'WINGED_SHIELD' // Escudo + Asa = Escudo Alado (Ganha esquiva)
+    'CARAPACE_SHIELD_asas': 'WINGED_SHIELD', // Escudo + Asa = Escudo Alado (Ganha esquiva)
+    
 };
 
 const ITEMS = {
@@ -598,7 +613,49 @@ const ITEMS = {
     'THUNDER_AMULET': { id: 'THUNDER_AMULET', name: 'Amuleto da Tormenta', icon: '⚡', desc: '+10% Crítico. Ataques zeram MP inimigo.', equipSlot: 'accessory', onEquip: (u, lvl) => { u.critChance = (u.critChance || 0) + 0.10; if (!u.abilities.includes('shock')) u.abilities.push('shock'); }, onUnequip: (u, lvl) => { u.critChance -= 0.10; let idx = u.abilities.indexOf('shock'); if (idx > -1) u.abilities.splice(idx, 1); } },
     'FROST_ARMOR': { id: 'FROST_ARMOR', name: 'Manto do Zero Absoluto', icon: '❄️', desc: '+30 HP. Aura Congelante.', equipSlot: 'armour', onEquip: (u, lvl) => { u.maxHp += 30 * lvl; u.hp += 30 * lvl; if (!u.abilities.includes('frost_aura')) u.abilities.push('frost_aura'); }, onUnequip: (u, lvl) => { u.maxHp -= 30 * lvl; u.hp = Math.min(u.hp, u.maxHp); let idx = u.abilities.indexOf('frost_aura'); if (idx > -1) u.abilities.splice(idx, 1); } },
     'HELLFIRE_BOW': { id: 'HELLFIRE_BOW', name: 'Arco do Inferno', icon: '🏹🔥', desc: '+1 Alcance, +12 ATK. Incendeia alvos.', equipSlot: 'weapon', onEquip: (u, lvl) => { u.range = (u.range || 1) + 1; u.atk += 12 * lvl; if (!u.abilities.includes('burn')) u.abilities.push('burn'); }, onUnequip: (u, lvl) => { u.range -= 1; u.atk -= 12 * lvl; let idx = u.abilities.indexOf('burn'); if (idx > -1) u.abilities.splice(idx, 1); } },
-    'WINGED_SHIELD': { id: 'WINGED_SHIELD', name: 'Escudo Alado', icon: '🛡️', desc: '+15 HP, +25% Esquiva.',  equipSlot: 'shield', onEquip: (u, lvl) => { u.maxHp += 15 * lvl; u.hp += 15 * lvl; if (!u.abilities.includes('dodge')) u.abilities.push('dodge'); }, onUnequip: (u, lvl) => { u.maxHp -= 15 * lvl; u.hp = Math.min(u.hp, u.maxHp); } }
+    'WINGED_SHIELD': { id: 'WINGED_SHIELD', name: 'Escudo Alado', icon: '🛡️', desc: '+15 HP, +25% Esquiva.',  equipSlot: 'shield', onEquip: (u, lvl) => { u.maxHp += 15 * lvl; u.hp += 15 * lvl; if (!u.abilities.includes('dodge')) u.abilities.push('dodge'); }, onUnequip: (u, lvl) => { u.maxHp -= 15 * lvl; u.hp = Math.min(u.hp, u.maxHp); } },
+    'WINGED_BOOTS': {
+        name: 'Botas Aladas',
+        icon: '🪽👢',
+        desc: '+2 Movimento estável e concede a habilidade de voar (ignora penalidade de terrenos).',
+        equipSlot: 'boots',
+        onEquip: (unit, lvl) => {
+            if (!unit.abilities.includes('flying')) unit.abilities.push('flying');
+            unit.maxMp += (1 + lvl);
+        },
+        onUnequip: (unit, lvl) => {
+            unit.abilities = unit.abilities.filter(a => a !== 'flying');
+            unit.maxMp -= (1 + lvl);
+        }
+    },
+    'FLAME_SWORD': {
+        name: 'Espada Infernun',
+        icon: '🔥🗡️',
+        desc: '+12 ATK. Ataques aplicam o status Queimadura no alvo.',
+        equipSlot: 'weapon',
+        onEquip: (unit, lvl) => {
+            unit.atk += (12 + lvl * 3);
+            if (!unit.abilities.includes('burn')) unit.abilities.push('burn');
+        },
+        onUnequip: (unit, lvl) => {
+            unit.atk -= (12 + lvl * 3);
+            unit.abilities = unit.abilities.filter(a => a !== 'burn');
+        }
+    },
+    'SPIKED_SHIELD': {
+        name: 'Escudo Espinhoso',
+        icon: '🌵🛡️',
+        desc: '+20% Defesa. Devolve 15% do dano físico recebido como contra-ataque peçonhento.',
+        equipSlot: 'shield',
+        onEquip: (unit, lvl) => {
+            if (!unit.abilities.includes('counter')) unit.abilities.push('counter');
+            if (!unit.tags.includes('VENOM')) unit.tags.push('VENOM');
+        },
+        onUnequip: (unit, lvl) => {
+            unit.abilities = unit.abilities.filter(a => a !== 'counter');
+            unit.tags = unit.tags.filter(t => t !== 'VENOM');
+        }
+    },
 };
 
 const NODE_TYPES = {
