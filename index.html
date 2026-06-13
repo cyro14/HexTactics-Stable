@@ -148,8 +148,20 @@
                 <div id="spell-bar" class="spell-bar-compact hidden"></div>
 
                 <div class="hud-actions-row">
-                    <button id="btn-undo" class="btn-hud-action" disabled title="Desfazer Último Movimento">↩️ </button>
-                    <button id="btn-next-unit" class="btn-hud-action" title="Selecionar Próxima Unidade Livre">⏭️
+                    <button id="btn-undo" class="btn-hud-action" disabled title="Desfazer Último Movimento"><svg
+                            viewBox="0 0 24 24" width="24" height="24" stroke="var(--gold)" stroke-width="2.5"
+                            fill="none" stroke-linecap="round" stroke-linejoin="round"
+                            style="filter: drop-shadow(1px 1px 2px #000);">
+                            <path d="M3 7v6h6"></path>
+                            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+                        </svg></button>
+                    <button id="btn-next-unit" class="btn-hud-action" title="Selecionar Próxima Unidade Livre"><svg
+                            viewBox="0 0 24 24" width="24" height="24" stroke="var(--gold)" stroke-width="2.5"
+                            fill="none" stroke-linecap="round" stroke-linejoin="round"
+                            style="filter: drop-shadow(1px 1px 2px #000);">
+                            <polygon points="5 4 15 12 5 20 5 4" fill="rgba(201, 162, 39, 0.2)"></polygon>
+                            <line x1="19" y1="5" x2="19" y2="19"></line>
+                        </svg>
                     </button>
                     <button id="btn-toggle-spells" class="btn-hud-action" title="Abrir Livro de Magias">✨
                         Magias</button>
@@ -401,33 +413,45 @@
     </div>
 
     <div id="continent-map-screen" class="layer screen hidden" style="background: rgba(5,7,12,0.98); z-index: 150;">
-        <h1 class="screen-title" style="font-size: 2.2rem; margin-top:15px; text-shadow: 0 0 15px var(--gold);">Hexis: O Tabuleiro Estilhaçado</h1>
-        <p class="screen-subtitle" style="margin-bottom: 15px; color:#aaa;">Expanda sua ideologia e purifique os setores</p>
+        <h1 class="screen-title" style="font-size: 2.2rem; margin-top:15px; text-shadow: 0 0 15px var(--gold);">Hexis: O
+            Tabuleiro Estilhaçado</h1>
+        <p class="screen-subtitle" style="margin-bottom: 15px; color:#aaa;">Expanda sua ideologia e purifique os setores
+        </p>
 
         <!-- Container Visual do Macro Mapa -->
-        <div id="macro-map-container" style="position:relative; width:95%; max-width:500px; height:320px; background:radial-gradient(circle, #1a1a2e 0%, #050508 100%); border:2px solid var(--gold-dark); border-radius:8px; margin:0 auto; overflow:hidden; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
+        <div id="macro-map-container"
+            style="position:relative; width:95%; max-width:500px; height:320px; background:radial-gradient(circle, #1a1a2e 0%, #050508 100%); border:2px solid var(--gold-dark); border-radius:8px; margin:0 auto; overflow:hidden; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
             <!-- O JS vai injetar os Pinos do mapa aqui -->
         </div>
 
         <!-- Painel de Inteligência -->
-        <div id="macro-info-panel" style="width:95%; max-width:500px; margin: 15px auto; background:rgba(20,20,30,0.95); border:1px solid var(--gold); padding:15px; border-radius:8px; text-align:left; opacity:0; transition: opacity 0.3s; pointer-events:none;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid #444; padding-bottom:8px; margin-bottom:10px;">
-                <h3 id="macro-region-name" style="color:var(--gold); margin:0; font-family:'Cinzel',serif; font-size:18px;">SELECIONE UM SETOR</h3>
+        <div id="macro-info-panel"
+            style="width:95%; max-width:500px; margin: 15px auto; background:rgba(20,20,30,0.95); border:1px solid var(--gold); padding:15px; border-radius:8px; text-align:left; opacity:0; transition: opacity 0.3s; pointer-events:none;">
+            <div
+                style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid #444; padding-bottom:8px; margin-bottom:10px;">
+                <h3 id="macro-region-name"
+                    style="color:var(--gold); margin:0; font-family:'Cinzel',serif; font-size:18px;">SELECIONE UM SETOR
+                </h3>
                 <span id="macro-region-icon" style="font-size:24px;">🌍</span>
             </div>
-            
+
             <div style="font-size:12px; color:#ccc; line-height:1.8;">
-                <div><strong style="color:#fff;">INFLUÊNCIA:</strong> <span id="macro-region-status" style="color:#aaa;">Desconhecida</span></div>
-                <div><strong style="color:#fff;">BIOMA PREDOMINANTE:</strong> <span id="macro-region-biome">---</span></div>
-                <div id="macro-region-threat" style="margin-top:8px; padding:6px; background:rgba(231,76,60,0.1); border-left:3px solid var(--enemy-color); color:var(--gold-light);">
+                <div><strong style="color:#fff;">INFLUÊNCIA:</strong> <span id="macro-region-status"
+                        style="color:#aaa;">Desconhecida</span></div>
+                <div><strong style="color:#fff;">BIOMA PREDOMINANTE:</strong> <span id="macro-region-biome">---</span>
+                </div>
+                <div id="macro-region-threat"
+                    style="margin-top:8px; padding:6px; background:rgba(231,76,60,0.1); border-left:3px solid var(--enemy-color); color:var(--gold-light);">
                     Ameaça Rival: Detectando presença hostil na área...
                 </div>
             </div>
-            
-            <button id="btn-start-incursion" class="btn-success" style="width:100%; margin-top:15px; padding:12px; font-weight:bold; font-size:14px; letter-spacing:1px; box-shadow:0 0 15px rgba(46,204,113,0.3);">INICIAR INCURSÃO</button>
+
+            <button id="btn-start-incursion" class="btn-success"
+                style="width:100%; margin-top:15px; padding:12px; font-weight:bold; font-size:14px; letter-spacing:1px; box-shadow:0 0 15px rgba(46,204,113,0.3);">INICIAR
+                INCURSÃO</button>
         </div>
     </div>
-    
+
     <div id="route-map-screen" class="layer screen hidden"
         style="justify-content: flex-start; padding-top: 20px; background: rgba(5,7,12,0.98);">
         <h1 class="screen-title" style="font-size: 2.2rem;">Mapa de Exploração</h1>
@@ -523,7 +547,8 @@
                 <button id="btn-retry" class="btn-danger">↺ Tentar Novamente</button><button id="btn-menu-from-lose"
                     style="background:transparent;margin-top:10px;">← Menu Principal</button>
                 <button id="btn-change-leader" class="btn-warning"
-                    style="margin-top: 10px; width: 100%; padding: 12px; font-weight: bold; border-radius: 6px;">Trocar de Herói</button>
+                    style="margin-top: 10px; width: 100%; padding: 12px; font-weight: bold; border-radius: 6px;">Trocar
+                    de Herói</button>
             </div>
         </div>
     </div>

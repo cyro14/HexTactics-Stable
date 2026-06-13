@@ -101,6 +101,7 @@ function autoSave() {
             fieldItems: game.fieldItems,
             routeMap: game.routeMap, currentFloor: game.currentFloor, inventory: game.inventory,
             isBossStage: game.isBossStage || false,
+            turnCount: game.turnCount,
             currentRouteType: game.currentRouteType || 'BATTLE'
         };
         //Salva os pergaminhos aprendidos
@@ -1968,6 +1969,7 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
         game.isBossStage = d.isBossStage || false; game.currentRouteType = d.currentRouteType || 'BATTLE';
         game.manaPool = d.manaPool || {};
         game.spentMana = d.spentMana || {};
+        game.turnCount = d.turnCount || 1;
         game.spellCooldowns = d.spellCooldowns || {};
         // <-- CARREGA A MOCHILA (ou cria vazia)
         game.fieldItems = d.fieldItems || { isca: 0, rede: 0, potion: 0, bandage: 0, scroll: 0, sphere: 0, picanha: 0, feromonio: 0, adrenalina: 0, apito: 0, trap_stun: 0, trap_teleport: 0, silence: 0 };

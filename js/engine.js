@@ -197,7 +197,7 @@ class Game {
         this.isRoguelite = false; this.hasKey = false; this.hasEgg = false;
         this.leaderData = typeof LEADERS !== 'undefined' ? LEADERS[0] : {};
         this.activeSynergies = {}; this.manaPool = {}; this.spentMana = {};
-        this.spellCooldowns = {}; this.activeSpell = null; this.lastDeadAlly = null; this.turnCount = 0;
+        this.spellCooldowns = {}; this.activeSpell = null; this.lastDeadAlly = null; this.turnCount = 1;
         this.resources = { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
         this.kingdomMap = new Map();
         this.conqueredRegions = [];

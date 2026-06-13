@@ -235,6 +235,8 @@ canvas {
 }
 
 #combat-log {
+    z-index: 10 !important;
+    pointer-events: none !important;
     position: relative;
     width: 100%;
     display: flex;
@@ -244,7 +246,14 @@ canvas {
     pointer-events: none;
 }
 
+#mana-hud,
+#resource-hud,
+.hud-container {
+    z-index: 100 !important;
+}
+
 .log-entry {
+    z-index: 10 !important;
     background: rgba(4, 6, 12, .85);
     padding: 4px 10px;
     border-left: 2px solid var(--gold-dark);
@@ -744,8 +753,8 @@ button.btn-success {
 }
 
 #btn-cancel-action {
-    bottom: 130px !important; 
-    z-index: 3000 !important; 
+    bottom: 130px !important;
+    z-index: 3000 !important;
 }
 
 @media (max-width: 600px) {
@@ -756,39 +765,43 @@ button.btn-success {
     /* --- 1. CABEÇALHO LADO A LADO (CORRIGIDO PARA MOBILE) --- */
     #top-bar {
         padding: 8px 8px 6px 8px;
-        align-items: flex-start !important; 
-        padding-top: 24px; /* Espaço para o indicador de fase */
+        align-items: flex-start !important;
+        padding-top: 24px;
+        /* Espaço para o indicador de fase */
         flex-direction: row;
-        flex-wrap: wrap; /* Permite que os itens quebrem linha */
+        flex-wrap: wrap;
+        /* Permite que os itens quebrem linha */
         align-items: center;
         justify-content: space-between;
-        max-height: none !important; /* Libera a altura da caixa preta! */
+        max-height: none !important;
+        /* Libera a altura da caixa preta! */
         gap: 8px;
     }
 
     /* 1. Joga a Mana para debaixo da badge de Turno */
     .hud-top-left {
-        flex-direction: column !important; 
+        flex-direction: column !important;
         align-items: flex-start !important;
         gap: 6px !important;
-        max-width: 45% !important; /* Garante que não invada a área dos botões */
+        max-width: 45% !important;
+        /* Garante que não invada a área dos botões */
     }
 
-          .hud-top-right {
-        justify-content: flex-end !important; 
-        flex-wrap: wrap !important; 
-        max-width: 55% !important; 
+    .hud-top-right {
+        justify-content: flex-end !important;
+        flex-wrap: wrap !important;
+        max-width: 55% !important;
         gap: 4px !important;
     }
-    
+
     /* Dá um respiro para a linha de Recursos embaixo */
     .hud-top-center {
-        margin-top: 6px !important; 
+        margin-top: 6px !important;
     }
-    
+
     /* Ajuste fino do botão de Cancelar para telas menores */
     #btn-cancel-action {
-        bottom: 115px !important; 
+        bottom: 115px !important;
     }
 
     .turn-section {
@@ -905,15 +918,18 @@ button.btn-success {
     .bestiary-grid {
         grid-template-columns: repeat(3, 1fr);
     }
-     /* Garante que os botões caibam lado a lado se distribuindo igualmente sem quebrar o layout */
+
+    /* Garante que os botões caibam lado a lado se distribuindo igualmente sem quebrar o layout */
     .hud-actions-row {
         gap: 4px !important;
         padding-top: 6px !important;
     }
+
     .btn-hud-action {
         font-size: 9px !important;
         padding: 6px 2px !important;
-        flex: 1 1 0 !important; /* Força distribuição perfeitamente simétrica e encolhimento seguro */
+        flex: 1 1 0 !important;
+        /* Força distribuição perfeitamente simétrica e encolhimento seguro */
         justify-content: center;
         white-space: nowrap;
         letter-spacing: 0px !important;
@@ -922,7 +938,8 @@ button.btn-success {
 
     /* Move a lista de itens da mochila para baixo da barra superior duplicada do mobile */
     #field-item-menu {
-        top: 92px !important; /* Desce o menu para limpar a linha de recursos */
+        top: 92px !important;
+        /* Desce o menu para limpar a linha de recursos */
         right: 8px !important;
         min-width: 160px !important;
         z-index: 2800 !important;
@@ -1346,19 +1363,110 @@ button.btn-success {
    ========================================== */
 
 /* Tooltips Dinâmicas */
-.qol-tooltip { position: relative; display: inline-block; cursor: help; }
-.qol-tooltip .qol-tooltiptext { visibility: hidden; width: 180px; background-color: rgba(10,12,18,0.98); color: #fff; text-align: center; border: 1px solid var(--gold-dark); border-radius: 6px; padding: 8px; position: absolute; z-index: 3000; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.2s; font-size: 10px; font-family: sans-serif; text-shadow: none; white-space: normal; line-height: 1.4; pointer-events: none; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
-.qol-tooltip .qol-tooltiptext::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: var(--gold-dark) transparent transparent transparent; }
-.qol-tooltip:hover .qol-tooltiptext { visibility: visible; opacity: 1; }
+.qol-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.qol-tooltip .qol-tooltiptext {
+    visibility: hidden;
+    width: 180px;
+    background-color: rgba(10, 12, 18, 0.98);
+    color: #fff;
+    text-align: center;
+    border: 1px solid var(--gold-dark);
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 3000;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-size: 10px;
+    font-family: sans-serif;
+    text-shadow: none;
+    white-space: normal;
+    line-height: 1.4;
+    pointer-events: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.qol-tooltip .qol-tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--gold-dark) transparent transparent transparent;
+}
+
+.qol-tooltip:hover .qol-tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
 
 /* Previsão de Combate (Combat Forecast) */
-#combat-forecast { position: absolute; background: rgba(15, 15, 20, 0.95); border: 2px solid #c0392b; border-radius: 8px; padding: 10px; color: white; pointer-events: none; z-index: 2000; display: flex; gap: 15px; box-shadow: 0 0 15px rgba(192, 57, 43, 0.5); display: none; font-family: 'Cinzel', serif; }
-.forecast-side { display: flex; flex-direction: column; align-items: center; width: 90px; width: 75px; }
-.forecast-emoji { font-size: 32px; margin-bottom: 5px; }
-.forecast-stat { font-size: 10px; margin: 2px 0; color: #ddd; text-shadow: 1px 1px 2px #000; font-family: sans-serif; }
-.forecast-dmg { font-size: 15px; font-weight: bold; color: #e74c3c; margin-top: 2px; }
-.forecast-vs { display: flex; align-items: center; font-weight: bold; color: var(--gold-light); font-size: 20px; }
-.forecast-emoji { font-size: 26px; margin-bottom: 2px; }
+#combat-forecast {
+    position: absolute;
+    background: rgba(15, 15, 20, 0.95);
+    border: 2px solid #c0392b;
+    border-radius: 8px;
+    padding: 10px;
+    color: white;
+    pointer-events: none;
+    z-index: 2000;
+    display: flex;
+    gap: 15px;
+    box-shadow: 0 0 15px rgba(192, 57, 43, 0.5);
+    display: none;
+    font-family: 'Cinzel', serif;
+}
+
+.forecast-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 90px;
+    width: 75px;
+}
+
+.forecast-emoji {
+    font-size: 32px;
+    margin-bottom: 5px;
+}
+
+.forecast-stat {
+    font-size: 10px;
+    margin: 2px 0;
+    color: #ddd;
+    text-shadow: 1px 1px 2px #000;
+    font-family: sans-serif;
+}
+
+.forecast-dmg {
+    font-size: 15px;
+    font-weight: bold;
+    color: #e74c3c;
+    margin-top: 2px;
+}
+
+.forecast-vs {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    color: var(--gold-light);
+    font-size: 20px;
+}
+
+.forecast-emoji {
+    font-size: 26px;
+    margin-bottom: 2px;
+}
 
 
 
@@ -1366,71 +1474,259 @@ button.btn-success {
    HUD COMPACTA (TOP & BOTTOM)
 ========================================= */
 .hud-top {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 6px 12px; background: rgba(10, 10, 15, 0.95);
-    border-bottom: 2px solid var(--gold-dark); max-height: 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    background: rgba(10, 10, 15, 0.95);
+    border-bottom: 2px solid var(--gold-dark);
+    max-height: 50px;
 }
-.hud-top-left, .hud-top-right { display: flex; gap: 10px; align-items: center; }
-.hud-top-center { display: flex; gap: 8px; background: rgba(0,0,0,0.5); padding: 4px 10px; border-radius: 20px; }
-.res-compact { font-size: 12px; font-weight: bold; color: #ddd; display: flex; align-items: center; gap: 3px;}
-.res-icon { font-size: 14px; }
-.btn-icon { background: none; border: 1px solid #444; border-radius: 5px; font-size: 18px; padding: 4px 8px; cursor: pointer; color: var(--gold); }
-.btn-icon:hover { border-color: var(--gold-light); background: rgba(255,255,255,0.1); }
+
+.hud-top-left,
+.hud-top-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.hud-top-center {
+    display: flex;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.res-compact {
+    font-size: 12px;
+    font-weight: bold;
+    color: #ddd;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.res-icon {
+    font-size: 14px;
+}
+
+.btn-icon {
+    background: none;
+    border: 1px solid #444;
+    border-radius: 5px;
+    font-size: 18px;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: var(--gold);
+}
+
+.btn-icon:hover {
+    border-color: var(--gold-light);
+    background: rgba(255, 255, 255, 0.1);
+}
 
 .hud-bottom {
-    position: absolute; bottom: 0; left: 0; width: 100%;
-    background: linear-gradient(to top, rgba(5,5,8,1) 0%, rgba(15,15,22,0.95) 100%);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(to top, rgba(5, 5, 8, 1) 0%, rgba(15, 15, 22, 0.95) 100%);
     border-top: 2px solid var(--gold-dark);
-    display: flex; flex-direction: column; gap: 10px; padding: 10px 20px;
-    box-sizing: border-box; transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 20px;
+    box-sizing: border-box;
+    transition: transform 0.3s ease;
 }
-.unit-layout { display: flex; gap: 15px; align-items: center; width: 100%; }
-.unit-portrait-box #unit-portrait { width: 60px; height: 60px; font-size: 40px; background: rgba(0,0,0,0.5); border: 2px solid #555; border-radius: 8px; display: flex; justify-content: center; align-items: center; }
-.unit-stats-box { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-.unit-title { font-size: 16px; font-weight: bold; font-family: Cinzel, serif; color: var(--gold-light); }
-.stat-bar-row { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: bold; color: #ccc; }
-.stat-bar-bg { flex: 1; background: #222; height: 6px; border-radius: 3px; overflow: hidden; border: 1px solid #000; }
-.stat-bar-fill { height: 100%; transition: width 0.3s; }
-.fill-hp { background: #e74c3c; } .fill-mp { background: #3498db; } .fill-xp { background: #2ecc71; }
 
-.unit-details-box { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; min-width: 120px; }
-.unit-combat-stats { font-size: 12px; color: #aaa; text-align: right; line-height: 1.4; }
-.unit-icons-row { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
-.icon-badge { font-size: 16px; cursor: help; filter: drop-shadow(1px 1px 2px #000); }
+.unit-layout {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    width: 100%;
+}
 
-.hud-bottom-actions { display: flex; justify-content: center; gap: 10px; position: absolute; right: 20px; top: -20px; }
-.spell-bar-compact { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
+.unit-portrait-box #unit-portrait {
+    width: 60px;
+    height: 60px;
+    font-size: 40px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid #555;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.unit-stats-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.unit-title {
+    font-size: 16px;
+    font-weight: bold;
+    font-family: Cinzel, serif;
+    color: var(--gold-light);
+}
+
+.stat-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #ccc;
+}
+
+.stat-bar-bg {
+    flex: 1;
+    background: #222;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid #000;
+}
+
+.stat-bar-fill {
+    height: 100%;
+    transition: width 0.3s;
+}
+
+.fill-hp {
+    background: #e74c3c;
+}
+
+.fill-mp {
+    background: #3498db;
+}
+
+.fill-xp {
+    background: #2ecc71;
+}
+
+.unit-details-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    min-width: 120px;
+}
+
+.unit-combat-stats {
+    font-size: 12px;
+    color: #aaa;
+    text-align: right;
+    line-height: 1.4;
+}
+
+.unit-icons-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: flex-end;
+}
+
+.icon-badge {
+    font-size: 16px;
+    cursor: help;
+    filter: drop-shadow(1px 1px 2px #000);
+}
+
+.hud-bottom-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    position: absolute;
+    right: 20px;
+    top: -20px;
+}
+
+.spell-bar-compact {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+}
 
 /* Força o botão de itens a ficar na barra superior, anulando o absolute antigo */
-#btn-field-items { 
-    position: static !important; 
-    width: auto !important; 
-    height: auto !important; 
-    border-radius: 5px !important; 
-    box-shadow: none !important; 
-    margin: 0 !important; 
+#btn-field-items {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 5px !important;
+    box-shadow: none !important;
+    margin: 0 !important;
 }
 
-.mana-compact { 
-    position: relative; /* Mantém o dropdown preso ao botão */
-    display: flex; gap: 4px; align-items: center; 
-    background: rgba(0,0,0,0.5); padding: 4px 10px; 
-    border-radius: 20px; border: 1px solid #333; 
+.mana-compact {
+    position: relative;
+    /* Mantém o dropdown preso ao botão */
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid #333;
     min-height: 24px;
 }
-.mana-token { 
-    width: 12px; height: 12px; border-radius: 50%; 
-    display: inline-block; 
-    box-shadow: 0 0 4px rgba(255,255,255,0.3) inset, 0 0 2px #000; 
-}
-#btn-field-items:hover { background: rgba(155, 89, 182, 0.3); box-shadow: 0 0 15px #9b59b6; transform: scale(1.1); }
 
-#field-item-menu { position: absolute; right: 75px; top: 235px; background: rgba(15, 15, 20, 0.95); border: 1px solid var(--gold-dark); border-radius: 8px; padding: 10px; z-index: 100; display: flex; flex-direction: column; gap: 8px; }
-.item-slot { background: rgba(30, 30, 40, 0.8); border: 1px solid #444; padding: 8px 12px; border-radius: 4px; color: #ddd; cursor: pointer; font-size: 12px; font-family: sans-serif; display: flex; justify-content: space-between; gap: 15px; }
-.item-slot:hover { background: rgba(50, 50, 60, 0.9); border-color: var(--gold-light); }
+.mana-token {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.3) inset, 0 0 2px #000;
+}
+
+#btn-field-items:hover {
+    background: rgba(155, 89, 182, 0.3);
+    box-shadow: 0 0 15px #9b59b6;
+    transform: scale(1.1);
+}
+
+#field-item-menu {
+    position: absolute;
+    right: 75px;
+    top: 235px;
+    background: rgba(15, 15, 20, 0.95);
+    border: 1px solid var(--gold-dark);
+    border-radius: 8px;
+    padding: 10px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.item-slot {
+    background: rgba(30, 30, 40, 0.8);
+    border: 1px solid #444;
+    padding: 8px 12px;
+    border-radius: 4px;
+    color: #ddd;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: sans-serif;
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.item-slot:hover {
+    background: rgba(50, 50, 60, 0.9);
+    border-color: var(--gold-light);
+}
 
 /* Remove resquícios da antiga div absoluta de botões */
-.hud-bottom-actions { display: none !important; }
+.hud-bottom-actions {
+    display: none !important;
+}
 
 /* Nova Linha integrada de botões na HUD Inferior */
 .hud-actions-row {
@@ -1499,30 +1795,34 @@ button.btn-success {
 ========================================= */
 #kingdom-screen {
     position: fixed !important;
-    top: 0; left: 0;
-    width: 100vw !important; height: 100vh !important;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
     background: #050508 !important;
     z-index: 50;
 }
 
 #kingdomCanvas {
     position: absolute !important;
-    top: 0; left: 0;
-    width: 100% !important; height: 100% !important;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
     z-index: 1;
 }
 
 /* 1. Título Menor no Topo (Agora apontando para o H1 correto!) */
 #kingdom-screen h1.screen-title {
     position: absolute !important;
-    top: 15px !important; 
+    top: 15px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     font-size: 18px !important;
     margin: 0 !important;
     z-index: 10 !important;
-    pointer-events: none !important; 
-    text-shadow: 0 2px 8px rgba(0,0,0,1) !important;
+    pointer-events: none !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 1) !important;
     background: none !important;
     border: none !important;
 }
@@ -1530,27 +1830,29 @@ button.btn-success {
 /* 2. Barra de Recursos Compacta (Apontando direto para o ID) */
 #kingdom-resources {
     position: absolute !important;
-    top: 45px !important; 
+    top: 45px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     z-index: 10 !important;
-    background: rgba(10,10,15, 0.85) !important;
+    background: rgba(10, 10, 15, 0.85) !important;
     border: 1px solid var(--gold-dark) !important;
     border-radius: 20px !important;
     padding: 4px 15px !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8) !important;
     -webkit-backdrop-filter: blur(5px) !important;
     backdrop-filter: blur(5px) !important;
     width: auto !important;
     margin: 0 !important;
 }
 
-#kingdom-screen > div:last-child {
+#kingdom-screen>div:last-child {
     position: absolute;
-    bottom: 20px; left: 50%;
+    bottom: 20px;
+    left: 50%;
     transform: translateX(-50%);
     z-index: 10;
-    display: flex; gap: 10px;
+    display: flex;
+    gap: 10px;
 }
 
 #building-menu {
@@ -1559,11 +1861,11 @@ button.btn-success {
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
-    display: flex; 
-    flex-direction: row !important; 
+    display: flex;
+    flex-direction: row !important;
     gap: 8px;
     max-width: 95vw;
-    overflow-x: auto; 
+    overflow-x: auto;
     padding: 5px;
     align-items: flex-end;
 }
@@ -1577,7 +1879,8 @@ button.btn-success {
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    border: none !important; /* Remove aquelas linhas douradas horizontais */
+    border: none !important;
+    /* Remove aquelas linhas douradas horizontais */
     background: transparent !important;
     z-index: 1 !important;
 }
@@ -1585,15 +1888,17 @@ button.btn-success {
 /* =========================================
    ENCOLHENDO OS BOTÕES DE AÇÃO
 ========================================= */
-#btn-toggle-build, #btn-leave-kingdom {
+#btn-toggle-build,
+#btn-leave-kingdom {
     font-size: 12px !important;
     padding: 8px 20px !important;
-    border-radius: 20px !important; /* Deixa eles mais arredondados e elegantes */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.8) !important;
+    border-radius: 20px !important;
+    /* Deixa eles mais arredondados e elegantes */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8) !important;
 }
 
 /* Ajusta o distanciamento da barra inferior para ficar bem colada na base */
-#kingdom-screen > div:last-child {
+#kingdom-screen>div:last-child {
     bottom: 15px !important;
     gap: 10px !important;
 }
@@ -1602,7 +1907,8 @@ button.btn-success {
    SISTEMA DE ABAS DO GERENCIAMENTO
 ========================================= */
 .mgmt-tabs {
-    display: none; /* Escondido por padrão no PC */
+    display: none;
+    /* Escondido por padrão no PC */
     width: 100%;
     gap: 4px;
     margin-bottom: 10px;
@@ -1610,7 +1916,7 @@ button.btn-success {
 }
 
 .mgmt-tab-btn {
-    background: rgba(20,20,30,0.8);
+    background: rgba(20, 20, 30, 0.8);
     border: 1px solid #444;
     color: #aaa;
     padding: 8px 4px;
@@ -1623,48 +1929,57 @@ button.btn-success {
 }
 
 .mgmt-tab-btn.active {
-    background: rgba(40,30,10,0.9);
+    background: rgba(40, 30, 10, 0.9);
     border-color: var(--gold-light);
     color: var(--gold-light);
     font-weight: bold;
-    box-shadow: 0 0 10px rgba(212,175,55,0.3);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
 }
 
 /* Regras exclusivas para o Celular */
 @media (max-width: 600px) {
     .mgmt-tabs {
-        display: flex; /* Mostra os botões das abas */
+        display: flex;
+        /* Mostra os botões das abas */
     }
-    
+
     .mgmt-container {
-        display: block; /* Desativa o lado-a-lado do PC */
+        display: block;
+        /* Desativa o lado-a-lado do PC */
     }
 
     .mgmt-panel {
-        display: none; /* Esconde todas as caixas por padrão */
+        display: none;
+        /* Esconde todas as caixas por padrão */
         width: 100% !important;
         margin-bottom: 10px;
     }
 
     .mgmt-panel.active-panel {
-        display: flex; /* Mostra APENAS a caixa que tem a classe ativa */
+        display: flex;
+        /* Mostra APENAS a caixa que tem a classe ativa */
     }
 }
+
 /* =========================================
    ÍCONES DE IMAGEM NA HUD
 ========================================= */
 .btn-icon img {
-    width: 22px; /* Largura padrão do ícone */
-    height: 22px; /* Altura padrão do ícone */
-    object-fit: contain; /* Garante que a imagem não distorça */
-    pointer-events: none; /* Evita "bugs" de clique e arraste na imagem */
+    width: 22px;
+    /* Largura padrão do ícone */
+    height: 22px;
+    /* Altura padrão do ícone */
+    object-fit: contain;
+    /* Garante que a imagem não distorça */
+    pointer-events: none;
+    /* Evita "bugs" de clique e arraste na imagem */
 }
 
 /* =========================================
    EDITOR DE MAPAS
 ========================================= */
 .editor-palette-btn {
-    background: rgba(20,20,30,0.8);
+    background: rgba(20, 20, 30, 0.8);
     border: 1px solid #444;
     color: #fff;
     width: 42px;
@@ -1680,8 +1995,8 @@ button.btn-success {
 
 .editor-palette-btn.active {
     border-color: var(--gold-light);
-    background: rgba(40,30,10,0.9);
-    box-shadow: 0 0 10px rgba(212,175,55,0.5);
+    background: rgba(40, 30, 10, 0.9);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
     transform: scale(1.1);
     z-index: 2;
 }
@@ -1713,7 +2028,7 @@ button.btn-success {
     border-right: 1px solid #444;
     padding: 15px;
     overflow-y: auto;
-    background: rgba(0,0,0,0.3);
+    background: rgba(0, 0, 0, 0.3);
 }
 
 .forge-panel-right {
@@ -1723,19 +2038,22 @@ button.btn-success {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: radial-gradient(circle, rgba(40,30,10,0.8) 0%, transparent 80%);
+    background: radial-gradient(circle, rgba(40, 30, 10, 0.8) 0%, transparent 80%);
 }
 
 /* No celular, empilhamos: a Forja fica em cima e o Inventário rola embaixo */
 @media (max-width: 768px) {
     .forge-container {
-        flex-direction: column-reverse; 
+        flex-direction: column-reverse;
         overflow-y: auto;
     }
-    .forge-panel-left, .forge-panel-right {
+
+    .forge-panel-left,
+    .forge-panel-right {
         width: 100%;
         border-right: none;
     }
+
     .forge-panel-left {
         border-top: 1px solid #444;
         overflow-y: visible;
