@@ -432,6 +432,7 @@ class Game {
 
         aiPool.sort(() => Math.random() - 0.5);
         let chosenAI = aiPool[0] || { name: 'Desconhecido', emoji: '💀', hp: 50, atk: 10, mp: 3, range: 1, tags: [], fav: [] };
+        this.rivalLeader = chosenAI;
         let vHp = Math.floor(chosenAI.hp * sFac) + 20;
         let vAtk = Math.floor(chosenAI.atk * sFac) + 4;
 

@@ -1229,7 +1229,13 @@ function openLeaderSelection(isRoguelite, isDuel = false, pickingOpponentFor = n
 
             btn.innerHTML = `
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-                    <img src="${l.sprite}" onerror="this.onerror=null; this.outerHTML='<span style=\"font-size:40px;\ style="width: 64px; height: 100%; object-fit: contain; image-rendering: pixelated;">
+                    <div style="width: 64px; height: 64px; display: flex; justify-content: center; align-items: center; overflow: hidden; background: rgba(0,0,0,0.4); border: 1px solid #333; border-radius: 6px; flex-shrink: 0;">
+                        <img src="${l.sprite}" onerror="console.error('Erro na Seleção:', '${l.sprite}'); this.onerror=null; this.outerHTML='<span style=\\'font-size:40px;\\'>${l.emoji}</span>';" style="width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated;">
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-size:14px; font-weight:bold; color:var(--gold-light);">${l.name}</div>
+                        <div style="font-size:10px; color:#888; text-transform:uppercase;">${l.loreFaction}</div>
+                    </div>
                 </div>
                 <div style="font-size:12px; text-transform:none; color:#aaa; font-weight:normal; margin-bottom:8px; line-height:1.4;">${l.desc}</div>
                 <div style="display:flex; flex-wrap:wrap; gap:3px;">${grimTags}</div>
@@ -4169,7 +4175,7 @@ window.openCharacterScreen = function (u, isBox, mode) {
     renderModal();
 };
 
-window.playDialogueSequence = async function (sequence) {
+window.playDialogueSequence = async function(sequence) {
     return new Promise(resolve => {
         let overlay = document.getElementById('dialogue-overlay');
         if (!overlay) {
@@ -4177,37 +4183,46 @@ window.playDialogueSequence = async function (sequence) {
             overlay.id = 'dialogue-overlay';
             document.body.appendChild(overlay);
         }
-
+        
         let currentIndex = 0;
         overlay.classList.remove('hidden');
 
         const renderCurrentLine = () => {
             if (currentIndex >= sequence.length) {
                 overlay.classList.add('hidden');
-                resolve(); // Terminou o diálogo, o jogo continua!
+                resolve();
                 return;
             }
 
             let line = sequence[currentIndex];
             let isRival = line.isRival || false;
-
-            // Inverte o layout se for o rival falando
+            
             let flexDir = isRival ? 'row-reverse' : 'row';
             let textAlign = isRival ? 'right' : 'left';
             let nameColor = isRival ? '#e74c3c' : 'var(--gold-light)';
 
+            let finalSprite = line.sprite;
+
+            let portraitHtml = '';
+            if (finalSprite) {
+                portraitHtml = `<img src="${finalSprite}" onerror="console.error('Erro no Diálogo:', '${finalSprite}'); this.onerror=null; this.outerHTML='<span style=\\'font-size:36px;\\'>${line.emoji || '👤'}</span>';" style="width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated;">`;
+            } else {
+                portraitHtml = `<span style="font-size: 36px;">${line.emoji || '👤'}</span>`;
+            }
+
             overlay.style.flexDirection = flexDir;
             overlay.innerHTML = `
-                <div class="dialogue-portrait">${line.emoji}</div>
-                <div class="dialogue-content" style="text-align: ${textAlign};">
-                    <div class="dialogue-name" style="color: ${nameColor};">${line.name}</div>
-                    <div class="dialogue-text">${line.text}</div>
-                    <div class="dialogue-click">▼ Toque para continuar</div>
+                <div class="dialogue-portrait" style="width: 70px; height: 70px; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.6); border: 2px solid var(--gold-dark); border-radius: 8px; overflow: hidden; flex-shrink: 0;">
+                    ${portraitHtml}
+                </div>
+                <div class="dialogue-content" style="text-align: ${textAlign}; flex-grow: 1; margin: 0 12px;">
+                    <div class="dialogue-name" style="color: ${nameColor}; font-weight: bold; font-family: Cinzel, serif; font-size: 15px; margin-bottom: 4px;">${line.name}</div>
+                    <div class="dialogue-text" style="color: #fff; font-size: 13.5px; line-height: 1.4;">${line.text}</div>
+                    <div class="dialogue-click" style="font-size: 9px; color: #888; text-align: right; margin-top: 4px;">▼ Toque para avançar</div>
                 </div>
             `;
         };
 
-        // Avança o diálogo ao clicar
         overlay.onclick = () => {
             currentIndex++;
             renderCurrentLine();
