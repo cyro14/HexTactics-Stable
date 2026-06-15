@@ -641,27 +641,39 @@ class Game {
             setTimeout(() => { if (typeof window.triggerGenieWishes === 'function') window.triggerGenieWishes(); }, 1200);
         }
 
-        // === GATILHO DA LORE DE INÍCIO DE FASE ===
-        setTimeout(() => {
+        // === GATILHO DA LORE DE INÍCIO DE FASE CORRIGIDO ===
+        setTimeout(async () => {
             let myLore = typeof LORE_DIALOGUES !== 'undefined' ? LORE_DIALOGUES[this.leaderData.loreFaction] : null;
-            let actIndex = this.currentLevel - 1; // Ato 1 = índice 0
+            let actIndex = this.currentLevel - 1; 
             
-            // Só dispara no primeiro nó de cada Ato
             if (myLore && myLore.stages[actIndex] && this.currentFloor === 0) {
                 let seq = [];
-                // Fala do Jogador
-                seq.push({ name: this.leaderData.name, emoji: this.leaderData.emoji, text: myLore.stages[actIndex] });
                 
-                // 60% de chance do rival aparecer para provocar
-                if (Math.random() > 0.4 && this.rivalLeader && myLore.rivalTaunts[actIndex]) {
-                    seq.push({ name: this.rivalLeader.name, emoji: this.rivalLeader.emoji, text: myLore.rivalTaunts[actIndex], isRival: true });
+                seq.push({ 
+                    name: this.leaderData.name, 
+                    emoji: this.leaderData.emoji, 
+                    sprite: this.leaderData.sprite, 
+                    text: myLore.stages[actIndex] 
+                });
+                
+                if (this.rivalLeader && myLore.rivalTaunts && myLore.rivalTaunts.length > 0) {
+                    let tauntIndex = actIndex % myLore.rivalTaunts.length;
+                    let tauntText = myLore.rivalTaunts[tauntIndex];
+                    
+                    seq.push({ 
+                        name: this.rivalLeader.name, 
+                        emoji: this.rivalLeader.emoji, 
+                        sprite: this.rivalLeader.sprite, 
+                        text: tauntText, 
+                        isRival: true 
+                    });
                 }
                 
                 if (typeof window.playDialogueSequence === 'function') {
-                    window.playDialogueSequence(seq);
+                    await window.playDialogueSequence(seq);
                 }
             }
-        }, 800); // 800ms de delay para a tela de loading sumir primeiro
+        }, 600);
     }
 
     generateDuelMap() {

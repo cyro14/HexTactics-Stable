@@ -1008,7 +1008,7 @@ function renderManagement(mode = 'prep') {
             let el = document.createElement('div');
             el.className = 'beast-card unlocked';
             el.style.padding = '8px';
-            
+
             let lvlStr = item.isScroll ? `<span style="color:#aaa;">Consumível</span>` : `Lv${item.level}`;
             el.innerHTML = `<span style="font-size:24px;">${iDef.icon}</span><div style="font-size:9px; color:var(--gold);">${lvlStr}</div>`;
 
@@ -1028,24 +1028,24 @@ function renderManagement(mode = 'prep') {
 
                     let targets = [...deployedRoster, ...rosterMemory];
                     let chosenUnit = await window.promptSelectUnit(`Equipar ${iDef.name} Lv${item.level} em quem?`, targets);
-                    
+
                     if (chosenUnit) {
                         if (!chosenUnit.equipment) chosenUnit.equipment = [];
-                        
+
                         let realIdx = game.inventory.indexOf(item);
-                        if (realIdx === -1) return; 
+                        if (realIdx === -1) return;
 
                         let itemToEquip = game.inventory.splice(realIdx, 1)[0];
-                        
+
                         // 2. Procura se a unidade já tem algo equipado no mesmo slot
                         let existingEqIdx = chosenUnit.equipment.findIndex(eq => ITEMS[eq.id] && ITEMS[eq.id].equipSlot === itemSlot);
-                        
+
                         if (existingEqIdx !== -1) {
                             // Auto-Swap seguro
                             let eq = chosenUnit.equipment[existingEqIdx];
                             let eqDef = ITEMS[eq.id];
                             if (eqDef && typeof eqDef.onUnequip === 'function') eqDef.onUnequip(chosenUnit, eq.level);
-                            
+
                             chosenUnit.equipment.splice(existingEqIdx, 1);
                             game.inventory.push(eq);
                             showMessage(`Trocou ${eqDef.name} por ${iDef.name}!`, '#3498db');
@@ -1055,7 +1055,7 @@ function renderManagement(mode = 'prep') {
 
                         chosenUnit.equipment.push(itemToEquip);
                         if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(chosenUnit, itemToEquip.level);
-                        
+
                         renderManagement(mode);
                     }
                 }
@@ -1235,14 +1235,28 @@ function openLeaderSelection(isRoguelite, isDuel = false, pickingOpponentFor = n
                 <div style="display:flex; flex-wrap:wrap; gap:3px;">${grimTags}</div>
             `;
 
-            btn.onclick = () => {
+            btn.onclick = async () => {
                 if (isDuel && !pickingOpponentFor) {
-                    // Selecionou o Jogador, agora reabre para escolher o Inimigo!
                     openLeaderSelection(false, true, l.id);
                 } else {
                     $('leader-selection').classList.add('hidden');
-                    // Se for duelo, passa o jogador e o oponente.
                     startGame(false, isRoguelite, pickingOpponentFor || l.id, isDuel, pickingOpponentFor ? l.id : null);
+                    
+                    // === PASSO 3: GATILHO DA INTRODUÇÃO ===
+                    let myLore = typeof LORE_DIALOGUES !== 'undefined' ? LORE_DIALOGUES[game.leaderData.loreFaction] : null;
+                    if (myLore && !isDuel) { // Evita tocar a lore no modo Duelo
+                        let possibleRivals = LEADERS.filter(leader => leader.loreFaction !== game.leaderData.loreFaction);
+                        game.rivalLeader = possibleRivals[Math.floor(Math.random() * possibleRivals.length)] || LEADERS[1];
+                        
+                        let seq = [
+                            { name: game.leaderData.name, emoji: game.leaderData.emoji, sprite: game.leaderData.sprite, text: myLore.intro },
+                            { name: game.rivalLeader.name, emoji: game.rivalLeader.emoji, sprite: game.rivalLeader.sprite, text: myLore.rivalIntro, isRival: true }
+                        ];
+                        
+                        if (typeof window.playDialogueSequence === 'function') {
+                            await window.playDialogueSequence(seq);
+                        }
+                    }
                 }
             };
             container.appendChild(btn);
@@ -2406,28 +2420,6 @@ function openKingdom() {
             if ($('building-menu')) {
                 $('building-menu').classList.remove('hidden');
                 renderBuildingMenu();
-
-                // === GATILHO DA INTRODUÇÃO (LORE) ===
-    if (game && !game.hasSeenIntro) {
-        game.hasSeenIntro = true;
-        let myLore = typeof LORE_DIALOGUES !== 'undefined' ? LORE_DIALOGUES[game.leaderData.loreFaction] : null;
-        
-        if (myLore) {
-            // Acha um rival garantindo que ele exista no array
-            let possibleRivals = LEADERS.filter(l => l.loreFaction !== game.leaderData.loreFaction);
-            game.rivalLeader = possibleRivals[Math.floor(Math.random() * possibleRivals.length)] || LEADERS[1];
-            
-            let seq = [
-                { name: game.leaderData.name, emoji: game.leaderData.emoji, text: myLore.intro },
-                { name: game.rivalLeader.name, emoji: game.rivalLeader.emoji, text: myLore.rivalIntro, isRival: true }
-            ];
-            
-            // Chama a interface por cima do reino recém-desenhado
-            if (typeof window.playDialogueSequence === 'function') {
-                window.playDialogueSequence(seq);
-            }
-        }
-    }
             }
         }
 
@@ -4177,7 +4169,7 @@ window.openCharacterScreen = function (u, isBox, mode) {
     renderModal();
 };
 
-window.playDialogueSequence = async function(sequence) {
+window.playDialogueSequence = async function (sequence) {
     return new Promise(resolve => {
         let overlay = document.getElementById('dialogue-overlay');
         if (!overlay) {
@@ -4185,7 +4177,7 @@ window.playDialogueSequence = async function(sequence) {
             overlay.id = 'dialogue-overlay';
             document.body.appendChild(overlay);
         }
-        
+
         let currentIndex = 0;
         overlay.classList.remove('hidden');
 
@@ -4198,7 +4190,7 @@ window.playDialogueSequence = async function(sequence) {
 
             let line = sequence[currentIndex];
             let isRival = line.isRival || false;
-            
+
             // Inverte o layout se for o rival falando
             let flexDir = isRival ? 'row-reverse' : 'row';
             let textAlign = isRival ? 'right' : 'left';
