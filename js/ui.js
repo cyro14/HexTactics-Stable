@@ -1229,8 +1229,7 @@ function openLeaderSelection(isRoguelite, isDuel = false, pickingOpponentFor = n
 
             btn.innerHTML = `
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-                    <span style="font-size:42px; filter:${l.filter || 'none'}; text-shadow: 2px 2px 5px #000;">${l.emoji}</span>
-                    <div style="font-size:18px; color:var(--gold-light); font-weight:bold;">${l.name}</div>
+                    <img src="${l.sprite}" onerror="this.onerror=null; this.outerHTML='<span style=\"font-size:40px;\ style="width: 64px; height: 100%; object-fit: contain; image-rendering: pixelated;">
                 </div>
                 <div style="font-size:12px; text-transform:none; color:#aaa; font-weight:normal; margin-bottom:8px; line-height:1.4;">${l.desc}</div>
                 <div style="display:flex; flex-wrap:wrap; gap:3px;">${grimTags}</div>
@@ -2407,6 +2406,28 @@ function openKingdom() {
             if ($('building-menu')) {
                 $('building-menu').classList.remove('hidden');
                 renderBuildingMenu();
+
+                // === GATILHO DA INTRODUÇÃO (LORE) ===
+    if (game && !game.hasSeenIntro) {
+        game.hasSeenIntro = true;
+        let myLore = typeof LORE_DIALOGUES !== 'undefined' ? LORE_DIALOGUES[game.leaderData.loreFaction] : null;
+        
+        if (myLore) {
+            // Acha um rival garantindo que ele exista no array
+            let possibleRivals = LEADERS.filter(l => l.loreFaction !== game.leaderData.loreFaction);
+            game.rivalLeader = possibleRivals[Math.floor(Math.random() * possibleRivals.length)] || LEADERS[1];
+            
+            let seq = [
+                { name: game.leaderData.name, emoji: game.leaderData.emoji, text: myLore.intro },
+                { name: game.rivalLeader.name, emoji: game.rivalLeader.emoji, text: myLore.rivalIntro, isRival: true }
+            ];
+            
+            // Chama a interface por cima do reino recém-desenhado
+            if (typeof window.playDialogueSequence === 'function') {
+                window.playDialogueSequence(seq);
+            }
+        }
+    }
             }
         }
 
@@ -4154,4 +4175,52 @@ window.openCharacterScreen = function (u, isBox, mode) {
     };
 
     renderModal();
+};
+
+window.playDialogueSequence = async function(sequence) {
+    return new Promise(resolve => {
+        let overlay = document.getElementById('dialogue-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'dialogue-overlay';
+            document.body.appendChild(overlay);
+        }
+        
+        let currentIndex = 0;
+        overlay.classList.remove('hidden');
+
+        const renderCurrentLine = () => {
+            if (currentIndex >= sequence.length) {
+                overlay.classList.add('hidden');
+                resolve(); // Terminou o diálogo, o jogo continua!
+                return;
+            }
+
+            let line = sequence[currentIndex];
+            let isRival = line.isRival || false;
+            
+            // Inverte o layout se for o rival falando
+            let flexDir = isRival ? 'row-reverse' : 'row';
+            let textAlign = isRival ? 'right' : 'left';
+            let nameColor = isRival ? '#e74c3c' : 'var(--gold-light)';
+
+            overlay.style.flexDirection = flexDir;
+            overlay.innerHTML = `
+                <div class="dialogue-portrait">${line.emoji}</div>
+                <div class="dialogue-content" style="text-align: ${textAlign};">
+                    <div class="dialogue-name" style="color: ${nameColor};">${line.name}</div>
+                    <div class="dialogue-text">${line.text}</div>
+                    <div class="dialogue-click">▼ Toque para continuar</div>
+                </div>
+            `;
+        };
+
+        // Avança o diálogo ao clicar
+        overlay.onclick = () => {
+            currentIndex++;
+            renderCurrentLine();
+        };
+
+        renderCurrentLine();
+    });
 };

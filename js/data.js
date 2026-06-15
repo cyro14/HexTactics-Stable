@@ -687,7 +687,8 @@ const BUILDINGS = {
     FORGE: { id: 'FORGE', name: 'Forja de Monstros', icon: '⚒️', cost: { wood: 0, stone: 0 }, desc: 'Forje equipamentos especiais usando partes caçadas de feras.', terrains: ['MOUNTAIN', 'PLAINS'] },
     BLACKSMITH: { id: 'BLACKSMITH', name: 'Ferreiro', icon: '⚔️', cost: { wood: 0, stone: 0 }, desc: 'Forje armas e armaduras comuns usando Ouro.', terrains: ['PLAINS', 'MOUNTAIN'] },
     BIOTERIUM: { id: 'BIOTERIUM', name: 'Biotério', icon: '🐾', cost: { wood: 0, stone: 0 }, desc: 'Descansa as feras da Box. Elas curam todo HP e adquirem afinidade de terreno com o local onde o Biotério está construído!', terrains: ['PLAINS', 'FOREST', 'MOUNTAIN', 'WATER', 'SNOW', 'DESERT'] },
-    APOTHECARY: { id: 'APOTHECARY', name: 'Botica', icon: '🧪', cost: { wood: 0, stone: 0 }, desc: 'Produza itens de campo (Poções, Bandagens) usando Ervas e Venenos.', terrains: ['FOREST', 'PLAINS'] }, LUMBERMILL: { id: 'LUMBERMILL', name: 'Madeireira', icon: '🪓', cost: { stone: 0, wood: 0 }, desc: 'Gera +3 Madeira ao vencer batalhas.', terrains: ['FOREST'] },
+    APOTHECARY: { id: 'APOTHECARY', name: 'Botica', icon: '🧪', cost: { wood: 0, stone: 0 }, desc: 'Produza itens de campo (Poções, Bandagens) usando Ervas e Venenos.', terrains: ['FOREST', 'PLAINS'] }, 
+    LUMBERMILL: { id: 'LUMBERMILL', name: 'Madeireira', icon: '🪓', cost: { stone: 0, wood: 0 }, desc: 'Gera +3 Madeira ao vencer batalhas.', terrains: ['FOREST'] },
     FISHINGCAMP: { id: 'FISHINGCAMP', name: 'Campo de Pesca', icon: '🎣', cost: { wood: 0 }, desc: 'Gera +3 Escamas ao vencer batalhas.', terrains: ['WATER'] },
     SANDPIT: { id: 'SANDPIT', name: 'Extrator de Areia', icon: '🐪', cost: { wood: 0, stone: 0 }, desc: 'Gera +3 Areia ao vencer batalhas.', terrains: ['DESERT'] },
     PARK: { id: 'PARK', name: 'Parque', icon: '⛲', cost: { stone: 0, sand: 0 }, desc: 'Grande chance de domar feras Nv1 com HP cheio.', terrains: ['PLAINS', 'FOREST', 'DESERT', 'SNOW'] },
@@ -712,6 +713,74 @@ const LORE_FACTIONS = {
     'DESERTO': { id: 'DESERTO', name: 'Guardiões das Areias', startNode: 'SE' },
     'ABISSAL': { id: 'ABISSAL', name: 'Terrores das Profundezas', startNode: 'SW' },
     'TEMPESTADE': { id: 'TEMPESTADE', name: 'Senhores da Tormenta', startNode: 'NE' }
+};
+
+const LORE_DIALOGUES = {
+    'SILVESTRE': {
+        intro: "A nascente sussurra em agonia. O equilíbrio foi quebrado.",
+        rivalIntro: "Equilíbrio? Eu vou queimar cada folha dessa sua floresta patética!",
+        stages: [
+            "O cheiro de enxofre fica mais forte. Estamos no caminho certo.",
+            "Eles estão armando acampamentos... Estão drenando o poder da terra.",
+            "O Leviatã Umbral desperta. Preparem as garras, a verdadeira caçada começa agora!"
+        ],
+        rivalTaunts: [
+            "Suas ferinhas de estimação não vão sobreviver a isso!",
+            "Tolo! Vocês estão marchando direto para a própria cova."
+        ]
+    },
+    'ORDEM': {
+        intro: "A escuridão avança, mas nossa luz não vacilará. Pela Ordem Áurea!",
+        rivalIntro: "A luz de vocês nos cega há séculos. Hoje, ela será apagada.",
+        stages: [
+            "Mantenham a formação. O centro do continente cheira a caos.",
+            "Eles tentam nos dividir. Não permitam que as trevas entrem em suas mentes.",
+            "A grande besta os guia. Se o Leviatã cair, a rebelião acaba."
+        ],
+        rivalTaunts: [
+            "Sua armadura brilhante só serve para nos mostrar onde golpear!",
+            "A Ordem não tem jurisdição aqui!"
+        ]
+    },
+   'SOMBRAS': {
+        intro: "As sombras me contaram segredos. Há poder no caos, e eu o tomarei.",
+        rivalIntro: "Vocês rastejam na sujeira. Nós vamos trazer a luz para purificá-los!",
+        stages: [
+            "O medo deles é palpável. Cada passo nosso drena a esperança deste continente.",
+            "As feras selvagens sentem a morte se aproximar. Continuem a marcha.",
+            "O Leviatã acha que domina as sombras? Nós somos a própria escuridão!"
+        ],
+        rivalTaunts: [
+            "Voltem para os seus buracos! Este reino nos pertence.",
+            "Sua arrogância será o seu fim, senhor das sombras."
+        ]
+    },
+    'FORASTEIROS': {
+        intro: "Este continente está quebrado. Nós não pedimos essa guerra, mas vamos terminá-la.",
+        rivalIntro: "Vocês não pertencem a este lugar, invasores! Serão expulsos hoje.",
+        stages: [
+            "O clima aqui é hostil. Precisamos adaptar nossas táticas rápido.",
+            "Esses nativos são teimosos, mas nossa tecnologia e magias não falharão.",
+            "Esse tal de Leviatã é a anomalia principal. Foco total, derrubem o monstro!"
+        ],
+        rivalTaunts: [
+            "Sua presença aqui é um insulto à nossa história!",
+            "Estratégia vazia! Vocês não conhecem os segredos desta terra."
+        ]
+    },
+    'PRIMORDIAL': {
+        intro: "A terra treme! As velhas leis da natureza comandam que o mais forte sobreviva.",
+        rivalIntro: "Animais ignorantes! A evolução passou reto por vocês.",
+        stages: [
+            "Sangue. Muito sangue foi derramado aqui. O bando precisa avançar.",
+            "Esmaguem as construções deles! Tragam o mundo de volta às suas raízes.",
+            "Uma besta colossal nos desafia... O Leviatã. Mostrem quem é o Alfa!"
+        ],
+        rivalTaunts: [
+            "Força bruta sem intelecto não ganha guerras.",
+            "Suas feras primitivas vão virar casacos de pele!"
+        ]
+    }
 };
 
 // ==========================================
