@@ -1684,7 +1684,7 @@ class Renderer {
         this.offsetY = 0;
         this.tileset = new Image();
         this.tileset.onload = () => { if (this.game) this.draw(); };
-        this.tileset.src = 'img/tileset.png';
+        this.tileset.src = 'img/tiles/tileset.png';
         window.addEventListener('resize', () => this.initCamera(false));
     }
 
@@ -2133,7 +2133,7 @@ class KingdomRenderer {
         this.tileset.onload = () => { if (this.game) this.draw(); };
 
         // MUITO IMPORTANTE: Coloque o mesmo nome de arquivo que você usou no outro mapa!
-        this.tileset.src = 'img/tileset.png';
+        this.tileset.src = 'img/tiles/tileset.png';
 
         window.addEventListener('resize', () => this.initCamera());
     }
