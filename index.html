@@ -163,9 +163,15 @@
                             <line x1="19" y1="5" x2="19" y2="19"></line>
                         </svg>
                     </button>
-                    <button id="btn-toggle-spells" class="btn-hud-action" title="Abrir Livro de Magias"><img src="img/icons/icone-magias.png" style="width: 24px; height: 32px; margin-right: 5px;" alt="Magias">Magias</button>
-                    <button id="btn-tame" class="btn-hud-action hidden" title="Ativar Modo de Doma"><img src="img/icons/icone-domar.png" alt="Domar" style="width: 32px; height: 32px; margin-right: 5px;" alt="Domar">Domar</button>
-                    <button id="btn-end-turn" class="btn-hud-action btn-end-turn-style" title="Encerrar Turno Atual"><img src="img/icons/icone-pronto.png" style="width: 24px; height: 32px; margin-right: 5px;" alt="Pronto">Pronto</button>
+                    <button id="btn-toggle-spells" class="btn-hud-action" title="Abrir Livro de Magias"><img
+                            src="img/icons/icone-magias.png" style="width: 24px; height: 32px; margin-right: 5px;"
+                            alt="Magias">Magias</button>
+                    <button id="btn-tame" class="btn-hud-action hidden" title="Ativar Modo de Doma"><img
+                            src="img/icons/icone-domar.png" alt="Domar"
+                            style="width: 32px; height: 32px; margin-right: 5px;" alt="Domar">Domar</button>
+                    <button id="btn-end-turn" class="btn-hud-action btn-end-turn-style"
+                        title="Encerrar Turno Atual"><img src="img/icons/icone-pronto.png"
+                            style="width: 24px; height: 32px; margin-right: 5px;" alt="Pronto">Pronto</button>
                 </div>
                 <button id="btn-cancel-action" class="btn-danger hidden"
                     style="position: absolute; bottom: 120px; right: 20px; padding: 6px 12px; font-size: 11px; font-weight: bold; z-index: 2000; border-radius: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.8); pointer-events: auto;">✖
@@ -417,14 +423,13 @@
         </p>
 
         <!-- Container Visual do Macro Mapa -->
-        <div id="macro-map-container"
-            style="position:relative; width:95%; max-width:500px; height:320px; background:radial-gradient(circle, #1a1a2e 0%, #050508 100%); border:2px solid var(--gold-dark); border-radius:8px; margin:0 auto; overflow:hidden; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
-            <!-- O JS vai injetar os Pinos do mapa aqui -->
+        <div id="macro-map-container" class="bg-continente"
+            style="position:relative; width: 95%; max-width:800px; height:500px; border:0px solid var(--gold-dark); border-radius:0px; margin:0 auto; overflow:hidden; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
         </div>
 
         <!-- Painel de Inteligência -->
         <div id="macro-info-panel"
-            style="width:95%; max-width:500px; margin: 15px auto; background:rgba(20,20,30,0.95); border:1px solid var(--gold); padding:15px; border-radius:8px; text-align:left; opacity:0; transition: opacity 0.3s; pointer-events:none;">
+            style="width:95%; max-width:800px; margin: 15px auto; background:rgba(20,20,30,0.95); border:1px solid var(--gold); padding:15px; border-radius:8px; text-align:left; opacity:0; transition: opacity 0.3s; pointer-events:none;">
             <div
                 style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid #444; padding-bottom:8px; margin-bottom:10px;">
                 <h3 id="macro-region-name"
