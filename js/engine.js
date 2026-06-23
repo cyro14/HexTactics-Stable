@@ -2555,3 +2555,204 @@ window.runWildTurn = async function () {
     }
     game.selectedUnit = null;
 };
+
+// =====================================================================
+// SISTEMA DINÂMICO DE OBJETIVOS DA MISSÃO
+// =====================================================================
+
+// 1. Hook na Geração do Mapa para definir o Objetivo e mostrar o Banner
+const origGenerateCampaignMap = Game.prototype.generateCampaignMap;
+Game.prototype.generateCampaignMap = function(savedRoster = []) {
+    origGenerateCampaignMap.call(this, savedRoster);
+    
+    // Lista de objetivos possíveis
+    let possibleObjectives = ['DEFEAT_LEADER', 'SURVIVE'];
+    
+    // Só sorteia DOMINATE se existir pelo menos uma vila no mapa gerado
+    let hasVillages = Array.from(this.map.values()).some(h => h.terrain.id === 'VILLAGE');
+    if (hasVillages) possibleObjectives.push('DOMINATE');
+    
+    // Identifica se há um monstro Épico ou Chefe Selvagem na tela
+    let wildBoss = this.units.find(u => u.isBoss && u.faction === 0);
+
+    // Se for nó de Chefe ou Elite, o objetivo é SEMPRE matá-lo!
+    if (this.currentRouteType === 'BOSS' || this.isBossStage || this.currentRouteType === 'ELITE') {
+        if (wildBoss) {
+            this.currentObjective = 'BOSS';
+        } else {
+            this.currentObjective = 'DEFEAT_LEADER';
+        }
+    } else {
+        // Se for Batalha Comum, sorteia!
+        this.currentObjective = possibleObjectives[Math.floor(Math.random() * possibleObjectives.length)];
+    }
+
+    // Marca o alvo para o motor não perder a referência
+    if (this.currentObjective === 'BOSS' && wildBoss) {
+        wildBoss.isObjectiveTarget = true;
+    }
+
+    // Exibir o Banner Gigante na Tela
+    setTimeout(() => {
+        let text = "DERROTE O LÍDER INIMIGO!";
+        if (this.currentObjective === 'SURVIVE') text = "SOBREVIVA POR 10 TURNOS!";
+        else if (this.currentObjective === 'DOMINATE') text = "CAPTURE TODAS AS VILAS!";
+        else if (this.currentObjective === 'BOSS') text = "ELIMINE OU CAPTURE O CHEFE!";
+
+        let banner = document.getElementById('objective-banner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'objective-banner';
+            document.body.appendChild(banner);
+        }
+        
+        banner.innerHTML = `<h2 style="color:var(--gold); margin:0 0 10px 0; font-family:'Cinzel', serif;">NOVO OBJETIVO</h2><div style="font-weight:bold; font-size:1.2em; text-shadow: 0 0 10px red;">${text}</div>`;
+        
+        // Reinicia a animação CSS para garantir que rode sempre que for chamada
+        banner.classList.remove('banner-animate');
+        void banner.offsetWidth; // Trigger reflow para reset
+        banner.classList.add('banner-animate');
+        
+        // Congela o jogo e as ações enquanto a animação grita na tela
+        this.isAnimating = true; 
+        setTimeout(() => {
+            this.isAnimating = false; // Descongela após 3 segundos
+        }, 3000);
+    }, 650); 
+};
+
+// 2. Novo CheckWin que respeita os Objetivos
+Game.prototype.checkWin = function() {
+    if (this.gameOver) return;
+    
+    // Condição de Derrota Universal: Seu Herói morreu
+    const pL = this.units.find(u => u.faction === 1 && u.isLeader);
+    if (!pL) { 
+        this.gameOver = true; 
+        if (typeof triggerStageEnd === 'function') triggerStageEnd(false); 
+        return; 
+    }
+
+    // Modo SOBREVIVÊNCIA
+    if (this.currentObjective === 'SURVIVE') {
+        if (this.turnCount >= 11) {
+            this.gameOver = true;
+            if (typeof triggerStageEnd === 'function') triggerStageEnd(true);
+        }
+        return; // O Líder inimigo morrer antes do fim não finaliza a partida!
+    }
+
+    // Modo DOMINAÇÃO
+    if (this.currentObjective === 'DOMINATE') {
+        let totalV = 0, playerV = 0;
+        this.map.forEach(h => {
+            if (h.terrain.id === 'VILLAGE') {
+                totalV++;
+                if (h.owner === 1) playerV++;
+            }
+        });
+        // Ganha instantaneamente ao pintar a última bandeira
+        if (totalV > 0 && playerV === totalV) {
+            this.gameOver = true;
+            if (typeof triggerStageEnd === 'function') triggerStageEnd(true);
+        }
+        return;
+    }
+
+    // Modo CHEFE
+    if (this.currentObjective === 'BOSS') {
+        // A vitória só é calculada no momento do abate ou captura do alvo nos hooks abaixo
+        return;
+    }
+
+    // Modo DEFEAT_LEADER (Padrão)
+    const aL = this.units.find(u => u.faction === 2 && u.isLeader);
+    if (!aL) { 
+        this.gameOver = true; 
+        if (typeof triggerStageEnd === 'function') triggerStageEnd(true); 
+    }
+};
+
+// 3. Verifica Vitória na captura de Vilas
+const origCheckVillageCapture = Game.prototype.checkVillageCapture;
+Game.prototype.checkVillageCapture = function(u) {
+    origCheckVillageCapture.call(this, u);
+    // Se o objetivo é dominar, roda o checkWin logo após pintar a vila
+    if (u.faction === 1 && this.currentObjective === 'DOMINATE') {
+        this.checkWin();
+    }
+};
+
+// 4. Hook de Morte para o Modo Chefe
+const origHandleDeathObj = Game.prototype.handleDeath;
+Game.prototype.handleDeath = function(victim, killer) {
+    origHandleDeathObj.call(this, victim, killer);
+    
+    // Se o alvo da missão morrer
+    if (this.currentObjective === 'BOSS' && victim.isObjectiveTarget) {
+        this.gameOver = true;
+        // Se o Jogador matou = Venceu. Se o cenário, dano passivo ou rival matou = Perdeu!
+        if (killer && killer.faction === 1) {
+            if (typeof triggerStageEnd === 'function') triggerStageEnd(true);
+        } else {
+            if (typeof triggerStageEnd === 'function') triggerStageEnd(false);
+        }
+    }
+};
+
+// 5. Hook de Doma para o Modo Chefe (Captura Pacífica!)
+const origAttemptTameObj = Game.prototype.attemptTame;
+Game.prototype.attemptTame = async function(tamer, wild) {
+    let res = await origAttemptTameObj.call(this, tamer, wild);
+    
+    // Se a doma funcionou e o alvo era o Chefe da missão
+    if (res && this.currentObjective === 'BOSS' && wild.isObjectiveTarget && tamer.faction === 1) {
+        this.gameOver = true;
+        if (typeof triggerStageEnd === 'function') triggerStageEnd(true);
+    }
+    return res;
+};
+
+// 6. Spawn Infinito do Modo Sobrevivência
+const origStartNextTurnSurvive = Game.prototype.startNextTurn;
+Game.prototype.startNextTurn = async function() {
+    
+    // Exatamente no momento em que o jogador passa a vez para a IA
+    if (this.currentTurn === 1 && this.currentObjective === 'SURVIVE' && this.turnCount < 11 && !this.gameOver) {
+        
+        // Busca todos os hexágonos limpos posicionados nas beiradas do mapa
+        let edges = Array.from(this.map.values()).filter(h =>
+            (h.q === -Math.floor(this.cols/2) || h.q === this.cols - 1 - Math.floor(this.cols/2) || h.r === 0 || h.r === this.rows - 1) &&
+            h.terrain.id !== 'WATER' && h.terrain.id !== 'MOUNTAIN' && h.terrain.id !== 'CASTLE' &&
+            !this.getUnitAt(h.q, h.r)
+        );
+        
+        // Puxa entre 1 a 2 bestas por turno
+        if (edges.length > 0 && typeof BEASTS !== 'undefined') {
+            let spawnHex = edges[Math.floor(Math.random() * edges.length)];
+            let b = BEASTS.LAND[Math.floor(Math.random() * BEASTS.LAND.length)];
+            let uLvl = this.getUnitLvl(b);
+            let fFac = 1 + (uLvl - 1) * 0.2;
+            
+            this.units.push(new Unit({
+                q: spawnHex.q, r: spawnHex.r, faction: 2, 
+                name: "Horda de " + b.name, baseName: b.name, emoji: b.e,
+                hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac), 
+                mp: b.mp, maxMp: b.mp,
+                atk: Math.floor(b.atk * fFac), range: b.range, 
+                abilities: [...(b.abilities || [])],
+                tags: b.tags || [], level: uLvl
+            }));
+            
+            if (typeof showPopup === 'function') showPopup("A Horda avança!", {vq: spawnHex.q, vr: spawnHex.r}, '#c0392b');
+        }
+    }
+    
+    // Chama o loop de turnos base do jogo (que ativa e controla IAs)
+    await origStartNextTurnSurvive.call(this);
+    
+    // Verifica a vitória logo no início do Turno 11 do jogador
+    if (this.currentTurn === 1 && this.currentObjective === 'SURVIVE' && this.turnCount === 11) {
+        this.checkWin();
+    }
+};
