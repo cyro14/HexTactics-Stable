@@ -102,7 +102,9 @@ function autoSave() {
             routeMap: game.routeMap, currentFloor: game.currentFloor, inventory: game.inventory,
             isBossStage: game.isBossStage || false,
             turnCount: game.turnCount,
-            currentRouteType: game.currentRouteType || 'BATTLE'
+            currentRouteType: game.currentRouteType || 'BATTLE',
+            currentObjective: game.currentObjective,
+            _objectiveStageId: game._objectiveStageId
         };
         //Salva os pergaminhos aprendidos
         if (typeof RECIPES !== 'undefined') {
@@ -1247,18 +1249,18 @@ function openLeaderSelection(isRoguelite, isDuel = false, pickingOpponentFor = n
                 } else {
                     $('leader-selection').classList.add('hidden');
                     startGame(false, isRoguelite, pickingOpponentFor || l.id, isDuel, pickingOpponentFor ? l.id : null);
-                    
+
                     // === PASSO 3: GATILHO DA INTRODUÇÃO ===
                     let myLore = typeof LORE_DIALOGUES !== 'undefined' ? LORE_DIALOGUES[game.leaderData.loreFaction] : null;
                     if (myLore && !isDuel) { // Evita tocar a lore no modo Duelo
                         let possibleRivals = LEADERS.filter(leader => leader.loreFaction !== game.leaderData.loreFaction);
                         game.rivalLeader = possibleRivals[Math.floor(Math.random() * possibleRivals.length)] || LEADERS[1];
-                        
+
                         let seq = [
                             { name: game.leaderData.name, emoji: game.leaderData.emoji, sprite: game.leaderData.sprite, text: myLore.intro },
                             { name: game.rivalLeader.name, emoji: game.rivalLeader.emoji, sprite: game.rivalLeader.sprite, text: myLore.rivalIntro, isRival: true }
                         ];
-                        
+
                         if (typeof window.playDialogueSequence === 'function') {
                             await window.playDialogueSequence(seq);
                         }
@@ -1979,13 +1981,21 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
         const d = JSON.parse(localStorage.getItem(sk));
         game.resources = d.resources || { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
         game.kingdomMap = new Map(d.kingdomMap || []);
-        game.currentLevel = d.level; game.cols = d.cols; game.rows = d.rows; game.gold = d.gold || 0;
+        game.currentLevel = d.level;
+        game.cols = d.cols;
+        game.rows = d.rows;
+        game.gold = d.gold || 0;
         game.dna = d.dna || 0;
         game.isRoguelite = d.isRoguelite || false;
         game.conqueredRegions = d.conqueredRegions || [];
         game.currentRegionId = d.currentRegionId || null;
-        game.routeMap = d.routeMap; game.currentFloor = d.currentFloor; game.inventory = d.inventory || [];
-        game.isBossStage = d.isBossStage || false; game.currentRouteType = d.currentRouteType || 'BATTLE';
+        game.routeMap = d.routeMap;
+        game.currentFloor = d.currentFloor;
+        game.inventory = d.inventory || [];
+        game.isBossStage = d.isBossStage || false;
+        game.currentRouteType = d.currentRouteType || 'BATTLE';
+        game.currentObjective = d.currentObjective || null;
+        game._objectiveStageId = d._objectiveStageId || null;
         game.manaPool = d.manaPool || {};
         game.spentMana = d.spentMana || {};
         game.turnCount = d.turnCount || 1;
@@ -2008,8 +2018,12 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
         rosterMemory = (d.rosterMemory || []).map(u => new Unit({ ...u, isNew: false }));
         deployedRoster = (d.deployedRoster || game.units.filter(u => u.faction === 1)).map(u => new Unit({ ...u, isNew: false }));
         if (d.items) d.items.forEach(([k, v]) => game.items.set(k, v));
-
-        game.currentTurn = 1; game.gameOver = false; game.selectPlayerLeader();
+        let wildBoss = game.units.find(u => u.isBoss && u.faction === 0);
+        if (game.currentObjective === 'BOSS' && wildBoss) {
+            wildBoss.isObjectiveTarget = true;
+        }
+        game.currentTurn = 1;
+        game.gameOver = false; game.selectPlayerLeader();
         updateUI(); renderer.initCamera(true); show('game-container');
     } else {
         if (localStorage.getItem(sk)) localStorage.removeItem(sk);
@@ -4175,7 +4189,7 @@ window.openCharacterScreen = function (u, isBox, mode) {
     renderModal();
 };
 
-window.playDialogueSequence = async function(sequence) {
+window.playDialogueSequence = async function (sequence) {
     return new Promise(resolve => {
         let overlay = document.getElementById('dialogue-overlay');
         if (!overlay) {
@@ -4183,7 +4197,7 @@ window.playDialogueSequence = async function(sequence) {
             overlay.id = 'dialogue-overlay';
             document.body.appendChild(overlay);
         }
-        
+
         let currentIndex = 0;
         overlay.classList.remove('hidden');
 
@@ -4196,7 +4210,7 @@ window.playDialogueSequence = async function(sequence) {
 
             let line = sequence[currentIndex];
             let isRival = line.isRival || false;
-            
+
             let flexDir = isRival ? 'row-reverse' : 'row';
             let textAlign = isRival ? 'right' : 'left';
             let nameColor = isRival ? '#e74c3c' : 'var(--gold-light)';

@@ -675,6 +675,54 @@ class Game {
                 }
             }
         }, 600);
+
+        // =========================================================
+        // SORTEIO DO OBJETIVO (Protegido contra F5 e Tentar Novamente)
+        // =========================================================
+        let currentStageId = `${this.currentLevel}_${this.currentFloor}_${this.currentRegionId}`;
+        
+        if (this._objectiveStageId !== currentStageId || !this.currentObjective) {
+            this._objectiveStageId = currentStageId;
+            
+            let possibleObjectives = ['DEFEAT_LEADER', 'SURVIVE'];
+            let hasVillages = Array.from(this.map.values()).some(h => h.terrain.id === 'VILLAGE');
+            if (hasVillages) possibleObjectives.push('DOMINATE');
+            
+            let wildBoss = this.units.find(u => u.isBoss && u.faction === 0);
+
+            if (this.currentRouteType === 'BOSS' || this.isBossStage || this.currentRouteType === 'ELITE') {
+                this.currentObjective = wildBoss ? 'BOSS' : 'DEFEAT_LEADER';
+            } else {
+                this.currentObjective = possibleObjectives[Math.floor(Math.random() * possibleObjectives.length)];
+            }
+        }
+
+        let wildBoss = this.units.find(u => u.isBoss && u.faction === 0);
+        if (this.currentObjective === 'BOSS' && wildBoss) {
+            wildBoss.isObjectiveTarget = true;
+        }
+
+        setTimeout(() => {
+            let text = "DERROTE O LÍDER INIMIGO!";
+            if (this.currentObjective === 'SURVIVE') text = "SOBREVIVA POR 10 TURNOS!";
+            else if (this.currentObjective === 'DOMINATE') text = "CAPTURE TODAS AS VILAS!";
+            else if (this.currentObjective === 'BOSS') text = "ELIMINE OU CAPTURE O CHEFE!";
+
+            let banner = document.getElementById('objective-banner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'objective-banner';
+                document.body.appendChild(banner);
+            }
+            
+            banner.innerHTML = `<h2 style="color:var(--gold); margin:0 0 10px 0; font-family:'Cinzel', serif;">NOVO OBJETIVO</h2><div style="font-weight:bold; font-size:1.2em; text-shadow: 0 0 10px red;">${text}</div>`;
+            banner.classList.remove('banner-animate');
+            void banner.offsetWidth; 
+            banner.classList.add('banner-animate');
+            
+            this.isAnimating = true; 
+            setTimeout(() => { this.isAnimating = false; }, 3000);
+        }, 650);
     }
 
     generateDuelMap() {
@@ -2557,37 +2605,37 @@ window.runWildTurn = async function () {
 };
 
 // =====================================================================
-// SISTEMA DINÂMICO DE OBJETIVOS DA MISSÃO
+// SISTEMA DINÂMICO DE OBJETIVOS DA MISSÃO (CORRIGIDO PARA O SAVE)
 // =====================================================================
 
-// 1. Hook na Geração do Mapa para definir o Objetivo e mostrar o Banner
+// 1. Hook na Geração do Mapa (Evita trocar o objetivo no Tentar Novamente)
 const origGenerateCampaignMap = Game.prototype.generateCampaignMap;
 Game.prototype.generateCampaignMap = function(savedRoster = []) {
     origGenerateCampaignMap.call(this, savedRoster);
     
-    // Lista de objetivos possíveis
-    let possibleObjectives = ['DEFEAT_LEADER', 'SURVIVE'];
+    // Cria um identificador único para o nó atual (Ex: Nível_Andar_Regiao)
+    let currentStageId = `${this.currentLevel}_${this.currentFloor}_${this.currentRegionId}`;
     
-    // Só sorteia DOMINATE se existir pelo menos uma vila no mapa gerado
-    let hasVillages = Array.from(this.map.values()).some(h => h.terrain.id === 'VILLAGE');
-    if (hasVillages) possibleObjectives.push('DOMINATE');
-    
-    // Identifica se há um monstro Épico ou Chefe Selvagem na tela
-    let wildBoss = this.units.find(u => u.isBoss && u.faction === 0);
+    // Verifica se JÁ sorteamos um objetivo para ESTA fase exata
+    if (this._objectiveStageId !== currentStageId || !this.currentObjective) {
+        this._objectiveStageId = currentStageId;
+        
+        let possibleObjectives = ['DEFEAT_LEADER', 'SURVIVE'];
+        
+        let hasVillages = Array.from(this.map.values()).some(h => h.terrain.id === 'VILLAGE');
+        if (hasVillages) possibleObjectives.push('DOMINATE');
+        
+        let wildBoss = this.units.find(u => u.isBoss && u.faction === 0);
 
-    // Se for nó de Chefe ou Elite, o objetivo é SEMPRE matá-lo!
-    if (this.currentRouteType === 'BOSS' || this.isBossStage || this.currentRouteType === 'ELITE') {
-        if (wildBoss) {
-            this.currentObjective = 'BOSS';
+        if (this.currentRouteType === 'BOSS' || this.isBossStage || this.currentRouteType === 'ELITE') {
+            this.currentObjective = wildBoss ? 'BOSS' : 'DEFEAT_LEADER';
         } else {
-            this.currentObjective = 'DEFEAT_LEADER';
+            this.currentObjective = possibleObjectives[Math.floor(Math.random() * possibleObjectives.length)];
         }
-    } else {
-        // Se for Batalha Comum, sorteia!
-        this.currentObjective = possibleObjectives[Math.floor(Math.random() * possibleObjectives.length)];
     }
 
-    // Marca o alvo para o motor não perder a referência
+    // Marca o alvo SEMPRE (pois ao clicar em Tentar Novamente, as unidades são apagadas e recriadas)
+    let wildBoss = this.units.find(u => u.isBoss && u.faction === 0);
     if (this.currentObjective === 'BOSS' && wildBoss) {
         wildBoss.isObjectiveTarget = true;
     }
@@ -2608,17 +2656,57 @@ Game.prototype.generateCampaignMap = function(savedRoster = []) {
         
         banner.innerHTML = `<h2 style="color:var(--gold); margin:0 0 10px 0; font-family:'Cinzel', serif;">NOVO OBJETIVO</h2><div style="font-weight:bold; font-size:1.2em; text-shadow: 0 0 10px red;">${text}</div>`;
         
-        // Reinicia a animação CSS para garantir que rode sempre que for chamada
         banner.classList.remove('banner-animate');
-        void banner.offsetWidth; // Trigger reflow para reset
+        void banner.offsetWidth; // Força a tela a reiniciar a animação
         banner.classList.add('banner-animate');
         
-        // Congela o jogo e as ações enquanto a animação grita na tela
         this.isAnimating = true; 
-        setTimeout(() => {
-            this.isAnimating = false; // Descongela após 3 segundos
-        }, 3000);
+        setTimeout(() => { this.isAnimating = false; }, 3000);
     }, 650); 
+};
+
+// =====================================================================
+// INJEÇÃO NO SISTEMA DE SAVE/LOAD (Para F5 e Carregar Jogo)
+// =====================================================================
+
+// Gravar o objetivo no localStorage junto com o resto da batalha
+const origAutoSave = window.autoSave;
+window.autoSave = function() {
+    origAutoSave(); // Executa o save nativo do seu jogo primeiro
+    
+    // Agora injetamos o objetivo no arquivo salvo
+    if (game && !game.gameOver) {
+        const sk = game.isDuel ? 'ht_save_duel' : (game.isRoguelite ? 'ht_save_rogue' : 'ht_save_camp');
+        let savedData = JSON.parse(localStorage.getItem(sk));
+        if (savedData) {
+            savedData.currentObjective = game.currentObjective;
+            savedData._objectiveStageId = game._objectiveStageId;
+            localStorage.setItem(sk, JSON.stringify(savedData));
+        }
+    }
+};
+
+// Recuperar o objetivo quando a página for recarregada
+const origStartGame = window.startGame;
+window.startGame = function(load, isRoguelite = false, leaderId = null, isDuel = false, opponentId = null) {
+    origStartGame(load, isRoguelite, leaderId, isDuel, opponentId);
+    
+    if (load && game) {
+        const sk = isDuel ? 'ht_save_duel' : (isRoguelite ? 'ht_save_rogue' : 'ht_save_camp');
+        let savedData = JSON.parse(localStorage.getItem(sk));
+        
+        // Restaura as variáveis mágicas
+        if (savedData && savedData.currentObjective) {
+            game.currentObjective = savedData.currentObjective;
+            game._objectiveStageId = savedData._objectiveStageId;
+            
+            // Re-Aplica a mira no Chefe caso o save tenha sido feito no meio da luta
+            let wildBoss = game.units.find(u => u.isBoss && u.faction === 0);
+            if (game.currentObjective === 'BOSS' && wildBoss) {
+                wildBoss.isObjectiveTarget = true;
+            }
+        }
+    }
 };
 
 // 2. Novo CheckWin que respeita os Objetivos
