@@ -235,41 +235,41 @@ class Game {
         let isNight = (cycle >= 6 && cycle <= 8);
 
         this.units.forEach(u => {
-                // O jogador sempre vê as próprias tropas
-                if (u.faction === 1) return;
+            // O jogador sempre vê as próprias tropas
+            if (u.faction === 1) return;
 
-                let inLight = false;
+            let inLight = false;
 
-                // Se for de dia, ou se a própria fera emitir luz (fogo/celestial), ela é visível
-                if (!isNight || (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL') || u.tags.includes('ELECTRIC')))) {
-                    inLight = true;
-                } else {
-                    // Checa se está sendo iluminado por uma unidade do jogador
-                    for (let light of this.units) {
-                        if (light.faction === 1 || (light.tags && (light.tags.includes('FIRE') || light.tags.includes('CELESTIAL') || light.tags.includes('ELECTRIC')))) {
-                            let r = (light.tags && (light.tags.includes('FIRE') || light.tags.includes('CELESTIAL'))) ? 3 : 2;
-                            if (Hex.distance(u, light) <= r) { inLight = true; break; }
-                        }
+            // Se for de dia, ou se a própria fera emitir luz (fogo/celestial), ela é visível
+            if (!isNight || (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL') || u.tags.includes('ELECTRIC')))) {
+                inLight = true;
+            } else {
+                // Checa se está sendo iluminado por uma unidade do jogador
+                for (let light of this.units) {
+                    if (light.faction === 1 || (light.tags && (light.tags.includes('FIRE') || light.tags.includes('CELESTIAL') || light.tags.includes('ELECTRIC')))) {
+                        let r = (light.tags && (light.tags.includes('FIRE') || light.tags.includes('CELESTIAL'))) ? 3 : 2;
+                        if (Hex.distance(u, light) <= r) { inLight = true; break; }
                     }
-                    // Checa se está pisando perto de lava ou floresta em chamas
-                    if (!inLight) {
-                        for (let [key, hex] of this.map.entries()) {
-                            if (hex.terrain && (hex.terrain.id === 'LAVA_RIFT' || hex.terrain.id === 'BURNING_FOREST')) {
-                                if (Hex.distance(u, hex) <= 2) { inLight = true; break; }
-                            }
+                }
+                // Checa se está pisando perto de lava ou floresta em chamas
+                if (!inLight) {
+                    for (let [key, hex] of this.map.entries()) {
+                        if (hex.terrain && (hex.terrain.id === 'LAVA_RIFT' || hex.terrain.id === 'BURNING_FOREST')) {
+                            if (Hex.distance(u, hex) <= 2) { inLight = true; break; }
                         }
                     }
                 }
+            }
 
-                u.isHiddenByNight = !inLight;
+            u.isHiddenByNight = !inLight;
 
-                // INTEGRAÇÃO PERFEITA: Preserva o status do monstro que já estava camuflado no mato!
-                if (u.isHiddenByNight) {
-                    u.isHidden = true; // A noite engole a fera
-                } else if (!u.abilities || (!u.abilities.includes('camouflage') && !u.abilities.includes('dive'))) {
-                    u.isHidden = false; // A luz revela a fera (a menos que ela esteja mergulhada/camuflada)
-                }
-            });
+            // INTEGRAÇÃO PERFEITA: Preserva o status do monstro que já estava camuflado no mato!
+            if (u.isHiddenByNight) {
+                u.isHidden = true; // A noite engole a fera
+            } else if (!u.abilities || (!u.abilities.includes('camouflage') && !u.abilities.includes('dive'))) {
+                u.isHidden = false; // A luz revela a fera (a menos que ela esteja mergulhada/camuflada)
+            }
+        });
     }
     generateCampaignMap(savedRoster = []) {
         if (!this.eventFlags) this.eventFlags = {};
@@ -645,31 +645,31 @@ class Game {
         // === GATILHO DA LORE DE INÍCIO DE FASE CORRIGIDO ===
         setTimeout(async () => {
             let myLore = typeof LORE_DIALOGUES !== 'undefined' ? LORE_DIALOGUES[this.leaderData.loreFaction] : null;
-            let actIndex = this.currentLevel - 1; 
-            
+            let actIndex = this.currentLevel - 1;
+
             if (myLore && myLore.stages[actIndex] && this.currentFloor === 0) {
                 let seq = [];
-                
-                seq.push({ 
-                    name: this.leaderData.name, 
-                    emoji: this.leaderData.emoji, 
-                    sprite: this.leaderData.sprite, 
-                    text: myLore.stages[actIndex] 
+
+                seq.push({
+                    name: this.leaderData.name,
+                    emoji: this.leaderData.emoji,
+                    sprite: this.leaderData.sprite,
+                    text: myLore.stages[actIndex]
                 });
-                
+
                 if (this.rivalLeader && myLore.rivalTaunts && myLore.rivalTaunts.length > 0) {
                     let tauntIndex = actIndex % myLore.rivalTaunts.length;
                     let tauntText = myLore.rivalTaunts[tauntIndex];
-                    
-                    seq.push({ 
-                        name: this.rivalLeader.name, 
-                        emoji: this.rivalLeader.emoji, 
-                        sprite: this.rivalLeader.sprite, 
-                        text: tauntText, 
-                        isRival: true 
+
+                    seq.push({
+                        name: this.rivalLeader.name,
+                        emoji: this.rivalLeader.emoji,
+                        sprite: this.rivalLeader.sprite,
+                        text: tauntText,
+                        isRival: true
                     });
                 }
-                
+
                 if (typeof window.playDialogueSequence === 'function') {
                     await window.playDialogueSequence(seq);
                 }
@@ -680,14 +680,14 @@ class Game {
         // SORTEIO DO OBJETIVO (Protegido contra F5 e Tentar Novamente)
         // =========================================================
         let currentStageId = `${this.currentLevel}_${this.currentFloor}_${this.currentRegionId}`;
-        
+
         if (this._objectiveStageId !== currentStageId || !this.currentObjective) {
             this._objectiveStageId = currentStageId;
-            
+
             let possibleObjectives = ['DEFEAT_LEADER', 'SURVIVE'];
             let hasVillages = Array.from(this.map.values()).some(h => h.terrain.id === 'VILLAGE');
             if (hasVillages) possibleObjectives.push('DOMINATE');
-            
+
             let wildBoss = this.units.find(u => u.isBoss && u.faction === 0);
 
             if (this.currentRouteType === 'BOSS' || this.isBossStage || this.currentRouteType === 'ELITE') {
@@ -714,13 +714,13 @@ class Game {
                 banner.id = 'objective-banner';
                 document.body.appendChild(banner);
             }
-            
+
             banner.innerHTML = `<h2 style="color:var(--gold); margin:0 0 10px 0; font-family:'Cinzel', serif;">NOVO OBJETIVO</h2><div style="font-weight:bold; font-size:1.2em; text-shadow: 0 0 10px red;">${text}</div>`;
             banner.classList.remove('banner-animate');
-            void banner.offsetWidth; 
+            void banner.offsetWidth;
             banner.classList.add('banner-animate');
-            
-            this.isAnimating = true; 
+
+            this.isAnimating = true;
             setTimeout(() => { this.isAnimating = false; }, 3000);
         }, 650);
     }
@@ -859,38 +859,38 @@ class Game {
                         // Aceita tanto a tag antiga type: 'equip' quanto os novos itens com equipSlot
                         if (iDef.equipSlot || iDef.type === 'equip') {
                             let existingEq = u.equipment.find(eq => eq.id === iType);
-                            
+
                             // 1. O monstro já tem este EXATO item? Funde para o próximo nível
-                            if (existingEq) { 
-                                if (iDef && typeof iDef.onUnequip === 'function') iDef.onUnequip(u, existingEq.level); 
-                                existingEq.level++; 
-                                if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(u, existingEq.level); 
-                                if (typeof showPopup === 'function') showPopup(`✨ Fusão Lv${existingEq.level}!`, u, '#c9a227'); 
-                            } 
+                            if (existingEq) {
+                                if (iDef && typeof iDef.onUnequip === 'function') iDef.onUnequip(u, existingEq.level);
+                                existingEq.level++;
+                                if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(u, existingEq.level);
+                                if (typeof showPopup === 'function') showPopup(`✨ Fusão Lv${existingEq.level}!`, u, '#c9a227');
+                            }
                             // 2. O monstro não tem esse item. Vamos checar a restrição de Slots!
-                            else { 
+                            else {
                                 let itemSlot = iDef.equipSlot;
                                 let existingSlotIdx = itemSlot ? u.equipment.findIndex(eq => ITEMS[eq.id] && ITEMS[eq.id].equipSlot === itemSlot) : -1;
-                                
+
                                 // AUTO-SWAP: Se já tem algo ocupando o slot, desequipa primeiro
                                 if (existingSlotIdx !== -1) {
                                     let oldEq = u.equipment[existingSlotIdx];
                                     let oldDef = ITEMS[oldEq.id];
-                                    
+
                                     if (oldDef && typeof oldDef.onUnequip === 'function') oldDef.onUnequip(u, oldEq.level);
-                                    
+
                                     u.equipment.splice(existingSlotIdx, 1);
-                                    
+
                                     // Devolve o item velho pra mochila global do jogo
                                     if (!this.inventory) this.inventory = [];
-                                    this.inventory.push(oldEq); 
-                                    
+                                    this.inventory.push(oldEq);
+
                                     if (typeof showPopup === 'function') showPopup(`Trocou: ${oldDef.name}`, u, '#3498db');
                                 }
-                                
+
                                 // Equipa o item novo que estava no chão
-                                u.equipment.push({ id: iType, level: 1 }); 
-                                if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(u, 1); 
+                                u.equipment.push({ id: iType, level: 1 });
+                                if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(u, 1);
                             }
                             this.items.delete(k);
                         } else {
@@ -1761,8 +1761,22 @@ class Renderer {
     hexPath(ctx, cx, cy, size) { ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = (Math.PI / 180) * (60 * i - 30); const px = cx + size * Math.cos(a); const py = cy + size * Math.sin(a); i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); } ctx.closePath(); }
 
     draw() {
-        const ctx = this.ctx; const actBgColors = ['#0a0a0e', '#121208', '#050a15', '#100515', '#150505']; const bgColor = actBgColors[this.game.currentLevel - 1] || '#0a0a0e';
-        ctx.fillStyle = bgColor; ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); ctx.globalAlpha = 1.0; ctx.shadowBlur = 0;
+        const ctx = this.ctx; 
+        
+        // ==========================================
+        // TRAVA ABSOLUTA DE NITIDEZ (PIXEL ART)
+        // ==========================================
+        ctx.imageSmoothingEnabled = false;
+        ctx.webkitImageSmoothingEnabled = false;
+        ctx.mozImageSmoothingEnabled = false;
+        ctx.msImageSmoothingEnabled = false;
+        
+        const actBgColors = ['#0a0a0e', '#121208', '#050a15', '#100515', '#150505']; 
+        const bgColor = actBgColors[this.game.currentLevel - 1] || '#0a0a0e';
+        ctx.fillStyle = bgColor; 
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); 
+        ctx.globalAlpha = 1.0; 
+        ctx.shadowBlur = 0;
 
         this.game.map.forEach(hex => {
             const p = this.getPos(hex.q, hex.r);
@@ -2021,13 +2035,13 @@ class Renderer {
                     // SISTEMA DE ESCALA INDIVIDUAL DO SPRITE (AO VIVO)
                     // ==========================================
                     // 1. Vasculha o banco de dados em tempo real atrás da ficha original do monstro
-                    let masterPool = typeof BEASTS !== 'undefined' ? [...(BEASTS.LAND||[]), ...(BEASTS.WATER||[]), ...(BEASTS.SNOW||[]), ...(BEASTS.BOSSES||[])] : [];
+                    let masterPool = typeof BEASTS !== 'undefined' ? [...(BEASTS.LAND || []), ...(BEASTS.WATER || []), ...(BEASTS.SNOW || []), ...(BEASTS.BOSSES || [])] : [];
                     let template = masterPool.find(x => x.name === (u.baseName || u.name));
                     if (!template && u.isLeader && typeof LEADERS !== 'undefined') template = LEADERS.find(x => x.name === (u.baseName || u.name));
-                    
+
                     // 2. Aplica a escala direto do data.js (substitui o save antigo!)
                     let customScale = (template && template.scale) ? template.scale : (u.scale || 1);
-                    
+
                     let finalW = drawW * customScale;
                     let finalH = drawH * customScale;
 
@@ -2610,21 +2624,21 @@ window.runWildTurn = async function () {
 
 // 1. Hook na Geração do Mapa (Evita trocar o objetivo no Tentar Novamente)
 const origGenerateCampaignMap = Game.prototype.generateCampaignMap;
-Game.prototype.generateCampaignMap = function(savedRoster = []) {
+Game.prototype.generateCampaignMap = function (savedRoster = []) {
     origGenerateCampaignMap.call(this, savedRoster);
-    
+
     // Cria um identificador único para o nó atual (Ex: Nível_Andar_Regiao)
     let currentStageId = `${this.currentLevel}_${this.currentFloor}_${this.currentRegionId}`;
-    
+
     // Verifica se JÁ sorteamos um objetivo para ESTA fase exata
     if (this._objectiveStageId !== currentStageId || !this.currentObjective) {
         this._objectiveStageId = currentStageId;
-        
+
         let possibleObjectives = ['DEFEAT_LEADER', 'SURVIVE'];
-        
+
         let hasVillages = Array.from(this.map.values()).some(h => h.terrain.id === 'VILLAGE');
         if (hasVillages) possibleObjectives.push('DOMINATE');
-        
+
         let wildBoss = this.units.find(u => u.isBoss && u.faction === 0);
 
         if (this.currentRouteType === 'BOSS' || this.isBossStage || this.currentRouteType === 'ELITE') {
@@ -2653,16 +2667,16 @@ Game.prototype.generateCampaignMap = function(savedRoster = []) {
             banner.id = 'objective-banner';
             document.body.appendChild(banner);
         }
-        
+
         banner.innerHTML = `<h2 style="color:var(--gold); margin:0 0 10px 0; font-family:'Cinzel', serif;">NOVO OBJETIVO</h2><div style="font-weight:bold; font-size:1.2em; text-shadow: 0 0 10px red;">${text}</div>`;
-        
+
         banner.classList.remove('banner-animate');
         void banner.offsetWidth; // Força a tela a reiniciar a animação
         banner.classList.add('banner-animate');
-        
-        this.isAnimating = true; 
+
+        this.isAnimating = true;
         setTimeout(() => { this.isAnimating = false; }, 3000);
-    }, 650); 
+    }, 650);
 };
 
 // =====================================================================
@@ -2671,9 +2685,9 @@ Game.prototype.generateCampaignMap = function(savedRoster = []) {
 
 // Gravar o objetivo no localStorage junto com o resto da batalha
 const origAutoSave = window.autoSave;
-window.autoSave = function() {
+window.autoSave = function () {
     origAutoSave(); // Executa o save nativo do seu jogo primeiro
-    
+
     // Agora injetamos o objetivo no arquivo salvo
     if (game && !game.gameOver) {
         const sk = game.isDuel ? 'ht_save_duel' : (game.isRoguelite ? 'ht_save_rogue' : 'ht_save_camp');
@@ -2688,18 +2702,18 @@ window.autoSave = function() {
 
 // Recuperar o objetivo quando a página for recarregada
 const origStartGame = window.startGame;
-window.startGame = function(load, isRoguelite = false, leaderId = null, isDuel = false, opponentId = null) {
+window.startGame = function (load, isRoguelite = false, leaderId = null, isDuel = false, opponentId = null) {
     origStartGame(load, isRoguelite, leaderId, isDuel, opponentId);
-    
+
     if (load && game) {
         const sk = isDuel ? 'ht_save_duel' : (isRoguelite ? 'ht_save_rogue' : 'ht_save_camp');
         let savedData = JSON.parse(localStorage.getItem(sk));
-        
+
         // Restaura as variáveis mágicas
         if (savedData && savedData.currentObjective) {
             game.currentObjective = savedData.currentObjective;
             game._objectiveStageId = savedData._objectiveStageId;
-            
+
             // Re-Aplica a mira no Chefe caso o save tenha sido feito no meio da luta
             let wildBoss = game.units.find(u => u.isBoss && u.faction === 0);
             if (game.currentObjective === 'BOSS' && wildBoss) {
@@ -2710,15 +2724,15 @@ window.startGame = function(load, isRoguelite = false, leaderId = null, isDuel =
 };
 
 // 2. Novo CheckWin que respeita os Objetivos
-Game.prototype.checkWin = function() {
+Game.prototype.checkWin = function () {
     if (this.gameOver) return;
-    
+
     // Condição de Derrota Universal: Seu Herói morreu
     const pL = this.units.find(u => u.faction === 1 && u.isLeader);
-    if (!pL) { 
-        this.gameOver = true; 
-        if (typeof triggerStageEnd === 'function') triggerStageEnd(false); 
-        return; 
+    if (!pL) {
+        this.gameOver = true;
+        if (typeof triggerStageEnd === 'function') triggerStageEnd(false);
+        return;
     }
 
     // Modo SOBREVIVÊNCIA
@@ -2755,15 +2769,15 @@ Game.prototype.checkWin = function() {
 
     // Modo DEFEAT_LEADER (Padrão)
     const aL = this.units.find(u => u.faction === 2 && u.isLeader);
-    if (!aL) { 
-        this.gameOver = true; 
-        if (typeof triggerStageEnd === 'function') triggerStageEnd(true); 
+    if (!aL) {
+        this.gameOver = true;
+        if (typeof triggerStageEnd === 'function') triggerStageEnd(true);
     }
 };
 
 // 3. Verifica Vitória na captura de Vilas
 const origCheckVillageCapture = Game.prototype.checkVillageCapture;
-Game.prototype.checkVillageCapture = function(u) {
+Game.prototype.checkVillageCapture = function (u) {
     origCheckVillageCapture.call(this, u);
     // Se o objetivo é dominar, roda o checkWin logo após pintar a vila
     if (u.faction === 1 && this.currentObjective === 'DOMINATE') {
@@ -2773,9 +2787,9 @@ Game.prototype.checkVillageCapture = function(u) {
 
 // 4. Hook de Morte para o Modo Chefe
 const origHandleDeathObj = Game.prototype.handleDeath;
-Game.prototype.handleDeath = function(victim, killer) {
+Game.prototype.handleDeath = function (victim, killer) {
     origHandleDeathObj.call(this, victim, killer);
-    
+
     // Se o alvo da missão morrer
     if (this.currentObjective === 'BOSS' && victim.isObjectiveTarget) {
         this.gameOver = true;
@@ -2790,9 +2804,9 @@ Game.prototype.handleDeath = function(victim, killer) {
 
 // 5. Hook de Doma para o Modo Chefe (Captura Pacífica!)
 const origAttemptTameObj = Game.prototype.attemptTame;
-Game.prototype.attemptTame = async function(tamer, wild) {
+Game.prototype.attemptTame = async function (tamer, wild) {
     let res = await origAttemptTameObj.call(this, tamer, wild);
-    
+
     // Se a doma funcionou e o alvo era o Chefe da missão
     if (res && this.currentObjective === 'BOSS' && wild.isObjectiveTarget && tamer.faction === 1) {
         this.gameOver = true;
@@ -2803,42 +2817,42 @@ Game.prototype.attemptTame = async function(tamer, wild) {
 
 // 6. Spawn Infinito do Modo Sobrevivência
 const origStartNextTurnSurvive = Game.prototype.startNextTurn;
-Game.prototype.startNextTurn = async function() {
-    
+Game.prototype.startNextTurn = async function () {
+
     // Exatamente no momento em que o jogador passa a vez para a IA
     if (this.currentTurn === 1 && this.currentObjective === 'SURVIVE' && this.turnCount < 11 && !this.gameOver) {
-        
+
         // Busca todos os hexágonos limpos posicionados nas beiradas do mapa
         let edges = Array.from(this.map.values()).filter(h =>
-            (h.q === -Math.floor(this.cols/2) || h.q === this.cols - 1 - Math.floor(this.cols/2) || h.r === 0 || h.r === this.rows - 1) &&
+            (h.q === -Math.floor(this.cols / 2) || h.q === this.cols - 1 - Math.floor(this.cols / 2) || h.r === 0 || h.r === this.rows - 1) &&
             h.terrain.id !== 'WATER' && h.terrain.id !== 'MOUNTAIN' && h.terrain.id !== 'CASTLE' &&
             !this.getUnitAt(h.q, h.r)
         );
-        
+
         // Puxa entre 1 a 2 bestas por turno
         if (edges.length > 0 && typeof BEASTS !== 'undefined') {
             let spawnHex = edges[Math.floor(Math.random() * edges.length)];
             let b = BEASTS.LAND[Math.floor(Math.random() * BEASTS.LAND.length)];
             let uLvl = this.getUnitLvl(b);
             let fFac = 1 + (uLvl - 1) * 0.2;
-            
+
             this.units.push(new Unit({
-                q: spawnHex.q, r: spawnHex.r, faction: 2, 
+                q: spawnHex.q, r: spawnHex.r, faction: 2,
                 name: "Horda de " + b.name, baseName: b.name, emoji: b.e,
-                hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac), 
+                hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac),
                 mp: b.mp, maxMp: b.mp,
-                atk: Math.floor(b.atk * fFac), range: b.range, 
+                atk: Math.floor(b.atk * fFac), range: b.range,
                 abilities: [...(b.abilities || [])],
                 tags: b.tags || [], level: uLvl
             }));
-            
-            if (typeof showPopup === 'function') showPopup("A Horda avança!", {vq: spawnHex.q, vr: spawnHex.r}, '#c0392b');
+
+            if (typeof showPopup === 'function') showPopup("A Horda avança!", { vq: spawnHex.q, vr: spawnHex.r }, '#c0392b');
         }
     }
-    
+
     // Chama o loop de turnos base do jogo (que ativa e controla IAs)
     await origStartNextTurnSurvive.call(this);
-    
+
     // Verifica a vitória logo no início do Turno 11 do jogador
     if (this.currentTurn === 1 && this.currentObjective === 'SURVIVE' && this.turnCount === 11) {
         this.checkWin();
