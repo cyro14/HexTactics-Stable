@@ -59,7 +59,14 @@ class Unit {
             filter: d.filter || 'none', tags: d.tags || [], fav: d.fav || [],
             furyAtk: d.furyAtk || 0, knownSpells: d.knownSpells || [],
             grimTags: d.grimTags || [], spellsCast: d.spellsCast || 0,
-            _origFaction: d._origFaction, _mcDuration: d._mcDuration
+            _origFaction: d._origFaction, _mcDuration: d._mcDuration,
+            isElite: d.isElite || false,
+            isObjectiveTarget: d.isObjectiveTarget || false,
+            isHidden: d.isHidden || false,
+            isHiddenByNight: d.isHiddenByNight || false,
+            tameImmuneTurn: d.tameImmuneTurn || 0,
+            undyingTurns: d.undyingTurns || 0,
+            _digTurn: d._digTurn || null
         });
 
         this.abilities = (d.abilities || []).concat(d.ability ? [d.ability] : []).filter(Boolean);
