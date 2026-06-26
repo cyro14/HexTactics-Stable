@@ -345,9 +345,15 @@ class Game {
                         else if (rnd > 0.2) t = TERRAINS.SAVANNA;
                         else if (rnd > 0.15) t = TERRAINS.VILLAGE;
                     } else if (prefBiome === 'WATER') {
-                        if (rnd > 0.5) t = TERRAINS.WATER;
-                        else if (rnd > 0.3) t = TERRAINS.SWAMP;
-                        else if (rnd > 0.2) t = TERRAINS.SEA;
+                        if (rnd > 0.4) t = TERRAINS.SEA;
+                        else if (rnd > 0.1) t = TERRAINS.WATER;
+                        else if (rnd > 0.05) t = TERRAINS.PLAINS;
+                        else if (rnd > 0.02) t = TERRAINS.VILLAGE; // Apenas ~3% de chance de Vila
+                    } else if (prefBiome === 'SWAMP') {
+                        if (rnd > 0.4) t = TERRAINS.SWAMP;
+                        else if (rnd > 0.1) t = TERRAINS.WATER;
+                        else if (rnd > 0.05) t = TERRAINS.FOREST;
+                        else if (rnd > 0.02) t = TERRAINS.VILLAGE; // Apenas ~3% de chance de Vila
                     } else if (prefBiome === 'FOREST') {
                         if (rnd > 0.5) t = TERRAINS.FOREST;
                         else if (rnd > 0.3) t = TERRAINS.SWAMP;
@@ -356,6 +362,7 @@ class Game {
                         if (rnd > 0.5) t = TERRAINS.MOUNTAIN;
                         else if (rnd > 0.3) t = TERRAINS.FOREST;
                         else if (rnd > 0.2) t = TERRAINS.SNOW;
+                        else if (rnd > 0.1) t = TERRAINS.VILLAGE;
                     } else if (prefBiome === 'ASHES') {
                         if (rnd > 0.4) t = TERRAINS.ASHES;
                         else if (rnd > 0.2) t = TERRAINS.BURNING_FOREST;
@@ -370,14 +377,21 @@ class Game {
                     }
 
                     // ========================================================
-                    // GERAÇÃO DE TERRENOS ESPECIAIS (AGORA NO LUGAR CERTO!)
+                    // GERAÇÃO DE TERRENOS ESPECIAIS
                     // ========================================================
                     let specRnd = Math.random();
                     if (specRnd > 0.94) {
                         let newT = null;
                         if (t.id === 'WATER' || t.id === 'SEA') newT = TERRAINS.REEF;
                         else if (t.id === 'DESERT' || t.id === 'SAVANNA') newT = Math.random() > 0.5 ? TERRAINS.QUICKSAND : TERRAINS.GOLD_DEPOSIT;
-                        else if (t.id === 'MOUNTAIN' || t.id === 'ASHES' || t.id === 'BURNING_FOREST') newT = Math.random() > 0.6 ? TERRAINS.LAVA_RIFT : (Math.random() > 0.5 ? TERRAINS.STONE_DEPOSIT : TERRAINS.MANA_RIFT);
+                        else if (t.id === 'MOUNTAIN' || t.id === 'ASHES' || t.id === 'BURNING_FOREST') {
+                            // Proteção: Impede que surja LAVA no meio dos Picos Nevados!
+                            if (prefBiome === 'SNOW') {
+                                newT = Math.random() > 0.5 ? TERRAINS.STONE_DEPOSIT : TERRAINS.MANA_RIFT;
+                            } else {
+                                newT = Math.random() > 0.6 ? TERRAINS.LAVA_RIFT : (Math.random() > 0.5 ? TERRAINS.STONE_DEPOSIT : TERRAINS.MANA_RIFT);
+                            }
+                        }
                         else if (t.id === 'FOREST' || t.id === 'SWAMP') newT = Math.random() > 0.5 ? TERRAINS.DNA_DEPOSIT : TERRAINS.MANA_RIFT;
                         else if (t.id === 'PLAINS' || t.id === 'SNOW') newT = Math.random() > 0.85 ? TERRAINS.BLACK_MARKET : (Math.random() > 0.5 ? TERRAINS.GOLD_DEPOSIT : TERRAINS.DNA_DEPOSIT);
 

@@ -45,7 +45,7 @@ window.CONTINENT_REGIONS = {
     'WEST': { id: 'WEST', name: 'Floresta Ancestral', icon: '🌲', biome: 'FOREST', x: 15, y: 50, adj: ['NW', 'SW', 'CENTER'] },
     'NORTH': { id: 'NORTH', name: 'Picos Gélidos', icon: '🏔️', biome: 'SNOW', x: 50, y: 15, adj: ['NW', 'NE', 'CENTER'] },
     'EAST': { id: 'EAST', name: 'Ermos Desolados', icon: '🏜️', biome: 'DESERT', x: 85, y: 50, adj: ['NE', 'SE', 'CENTER'] },
-    'SOUTH': { id: 'SOUTH', name: 'Pântano Tóxico', icon: '☠️', biome: 'WATER', x: 50, y: 85, adj: ['SW', 'SE', 'CENTER'] },
+    'SOUTH': { id: 'SOUTH', name: 'Pântano Tóxico', icon: '☠️', biome: 'SWAMP', x: 50, y: 85, adj: ['SW', 'SE', 'CENTER'] },
     'NW': { id: 'NW', name: 'Cordilheira Primal', icon: '⛰️', biome: 'MOUNTAIN', x: 32.5, y: 32.5, adj: ['WEST', 'NORTH'] },
     'NE': { id: 'NE', name: 'Rota da Tempestade', icon: '⚡', biome: 'PLAINS', x: 67.5, y: 32.5, adj: ['NORTH', 'EAST'] },
     'SE': { id: 'SE', name: 'Fenda Vulcânica', icon: '🔥', biome: 'ASHES', x: 67.5, y: 67.5, adj: ['EAST', 'SOUTH'] },
