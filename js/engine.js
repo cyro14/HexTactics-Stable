@@ -1782,8 +1782,8 @@ class Renderer {
     hexPath(ctx, cx, cy, size) { ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = (Math.PI / 180) * (60 * i - 30); const px = cx + size * Math.cos(a); const py = cy + size * Math.sin(a); i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); } ctx.closePath(); }
 
     draw() {
-        const ctx = this.ctx; 
-        
+        const ctx = this.ctx;
+
         // ==========================================
         // TRAVA ABSOLUTA DE NITIDEZ (PIXEL ART)
         // ==========================================
@@ -1791,12 +1791,12 @@ class Renderer {
         ctx.webkitImageSmoothingEnabled = false;
         ctx.mozImageSmoothingEnabled = false;
         ctx.msImageSmoothingEnabled = false;
-        
-        const actBgColors = ['#0a0a0e', '#121208', '#050a15', '#100515', '#150505']; 
+
+        const actBgColors = ['#0a0a0e', '#121208', '#050a15', '#100515', '#150505'];
         const bgColor = actBgColors[this.game.currentLevel - 1] || '#0a0a0e';
-        ctx.fillStyle = bgColor; 
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); 
-        ctx.globalAlpha = 1.0; 
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.globalAlpha = 1.0;
         ctx.shadowBlur = 0;
 
         this.game.map.forEach(hex => {
@@ -1847,13 +1847,17 @@ class Renderer {
                 let hexWidth = this.hexSize * Math.sqrt(3);
                 let hexHeight = this.hexSize * 2;
 
-                let zoom = 1.15;
+                let zoom = 1.16;
                 let drawW = hexWidth * zoom;
                 let drawH = hexHeight * zoom;
 
-                // AJUSTE VERTICAL: Sobe a imagem em 15% para centralizar perfeitamente no Hexágono!
-                let offsetY = this.hexSize * 0.15;
+                // ==========================================
+                // 1. AJUSTE O VALOR AQUI PARA CORRIGIR O ENCAIXE!
+                // Mude de 0.15 para 0.25, 0.30 ou 0.10 até ficar perfeito.
+                // ==========================================
+                let offsetY = this.hexSize * 0.15; 
 
+                // Corrigido para 9 argumentos
                 ctx.drawImage(
                     currentImg,
                     selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
@@ -1863,7 +1867,39 @@ class Renderer {
                 ctx.fillStyle = (hex.terrain && hex.terrain.color) ? hex.terrain.color : '#000';
                 ctx.fill();
             }
-            ctx.restore(); // Finaliza a máscara
+            ctx.restore(); // Fim da máscara do hexágono
+
+            // ==========================================
+            // 2. EFEITO DE ESPUMA DA ÁGUA (Transição Suave)
+            // ==========================================
+            let isWater = hex.terrain.id === 'WATER' || hex.terrain.id === 'SEA' || hex.terrain.id === 'REEF' || hex.terrain.id === 'SWAMP';
+
+            if (isWater) {
+                ctx.lineWidth = 4;
+                ctx.lineCap = "round";
+                // Pântano ganha espuma verde lodo; o resto ganha espuma branca
+                ctx.strokeStyle = hex.terrain.id === 'SWAMP' ? "rgba(100, 150, 70, 0.4)" : "rgba(255, 255, 255, 0.4)"; 
+
+                let neighbors = Hex.getNeighbors(hex.q, hex.r);
+                
+                neighbors.forEach((n, i) => {
+                    let neighborHex = this.game.map.get(`${n.q},${n.r}`);
+                    
+                    // Se o vizinho for terra, desenha a borda suave
+                    if (neighborHex && neighborHex.terrain.id !== 'WATER' && neighborHex.terrain.id !== 'SEA' && neighborHex.terrain.id !== 'REEF' && neighborHex.terrain.id !== 'SWAMP') {
+                        
+                        ctx.beginPath();
+                        const a1 = (Math.PI / 180) * (60 * i - 30);
+                        const a2 = (Math.PI / 180) * (60 * (i + 1) - 30);
+                        
+                        // Desenha a linha na aresta exata de encontro
+                        ctx.moveTo(p.x + (this.hexSize - 1) * Math.cos(a1), p.y + (this.hexSize - 1) * Math.sin(a1));
+                        ctx.lineTo(p.x + (this.hexSize - 1) * Math.cos(a2), p.y + (this.hexSize - 1) * Math.sin(a2));
+                        
+                        ctx.stroke();
+                    }
+                });
+            } // Finaliza a máscara
 
             // 2. DESENHA A BORDA E OS EFEITOS (Fora da máscara)
             this.hexPath(ctx, p.x, p.y, this.hexSize - 0.5);
