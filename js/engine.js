@@ -59,7 +59,14 @@ class Unit {
             filter: d.filter || 'none', tags: d.tags || [], fav: d.fav || [],
             furyAtk: d.furyAtk || 0, knownSpells: d.knownSpells || [],
             grimTags: d.grimTags || [], spellsCast: d.spellsCast || 0,
-            _origFaction: d._origFaction, _mcDuration: d._mcDuration
+            _origFaction: d._origFaction, _mcDuration: d._mcDuration,
+            isElite: d.isElite || false,
+            isObjectiveTarget: d.isObjectiveTarget || false,
+            isHidden: d.isHidden || false,
+            isHiddenByNight: d.isHiddenByNight || false,
+            tameImmuneTurn: d.tameImmuneTurn || 0,
+            undyingTurns: d.undyingTurns || 0,
+            _digTurn: d._digTurn || null
         });
 
         this.abilities = (d.abilities || []).concat(d.ability ? [d.ability] : []).filter(Boolean);
@@ -235,41 +242,41 @@ class Game {
         let isNight = (cycle >= 6 && cycle <= 8);
 
         this.units.forEach(u => {
-                // O jogador sempre vê as próprias tropas
-                if (u.faction === 1) return;
+            // O jogador sempre vê as próprias tropas
+            if (u.faction === 1) return;
 
-                let inLight = false;
+            let inLight = false;
 
-                // Se for de dia, ou se a própria fera emitir luz (fogo/celestial), ela é visível
-                if (!isNight || (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL') || u.tags.includes('ELECTRIC')))) {
-                    inLight = true;
-                } else {
-                    // Checa se está sendo iluminado por uma unidade do jogador
-                    for (let light of this.units) {
-                        if (light.faction === 1 || (light.tags && (light.tags.includes('FIRE') || light.tags.includes('CELESTIAL') || light.tags.includes('ELECTRIC')))) {
-                            let r = (light.tags && (light.tags.includes('FIRE') || light.tags.includes('CELESTIAL'))) ? 3 : 2;
-                            if (Hex.distance(u, light) <= r) { inLight = true; break; }
-                        }
+            // Se for de dia, ou se a própria fera emitir luz (fogo/celestial), ela é visível
+            if (!isNight || (u.tags && (u.tags.includes('FIRE') || u.tags.includes('CELESTIAL') || u.tags.includes('ELECTRIC')))) {
+                inLight = true;
+            } else {
+                // Checa se está sendo iluminado por uma unidade do jogador
+                for (let light of this.units) {
+                    if (light.faction === 1 || (light.tags && (light.tags.includes('FIRE') || light.tags.includes('CELESTIAL') || light.tags.includes('ELECTRIC')))) {
+                        let r = (light.tags && (light.tags.includes('FIRE') || light.tags.includes('CELESTIAL'))) ? 3 : 2;
+                        if (Hex.distance(u, light) <= r) { inLight = true; break; }
                     }
-                    // Checa se está pisando perto de lava ou floresta em chamas
-                    if (!inLight) {
-                        for (let [key, hex] of this.map.entries()) {
-                            if (hex.terrain && (hex.terrain.id === 'LAVA_RIFT' || hex.terrain.id === 'BURNING_FOREST')) {
-                                if (Hex.distance(u, hex) <= 2) { inLight = true; break; }
-                            }
+                }
+                // Checa se está pisando perto de lava ou floresta em chamas
+                if (!inLight) {
+                    for (let [key, hex] of this.map.entries()) {
+                        if (hex.terrain && (hex.terrain.id === 'LAVA_RIFT' || hex.terrain.id === 'BURNING_FOREST')) {
+                            if (Hex.distance(u, hex) <= 2) { inLight = true; break; }
                         }
                     }
                 }
+            }
 
-                u.isHiddenByNight = !inLight;
+            u.isHiddenByNight = !inLight;
 
-                // INTEGRAÇÃO PERFEITA: Preserva o status do monstro que já estava camuflado no mato!
-                if (u.isHiddenByNight) {
-                    u.isHidden = true; // A noite engole a fera
-                } else if (!u.abilities || (!u.abilities.includes('camouflage') && !u.abilities.includes('dive'))) {
-                    u.isHidden = false; // A luz revela a fera (a menos que ela esteja mergulhada/camuflada)
-                }
-            });
+            // INTEGRAÇÃO PERFEITA: Preserva o status do monstro que já estava camuflado no mato!
+            if (u.isHiddenByNight) {
+                u.isHidden = true; // A noite engole a fera
+            } else if (!u.abilities || (!u.abilities.includes('camouflage') && !u.abilities.includes('dive'))) {
+                u.isHidden = false; // A luz revela a fera (a menos que ela esteja mergulhada/camuflada)
+            }
+        });
     }
     generateCampaignMap(savedRoster = []) {
         if (!this.eventFlags) this.eventFlags = {};
@@ -338,9 +345,15 @@ class Game {
                         else if (rnd > 0.2) t = TERRAINS.SAVANNA;
                         else if (rnd > 0.15) t = TERRAINS.VILLAGE;
                     } else if (prefBiome === 'WATER') {
-                        if (rnd > 0.5) t = TERRAINS.WATER;
-                        else if (rnd > 0.3) t = TERRAINS.SWAMP;
-                        else if (rnd > 0.2) t = TERRAINS.SEA;
+                        if (rnd > 0.4) t = TERRAINS.SEA;
+                        else if (rnd > 0.1) t = TERRAINS.WATER;
+                        else if (rnd > 0.05) t = TERRAINS.PLAINS;
+                        else if (rnd > 0.02) t = TERRAINS.VILLAGE; // Apenas ~3% de chance de Vila
+                    } else if (prefBiome === 'SWAMP') {
+                        if (rnd > 0.4) t = TERRAINS.SWAMP;
+                        else if (rnd > 0.1) t = TERRAINS.WATER;
+                        else if (rnd > 0.05) t = TERRAINS.FOREST;
+                        else if (rnd > 0.02) t = TERRAINS.VILLAGE; // Apenas ~3% de chance de Vila
                     } else if (prefBiome === 'FOREST') {
                         if (rnd > 0.5) t = TERRAINS.FOREST;
                         else if (rnd > 0.3) t = TERRAINS.SWAMP;
@@ -349,6 +362,7 @@ class Game {
                         if (rnd > 0.5) t = TERRAINS.MOUNTAIN;
                         else if (rnd > 0.3) t = TERRAINS.FOREST;
                         else if (rnd > 0.2) t = TERRAINS.SNOW;
+                        else if (rnd > 0.1) t = TERRAINS.VILLAGE;
                     } else if (prefBiome === 'ASHES') {
                         if (rnd > 0.4) t = TERRAINS.ASHES;
                         else if (rnd > 0.2) t = TERRAINS.BURNING_FOREST;
@@ -363,14 +377,21 @@ class Game {
                     }
 
                     // ========================================================
-                    // GERAÇÃO DE TERRENOS ESPECIAIS (AGORA NO LUGAR CERTO!)
+                    // GERAÇÃO DE TERRENOS ESPECIAIS
                     // ========================================================
                     let specRnd = Math.random();
                     if (specRnd > 0.94) {
                         let newT = null;
                         if (t.id === 'WATER' || t.id === 'SEA') newT = TERRAINS.REEF;
                         else if (t.id === 'DESERT' || t.id === 'SAVANNA') newT = Math.random() > 0.5 ? TERRAINS.QUICKSAND : TERRAINS.GOLD_DEPOSIT;
-                        else if (t.id === 'MOUNTAIN' || t.id === 'ASHES' || t.id === 'BURNING_FOREST') newT = Math.random() > 0.6 ? TERRAINS.LAVA_RIFT : (Math.random() > 0.5 ? TERRAINS.STONE_DEPOSIT : TERRAINS.MANA_RIFT);
+                        else if (t.id === 'MOUNTAIN' || t.id === 'ASHES' || t.id === 'BURNING_FOREST') {
+                            // Proteção: Impede que surja LAVA no meio dos Picos Nevados!
+                            if (prefBiome === 'SNOW') {
+                                newT = Math.random() > 0.5 ? TERRAINS.STONE_DEPOSIT : TERRAINS.MANA_RIFT;
+                            } else {
+                                newT = Math.random() > 0.6 ? TERRAINS.LAVA_RIFT : (Math.random() > 0.5 ? TERRAINS.STONE_DEPOSIT : TERRAINS.MANA_RIFT);
+                            }
+                        }
                         else if (t.id === 'FOREST' || t.id === 'SWAMP') newT = Math.random() > 0.5 ? TERRAINS.DNA_DEPOSIT : TERRAINS.MANA_RIFT;
                         else if (t.id === 'PLAINS' || t.id === 'SNOW') newT = Math.random() > 0.85 ? TERRAINS.BLACK_MARKET : (Math.random() > 0.5 ? TERRAINS.GOLD_DEPOSIT : TERRAINS.DNA_DEPOSIT);
 
@@ -432,6 +453,7 @@ class Game {
 
         aiPool.sort(() => Math.random() - 0.5);
         let chosenAI = aiPool[0] || { name: 'Desconhecido', emoji: '💀', hp: 50, atk: 10, mp: 3, range: 1, tags: [], fav: [] };
+        this.rivalLeader = chosenAI;
         let vHp = Math.floor(chosenAI.hp * sFac) + 20;
         let vAtk = Math.floor(chosenAI.atk * sFac) + 4;
 
@@ -635,6 +657,93 @@ class Game {
         if (pL && pL.baseName === 'Gênia') {
             setTimeout(() => { if (typeof window.triggerGenieWishes === 'function') window.triggerGenieWishes(); }, 1200);
         }
+
+        // (O código que já existe aí deve ser o da Gênia)
+        if (pL && pL.baseName === 'Gênia') {
+            setTimeout(() => { if (typeof window.triggerGenieWishes === 'function') window.triggerGenieWishes(); }, 1200);
+        }
+
+        // === GATILHO DA LORE DE INÍCIO DE FASE CORRIGIDO ===
+        setTimeout(async () => {
+            let myLore = typeof LORE_DIALOGUES !== 'undefined' ? LORE_DIALOGUES[this.leaderData.loreFaction] : null;
+            let actIndex = this.currentLevel - 1;
+
+            if (myLore && myLore.stages[actIndex] && this.currentFloor === 0) {
+                let seq = [];
+
+                seq.push({
+                    name: this.leaderData.name,
+                    emoji: this.leaderData.emoji,
+                    sprite: this.leaderData.sprite,
+                    text: myLore.stages[actIndex]
+                });
+
+                if (this.rivalLeader && myLore.rivalTaunts && myLore.rivalTaunts.length > 0) {
+                    let tauntIndex = actIndex % myLore.rivalTaunts.length;
+                    let tauntText = myLore.rivalTaunts[tauntIndex];
+
+                    seq.push({
+                        name: this.rivalLeader.name,
+                        emoji: this.rivalLeader.emoji,
+                        sprite: this.rivalLeader.sprite,
+                        text: tauntText,
+                        isRival: true
+                    });
+                }
+
+                if (typeof window.playDialogueSequence === 'function') {
+                    await window.playDialogueSequence(seq);
+                }
+            }
+        }, 600);
+
+        // =========================================================
+        // SORTEIO DO OBJETIVO (Protegido contra F5 e Tentar Novamente)
+        // =========================================================
+        let currentStageId = `${this.currentLevel}_${this.currentFloor}_${this.currentRegionId}`;
+
+        if (this._objectiveStageId !== currentStageId || !this.currentObjective) {
+            this._objectiveStageId = currentStageId;
+
+            let possibleObjectives = ['DEFEAT_LEADER', 'SURVIVE'];
+            let hasVillages = Array.from(this.map.values()).some(h => h.terrain.id === 'VILLAGE');
+            if (hasVillages) possibleObjectives.push('DOMINATE');
+
+            let wildBoss = this.units.find(u => u.isBoss && u.faction === 0);
+
+            if (this.currentRouteType === 'BOSS' || this.isBossStage || this.currentRouteType === 'ELITE') {
+                this.currentObjective = wildBoss ? 'BOSS' : 'DEFEAT_LEADER';
+            } else {
+                this.currentObjective = possibleObjectives[Math.floor(Math.random() * possibleObjectives.length)];
+            }
+        }
+
+        let wildBoss = this.units.find(u => u.isBoss && u.faction === 0);
+        if (this.currentObjective === 'BOSS' && wildBoss) {
+            wildBoss.isObjectiveTarget = true;
+        }
+
+        setTimeout(() => {
+            let text = "DERROTE O LÍDER INIMIGO!";
+            if (this.currentObjective === 'SURVIVE') text = "SOBREVIVA POR 10 TURNOS!";
+            else if (this.currentObjective === 'DOMINATE') text = "CAPTURE TODAS AS VILAS!";
+            else if (this.currentObjective === 'BOSS') text = "ELIMINE OU CAPTURE O CHEFE!";
+
+            let banner = document.getElementById('objective-banner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'objective-banner';
+                document.body.appendChild(banner);
+            }
+
+            banner.innerHTML = `<h2 style="color:var(--gold); margin:0 0 10px 0; font-family:'Cinzel', serif;">NOVO OBJETIVO</h2><div style="font-weight:bold; font-size:1.2em; text-shadow: 0 0 10px red;">${text}</div>`;
+            banner.classList.remove('banner-animate');
+            void banner.offsetWidth;
+            banner.classList.add('banner-animate');
+
+            this.isAnimating = true;
+            setTimeout(() => { this.isAnimating = false; }, 3000);
+        }, 650);
     }
 
     generateDuelMap() {
@@ -771,38 +880,38 @@ class Game {
                         // Aceita tanto a tag antiga type: 'equip' quanto os novos itens com equipSlot
                         if (iDef.equipSlot || iDef.type === 'equip') {
                             let existingEq = u.equipment.find(eq => eq.id === iType);
-                            
+
                             // 1. O monstro já tem este EXATO item? Funde para o próximo nível
-                            if (existingEq) { 
-                                if (iDef && typeof iDef.onUnequip === 'function') iDef.onUnequip(u, existingEq.level); 
-                                existingEq.level++; 
-                                if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(u, existingEq.level); 
-                                if (typeof showPopup === 'function') showPopup(`✨ Fusão Lv${existingEq.level}!`, u, '#c9a227'); 
-                            } 
+                            if (existingEq) {
+                                if (iDef && typeof iDef.onUnequip === 'function') iDef.onUnequip(u, existingEq.level);
+                                existingEq.level++;
+                                if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(u, existingEq.level);
+                                if (typeof showPopup === 'function') showPopup(`✨ Fusão Lv${existingEq.level}!`, u, '#c9a227');
+                            }
                             // 2. O monstro não tem esse item. Vamos checar a restrição de Slots!
-                            else { 
+                            else {
                                 let itemSlot = iDef.equipSlot;
                                 let existingSlotIdx = itemSlot ? u.equipment.findIndex(eq => ITEMS[eq.id] && ITEMS[eq.id].equipSlot === itemSlot) : -1;
-                                
+
                                 // AUTO-SWAP: Se já tem algo ocupando o slot, desequipa primeiro
                                 if (existingSlotIdx !== -1) {
                                     let oldEq = u.equipment[existingSlotIdx];
                                     let oldDef = ITEMS[oldEq.id];
-                                    
+
                                     if (oldDef && typeof oldDef.onUnequip === 'function') oldDef.onUnequip(u, oldEq.level);
-                                    
+
                                     u.equipment.splice(existingSlotIdx, 1);
-                                    
+
                                     // Devolve o item velho pra mochila global do jogo
                                     if (!this.inventory) this.inventory = [];
-                                    this.inventory.push(oldEq); 
-                                    
+                                    this.inventory.push(oldEq);
+
                                     if (typeof showPopup === 'function') showPopup(`Trocou: ${oldDef.name}`, u, '#3498db');
                                 }
-                                
+
                                 // Equipa o item novo que estava no chão
-                                u.equipment.push({ id: iType, level: 1 }); 
-                                if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(u, 1); 
+                                u.equipment.push({ id: iType, level: 1 });
+                                if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(u, 1);
                             }
                             this.items.delete(k);
                         } else {
@@ -1644,7 +1753,7 @@ class Renderer {
         this.offsetY = 0;
         this.tileset = new Image();
         this.tileset.onload = () => { if (this.game) this.draw(); };
-        this.tileset.src = 'img/tileset.png';
+        this.tileset.src = 'img/tiles/tileset.png';
         window.addEventListener('resize', () => this.initCamera(false));
     }
 
@@ -1673,8 +1782,22 @@ class Renderer {
     hexPath(ctx, cx, cy, size) { ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = (Math.PI / 180) * (60 * i - 30); const px = cx + size * Math.cos(a); const py = cy + size * Math.sin(a); i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); } ctx.closePath(); }
 
     draw() {
-        const ctx = this.ctx; const actBgColors = ['#0a0a0e', '#121208', '#050a15', '#100515', '#150505']; const bgColor = actBgColors[this.game.currentLevel - 1] || '#0a0a0e';
-        ctx.fillStyle = bgColor; ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); ctx.globalAlpha = 1.0; ctx.shadowBlur = 0;
+        const ctx = this.ctx;
+
+        // ==========================================
+        // TRAVA ABSOLUTA DE NITIDEZ (PIXEL ART)
+        // ==========================================
+        ctx.imageSmoothingEnabled = false;
+        ctx.webkitImageSmoothingEnabled = false;
+        ctx.mozImageSmoothingEnabled = false;
+        ctx.msImageSmoothingEnabled = false;
+
+        const actBgColors = ['#0a0a0e', '#121208', '#050a15', '#100515', '#150505'];
+        const bgColor = actBgColors[this.game.currentLevel - 1] || '#0a0a0e';
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.globalAlpha = 1.0;
+        ctx.shadowBlur = 0;
 
         this.game.map.forEach(hex => {
             const p = this.getPos(hex.q, hex.r);
@@ -1724,13 +1847,17 @@ class Renderer {
                 let hexWidth = this.hexSize * Math.sqrt(3);
                 let hexHeight = this.hexSize * 2;
 
-                let zoom = 1.15;
+                let zoom = 1.16;
                 let drawW = hexWidth * zoom;
                 let drawH = hexHeight * zoom;
 
-                // AJUSTE VERTICAL: Sobe a imagem em 15% para centralizar perfeitamente no Hexágono!
-                let offsetY = this.hexSize * 0.15;
+                // ==========================================
+                // 1. AJUSTE O VALOR AQUI PARA CORRIGIR O ENCAIXE!
+                // Mude de 0.15 para 0.25, 0.30 ou 0.10 até ficar perfeito.
+                // ==========================================
+                let offsetY = this.hexSize * 0.15; 
 
+                // Corrigido para 9 argumentos
                 ctx.drawImage(
                     currentImg,
                     selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
@@ -1740,7 +1867,39 @@ class Renderer {
                 ctx.fillStyle = (hex.terrain && hex.terrain.color) ? hex.terrain.color : '#000';
                 ctx.fill();
             }
-            ctx.restore(); // Finaliza a máscara
+            ctx.restore(); // Fim da máscara do hexágono
+
+            // ==========================================
+            // 2. EFEITO DE ESPUMA DA ÁGUA (Transição Suave)
+            // ==========================================
+            let isWater = hex.terrain.id === 'WATER' || hex.terrain.id === 'SEA' || hex.terrain.id === 'REEF' || hex.terrain.id === 'SWAMP';
+
+            if (isWater) {
+                ctx.lineWidth = 4;
+                ctx.lineCap = "round";
+                // Pântano ganha espuma verde lodo; o resto ganha espuma branca
+                ctx.strokeStyle = hex.terrain.id === 'SWAMP' ? "rgba(100, 150, 70, 0.4)" : "rgba(255, 255, 255, 0.4)"; 
+
+                let neighbors = Hex.getNeighbors(hex.q, hex.r);
+                
+                neighbors.forEach((n, i) => {
+                    let neighborHex = this.game.map.get(`${n.q},${n.r}`);
+                    
+                    // Se o vizinho for terra, desenha a borda suave
+                    if (neighborHex && neighborHex.terrain.id !== 'WATER' && neighborHex.terrain.id !== 'SEA' && neighborHex.terrain.id !== 'REEF' && neighborHex.terrain.id !== 'SWAMP') {
+                        
+                        ctx.beginPath();
+                        const a1 = (Math.PI / 180) * (60 * i - 30);
+                        const a2 = (Math.PI / 180) * (60 * (i + 1) - 30);
+                        
+                        // Desenha a linha na aresta exata de encontro
+                        ctx.moveTo(p.x + (this.hexSize - 1) * Math.cos(a1), p.y + (this.hexSize - 1) * Math.sin(a1));
+                        ctx.lineTo(p.x + (this.hexSize - 1) * Math.cos(a2), p.y + (this.hexSize - 1) * Math.sin(a2));
+                        
+                        ctx.stroke();
+                    }
+                });
+            } // Finaliza a máscara
 
             // 2. DESENHA A BORDA E OS EFEITOS (Fora da máscara)
             this.hexPath(ctx, p.x, p.y, this.hexSize - 0.5);
@@ -1933,13 +2092,13 @@ class Renderer {
                     // SISTEMA DE ESCALA INDIVIDUAL DO SPRITE (AO VIVO)
                     // ==========================================
                     // 1. Vasculha o banco de dados em tempo real atrás da ficha original do monstro
-                    let masterPool = typeof BEASTS !== 'undefined' ? [...(BEASTS.LAND||[]), ...(BEASTS.WATER||[]), ...(BEASTS.SNOW||[]), ...(BEASTS.BOSSES||[])] : [];
+                    let masterPool = typeof BEASTS !== 'undefined' ? [...(BEASTS.LAND || []), ...(BEASTS.WATER || []), ...(BEASTS.SNOW || []), ...(BEASTS.BOSSES || [])] : [];
                     let template = masterPool.find(x => x.name === (u.baseName || u.name));
                     if (!template && u.isLeader && typeof LEADERS !== 'undefined') template = LEADERS.find(x => x.name === (u.baseName || u.name));
-                    
+
                     // 2. Aplica a escala direto do data.js (substitui o save antigo!)
                     let customScale = (template && template.scale) ? template.scale : (u.scale || 1);
-                    
+
                     let finalW = drawW * customScale;
                     let finalH = drawH * customScale;
 
@@ -2093,7 +2252,7 @@ class KingdomRenderer {
         this.tileset.onload = () => { if (this.game) this.draw(); };
 
         // MUITO IMPORTANTE: Coloque o mesmo nome de arquivo que você usou no outro mapa!
-        this.tileset.src = 'img/tileset.png';
+        this.tileset.src = 'img/tiles/tileset.png';
 
         window.addEventListener('resize', () => this.initCamera());
     }
@@ -2514,4 +2673,245 @@ window.runWildTurn = async function () {
         if (typeof sleep === 'function') await sleep(200);
     }
     game.selectedUnit = null;
+};
+
+// =====================================================================
+// SISTEMA DINÂMICO DE OBJETIVOS DA MISSÃO (CORRIGIDO PARA O SAVE)
+// =====================================================================
+
+// 1. Hook na Geração do Mapa (Evita trocar o objetivo no Tentar Novamente)
+const origGenerateCampaignMap = Game.prototype.generateCampaignMap;
+Game.prototype.generateCampaignMap = function (savedRoster = []) {
+    origGenerateCampaignMap.call(this, savedRoster);
+
+    // Cria um identificador único para o nó atual (Ex: Nível_Andar_Regiao)
+    let currentStageId = `${this.currentLevel}_${this.currentFloor}_${this.currentRegionId}`;
+
+    // Verifica se JÁ sorteamos um objetivo para ESTA fase exata
+    if (this._objectiveStageId !== currentStageId || !this.currentObjective) {
+        this._objectiveStageId = currentStageId;
+
+        let possibleObjectives = ['DEFEAT_LEADER', 'SURVIVE'];
+
+        let hasVillages = Array.from(this.map.values()).some(h => h.terrain.id === 'VILLAGE');
+        if (hasVillages) possibleObjectives.push('DOMINATE');
+
+        let wildBoss = this.units.find(u => u.isBoss && u.faction === 0);
+
+        if (this.currentRouteType === 'BOSS' || this.isBossStage || this.currentRouteType === 'ELITE') {
+            this.currentObjective = wildBoss ? 'BOSS' : 'DEFEAT_LEADER';
+        } else {
+            this.currentObjective = possibleObjectives[Math.floor(Math.random() * possibleObjectives.length)];
+        }
+    }
+
+    // Marca o alvo SEMPRE (pois ao clicar em Tentar Novamente, as unidades são apagadas e recriadas)
+    let wildBoss = this.units.find(u => u.isBoss && u.faction === 0);
+    if (this.currentObjective === 'BOSS' && wildBoss) {
+        wildBoss.isObjectiveTarget = true;
+    }
+
+    // Exibir o Banner Gigante na Tela
+    setTimeout(() => {
+        let text = "DERROTE O LÍDER INIMIGO!";
+        if (this.currentObjective === 'SURVIVE') text = "SOBREVIVA POR 10 TURNOS!";
+        else if (this.currentObjective === 'DOMINATE') text = "CAPTURE TODAS AS VILAS!";
+        else if (this.currentObjective === 'BOSS') text = "ELIMINE OU CAPTURE O CHEFE!";
+
+        let banner = document.getElementById('objective-banner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'objective-banner';
+            document.body.appendChild(banner);
+        }
+
+        banner.innerHTML = `<h2 style="color:var(--gold); margin:0 0 10px 0; font-family:'Cinzel', serif;">NOVO OBJETIVO</h2><div style="font-weight:bold; font-size:1.2em; text-shadow: 0 0 10px red;">${text}</div>`;
+
+        banner.classList.remove('banner-animate');
+        void banner.offsetWidth; // Força a tela a reiniciar a animação
+        banner.classList.add('banner-animate');
+
+        this.isAnimating = true;
+        setTimeout(() => { this.isAnimating = false; }, 3000);
+    }, 650);
+};
+
+// =====================================================================
+// INJEÇÃO NO SISTEMA DE SAVE/LOAD (Para F5 e Carregar Jogo)
+// =====================================================================
+
+// Gravar o objetivo no localStorage junto com o resto da batalha
+const origAutoSave = window.autoSave;
+window.autoSave = function () {
+    origAutoSave(); // Executa o save nativo do seu jogo primeiro
+
+    // Agora injetamos o objetivo no arquivo salvo
+    if (game && !game.gameOver) {
+        const sk = game.isDuel ? 'ht_save_duel' : (game.isRoguelite ? 'ht_save_rogue' : 'ht_save_camp');
+        let savedData = JSON.parse(localStorage.getItem(sk));
+        if (savedData) {
+            savedData.currentObjective = game.currentObjective;
+            savedData._objectiveStageId = game._objectiveStageId;
+            localStorage.setItem(sk, JSON.stringify(savedData));
+        }
+    }
+};
+
+// Recuperar o objetivo quando a página for recarregada
+const origStartGame = window.startGame;
+window.startGame = function (load, isRoguelite = false, leaderId = null, isDuel = false, opponentId = null) {
+    origStartGame(load, isRoguelite, leaderId, isDuel, opponentId);
+
+    if (load && game) {
+        const sk = isDuel ? 'ht_save_duel' : (isRoguelite ? 'ht_save_rogue' : 'ht_save_camp');
+        let savedData = JSON.parse(localStorage.getItem(sk));
+
+        // Restaura as variáveis mágicas
+        if (savedData && savedData.currentObjective) {
+            game.currentObjective = savedData.currentObjective;
+            game._objectiveStageId = savedData._objectiveStageId;
+
+            // Re-Aplica a mira no Chefe caso o save tenha sido feito no meio da luta
+            let wildBoss = game.units.find(u => u.isBoss && u.faction === 0);
+            if (game.currentObjective === 'BOSS' && wildBoss) {
+                wildBoss.isObjectiveTarget = true;
+            }
+        }
+    }
+};
+
+// 2. Novo CheckWin que respeita os Objetivos
+Game.prototype.checkWin = function () {
+    if (this.gameOver) return;
+
+    // Condição de Derrota Universal: Seu Herói morreu
+    const pL = this.units.find(u => u.faction === 1 && u.isLeader);
+    if (!pL) {
+        this.gameOver = true;
+        if (typeof triggerStageEnd === 'function') triggerStageEnd(false);
+        return;
+    }
+
+    // Modo SOBREVIVÊNCIA
+    if (this.currentObjective === 'SURVIVE') {
+        if (this.turnCount >= 11) {
+            this.gameOver = true;
+            if (typeof triggerStageEnd === 'function') triggerStageEnd(true);
+        }
+        return; // O Líder inimigo morrer antes do fim não finaliza a partida!
+    }
+
+    // Modo DOMINAÇÃO
+    if (this.currentObjective === 'DOMINATE') {
+        let totalV = 0, playerV = 0;
+        this.map.forEach(h => {
+            if (h.terrain.id === 'VILLAGE') {
+                totalV++;
+                if (h.owner === 1) playerV++;
+            }
+        });
+        // Ganha instantaneamente ao pintar a última bandeira
+        if (totalV > 0 && playerV === totalV) {
+            this.gameOver = true;
+            if (typeof triggerStageEnd === 'function') triggerStageEnd(true);
+        }
+        return;
+    }
+
+    // Modo CHEFE
+    if (this.currentObjective === 'BOSS') {
+        // A vitória só é calculada no momento do abate ou captura do alvo nos hooks abaixo
+        return;
+    }
+
+    // Modo DEFEAT_LEADER (Padrão)
+    const aL = this.units.find(u => u.faction === 2 && u.isLeader);
+    if (!aL) {
+        this.gameOver = true;
+        if (typeof triggerStageEnd === 'function') triggerStageEnd(true);
+    }
+};
+
+// 3. Verifica Vitória na captura de Vilas
+const origCheckVillageCapture = Game.prototype.checkVillageCapture;
+Game.prototype.checkVillageCapture = function (u) {
+    origCheckVillageCapture.call(this, u);
+    // Se o objetivo é dominar, roda o checkWin logo após pintar a vila
+    if (u.faction === 1 && this.currentObjective === 'DOMINATE') {
+        this.checkWin();
+    }
+};
+
+// 4. Hook de Morte para o Modo Chefe
+const origHandleDeathObj = Game.prototype.handleDeath;
+Game.prototype.handleDeath = function (victim, killer) {
+    origHandleDeathObj.call(this, victim, killer);
+
+    // Se o alvo da missão morrer
+    if (this.currentObjective === 'BOSS' && victim.isObjectiveTarget) {
+        this.gameOver = true;
+        // Se o Jogador matou = Venceu. Se o cenário, dano passivo ou rival matou = Perdeu!
+        if (killer && killer.faction === 1) {
+            if (typeof triggerStageEnd === 'function') triggerStageEnd(true);
+        } else {
+            if (typeof triggerStageEnd === 'function') triggerStageEnd(false);
+        }
+    }
+};
+
+// 5. Hook de Doma para o Modo Chefe (Captura Pacífica!)
+const origAttemptTameObj = Game.prototype.attemptTame;
+Game.prototype.attemptTame = async function (tamer, wild) {
+    let res = await origAttemptTameObj.call(this, tamer, wild);
+
+    // Se a doma funcionou e o alvo era o Chefe da missão
+    if (res && this.currentObjective === 'BOSS' && wild.isObjectiveTarget && tamer.faction === 1) {
+        this.gameOver = true;
+        if (typeof triggerStageEnd === 'function') triggerStageEnd(true);
+    }
+    return res;
+};
+
+// 6. Spawn Infinito do Modo Sobrevivência
+const origStartNextTurnSurvive = Game.prototype.startNextTurn;
+Game.prototype.startNextTurn = async function () {
+
+    // Exatamente no momento em que o jogador passa a vez para a IA
+    if (this.currentTurn === 1 && this.currentObjective === 'SURVIVE' && this.turnCount < 11 && !this.gameOver) {
+
+        // Busca todos os hexágonos limpos posicionados nas beiradas do mapa
+        let edges = Array.from(this.map.values()).filter(h =>
+            (h.q === -Math.floor(this.cols / 2) || h.q === this.cols - 1 - Math.floor(this.cols / 2) || h.r === 0 || h.r === this.rows - 1) &&
+            h.terrain.id !== 'WATER' && h.terrain.id !== 'MOUNTAIN' && h.terrain.id !== 'CASTLE' &&
+            !this.getUnitAt(h.q, h.r)
+        );
+
+        // Puxa entre 1 a 2 bestas por turno
+        if (edges.length > 0 && typeof BEASTS !== 'undefined') {
+            let spawnHex = edges[Math.floor(Math.random() * edges.length)];
+            let b = BEASTS.LAND[Math.floor(Math.random() * BEASTS.LAND.length)];
+            let uLvl = this.getUnitLvl(b);
+            let fFac = 1 + (uLvl - 1) * 0.2;
+
+            this.units.push(new Unit({
+                q: spawnHex.q, r: spawnHex.r, faction: 2,
+                name: "Horda de " + b.name, baseName: b.name, emoji: b.e,
+                hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac),
+                mp: b.mp, maxMp: b.mp,
+                atk: Math.floor(b.atk * fFac), range: b.range,
+                abilities: [...(b.abilities || [])],
+                tags: b.tags || [], level: uLvl
+            }));
+
+            if (typeof showPopup === 'function') showPopup("A Horda avança!", { vq: spawnHex.q, vr: spawnHex.r }, '#c0392b');
+        }
+    }
+
+    // Chama o loop de turnos base do jogo (que ativa e controla IAs)
+    await origStartNextTurnSurvive.call(this);
+
+    // Verifica a vitória logo no início do Turno 11 do jogador
+    if (this.currentTurn === 1 && this.currentObjective === 'SURVIVE' && this.turnCount === 11) {
+        this.checkWin();
+    }
 };

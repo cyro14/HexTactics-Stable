@@ -102,7 +102,9 @@ function autoSave() {
             routeMap: game.routeMap, currentFloor: game.currentFloor, inventory: game.inventory,
             isBossStage: game.isBossStage || false,
             turnCount: game.turnCount,
-            currentRouteType: game.currentRouteType || 'BATTLE'
+            currentRouteType: game.currentRouteType || 'BATTLE',
+            currentObjective: game.currentObjective,
+            _objectiveStageId: game._objectiveStageId
         };
         //Salva os pergaminhos aprendidos
         if (typeof RECIPES !== 'undefined') {
@@ -286,7 +288,7 @@ function updateManaUI() {
     // Injeta o gatilho compacto e a caixinha absoluta oculta
     container.innerHTML = `
         <div id="mana-trigger" style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px; font-weight:bold; color:var(--gold-light); padding:2px 4px; user-select:none;">
-            <img src="img/icone-mana.png" style="width: 16px; height: 16px;"> <span>Mana: ${totalAvailable}</span> <small style="font-size:8px; opacity:0.5; transform:scale(0.8);">▼</small>
+            <img src="img/icons/icone-mana.png" style="width: 16px; height: 16px;"> <span>Mana: ${totalAvailable}</span> <small style="font-size:8px; opacity:0.5; transform:scale(0.8);">▼</small>
         </div>
         <div id="mana-dropdown-list" class="hidden" style="position:absolute; top:32px; left:0; background:rgba(10,10,15,0.98); border:1px solid var(--gold-dark); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,0.9); z-index:2500; min-width:150px; display:flex; flex-direction:column; backdrop-filter:blur(10px);">
             ${hasMana ? listHtml : '<div style="color:#666; padding:10px; font-size:11px; font-style:italic; text-align:center;">Sem Mana</div>'}
@@ -1008,7 +1010,7 @@ function renderManagement(mode = 'prep') {
             let el = document.createElement('div');
             el.className = 'beast-card unlocked';
             el.style.padding = '8px';
-            
+
             let lvlStr = item.isScroll ? `<span style="color:#aaa;">Consumível</span>` : `Lv${item.level}`;
             el.innerHTML = `<span style="font-size:24px;">${iDef.icon}</span><div style="font-size:9px; color:var(--gold);">${lvlStr}</div>`;
 
@@ -1028,24 +1030,24 @@ function renderManagement(mode = 'prep') {
 
                     let targets = [...deployedRoster, ...rosterMemory];
                     let chosenUnit = await window.promptSelectUnit(`Equipar ${iDef.name} Lv${item.level} em quem?`, targets);
-                    
+
                     if (chosenUnit) {
                         if (!chosenUnit.equipment) chosenUnit.equipment = [];
-                        
+
                         let realIdx = game.inventory.indexOf(item);
-                        if (realIdx === -1) return; 
+                        if (realIdx === -1) return;
 
                         let itemToEquip = game.inventory.splice(realIdx, 1)[0];
-                        
+
                         // 2. Procura se a unidade já tem algo equipado no mesmo slot
                         let existingEqIdx = chosenUnit.equipment.findIndex(eq => ITEMS[eq.id] && ITEMS[eq.id].equipSlot === itemSlot);
-                        
+
                         if (existingEqIdx !== -1) {
                             // Auto-Swap seguro
                             let eq = chosenUnit.equipment[existingEqIdx];
                             let eqDef = ITEMS[eq.id];
                             if (eqDef && typeof eqDef.onUnequip === 'function') eqDef.onUnequip(chosenUnit, eq.level);
-                            
+
                             chosenUnit.equipment.splice(existingEqIdx, 1);
                             game.inventory.push(eq);
                             showMessage(`Trocou ${eqDef.name} por ${iDef.name}!`, '#3498db');
@@ -1055,7 +1057,7 @@ function renderManagement(mode = 'prep') {
 
                         chosenUnit.equipment.push(itemToEquip);
                         if (iDef && typeof iDef.onEquip === 'function') iDef.onEquip(chosenUnit, itemToEquip.level);
-                        
+
                         renderManagement(mode);
                     }
                 }
@@ -1229,21 +1231,40 @@ function openLeaderSelection(isRoguelite, isDuel = false, pickingOpponentFor = n
 
             btn.innerHTML = `
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-                    <span style="font-size:42px; filter:${l.filter || 'none'}; text-shadow: 2px 2px 5px #000;">${l.emoji}</span>
-                    <div style="font-size:18px; color:var(--gold-light); font-weight:bold;">${l.name}</div>
+                    <div style="width: 64px; height: 64px; display: flex; justify-content: center; align-items: center; overflow: hidden; background: rgba(0,0,0,0.4); border: 1px solid #333; border-radius: 6px; flex-shrink: 0;">
+                        <img src="${l.sprite}" onerror="console.error('Erro na Seleção:', '${l.sprite}'); this.onerror=null; this.outerHTML='<span style=\\'font-size:40px;\\'>${l.emoji}</span>';" style="width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated;">
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-size:14px; font-weight:bold; color:var(--gold-light);">${l.name}</div>
+                        <div style="font-size:10px; color:#888; text-transform:uppercase;">${l.loreFaction}</div>
+                    </div>
                 </div>
                 <div style="font-size:12px; text-transform:none; color:#aaa; font-weight:normal; margin-bottom:8px; line-height:1.4;">${l.desc}</div>
                 <div style="display:flex; flex-wrap:wrap; gap:3px;">${grimTags}</div>
             `;
 
-            btn.onclick = () => {
+            btn.onclick = async () => {
                 if (isDuel && !pickingOpponentFor) {
-                    // Selecionou o Jogador, agora reabre para escolher o Inimigo!
                     openLeaderSelection(false, true, l.id);
                 } else {
                     $('leader-selection').classList.add('hidden');
-                    // Se for duelo, passa o jogador e o oponente.
                     startGame(false, isRoguelite, pickingOpponentFor || l.id, isDuel, pickingOpponentFor ? l.id : null);
+
+                    // === PASSO 3: GATILHO DA INTRODUÇÃO ===
+                    let myLore = typeof LORE_DIALOGUES !== 'undefined' ? LORE_DIALOGUES[game.leaderData.loreFaction] : null;
+                    if (myLore && !isDuel) { // Evita tocar a lore no modo Duelo
+                        let possibleRivals = LEADERS.filter(leader => leader.loreFaction !== game.leaderData.loreFaction);
+                        game.rivalLeader = possibleRivals[Math.floor(Math.random() * possibleRivals.length)] || LEADERS[1];
+
+                        let seq = [
+                            { name: game.leaderData.name, emoji: game.leaderData.emoji, sprite: game.leaderData.sprite, text: myLore.intro },
+                            { name: game.rivalLeader.name, emoji: game.rivalLeader.emoji, sprite: game.rivalLeader.sprite, text: myLore.rivalIntro, isRival: true }
+                        ];
+
+                        if (typeof window.playDialogueSequence === 'function') {
+                            await window.playDialogueSequence(seq);
+                        }
+                    }
                 }
             };
             container.appendChild(btn);
@@ -1960,13 +1981,21 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
         const d = JSON.parse(localStorage.getItem(sk));
         game.resources = d.resources || { wood: 0, stone: 0, scales: 0, sand: 0, blood: 0 };
         game.kingdomMap = new Map(d.kingdomMap || []);
-        game.currentLevel = d.level; game.cols = d.cols; game.rows = d.rows; game.gold = d.gold || 0;
+        game.currentLevel = d.level;
+        game.cols = d.cols;
+        game.rows = d.rows;
+        game.gold = d.gold || 0;
         game.dna = d.dna || 0;
         game.isRoguelite = d.isRoguelite || false;
         game.conqueredRegions = d.conqueredRegions || [];
         game.currentRegionId = d.currentRegionId || null;
-        game.routeMap = d.routeMap; game.currentFloor = d.currentFloor; game.inventory = d.inventory || [];
-        game.isBossStage = d.isBossStage || false; game.currentRouteType = d.currentRouteType || 'BATTLE';
+        game.routeMap = d.routeMap;
+        game.currentFloor = d.currentFloor;
+        game.inventory = d.inventory || [];
+        game.isBossStage = d.isBossStage || false;
+        game.currentRouteType = d.currentRouteType || 'BATTLE';
+        game.currentObjective = d.currentObjective || null;
+        game._objectiveStageId = d._objectiveStageId || null;
         game.manaPool = d.manaPool || {};
         game.spentMana = d.spentMana || {};
         game.turnCount = d.turnCount || 1;
@@ -1989,8 +2018,12 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
         rosterMemory = (d.rosterMemory || []).map(u => new Unit({ ...u, isNew: false }));
         deployedRoster = (d.deployedRoster || game.units.filter(u => u.faction === 1)).map(u => new Unit({ ...u, isNew: false }));
         if (d.items) d.items.forEach(([k, v]) => game.items.set(k, v));
-
-        game.currentTurn = 1; game.gameOver = false; game.selectPlayerLeader();
+        let wildBoss = game.units.find(u => u.isBoss && u.faction === 0);
+        if (game.currentObjective === 'BOSS' && wildBoss) {
+            wildBoss.isObjectiveTarget = true;
+        }
+        game.currentTurn = 1;
+        game.gameOver = false; game.selectPlayerLeader();
         updateUI(); renderer.initCamera(true); show('game-container');
     } else {
         if (localStorage.getItem(sk)) localStorage.removeItem(sk);
@@ -4154,4 +4187,61 @@ window.openCharacterScreen = function (u, isBox, mode) {
     };
 
     renderModal();
+};
+
+window.playDialogueSequence = async function (sequence) {
+    return new Promise(resolve => {
+        let overlay = document.getElementById('dialogue-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'dialogue-overlay';
+            document.body.appendChild(overlay);
+        }
+
+        let currentIndex = 0;
+        overlay.classList.remove('hidden');
+
+        const renderCurrentLine = () => {
+            if (currentIndex >= sequence.length) {
+                overlay.classList.add('hidden');
+                resolve();
+                return;
+            }
+
+            let line = sequence[currentIndex];
+            let isRival = line.isRival || false;
+
+            let flexDir = isRival ? 'row-reverse' : 'row';
+            let textAlign = isRival ? 'right' : 'left';
+            let nameColor = isRival ? '#e74c3c' : 'var(--gold-light)';
+
+            let finalSprite = line.sprite;
+
+            let portraitHtml = '';
+            if (finalSprite) {
+                portraitHtml = `<img src="${finalSprite}" onerror="console.error('Erro no Diálogo:', '${finalSprite}'); this.onerror=null; this.outerHTML='<span style=\\'font-size:36px;\\'>${line.emoji || '👤'}</span>';" style="width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated;">`;
+            } else {
+                portraitHtml = `<span style="font-size: 36px;">${line.emoji || '👤'}</span>`;
+            }
+
+            overlay.style.flexDirection = flexDir;
+            overlay.innerHTML = `
+                <div class="dialogue-portrait" style="width: 70px; height: 70px; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.6); border: 2px solid var(--gold-dark); border-radius: 8px; overflow: hidden; flex-shrink: 0;">
+                    ${portraitHtml}
+                </div>
+                <div class="dialogue-content" style="text-align: ${textAlign}; flex-grow: 1; margin: 0 12px;">
+                    <div class="dialogue-name" style="color: ${nameColor}; font-weight: bold; font-family: Cinzel, serif; font-size: 15px; margin-bottom: 4px;">${line.name}</div>
+                    <div class="dialogue-text" style="color: #fff; font-size: 13.5px; line-height: 1.4;">${line.text}</div>
+                    <div class="dialogue-click" style="font-size: 9px; color: #888; text-align: right; margin-top: 4px;">▼ Toque para avançar</div>
+                </div>
+            `;
+        };
+
+        overlay.onclick = () => {
+            currentIndex++;
+            renderCurrentLine();
+        };
+
+        renderCurrentLine();
+    });
 };
