@@ -17,10 +17,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const menuContainer = document.querySelector('#main-menu .menu-box');
     if (menuContainer) {
         const updateBtn = document.createElement('button');
-        updateBtn.innerHTML = "🔄 Verificar Atualizações (Limpar Cache)";
-        updateBtn.style.cssText = "background: rgba(0,0,0,0.5); border: 1px solid #7f8c8d; color: #bdc3c7; margin-top: 20px; font-size: 14px; transition: all 0.2s;";
-        updateBtn.onmouseover = () => updateBtn.style.borderColor = '#bdc3c7';
-        updateBtn.onmouseout = () => updateBtn.style.borderColor = '#7f8c8d';
+        updateBtn.innerHTML = "🔄 Verificar Atualizações";
+        updateBtn.className = 'mm-btn';
+        updateBtn.style.cssText = "font-size:11px;letter-spacing:1.5px;padding:10px 12px;margin-top:8px;";
 
         updateBtn.onclick = async () => {
             updateBtn.innerText = "Limpando...";

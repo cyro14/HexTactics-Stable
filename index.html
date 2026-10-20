@@ -250,25 +250,29 @@
         </div>
     </div>
 
-    <div id="main-menu" class="layer screen">
-        <h1 class="screen-title">HEX TACTICS</h1>
-        <p class="screen-subtitle">✦ Lendas Vivas ✦</p>
-        <div class="ornament">
-            <div class="ornament-line"></div>
-            <div class="ornament-diamond"></div>
-            <div class="ornament-line"></div>
+    <div id="main-menu" class="layer screen mm-screen">
+        <canvas id="menu-canvas"></canvas>
+
+        <div class="mm-content">
+            <div class="mm-logo">
+                <div class="mm-logo-gem">⬡</div>
+                <h1 class="mm-title">HEX<span class="mm-title-accent">TACTICS</span></h1>
+                <p class="mm-tagline">✦ &nbsp;Lendas Vivas&nbsp; ✦</p>
+                <div class="mm-rule"><i></i><b></b><i></i></div>
+            </div>
+
+            <div class="menu-box mm-menu-box">
+                <button id="btn-play" class="mm-btn mm-btn-primary">⚔ JOGAR</button>
+                <button id="btn-open-reliquary" class="mm-btn mm-btn-relic">🏺 Relicário</button>
+                <button id="btn-open-bestiary" class="mm-btn mm-btn-bestiary">📖 Bestiário</button>
+                <button id="btn-open-help" class="mm-btn mm-btn-help">❓ Como Jogar</button>
+                <button id="btn-map-editor" class="mm-btn mm-btn-editor">🗺️ Editor de Mapa</button>
+                <button id="btn-hall-fame" class="mm-btn mm-btn-hall">🏛️ Hall da Fama</button>
+            </div>
         </div>
-        <div class="menu-box"><button id="btn-play"
-                style="background:var(--success);color:#000;font-size:14px;padding:14px;">▶ JOGAR</button><button
-                id="btn-open-reliquary" style="border-color:#9b59b6;">🏺 Relicário</button><button
-                id="btn-open-bestiary" style="border-color:#3498db;">📖 Bestiário</button><button id="btn-open-help"
-                style="border-color:#888;">❓ Como Jogar</button>
-            <button id="btn-map-editor"
-                style="margin-top: 10px; width: 100%; padding: 15px; font-size: 16px; background: linear-gradient(to right, #2c3e50, #1a252f); border-color: #e67e22; color: #fff; font-weight: bold;">🗺️
-                Editor de Mapa</button>
-            <button id="btn-hall-fame" class="btn-warning"
-                style="margin-top: 10px; width: 100%; padding: 15px; font-size: 16px; background: linear-gradient(to right, #b9935a, #e7c996); color:#111; font-weight:bold;">🏛️Hall
-                da Fama</button>
+
+        <div class="mm-footer">
+            <span>⬡ Lendas Vivas · Um conto tático de hexágonos ⬡</span>
         </div>
     </div>
 
@@ -625,6 +629,7 @@
 
     <!----------------------------------------------->
     <script src="js/data.js"></script>
+    <script src="js/menu-bg.js"></script>
     <script src="js/engine.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/main.js"></script>
