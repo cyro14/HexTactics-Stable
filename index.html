@@ -327,11 +327,32 @@
         </div>
     </div>
 
-    <div id="leader-selection" class="layer screen hidden">
-        <h1 class="screen-title" style="font-size:2.2rem;">Escolha seu Líder</h1>
-        <p class="screen-subtitle" style="margin-bottom:15px;">Sua estratégia começa aqui</p>
-        <div class="menu-box" id="leader-list" style="max-height:60vh;overflow-y:auto;padding-right:5px;"></div>
-        <button id="btn-close-leader" style="margin-top:15px;background:transparent;">← Voltar</button>
+    <!-- SELEÇÃO DE LÍDER (preenchida por openLeaderSelection) -->
+    <div id="leader-selection" class="layer screen mm-screen hidden">
+        <canvas class="mm-bg-canvas"></canvas>
+
+        <div class="mm-content leader-content">
+            <h1 class="mode-title" id="leader-title">Selecione seu Líder</h1>
+            <div class="mm-rule mode-rule"><i></i><b></b><i></i></div>
+
+            <div id="leader-mode-badge" class="leader-mode-badge leader-badge-camp">
+                <svg class="mm-ico" viewBox="0 0 24 24" style="width:15px;height:15px;" aria-hidden="true">
+                    <path d="M12 3l7 2.5V11c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V5.5Z" />
+                </svg>
+                <span>Modo Campanha</span>
+            </div>
+
+            <div id="leader-filter-container"></div>
+
+            <div id="leader-list" class="leader-grid"></div>
+
+            <button id="btn-close-leader" class="mm-btn mode-btn-back">
+                <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M14.5 5.5 8 12l6.5 6.5" />
+                </svg>
+                <span>Voltar</span>
+            </button>
+        </div>
     </div>
 
     <div id="mode-screen" class="layer screen mm-screen hidden">

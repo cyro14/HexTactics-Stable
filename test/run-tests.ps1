@@ -31,7 +31,7 @@ if (-not $node) { $node = "C:\Users\CYRO\.dsh\dsh-runtimes\dsh-primary-runtime\d
 $failures = @()
 
 # ---------- armadilha de erros JS (grava no DOM; lida via --dump-dom) ----------
-$trap = '<script>(function(){function flush(){document.documentElement.setAttribute("data-js-errors",(window.__jsErrors||[]).length+"::"+(window.__jsErrors||[]).join(" | ").substring(0,300));}window.__jsErrors=[];window.onerror=function(m,s,l){window.__jsErrors.push(m+" ("+String(s||"").split("/").pop()+":"+l+")");flush();return false;};window.addEventListener("error",function(e){var t=e.target;if(t&&(t.src||t.href)){window.__jsErrors.push("recurso falhou: "+String(t.src||t.href).split("/").pop());flush();}},true);window.addEventListener("unhandledrejection",function(e){window.__jsErrors.push("promessa rejeitada: "+String(e.reason).substring(0,80));flush();});document.addEventListener("DOMContentLoaded",flush);})();</script>'
+$trap = '<script>(function(){function flush(){document.documentElement.setAttribute("data-js-errors",(window.__jsErrors||[]).length+"::"+(window.__jsErrors||[]).join(" | ").substring(0,300));}window.__jsErrors=[];window.__flushJsErrors=flush;window.onerror=function(m,s,l){window.__jsErrors.push(m+" ("+String(s||"").split("/").pop()+":"+l+")");flush();return false;};window.addEventListener("error",function(e){var t=e.target;if(t&&(t.src||t.href)){window.__jsErrors.push("recurso falhou: "+String(t.src||t.href).split("/").pop());flush();}},true);window.addEventListener("unhandledrejection",function(e){window.__jsErrors.push("promessa rejeitada: "+String(e.reason).substring(0,80));flush();});document.addEventListener("DOMContentLoaded",flush);})();</script>'
 
 # ---------- estado de visibilidade por tela ----------
 # id da tela -> @{ show = divs para exibir; hide = divs para esconder; pre = HTML fixo exigido }
@@ -41,7 +41,7 @@ $visRules = @{
     'save-chooser' = @{ match = '<div id="save-chooser" class="layer screen save-chooser-screen hidden">'; }
 }
 
-function New-TestPage([string[]]$Show) {
+function New-TestPage([string[]]$Show, [string]$After) {
     $html = Get-Content (Join-Path $root 'index.html') -Raw
     # injeta a armadilha de erros + desliga animações de entrada (determinismo
     # do screenshot) e remove a fonte remota (evita flake de rede; o layout
@@ -57,8 +57,17 @@ function New-TestPage([string[]]$Show) {
         if (-not $html.Contains($rule.match)) { throw "marcador HTML nao encontrado para '$scr' (index.html mudou? atualize test/run-tests.ps1)" }
         $html = $html.Replace($rule.match, $rule.match.Replace(' hidden', ''))
     }
-    $name = '_test_tmp_' + (($Show -join '+') -replace '[^a-z0-9+]', '')
-    if (-not $Show) { $name = '_test_tmp_menu' }
+    # telas inicializadas por JS (ex.: seleção de líder) usam $After para
+    # chamar a função real em vez de só expor a div via classe
+    if ($After) {
+        $inject = "<script>document.addEventListener('DOMContentLoaded',function(){try{ $After }catch(e){window.__jsErrors.push('teste: '+e);}if(window.__flushJsErrors)window.__flushJsErrors();});</script>"
+        $html = $html -replace '</body>', "$inject`n</body>"
+    }
+    # nome de arquivo seguro: apenas [a-zA-Z0-9] ('|' e outros chars sao
+    # ilegais em nomes de arquivo no Windows)
+    $safe = (($Show -join '+') + '|' + $After) -replace '[^a-zA-Z0-9]', ''
+    if (-not $safe) { $safe = 'menu' }
+    $name = '_test_tmp_' + $safe
     $path = Join-Path $root ($name + '.html')
     Set-Content $path $html -Encoding UTF8
     return $path
@@ -80,13 +89,17 @@ $screens = @(
     @{ id = 'menu-mobile'; kind = 'menu';         size = '400,800';  show = @() },
     @{ id = 'mode';        kind = 'mode';         size = '1280,800'; show = @('mode-screen') },
     @{ id = 'mode-mobile'; kind = 'mode-mobile';  size = '400,800';  show = @('mode-screen') },
-    @{ id = 'chooser';     kind = 'chooser';      size = '1280,800'; show = @('mode-screen', 'save-chooser') }
+    @{ id = 'chooser';     kind = 'chooser';      size = '1280,800'; show = @('mode-screen', 'save-chooser') },
+    @{ id = 'leader';      kind = 'leader';       size = '1280,800'; show = @(); after = 'openLeaderSelection(false, false)' },
+    @{ id = 'leader-mobile'; kind = 'leader';     size = '400,800';  show = @(); after = 'openLeaderSelection(false, false)' }
 )
 
 $pages = @{}
 foreach ($s in $screens) {
-    $key = $s.show -join '+'
-    if (-not $pages.ContainsKey($key)) { $pages[$key] = New-TestPage $s.show }
+    $after = ''
+    if ($s.after) { $after = $s.after }
+    $key = ($s.show -join '+') + '|' + $after
+    if (-not $pages.ContainsKey($key)) { $pages[$key] = New-TestPage $s.show $after }
     $page = $pages[$key]
     $img = Join-Path $artDir "$($s.id).png"
     $url = "file:///" + ($page -replace '\\', '/')
@@ -110,6 +123,12 @@ foreach ($key in $pages.Keys) {
     } else {
         $failures += "armadilha de erros ausente ($key)"
         Write-Output "[FAIL] armadilha de erros ausente ($key)"
+    }
+    # check de título duplicado na tela de líder (regressão do bug dos 2 títulos)
+    if ($key -match 'openLeaderSelection') {
+        $titleCount = ([regex]::Matches($dom, [regex]::Escape('Selecione seu'))).Count
+        if ($titleCount -eq 1) { Write-Output "[PASS] titulo unico na selecao de lider" }
+        else { $failures += "titulo duplicado/ausente na selecao de lider ($titleCount)"; Write-Output "[FAIL] titulo duplicado/ausente na selecao de lider ($titleCount)" }
     }
 }
 

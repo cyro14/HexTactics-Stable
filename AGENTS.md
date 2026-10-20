@@ -59,7 +59,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File test/run-tests.ps1
 
 ### Ao adicionar tela nova na suíte
 
-1. Em `test/run-tests.ps1`: registre o marcador da div em `$visRules` e adicione uma entrada em `$screens` (com `id`, `kind` e resolução).
+1. Em `test/run-tests.ps1`: registre o marcador da div em `$visRules` e adicione uma entrada em `$screens` (com `id`, `kind` e resolução). Telas cujo conteúdo só existe após JS rodar (ex.: seleção de líder) usam o parâmetro `after` com a chamada real (ex.: `after = 'openLeaderSelection(false, false)'`) em vez de só expor a div.
 2. Em `test/verify.py`: adicione os asserts do novo `kind` (copie um existente como base; prefira checks de cor com tolerância).
 3. Rode a suíte até tudo passar.
 

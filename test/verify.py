@@ -69,6 +69,23 @@ elif kind == "chooser":
         ("fundo_animado_atras_do_backdrop", px[0] > 35 and px[0] >= px[2]),
         ("modo_visivel_abaixo", count(0, w, int(h * 0.7), h, lambda r, g, b: r > 180 and g > 140 and b < 100) > 0),
     ]
+elif kind == "leader":
+    # tela de seleção de líder: badge do modo (azul = campanha), título,
+    # grid de cards com retratos e nomes dourados, botão voltar
+    # (a lua fica atrás do conteúdo nesta tela, então não é checada)
+    blue_badge = count(0, w, 0, int(h * 0.22), lambda r, g, b: b > 120 and r < 100)
+    gold_names = count(0, w, int(h * 0.20), int(h * 0.95), lambda r, g, b: r > 160 and g > 120 and b < 100)
+    # retratos: conteúdo claro/médio (sprites escuros contam), mas não
+    # branco puro (página de erro do Chrome é branca)
+    portraits = count(0, w, int(h * 0.20), int(h * 0.95), lambda r, g, b: r > 80 and g > 60 and b > 40 and not (r > 240 and g > 240 and b > 240), 4)
+    checks += [
+        ("ceu_pintado_nas_margens", sky_painted()),
+        ("titulo_selecione_lider", title_upper_half(max(25, w // 32))),
+        ("selo_do_modo_campanha", blue_badge > 3),
+        ("nomes_dos_lideres_dourados", gold_names > 100),
+        ("retratos_presentes", portraits > max(30, w // 16)),
+        ("botao_voltar", gold_band(0.85, 1.0, 10)),
+    ]
 elif kind == "mode-mobile":
     blue = count(0, w, 0, h, lambda r, g, b: b > 120 and r < 100)
     red = count(0, w, 0, h, lambda r, g, b: r > 140 and g < 90 and b < 80)

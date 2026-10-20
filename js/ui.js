@@ -1150,43 +1150,49 @@ function openLeaderSelection(isRoguelite, isDuel = false, pickingOpponentFor = n
     const leaderScreen = $('leader-selection');
     leaderScreen.classList.remove('hidden');
 
-    // Busca o título existente ou cria um novo corretamente
-    let titleEl = leaderScreen.querySelector('h2');
-    if (!titleEl) {
-        titleEl = document.createElement('h2');
-        leaderScreen.insertBefore(titleEl, leaderScreen.firstChild);
+    // Título único (o HTML estático não deve ter outro) + selo do modo atual
+    const icoShield = '<svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 2.5V11c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V5.5Z"/></svg>';
+    const icoSkull = '<svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a7 7 0 0 0-7 7c0 2.6 1.4 4.4 3 5.4V19h2v-2h4v2h2v-3.6c1.6-1 3-2.8 3-5.4a7 7 0 0 0-7-7Z"/><circle cx="9.3" cy="11" r="1.2" fill="currentColor" stroke="none"/><circle cx="14.7" cy="11" r="1.2" fill="currentColor" stroke="none"/><path d="M11 19v-2 M13 19v-2"/></svg>';
+    const icoSwords = '<svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5 16 8 M16 8l2.5-2.5 M6.5 15.5l3 3"/><path d="M19.5 19.5 8 8 M8 8 5.5 5.5 M17.5 15.5l-3 3"/></svg>';
+    const badgeDefs = {
+        camp: { label: 'Modo Campanha', cls: 'leader-badge-camp', icon: icoShield },
+        rogue: { label: 'Modo Roguelite', cls: 'leader-badge-rogue', icon: icoSkull },
+        duel: { label: 'Modo Duelo', cls: 'leader-badge-duel', icon: icoSwords },
+        opponent: { label: 'Escolha o Adversário', cls: 'leader-badge-opponent', icon: icoSwords }
+    };
+    const modeKey = pickingOpponentFor ? 'opponent' : (isDuel ? 'duel' : (isRoguelite ? 'rogue' : 'camp'));
+    const badgeDef = badgeDefs[modeKey];
+    const titleEl = $('leader-title');
+    const badge = $('leader-mode-badge');
+    if (titleEl) titleEl.innerText = pickingOpponentFor ? 'Selecione o Líder Adversário' : 'Selecione seu Líder';
+    if (badge) {
+        badge.className = 'leader-mode-badge ' + badgeDef.cls;
+        badge.innerHTML = badgeDef.icon + '<span>' + badgeDef.label + '</span>';
     }
-    titleEl.style.cssText = 'text-align:center; color:var(--gold); font-family:Cinzel,serif; margin-bottom:10px;';
-    titleEl.innerText = pickingOpponentFor ? "Selecione o Líder Adversário" : "Selecione seu Líder";
 
     // Remove o filtro antigo se existir
-    let oldFilter = $('leader-filter-container');
-    if (oldFilter) oldFilter.remove();
+    let filterDiv = $('leader-filter-container');
+    if (filterDiv) filterDiv.innerHTML = '';
 
     // Puxa as tags de todos os líderes
     let allTags = new Set();
     LEADERS.forEach(l => { (l.tags || []).forEach(t => allTags.add(t)); });
     let uniqueTags = Array.from(allTags).sort();
 
-    // Cria a UI dos botões de Tag (Tag Cloud)
-    let filterDiv = document.createElement('div');
-    filterDiv.id = 'leader-filter-container';
-    filterDiv.style.cssText = 'display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-bottom:15px; width: 100%;';
-
     const container = $('leader-list');
-    leaderScreen.insertBefore(filterDiv, container);
 
     let activeFilter = 'ALL';
 
     // Função que redesenha os botões do filtro para mostrar qual está "Aceso"
     const updateFilterUI = () => {
+        if (!filterDiv) return;
         filterDiv.innerHTML = '';
 
         // Botão "TODOS"
         let allBtn = document.createElement('div');
+        allBtn.className = 'leader-tag-btn' + (activeFilter === 'ALL' ? ' active' : '');
+        allBtn.style.setProperty('--tag-col', 'var(--gold-light)');
         allBtn.innerHTML = '✦ TODOS';
-        let allIsActive = activeFilter === 'ALL';
-        allBtn.style.cssText = `background:rgba(20,20,30,0.9); border:1px solid var(--gold-light); color:var(--gold-light); font-size:10px; padding:4px 8px; border-radius:4px; cursor:pointer; text-shadow:0 0 2px var(--gold); opacity:${allIsActive ? '1' : '0.4'}; box-shadow:${allIsActive ? '0 0 8px var(--gold-dark)' : 'none'}; transition:all 0.2s ease;`;
         allBtn.onclick = () => { activeFilter = 'ALL'; renderList(); updateFilterUI(); };
         filterDiv.appendChild(allBtn);
 
@@ -1195,11 +1201,11 @@ function openLeaderSelection(isRoguelite, isDuel = false, pickingOpponentFor = n
             let tDef = typeof TAGS !== 'undefined' ? TAGS[t] : null;
             let col = tDef ? tDef.col : '#888';
             let tName = tDef ? tDef.name : t;
-            let isActive = activeFilter === t;
 
             let tagBtn = document.createElement('div');
+            tagBtn.className = 'leader-tag-btn' + (activeFilter === t ? ' active' : '');
+            tagBtn.style.setProperty('--tag-col', col);
             tagBtn.innerHTML = tName;
-            tagBtn.style.cssText = `background:rgba(20,20,30,0.9); border:1px solid ${col}; color:${col}; font-size:10px; padding:4px 8px; border-radius:4px; cursor:pointer; box-shadow:${isActive ? '0 0 10px ' + col : '0 0 2px ' + col + '40'}; text-shadow:0 0 2px ${col}80; opacity:${isActive ? '1' : '0.4'}; transition:all 0.2s ease;`;
 
             tagBtn.onclick = () => { activeFilter = t; renderList(); updateFilterUI(); };
             filterDiv.appendChild(tagBtn);
@@ -1223,22 +1229,27 @@ function openLeaderSelection(isRoguelite, isDuel = false, pickingOpponentFor = n
             }
             const grimTags = gTags.map(t => getTagHTML(t)).join('');
 
-            btn.style.cssText = 'display:block; width:100%; text-align:left; background:rgba(20,20,30,0.8); border:1px solid #444; border-radius:8px; padding:12px; margin-bottom:10px; cursor:pointer; transition:border 0.2s, background 0.2s;';
-            btn.onmouseover = () => { btn.style.borderColor = 'var(--gold-light)'; btn.style.background = 'rgba(40,30,10,0.9)'; };
-            btn.onmouseout = () => { btn.style.borderColor = '#444'; btn.style.background = 'rgba(20,20,30,0.8)'; };
+            btn.className = 'leader-card';
 
             btn.innerHTML = `
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-                    <div style="width: 64px; height: 64px; display: flex; justify-content: center; align-items: center; overflow: hidden; background: rgba(0,0,0,0.4); border: 1px solid #333; border-radius: 6px; flex-shrink: 0;">
-                        <img src="${l.sprite}" onerror="console.error('Erro na Seleção:', '${l.sprite}'); this.onerror=null; this.outerHTML='<span style=\\'font-size:40px;\\'>${l.emoji}</span>';" style="width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated;">
-                    </div>
-                    <div style="flex:1;">
-                        <div style="font-size:14px; font-weight:bold; color:var(--gold-light);">${l.name}</div>
-                        <div style="font-size:10px; color:#888; text-transform:uppercase;">${l.loreFaction}</div>
-                    </div>
+                <div class="leader-card-art">
+                    <img src="${l.sprite}" alt="${l.name}" loading="lazy"
+                        onerror="this.onerror=null; this.outerHTML='<span class=\\'leader-emoji-fallback\\'>${l.emoji}</span>';"
+                        style="filter:${l.filter || 'none'};">
                 </div>
-                <div style="font-size:12px; text-transform:none; color:#aaa; font-weight:normal; margin-bottom:8px; line-height:1.4;">${l.desc}</div>
-                <div style="display:flex; flex-wrap:wrap; gap:3px;">${grimTags}</div>
+                <div class="leader-card-body">
+                    <div class="leader-card-name">${l.name}</div>
+                    <div class="leader-card-faction">${l.loreFaction}</div>
+                    <div class="leader-card-stats">
+                        <span title="Vida">HP ${l.hp}</span>
+                        <span title="Ataque">ATK ${l.atk}</span>
+                        <span title="Movimento">MOV ${l.mp}</span>
+                        <span title="Alcance">ALC ${l.range}</span>
+                        <span title="Limite de Exército">LIM ${l.limit}</span>
+                    </div>
+                    <div class="leader-card-desc">${l.desc || ''}</div>
+                    <div class="leader-card-tags">${grimTags}</div>
+                </div>
             `;
 
             btn.onclick = async () => {
