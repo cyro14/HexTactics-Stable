@@ -575,42 +575,34 @@
             Menu</button>
     </div>
 
-    <div id="continent-map-screen" class="layer screen hidden" style="background: rgba(5,7,12,0.98); z-index: 150;">
-        <h1 class="screen-title" style="font-size: 2.2rem; margin-top:15px; text-shadow: 0 0 15px var(--gold);">Hexis: O
-            Tabuleiro Estilhaçado</h1>
-        <p class="screen-subtitle" style="margin-bottom: 15px; color:#aaa;">Expanda sua ideologia e purifique os setores
-        </p>
+    <div id="continent-map-screen" class="layer screen mm-screen hidden" style="background: #06070d; z-index: 150;">
+        <canvas class="mm-bg-canvas"></canvas>
 
-        <!-- Container Visual do Macro Mapa -->
-        <div id="macro-map-container" class="bg-continente"
-            style="position:relative; width: 95%; max-width:800px; height:500px; border:0px solid var(--gold-dark); border-radius:0px; margin:0 auto; overflow:hidden; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
-        </div>
+        <div class="mm-content macro-content">
+            <h1 class="mode-title">Hexis: O Tabuleiro Estilhaçado</h1>
+            <div class="mm-rule mode-rule"><i></i><b></b><i></i></div>
+            <p class="macro-subtitle">Expanda sua ideologia e purifique os setores</p>
 
-        <!-- Painel de Inteligência -->
-        <div id="macro-info-panel"
-            style="width:95%; max-width:800px; margin: 15px auto; background:rgba(20,20,30,0.95); border:1px solid var(--gold); padding:15px; border-radius:8px; text-align:left; opacity:0; transition: opacity 0.3s; pointer-events:none;">
-            <div
-                style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid #444; padding-bottom:8px; margin-bottom:10px;">
-                <h3 id="macro-region-name"
-                    style="color:var(--gold); margin:0; font-family:'Cinzel',serif; font-size:18px;">SELECIONE UM SETOR
-                </h3>
-                <span id="macro-region-icon" style="font-size:24px;">🌍</span>
-            </div>
+            <!-- Mapa de Hexis pintado por js/macro-bg.js + marcadores -->
+            <div id="macro-map-container"></div>
 
-            <div style="font-size:12px; color:#ccc; line-height:1.8;">
-                <div><strong style="color:#fff;">INFLUÊNCIA:</strong> <span id="macro-region-status"
-                        style="color:#aaa;">Desconhecida</span></div>
-                <div><strong style="color:#fff;">BIOMA PREDOMINANTE:</strong> <span id="macro-region-biome">---</span>
+            <!-- Painel de Inteligência -->
+            <div id="macro-info-panel">
+                <div class="macro-panel-head">
+                    <h3 id="macro-region-name">SELECIONE UM SETOR</h3>
+                    <span id="macro-region-icon"></span>
                 </div>
-                <div id="macro-region-threat"
-                    style="margin-top:8px; padding:6px; background:rgba(231,76,60,0.1); border-left:3px solid var(--enemy-color); color:var(--gold-light);">
-                    Ameaça Rival: Detectando presença hostil na área...
-                </div>
-            </div>
 
-            <button id="btn-start-incursion" class="btn-success"
-                style="width:100%; margin-top:15px; padding:12px; font-weight:bold; font-size:14px; letter-spacing:1px; box-shadow:0 0 15px rgba(46,204,113,0.3);">INICIAR
-                INCURSÃO</button>
+                <div class="macro-panel-body">
+                    <div><strong>INFLUÊNCIA:</strong> <span id="macro-region-status">Desconhecida</span></div>
+                    <div><strong>BIOMA PREDOMINANTE:</strong> <span id="macro-region-biome">---</span></div>
+                    <div id="macro-region-threat">
+                        Ameaça Rival: Detectando presença hostil na área...
+                    </div>
+                </div>
+
+                <button id="btn-start-incursion" class="btn-success macro-incursion-btn">INICIAR INCURSÃO</button>
+            </div>
         </div>
     </div>
 
@@ -782,6 +774,7 @@
     <!----------------------------------------------->
     <script src="js/data.js"></script>
     <script src="js/menu-bg.js"></script>
+    <script src="js/macro-bg.js"></script>
     <script src="js/engine.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/main.js"></script>

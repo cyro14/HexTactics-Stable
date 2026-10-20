@@ -91,7 +91,9 @@ $screens = @(
     @{ id = 'mode-mobile'; kind = 'mode-mobile';  size = '400,800';  show = @('mode-screen') },
     @{ id = 'chooser';     kind = 'chooser';      size = '1280,800'; show = @('mode-screen', 'save-chooser') },
     @{ id = 'leader';      kind = 'leader';       size = '1280,800'; show = @(); after = 'openLeaderSelection(false, false)' },
-    @{ id = 'leader-mobile'; kind = 'leader';     size = '400,800';  show = @(); after = 'openLeaderSelection(false, false)' }
+    @{ id = 'leader-mobile'; kind = 'leader';     size = '400,800';  show = @(); after = 'openLeaderSelection(false, false)' },
+    @{ id = 'hexis';       kind = 'hexis';        size = '1280,800'; show = @(); after = 'game.leaderData=LEADERS[0]; game.conqueredRegions=["WEST","NW"]; openContinentMap();' },
+    @{ id = 'hexis-mobile'; kind = 'hexis';       size = '400,800';  show = @(); after = 'game.leaderData=LEADERS[0]; game.conqueredRegions=["WEST","NW"]; openContinentMap();' }
 )
 
 $pages = @{}

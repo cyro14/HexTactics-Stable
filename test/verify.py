@@ -95,6 +95,23 @@ elif kind == "mode-mobile":
         ("titulo_visivel", gold > 8),
         ("cards_empilhados_campanha_roguelite", blue > 20 and red > 5),
     ]
+elif kind == "hexis":
+    # mapa de Hexis: fragmentos de bioma pintados, azul=conquistado,
+    # vermelho=fronteira atacável, verde=florestas, dourado=rótulos/rotas
+    blue = count(0, w, 0, h, lambda r, g, b: b > 120 and r < 100)
+    red = count(0, w, 0, h, lambda r, g, b: r > 150 and g < 90 and b < 80)
+    green = count(0, w, 0, h, lambda r, g, b: r < 120 and 80 < g < 190 and b < 110)
+    gold = count(0, w, 0, h, lambda r, g, b: r > 160 and g > 120 and b < 100)
+    ocean = count(0, w, int(h * 0.2), int(h * 0.9), lambda r, g, b: 20 < b and r < 30 and g < 40, 4)
+    checks += [
+        ("ceu_pintado_nas_margens", sky_painted()),
+        ("titulo_hexis", title_upper_half(max(20, w // 40))),
+        ("oceano_do_vazio_pintado", ocean > max(60, w // 8)),
+        ("fragmento_floresta_verde", green > max(40, w // 10)),
+        ("territorios_conquistados_azuis", blue > max(25, w // 20)),
+        ("fronteira_atacavel_vermelha", red > max(20, w // 24)),
+        ("rotas_e_rotulos_dourados", gold > max(40, w // 12)),
+    ]
 else:
     print(f"[FAIL] tipo desconhecido: {kind}")
     sys.exit(1)

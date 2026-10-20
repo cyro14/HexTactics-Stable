@@ -52,28 +52,68 @@ window.CONTINENT_REGIONS = {
     'CENTER': { id: 'CENTER', name: 'Fenda do Ômega', icon: '🌀', biome: 'ASHES', x: 50, y: 50, adj: ['WEST', 'NORTH', 'EAST', 'SOUTH'] }
 };
 
+// Ícones desenhados dos biomas de Hexis (SVG linha, sem emoji)
+window.MACRO_ICONS = {
+    FOREST: '<path d="M12 3 8 9h3l-4 6h10l-4-6h3Z M12 15v5"/>',
+    SNOW: '<path d="M3 19 9 8l3 5 3-4 6 10Z"/>',
+    DESERT: '<path d="M3 16c3-4 6-4 9 0s6 4 9 0 M4 11c2-3 4-3 6 0"/>',
+    SWAMP: '<path d="M12 4c3 4 6 7 6 10a6 6 0 0 1-12 0c0-3 3-6 6-10Z"/>',
+    MOUNTAIN: '<path d="M3 19 8 9l3 5 2-3 8 8Z"/>',
+    PLAINS: '<path d="M5 20c0-5 1-8 3-10 M10 20c0-6 1-9 4-12 M15 20c0-5 1-8 3-10"/>',
+    ASHES: '<path d="M12 3c2 3 6 5 6 10a6 6 0 0 1-12 0c0-3 2-4 3-7 1 2 2 3 3 3 0-3-1-4 0-6Z"/>',
+    WATER: '<path d="M3 10c2-2 4-2 6 0s4 2 6 0 4-2 6 0 M3 15c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>',
+    CENTER: '<path d="M12 12m-1.5 0a1.5 1.5 0 1 1 3 0 3 3 0 1 1-6 0 5 5 0 1 1 10 0"/>'
+};
+
 window.openContinentMap = function() {
     hide('mode-screen');
     hide('result-screen');
     hide('game-container');
     hide('route-map-screen');
     hide('kingdom-screen');
+    hide('main-menu');
     show('continent-map-screen');
 
     const container = $('macro-map-container');
     container.innerHTML = '';
-    
+
     $('macro-info-panel').style.opacity = '0';
     $('macro-info-panel').style.pointerEvents = 'none';
 
     if (!game.conqueredRegions) game.conqueredRegions = [];
-    
+
+    // Blindagem: esta tela exige líder; garante um fallback em qualquer fluxo
+    if (!game.leaderData) {
+        game.leaderData = typeof LEADERS !== 'undefined' ? LEADERS[0] : {};
+    }
+
     // A MÁGICA DA LORE: O Líder sempre começa no nó base de sua Facção!
     let facId = game.leaderData.loreFaction || 'SILVESTRE';
     let startNode = typeof LORE_FACTIONS !== 'undefined' && LORE_FACTIONS[facId] ? LORE_FACTIONS[facId].startNode : 'WEST';
 
-    // Desenha as linhas conectando os nós de acordo com a adjacência lógica
-    let svg = `<svg style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;">`;
+    // 1) Estados por região (mesma regra de sempre)
+    const states = {};
+    Object.values(CONTINENT_REGIONS).forEach(reg => {
+        let isConquered = game.conqueredRegions.includes(reg.id);
+        let isReachable = false;
+        if (game.conqueredRegions.length === 0) {
+            if (reg.id === startNode) isReachable = true;
+        } else {
+            isReachable = reg.adj.some(adjId => game.conqueredRegions.includes(adjId));
+        }
+        let isLocked = false;
+        if (reg.id === 'CENTER') {
+            isLocked = game.conqueredRegions.length < 5;
+        }
+        states[reg.id] = {
+            conquered: isConquered,
+            attack: isReachable && !isConquered && !isLocked,
+            locked: isLocked
+        };
+    });
+
+    // 2) Rotas de adjacência (cores por estado)
+    let svg = `<svg class="macro-edges" viewBox="0 0 100 100" preserveAspectRatio="none">`;
     let drawn = new Set();
     Object.values(CONTINENT_REGIONS).forEach(r1 => {
         r1.adj.forEach(adjId => {
@@ -82,7 +122,10 @@ window.openContinentMap = function() {
                 let key = [r1.id, r2.id].sort().join('-');
                 if (!drawn.has(key)) {
                     drawn.add(key);
-                    svg += `<line x1="${r1.x}%" y1="${r1.y}%" x2="${r2.x}%" y2="${r2.y}%" stroke="#444" stroke-width="2" stroke-dasharray="5,5"/>`;
+                    let cls = 'me-dim';
+                    if (states[r1.id].conquered && states[r2.id].conquered) cls = 'me-gold';
+                    else if ((states[r1.id].conquered && states[r2.id].attack) || (states[r2.id].conquered && states[r1.id].attack)) cls = 'me-front';
+                    svg += `<line class="${cls}" x1="${r1.x}" y1="${r1.y}" x2="${r2.x}" y2="${r2.y}"/>`;
                 }
             }
         });
@@ -90,94 +133,81 @@ window.openContinentMap = function() {
     svg += `</svg>`;
     container.innerHTML += svg;
 
+    // 3) Marcadores hexagonais com rótulos
     Object.values(CONTINENT_REGIONS).forEach(reg => {
-        let isConquered = game.conqueredRegions.includes(reg.id);
-        
-        // Regra de Adjacência: Só libera o nó se for vizinho direto de uma área já conquistada
-        let isReachable = false;
-        if (game.conqueredRegions.length === 0) {
-            // Se for o início do jogo, apenas a base do líder libera!
-            if (reg.id === startNode) isReachable = true; 
-        } else {
-            isReachable = reg.adj.some(adjId => game.conqueredRegions.includes(adjId));
-        }
-
-        // O Centro só libera após limpar pelo menos 5 regiões externas
-        let isLocked = false;
-        if (reg.id === 'CENTER') {
-            isLocked = game.conqueredRegions.length < 5; 
-        }
-
-        let canAttack = isReachable && !isConquered && !isLocked;
+        const st = states[reg.id];
+        const canAttack = st.attack;
 
         let pin = document.createElement('div');
-        let pinColor = isConquered ? 'var(--player-color)' : (canAttack ? 'var(--enemy-color)' : '#555');
-        
-        // Estilização diferenciada para nós intermediários (Diagonais menores)
+        pin.className = 'macro-pin ' + (st.conquered ? 'state-conquered' : (canAttack ? 'state-attack' : 'state-locked'));
         let isInter = ['NW', 'NE', 'SE', 'SW'].includes(reg.id);
-        let sSize = isInter ? '35px' : '50px';
-        let fSize = isInter ? '16px' : '24px';
-        let anim = canAttack ? 'pulse 2s infinite' : 'none';
-        
-        pin.style.cssText = `position:absolute; top:${reg.y}%; left:${reg.x}%; transform:translate(-50%, -50%); 
-                             background:rgba(10,10,15,0.9); border:2px solid ${pinColor}; border-radius:50%; 
-                             width:${sSize}; height:${sSize}; display:flex; justify-content:center; align-items:center; 
-                             font-size:${fSize}; cursor:${!canAttack && !isConquered ? 'not-allowed' : 'pointer'}; box-shadow:0 0 15px ${pinColor}80;
-                             animation:${anim}; transition:transform 0.2s;`;
-                             
-        pin.innerHTML = reg.icon;
-        
-        if (canAttack || isConquered) {
-            pin.onmouseover = () => pin.style.transform = 'translate(-50%, -50%) scale(1.15)';
-            pin.onmouseout = () => pin.style.transform = 'translate(-50%, -50%) scale(1)';
-            
+        pin.style.setProperty('--pin-size', isInter ? '46px' : '58px');
+        pin.style.left = reg.x + '%';
+        pin.style.top = reg.y + '%';
+
+        pin.innerHTML = `
+            <div class="macro-pin-shape">
+                <div class="macro-pin-face">
+                    <svg viewBox="0 0 24 24">${window.MACRO_ICONS[reg.biome] || ''}</svg>
+                </div>
+            </div>
+            <div class="macro-pin-label">${reg.name}</div>`;
+
+        if (canAttack || st.conquered) {
             pin.onclick = () => {
                 $('macro-region-name').innerText = reg.name;
-                $('macro-region-icon').innerText = reg.icon;
-                $('macro-region-biome').innerText = reg.biome === 'FOREST' ? 'Florestas densas e antigas' : 
-                                                    reg.biome === 'SNOW' ? 'Montanhas gélidas' : 
+                $('macro-region-icon').innerHTML = `<svg viewBox="0 0 24 24">${window.MACRO_ICONS[reg.biome] || ''}</svg>`;
+                $('macro-region-biome').innerText = reg.biome === 'FOREST' ? 'Florestas densas e antigas' :
+                                                    reg.biome === 'SNOW' ? 'Montanhas gélidas' :
                                                     reg.biome === 'WATER' ? 'Pântanos e lagos perigosos' :
                                                     reg.biome === 'MOUNTAIN' ? 'Penhascos e pedreiras' :
                                                     reg.biome === 'PLAINS' ? 'Planícies varridas por ventos' :
                                                     reg.biome === 'ASHES' ? 'Cinzas e magia instável' : 'Desertos e terras áridas';
-                
+
                 let btnStart = $('btn-start-incursion');
-                if (isConquered) {
-                    $('macro-region-status').innerText = '✅ Purificado (Seu Território)';
-                    $('macro-region-status').style.color = 'var(--player-color)';
+                if (st.conquered) {
+                    $('macro-region-status').innerHTML = '<span class="macro-dot" style="background:var(--player-color); color:var(--player-color);"></span>Purificado (Seu Território)';
                     $('macro-region-threat').innerHTML = 'Ameaça Rival: <span style="color:#aaa">Nenhuma. Região segura.</span>';
                     btnStart.innerText = 'ÁREA PURIFICADA';
                     btnStart.className = 'btn-primary';
                     btnStart.disabled = true;
                 } else {
-                    $('macro-region-status').innerText = '⚠️ Dominado pelo Rival';
-                    $('macro-region-status').style.color = 'var(--enemy-color)';
+                    $('macro-region-status').innerHTML = '<span class="macro-dot" style="background:var(--enemy-color); color:var(--enemy-color);"></span>Dominado pelo Rival';
                     let bossHint = reg.id === 'CENTER' ? 'Ameaça Suprema: O Leviatã Umbral aguarda.' : 'Ameaça Rival: Forças inimigas controlam este setor.';
                     $('macro-region-threat').innerHTML = bossHint;
-                    
+
                     btnStart.innerText = game.conqueredRegions.length === 0 ? 'RETOMAR CAPITAL' : 'INICIAR INCURSÃO';
                     btnStart.className = 'btn-success';
                     btnStart.disabled = false;
-                    
+
                     btnStart.onclick = () => {
                         game.currentRegionId = reg.id;
                         game.currentLevel = game.conqueredRegions.length + 1;
-                        
+
                         if (!game.eventFlags) game.eventFlags = {};
                         if (reg.biome === 'SNOW') game.eventFlags.forceSnow = true;
-                        
+
                         generateRouteMap();
                         renderRouteMap();
                     };
                 }
-                
+
                 $('macro-info-panel').style.opacity = '1';
                 $('macro-info-panel').style.pointerEvents = 'auto';
             };
         }
-        
+
         container.appendChild(pin);
     });
+
+    // 4) Pintura procedural dos fragmentos (canvas abaixo dos marcadores)
+    if (window.MacroMap) {
+        window.MacroMap.mount(container, CONTINENT_REGIONS, {
+            conquered: [...game.conqueredRegions],
+            attackable: Object.keys(states).filter(id => states[id].attack),
+            centerLocked: states.CENTER.locked
+        });
+    }
 };
 
     // ==========================================
