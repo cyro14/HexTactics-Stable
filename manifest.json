@@ -1,6 +1,6 @@
 {
-  "name": "Hex Tactics: Lendas Vivas",
-  "short_name": "Hex Tactics",
+  "name": "Biomancer Tactics: Lendas Vivas",
+  "short_name": "Biomancer Tactics",
   "description": "Jogo de estratégia em turnos e domar feras.",
   "start_url": "./index.html",
   "display": "standalone",

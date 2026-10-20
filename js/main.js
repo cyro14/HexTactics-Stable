@@ -17,8 +17,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const menuContainer = document.querySelector('#main-menu .menu-box');
     if (menuContainer) {
         const updateBtn = document.createElement('button');
-        updateBtn.innerHTML = "🔄 Verificar Atualizações";
         updateBtn.className = 'mm-btn';
+        updateBtn.innerHTML = `<svg class="mm-ico" viewBox="0 0 24 24" style="width:14px;height:14px;" aria-hidden="true"><path d="M21 4v5h-5"/><path d="M18.5 14a7 7 0 1 1-1.6-7.2L21 8.6"/></svg><span>Verificar Atualizações</span>`;
         updateBtn.style.cssText = "font-size:11px;letter-spacing:1.5px;padding:10px 12px;margin-top:8px;";
 
         updateBtn.onclick = async () => {

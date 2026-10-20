@@ -2217,25 +2217,29 @@ button.btn-success {
 }
 
 .mm-logo-gem {
-    font-size: 30px;
-    color: var(--gold-light);
-    text-shadow: 0 0 22px rgba(232, 200, 74, .8);
+    width: 48px;
+    margin: 0 auto 2px;
     animation: mmGemFloat 4s ease-in-out infinite;
-    margin-bottom: 2px;
+}
+
+.mm-logo-gem svg {
+    display: block;
+    width: 100%;
+    height: auto;
 }
 
 @keyframes mmGemFloat {
-    0%, 100% { transform: translateY(0); text-shadow: 0 0 22px rgba(232, 200, 74, .8); }
-    50% { transform: translateY(-5px); text-shadow: 0 0 34px rgba(232, 200, 74, 1); }
+    0%, 100% { transform: translateY(0); filter: drop-shadow(0 0 14px rgba(232, 200, 74, .55)); }
+    50% { transform: translateY(-6px); filter: drop-shadow(0 0 28px rgba(232, 200, 74, .95)); }
 }
 
 .mm-title {
     font-family: Cinzel, serif;
     font-weight: 900;
-    font-size: clamp(3rem, 10vw, 4.6rem);
+    font-size: clamp(2.4rem, 8vw, 3.7rem);
     line-height: .95;
     margin: 0;
-    letter-spacing: 4px;
+    letter-spacing: 3px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2255,8 +2259,8 @@ button.btn-success {
 }
 
 .mm-title-accent {
-    font-size: .62em;
-    letter-spacing: 12px;
+    font-size: .68em;
+    letter-spacing: 10px;
     margin-left: 10px;
 }
 
@@ -2340,6 +2344,10 @@ button.btn-success {
 .mm-btn {
     position: relative;
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
     font-family: Cinzel, serif;
     font-size: 15px;
     font-weight: 700;
@@ -2357,6 +2365,23 @@ button.btn-success {
         0 3px 12px rgba(0, 0, 0, .7),
         inset 0 1px 0 rgba(232, 200, 74, .18),
         inset 0 -6px 12px rgba(0, 0, 0, .35);
+}
+
+/* ícones desenhados (SVG linha) */
+.mm-ico {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .55));
+}
+
+.mm-btn-primary .mm-ico {
+    filter: drop-shadow(0 1px 0 rgba(255, 244, 190, .5));
 }
 
 .mm-btn:hover {

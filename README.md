@@ -1,4 +1,4 @@
-## Hex Tactics - (nome provisório)
+## Biomancer Tactics
 
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-323330?style=for-the-badge&logo=javascript&logoColor=F7DF1E)
@@ -12,7 +12,7 @@ Um jogo de estratégia em turnos baseado em grid hexagonal rodando diretamente n
 
 ## Sobre o Jogo
 
-**Hex Tactics** combina táticas de tabuleiro com mecânicas de gerenciamento de exército e *Roguelite*. O jogador assume o controle de um Herói Líder com acesso a um Grimório de magias, devendo explorar mapas gerados dinamicamente, derrotar chefes e expandir seu reino e sua Box de criaturas.
+**Biomancer Tactics** combina táticas de tabuleiro com mecânicas de gerenciamento de exército e *Roguelite*. O jogador assume o controle de um Herói Líder com acesso a um Grimório de magias, devendo explorar mapas gerados dinamicamente, derrotar chefes e expandir seu reino e sua Box de criaturas.
 
 ### Modos de Jogo
 * **Modo Campanha:** Progressão contínua com sistema de saves. Ideal para planejar a expansão do seu Reino com calma.
