@@ -1,0 +1,5 @@
+# Artefatos de teste (regenerados a cada run da suíte)
+test/artifacts/
+
+# Páginas temporárias geradas pela suíte de testes
+_test_tmp_*.html

@@ -129,8 +129,6 @@ function loadMeta() {
         const ac = localStorage.getItem('ht_artifacts_camp'); if (ac) activeArtifactsCamp = JSON.parse(ac) || [];
         const ar = localStorage.getItem('ht_artifacts_rogue'); if (ar) activeArtifactsRogue = JSON.parse(ar) || [];
     } catch (e) { }
-    $('btn-load-campaign').classList.toggle('hidden', !localStorage.getItem('ht_save_camp'));
-    $('btn-load-roguelite').classList.toggle('hidden', !localStorage.getItem('ht_save_rogue'));
 }
 
 window.fullCombatHistory = []; // Memória global do log

@@ -251,7 +251,7 @@
     </div>
 
     <div id="main-menu" class="layer screen mm-screen">
-        <canvas id="menu-canvas"></canvas>
+        <canvas id="menu-canvas" class="mm-bg-canvas"></canvas>
 
         <div class="mm-content">
             <div class="mm-logo">
@@ -334,30 +334,113 @@
         <button id="btn-close-leader" style="margin-top:15px;background:transparent;">← Voltar</button>
     </div>
 
-    <div id="mode-screen" class="layer screen hidden">
-        <h1 class="screen-title" style="font-size:2.2rem;">Escolha seu Caminho</h1>
-        <div class="menu-box">
-            <button id="btn-campaign" style="border-color:var(--player-color);text-align:left;padding:12px;">
-                <div style="font-size:14px;color:var(--player-color);">🛡️ MODO CAMPANHA</div>
-                <div style="font-size:10px;color:#aaa;margin-top:4px;text-transform:none;font-weight:normal;">Progressão
-                    com Save próprio. Morreu? Tente a fase novamente.</div>
-            </button>
-            <button id="btn-load-campaign" class="hidden btn-success">📜 Continuar Campanha</button>
-            <div style="height:1px;background:#333;margin:5px 0;"></div>
-            <button id="btn-roguelite" style="border-color:var(--enemy-color);text-align:left;padding:12px;">
-                <div style="font-size:14px;color:var(--enemy-color);">☠️ MODO ROGUELITE</div>
-                <div style="font-size:10px;color:#aaa;margin-top:4px;text-transform:none;font-weight:normal;">Morte
-                    Permanente! Volta pra Fase 1 se perder, mas mantém Artefatos.</div>
-            </button>
-            <button id="btn-load-roguelite" class="hidden btn-success">📜 Continuar Roguelite</button>
-            <div style="height:1px;background:#333;margin:5px 0;"></div>
-            <button id="btn-duel" style="border-color:var(--enemy-color);text-align:left;padding:12px;">
-                <div style="font-size:14px;color:var(--enemy-color);">⚔️ Iniciar Duelo
-            </button>
-            <button id="btn-duel-history" class="btn-primary"
-                style="margin-top: 10px; width: 100%; padding: 15px; font-size: 16px; background:#2980b9;">📜 Histórico
-                de Duelos</button>
-            <button id="btn-close-mode" style="margin-top:15px;background:transparent;">← Voltar</button>
+    <div id="mode-screen" class="layer screen mm-screen hidden">
+        <canvas id="mode-canvas" class="mm-bg-canvas"></canvas>
+
+        <div class="mm-content mode-content">
+            <h1 class="mode-title">Escolha seu Caminho</h1>
+            <div class="mm-rule mode-rule"><i></i><b></b><i></i></div>
+
+            <div class="mode-cards">
+                <!-- MODO CAMPANHA — card grande à esquerda -->
+                <button id="btn-campaign" class="mode-card mode-card-hero mode-accent-camp">
+                    <div class="mode-card-art">
+                        <img src="img/lideres/paladina.png" alt="Paladina" draggable="false">
+                    </div>
+                    <div class="mode-card-body">
+                        <span class="mode-card-title">
+                            <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 3l7 2.5V11c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V5.5Z" />
+                            </svg>
+                            Modo Campanha
+                        </span>
+                        <span class="mode-card-desc">Progressão com save próprio. Se cair em combate, tente a
+                            fase novamente e defenda seu reino.</span>
+                    </div>
+                </button>
+
+                <div class="mode-col">
+                    <button id="btn-roguelite" class="mode-card mode-accent-rogue">
+                        <div class="mode-card-art mode-card-art-sm">
+                            <img src="img/lideres/carrasco.png" alt="Carrasco" draggable="false">
+                        </div>
+                        <div class="mode-card-body">
+                            <span class="mode-card-title">
+                                <svg class="mm-ico mm-ico-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path
+                                        d="M12 3a7 7 0 0 0-7 7c0 2.6 1.4 4.4 3 5.4V19h2v-2h4v2h2v-3.6c1.6-1 3-2.8 3-5.4a7 7 0 0 0-7-7Z" />
+                                    <circle cx="9.3" cy="11" r="1.2" fill="currentColor" stroke="none" />
+                                    <circle cx="14.7" cy="11" r="1.2" fill="currentColor" stroke="none" />
+                                    <path d="M11 19v-2 M13 19v-2" />
+                                </svg>
+                                Modo Roguelite
+                            </span>
+                            <span class="mode-card-desc">Morte permanente! Se perder, volta à Fase 1 — mas
+                                mantém os Artefatos.</span>
+                        </div>
+                    </button>
+
+                    <button id="btn-duel" class="mode-card mode-accent-duel">
+                        <div class="mode-card-art mode-card-art-sm">
+                            <img src="img/lideres/chefe_orc.png" alt="Chefe Orc" draggable="false">
+                        </div>
+                        <div class="mode-card-body">
+                            <span class="mode-card-title">
+                                <svg class="mm-ico mm-ico-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M4.5 19.5 16 8 M16 8l2.5-2.5 M6.5 15.5l3 3" />
+                                    <path d="M19.5 19.5 8 8 M8 8 5.5 5.5 M17.5 15.5l-3 3" />
+                                </svg>
+                                Duelo
+                            </span>
+                            <span class="mode-card-desc">Arena simétrica, fase de compra e um adversário à sua
+                                altura.</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mode-bottom">
+                <button id="btn-close-mode" class="mm-btn mode-btn-back">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M14.5 5.5 8 12l6.5 6.5" />
+                    </svg>
+                    <span>Voltar</span>
+                </button>
+                <button id="btn-duel-history" class="mm-btn mode-btn-back">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2h4" />
+                    </svg>
+                    <span>Histórico de Duelos</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seletor de save: aparece APÓS escolher um modo que já tem progresso salvo -->
+    <div id="save-chooser" class="layer screen save-chooser-screen hidden">
+        <div class="modal-card save-chooser-card">
+            <svg class="save-chooser-ico" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="8.6" />
+                <path d="M12 7.4V12l3.2 1.9" />
+            </svg>
+            <h2 class="save-chooser-title">Jornada em Andamento</h2>
+            <p class="save-chooser-sub">Encontramos um progresso salvo em <b id="sc-mode-name">Campanha</b>.
+                O que deseja fazer?</p>
+            <div class="save-chooser-actions">
+                <button id="btn-continue-save" class="mm-btn mm-btn-primary">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 5.5v13l10-6.5Z" />
+                    </svg>
+                    <span>Continuar</span>
+                </button>
+                <button id="btn-new-game" class="mm-btn mm-btn-danger">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 5v14 M5 12h14" />
+                    </svg>
+                    <span>Começar Novamente</span>
+                </button>
+            </div>
+            <button id="btn-cancel-save-choice" class="mm-btn save-chooser-cancel">Voltar</button>
         </div>
     </div>
 
@@ -674,9 +757,6 @@
                 style="width: 100%; margin-top: 8px; padding: 12px;">Fechar</button>
         </div>
     </div>
-
-    <!-- MAPAS -->
-    <script src="mapas/campanha/ATO1_NO0.js"></script>
 
     <!----------------------------------------------->
     <script src="js/data.js"></script>

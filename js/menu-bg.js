@@ -1,14 +1,18 @@
 // ==========================================
-// FUNDO ANIMADO DO MENU PRINCIPAL
+// FUNDO ANIMADO COMPARTILHADO (telas de menu)
 // Cena procedural estilo "fantasia indie" (referência: Battle for Wesnoth)
 // Céu crepuscular + lua + montanhas + ilhas hexagonais flutuantes + brasas
+// Basta um <canvas class="mm-bg-canvas"> dentro de uma .layer visível.
 // ==========================================
 (() => {
-    const menu = document.getElementById('main-menu');
-    const canvas = document.getElementById('menu-canvas');
-    if (!menu || !canvas) return;
-    const ctx = canvas.getContext('2d');
+    const entries = [];
+    document.querySelectorAll('.mm-bg-canvas').forEach(canvas => {
+        const owner = canvas.closest('.layer');
+        if (owner) entries.push({ canvas, owner, ctx: canvas.getContext('2d') });
+    });
+    if (!entries.length) return;
 
+    let ctx = null; // contexto ativo durante o desenho de cada canvas
     let W = 0, H = 0, dpr = 1;
     let time = 0;
     let lastTs = null;
@@ -126,11 +130,14 @@
 
     function resize() {
         dpr = Math.min(window.devicePixelRatio || 1, 2);
-        W = canvas.clientWidth || menu.clientWidth;
-        H = canvas.clientHeight || menu.clientHeight;
-        canvas.width = Math.max(1, Math.floor(W * dpr));
-        canvas.height = Math.max(1, Math.floor(H * dpr));
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        W = window.innerWidth;
+        H = window.innerHeight;
+        for (const e of entries) {
+            const cw = e.canvas.clientWidth || W;
+            const ch = e.canvas.clientHeight || H;
+            e.canvas.width = Math.max(1, Math.floor(cw * dpr));
+            e.canvas.height = Math.max(1, Math.floor(ch * dpr));
+        }
         init();
     }
 
@@ -341,19 +348,26 @@
 
     function frame(ts) {
         requestAnimationFrame(frame);
-        if (menu.classList.contains('hidden')) { lastTs = ts; return; }
         if (lastTs === null) lastTs = ts;
         const dt = Math.min((ts - lastTs) / 1000, 0.05);
         lastTs = ts;
         time += dt;
 
-        drawSky();
-        drawMountains();
-        drawIslands();
-        drawFog();
-        drawForeground();
-        drawEmbers(dt);
-        drawVignette();
+        for (const e of entries) {
+            if (e.owner.classList.contains('hidden')) continue;
+            const cw = e.canvas.clientWidth || W;
+            const ch = e.canvas.clientHeight || H;
+            ctx = e.ctx;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            drawSky();
+            drawMountains();
+            drawIslands();
+            drawFog();
+            drawForeground();
+            drawEmbers(dt);
+            drawVignette();
+            void cw; void ch;
+        }
     }
 
     window.addEventListener('resize', resize);

@@ -1111,16 +1111,50 @@ window.openContinentMap = function() {
     $('btn-play').addEventListener('click', () => { $('main-menu').classList.add('hidden'); $('mode-screen').classList.remove('hidden'); });
     $('btn-close-mode').addEventListener('click', () => { $('mode-screen').classList.add('hidden'); $('main-menu').classList.remove('hidden'); });
     $('btn-map-editor')?.addEventListener('click', startMapEditor);
-    $('btn-campaign').addEventListener('click', () => { if (localStorage.getItem('ht_save_camp')) { if (!confirm("Existe um jogo salvo. Deseja iniciar uma nova campanha e perder o progresso?")) return; } openLeaderSelection(false); });
-    $('btn-roguelite').addEventListener('click', () => { if (localStorage.getItem('ht_save_rogue')) { if (!confirm("Existe uma Run salva. Deseja iniciar uma nova e perder o progresso atual?")) return; } openLeaderSelection(true); });
-    const btnDuel = $('btn-duel');
-    if (btnDuel) { btnDuel.addEventListener('click', () => { if (localStorage.getItem('ht_save_duel')) { if (!confirm("Existe um duelo salvo. Deseja iniciar um novo e perder o progresso atual?")) return; } openLeaderSelection(true, false, true); }); }
+    // ==========================================
+    // FLUXO DOS MODOS: card -> (se houver save) seletor de save -> líder
+    // ==========================================
+    const SAVE_CHOOSER_MODES = {
+        camp: { name: 'Campanha', key: 'ht_save_camp', isRogue: false, isDuel: false },
+        rogue: { name: 'Roguelite', key: 'ht_save_rogue', isRogue: true, isDuel: false },
+        duel: { name: 'Duelo', key: 'ht_save_duel', isRogue: false, isDuel: true }
+    };
+    let pendingMode = null;
+
+    function chooseMode(modeId) {
+        const mode = SAVE_CHOOSER_MODES[modeId];
+        if (localStorage.getItem(mode.key)) {
+            pendingMode = mode;
+            $('sc-mode-name').textContent = mode.name;
+            $('save-chooser').classList.remove('hidden');
+        } else {
+            openLeaderSelection(mode.isRogue, mode.isDuel);
+        }
+    }
+
+    $('btn-campaign').addEventListener('click', () => chooseMode('camp'));
+    $('btn-roguelite').addEventListener('click', () => chooseMode('rogue'));
+    $('btn-duel').addEventListener('click', () => chooseMode('duel'));
+
+    $('btn-continue-save')?.addEventListener('click', () => {
+        $('save-chooser').classList.add('hidden');
+        if (pendingMode) startGame(true, pendingMode.isRogue, null, pendingMode.isDuel);
+        pendingMode = null;
+    });
+
+    $('btn-new-game')?.addEventListener('click', () => {
+        $('save-chooser').classList.add('hidden');
+        if (pendingMode) openLeaderSelection(pendingMode.isRogue, pendingMode.isDuel);
+        pendingMode = null;
+    });
+
+    $('btn-cancel-save-choice')?.addEventListener('click', () => {
+        $('save-chooser').classList.add('hidden');
+        pendingMode = null;
+    });
 
     const btnDuelHistory =
         $('btn-duel-history'); if (btnDuelHistory) { btnDuelHistory.addEventListener('click', openDuelHistory); }
-    $('btn-load-campaign')?.addEventListener('click', () => { startGame(true, false); });
-    $('btn-load-roguelite')?.addEventListener('click', () => { startGame(true, true); });
-    $('btn-load-duel')?.addEventListener('click', () => { startGame(true, false, true); });
 
     $('btn-toggle-build').addEventListener('click', () => {
         const menu = $('building-menu');
@@ -1269,11 +1303,7 @@ window.openContinentMap = function() {
             bar.classList.add('hidden');
         }
     });
-    $('btn-duel')?.addEventListener('click', () => {
-        if (confirm("Iniciar Modo Duelo (Fase de Compra + Arena Simétrica)?")) {
-            openLeaderSelection(false, true);
-        }
-    });
+    // (btn-duel agora é tratado apenas no fluxo chooseMode, acima)
 
     $('btn-duel-history')?.addEventListener('click', openDuelHistory);
     $('btn-hall-fame')?.addEventListener('click', openHallOfFame);
