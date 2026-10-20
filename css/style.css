@@ -1293,7 +1293,88 @@ button.btn-success {
     transform: none;
 }
 
-/* === ESTILOS DO MAPA DE ROTAS === */
+/* === ESTILOS DO MAPA DE ROTAS (Exploração) === */
+.route-content {
+    max-width: 560px;
+    gap: 10px;
+}
+
+.route-manage-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    padding: 8px 14px;
+}
+
+/* moldura do pergaminho de rota */
+.route-scroll {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    height: 68vh;
+    margin: 4px auto 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column-reverse;
+    padding: 26px 10px 34px;
+    border: 1px solid rgba(201, 162, 39, .5);
+    border-radius: 12px;
+    background:
+        radial-gradient(ellipse 90% 40% at 50% 100%, rgba(201, 162, 39, .06), transparent 70%),
+        rgba(4, 8, 14, .55);
+    box-shadow:
+        0 18px 50px rgba(0, 0, 0, .85),
+        inset 0 0 50px rgba(0, 0, 0, .55);
+}
+
+.route-scroll::before,
+.route-scroll::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-color: var(--gold);
+    border-style: solid;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.route-scroll::before {
+    top: -1px;
+    left: -1px;
+    border-width: 2px 0 0 2px;
+    border-radius: 8px 0 0 0;
+}
+
+.route-scroll::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 2px 2px 0;
+    border-radius: 0 0 8px 0;
+}
+
+.route-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.route-nodes {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 58px;
+}
+
 .map-floor {
     display: flex;
     justify-content: space-evenly;
@@ -1302,65 +1383,126 @@ button.btn-success {
     position: relative;
 }
 
+/* ---- nós hexagonais ---- */
 .map-node {
-    width: 54px;
-    height: 54px;
-    border-radius: 50%;
-    background: rgba(10, 12, 20, 0.9);
-    border: 2px solid #555;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8);
     position: relative;
+    width: 58px;
+    height: 58px;
+    cursor: pointer;
+}
+
+.map-node-shape {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: var(--node-col, #555);
+    clip-path: polygon(25% 4%, 75% 4%, 98% 50%, 75% 96%, 25% 96%, 2% 50%);
+    filter: drop-shadow(0 0 8px color-mix(in srgb, var(--node-col, #555) 50%, transparent));
+    transition: transform .15s ease, filter .15s ease;
+}
+
+.map-node-face {
+    position: absolute;
+    inset: 2px;
+    clip-path: polygon(25% 4%, 75% 4%, 98% 50%, 75% 96%, 25% 96%, 2% 50%);
+    background: linear-gradient(180deg, rgba(22, 18, 10, .96) 0%, rgba(6, 6, 10, .98) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.map-node-face svg {
+    width: 55%;
+    height: 55%;
+    stroke: var(--node-col, #555);
+    fill: none;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--node-col, #555) 60%, transparent));
 }
 
 .map-node .node-name {
     position: absolute;
-    bottom: -20px;
-    font-size: 9px;
-    color: #aaa;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: Cinzel, serif;
+    font-size: 8.5px;
+    color: #b9ac8c;
     white-space: nowrap;
     text-transform: uppercase;
-    font-weight: bold;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 3px #000;
     pointer-events: none;
 }
 
+/* estados */
 .map-node.reachable {
-    border-color: var(--gold-light);
-    box-shadow: 0 0 15px rgba(201, 162, 39, 0.5);
-    transform: scale(1.1);
+    --node-col: var(--gold-light);
 }
 
-.map-node.reachable:hover {
-    background: rgba(40, 30, 10, 0.9);
-    transform: scale(1.2);
+.map-node.reachable .map-node-shape {
+    transform: scale(1.14);
+    animation: nodePulse 2s ease-in-out infinite;
+}
+
+.map-node.reachable:hover .map-node-shape {
+    animation: none;
+    transform: scale(1.26);
+    filter: drop-shadow(0 0 18px rgba(232, 200, 74, .95));
+}
+
+@keyframes nodePulse {
+    0%, 100% { transform: scale(1.14); filter: drop-shadow(0 0 8px rgba(232, 200, 74, .55)); }
+    50% { transform: scale(1.2); filter: drop-shadow(0 0 20px rgba(232, 200, 74, .95)); }
 }
 
 .map-node.completed {
-    border-color: var(--success);
-    background: rgba(20, 50, 20, 0.6);
-    opacity: 0.7;
+    --node-col: var(--success);
     cursor: default;
 }
 
+.map-node.completed .map-node-shape {
+    filter: drop-shadow(0 0 6px rgba(46, 204, 113, .4));
+    opacity: .8;
+}
+
 .map-node.locked {
-    filter: grayscale(100%) brightness(0.5);
+    --node-col: #4a4a4a;
     cursor: not-allowed;
 }
 
+.map-node.locked .map-node-shape {
+    filter: grayscale(100%) brightness(.6);
+}
+
+.map-node.locked .node-name { color: #666; }
+
+/* nó de Chefe maior */
+.map-node.t-BOSS { width: 74px; height: 74px; }
+
+/* linhas */
 .map-line {
-    stroke: #555;
-    stroke-width: 3;
-    stroke-dasharray: 6 4;
+    stroke: rgba(255, 255, 255, .10);
+    stroke-width: 2;
+    stroke-dasharray: 5 7;
 }
 
 .map-line.active {
-    stroke: var(--gold-dark);
-    stroke-dasharray: none;
+    stroke: rgba(232, 200, 74, .6);
+    stroke-width: 2.5;
+    stroke-dasharray: 10 7;
+    filter: drop-shadow(0 0 4px rgba(232, 200, 74, .5));
+    animation: edgeFlow 1.3s linear infinite;
+}
+
+@media (max-width: 760px) {
+    .route-scroll { height: 62vh; max-width: none; }
+    .route-nodes { gap: 48px; }
+    .map-node { width: 50px; height: 50px; }
+    .map-node.t-BOSS { width: 62px; height: 62px; }
 }
 
 /* ==========================================
@@ -3241,8 +3383,75 @@ button.btn-success {
 }
 
 .leader-emoji-fallback {
-    font-size: 44px;
-    line-height: 118px;
+    font-size: 48px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ---- carrossel (só no mobile) ---- */
+.leader-carousel-nav {
+    display: none;
+}
+
+.leader-count {
+    font-family: Cinzel, serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--gold-light);
+    text-shadow: 0 1px 2px #000;
+    min-width: 72px;
+    text-align: center;
+}
+
+.leader-nav-btn {
+    padding: 8px 14px;
+}
+
+@media (max-width: 760px) {
+    .leader-grid {
+        display: flex;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        gap: 12px;
+        padding: 6px 7%;
+        max-height: none;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .leader-grid::-webkit-scrollbar {
+        display: none;
+    }
+
+    .leader-card {
+        flex: 0 0 86%;
+        max-width: 86%;
+        scroll-snap-align: center;
+        scroll-snap-stop: always;
+    }
+
+    .leader-card-art {
+        height: 190px;
+    }
+
+    .leader-card-art img {
+        max-height: 176px;
+    }
+
+    .leader-card-desc {
+        font-size: 11px;
+    }
+
+    .leader-carousel-nav {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
 }
 
 /* corpo do card */
@@ -3300,24 +3509,4 @@ button.btn-success {
     display: flex;
     flex-wrap: wrap;
     gap: 3px;
-}
-
-@media (max-width: 760px) {
-    .leader-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 10px;
-        max-height: 56vh;
-    }
-
-    .leader-card-art {
-        height: 104px;
-    }
-
-    .leader-card-art img {
-        max-height: 96px;
-    }
-
-    .leader-card-desc {
-        font-size: 10px;
-    }
 }

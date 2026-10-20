@@ -93,7 +93,9 @@ $screens = @(
     @{ id = 'leader';      kind = 'leader';       size = '1280,800'; show = @(); after = 'openLeaderSelection(false, false)' },
     @{ id = 'leader-mobile'; kind = 'leader';     size = '400,800';  show = @(); after = 'openLeaderSelection(false, false)' },
     @{ id = 'hexis';       kind = 'hexis';        size = '1280,800'; show = @(); after = 'game.leaderData=LEADERS[0]; game.conqueredRegions=["WEST","NW"]; openContinentMap();' },
-    @{ id = 'hexis-mobile'; kind = 'hexis';       size = '400,800';  show = @(); after = 'game.leaderData=LEADERS[0]; game.conqueredRegions=["WEST","NW"]; openContinentMap();' }
+    @{ id = 'hexis-mobile'; kind = 'hexis';       size = '400,800';  show = @(); after = 'game.leaderData=LEADERS[0]; game.conqueredRegions=["WEST","NW"]; openContinentMap();' },
+    @{ id = 'route';       kind = 'route';        size = '1280,800'; show = @(); after = 'game.leaderData=LEADERS[0]; generateRouteMap(); renderRouteMap();' },
+    @{ id = 'route-mobile'; kind = 'route';       size = '400,800';  show = @(); after = 'game.leaderData=LEADERS[0]; generateRouteMap(); renderRouteMap();' }
 )
 
 $pages = @{}
@@ -131,6 +133,13 @@ foreach ($key in $pages.Keys) {
         $titleCount = ([regex]::Matches($dom, [regex]::Escape('Selecione seu'))).Count
         if ($titleCount -eq 1) { Write-Output "[PASS] titulo unico na selecao de lider" }
         else { $failures += "titulo duplicado/ausente na selecao de lider ($titleCount)"; Write-Output "[FAIL] titulo duplicado/ausente na selecao de lider ($titleCount)" }
+    }
+    # check de integridade do mapa de rotas (nos e linhas renderizados)
+    if ($key -match 'renderRouteMap') {
+        $nodeCount = ([regex]::Matches($dom, 'class="map-node ')).Count
+        $lineCount = ([regex]::Matches($dom, '<line ')).Count
+        if ($nodeCount -ge 20 -and $lineCount -ge 10) { Write-Output "[PASS] mapa de rotas completo ($nodeCount nos, $lineCount linhas)" }
+        else { $failures += "mapa de rotas incompleto ($nodeCount nos, $lineCount linhas)"; Write-Output "[FAIL] mapa de rotas incompleto ($nodeCount nos, $lineCount linhas)" }
     }
 }
 

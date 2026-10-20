@@ -71,8 +71,9 @@ elif kind == "chooser":
     ]
 elif kind == "leader":
     # tela de seleção de líder: badge do modo (azul = campanha), título,
-    # grid de cards com retratos e nomes dourados, botão voltar
-    # (a lua fica atrás do conteúdo nesta tela, então não é checada)
+    # cards com retratos e nomes dourados, botão voltar.
+    # Em telas estreitas (<=760px) os cards viram carrossel (1 card por vez).
+    mobile = w <= 760
     blue_badge = count(0, w, 0, int(h * 0.22), lambda r, g, b: b > 120 and r < 100)
     gold_names = count(0, w, int(h * 0.20), int(h * 0.95), lambda r, g, b: r > 160 and g > 120 and b < 100)
     # retratos: conteúdo claro/médio (sprites escuros contam), mas não
@@ -82,9 +83,24 @@ elif kind == "leader":
         ("ceu_pintado_nas_margens", sky_painted()),
         ("titulo_selecione_lider", title_upper_half(max(25, w // 32))),
         ("selo_do_modo_campanha", blue_badge > 3),
-        ("nomes_dos_lideres_dourados", gold_names > 100),
+        ("nomes_dos_lideres_dourados", gold_names > (15 if mobile else 100)),
         ("retratos_presentes", portraits > max(30, w // 16)),
         ("botao_voltar", gold_band(0.85, 1.0, 10)),
+    ]
+    if mobile:
+        # carrossel: setas de navegação + contador na base
+        nav_gold = count(0, w, int(h * 0.75), h, lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
+        checks += [("setas_do_carrossel", nav_gold > 20)]
+elif kind == "route":
+    # mapa de exploração: nós hexagonais alcançáveis pulsando dourado,
+    # moldura, título; a integridade (nós/linhas) é validada via DOM
+    gold_nodes = count(0, w, int(h * 0.35), h, lambda r, g, b: r > 170 and g > 130 and b < 110, 2)
+    node_labels = count(0, w, int(h * 0.35), h, lambda r, g, b: b > 120 and r < 110 and g < 140, 2)
+    checks += [
+        ("ceu_pintado_nas_margens", sky_painted()),
+        ("titulo_mapa_exploracao", title_upper_half(max(20, w // 40))),
+        ("nos_alcancaveis_dourados", gold_nodes > 25),
+        ("rotulos_dos_nos", node_labels > 4),
     ]
 elif kind == "mode-mobile":
     blue = count(0, w, 0, h, lambda r, g, b: b > 120 and r < 100)

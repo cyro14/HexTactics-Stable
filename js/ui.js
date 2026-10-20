@@ -1215,6 +1215,7 @@ function openLeaderSelection(isRoguelite, isDuel = false, pickingOpponentFor = n
     // Função que lista os líderes de acordo com o filtro selecionado
     const renderList = () => {
         container.innerHTML = '';
+        container.scrollLeft = 0; // volta ao início do carrossel ao filtrar
         let filteredLeaders = LEADERS;
 
         if (activeFilter !== 'ALL') {
@@ -1287,6 +1288,27 @@ function openLeaderSelection(isRoguelite, isDuel = false, pickingOpponentFor = n
     // Inicia os estados
     updateFilterUI();
     renderList();
+
+    // ---- Carrossel (mobile): setas + contador ----
+    // (onclick/onscroll por propriedade evita listeners duplicados em reaberturas)
+    const prevBtn = $('leader-prev');
+    const nextBtn = $('leader-next');
+    const countEl = $('leader-count');
+    const cardStep = () => {
+        const card = container.querySelector('.leader-card');
+        return card ? card.offsetWidth + 12 : 1;
+    };
+    const updateCount = () => {
+        if (!countEl) return;
+        const total = container.children.length;
+        if (!total) { countEl.textContent = '0 / 0'; return; }
+        const idx = Math.min(Math.round(container.scrollLeft / cardStep()), total - 1);
+        countEl.textContent = `${idx + 1} / ${total}`;
+    };
+    if (prevBtn) prevBtn.onclick = () => container.scrollBy({ left: -cardStep(), behavior: 'smooth' });
+    if (nextBtn) nextBtn.onclick = () => container.scrollBy({ left: cardStep(), behavior: 'smooth' });
+    container.onscroll = updateCount;
+    updateCount();
 
     $('btn-close-leader').onclick = () => {
         $('leader-selection').classList.add('hidden');
@@ -1538,6 +1560,17 @@ function generateRouteMap() {
     game.currentFloor = -1;
 }
 
+// Ícones desenhados dos nós de exploração (SVG linha, sem emoji)
+window.ROUTE_ICONS = {
+    BATTLE: '<path d="M4.5 19.5 16 8 M16 8l2.5-2.5 M6.5 15.5l3 3"/><path d="M19.5 19.5 8 8 M8 8 5.5 5.5 M17.5 15.5l-3 3"/>',
+    ELITE: '<path d="M12 3a7 7 0 0 0-7 7c0 2.6 1.4 4.4 3 5.4V19h2v-2h4v2h2v-3.6c1.6-1 3-2.8 3-5.4a7 7 0 0 0-7-7Z"/><circle cx="9.3" cy="11" r="1.2" fill="currentColor" stroke="none"/><circle cx="14.7" cy="11" r="1.2" fill="currentColor" stroke="none"/><path d="M11 19v-2 M13 19v-2"/>',
+    EVENT: '<path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3" transform="translate(0 1.5)"/><path d="M12 17.5v.02" transform="translate(0 1.5)"/>',
+    TREASURE: '<path d="M7 4h10l4 5-9 12L3 9Z M3 9h18 M7 4l5 5 5-5 M12 21 8 9 M12 21l4-12"/>',
+    SHOP: '<circle cx="12" cy="12" r="7.5"/><path d="M12 8.5v7 M9.8 10.2c.4-1 1.2-1.7 2.2-1.7 1.4 0 2.3.9 2.3 2 0 2.6-4.5 1.7-4.5 4.3.4 1 1.2 1.7 2.2 1.7 1 0 1.9-.5 2.3-1.4"/>',
+    BOSS: '<path d="M4 18h16 M4 18 2.5 8l5.5 4 4-6.5 4 6.5 5.5-4L20 18"/>',
+    LAB: '<path d="M10 3v5.5L4.8 18.5A2 2 0 0 0 6.5 21.5h11a2 2 0 0 0 1.7-3L14 8.5V3 M8 3h8 M7.5 14.5h9"/>'
+};
+
 function renderRouteMap() {
     const container = $('map-nodes-container');
     const svg = $('map-lines');
@@ -1552,9 +1585,15 @@ function renderRouteMap() {
         floor.forEach(node => {
             const nType = NODE_TYPES[node.type];
             const btn = document.createElement('div');
-            btn.className = `map-node ${node.status}`;
+            btn.className = `map-node t-${node.type} ${node.status}`;
             btn.id = `node_${node.id}`;
-            btn.innerHTML = `${nType.icon}<div class="node-name" style="color:${nType.color}">${nType.name}</div>`;
+            btn.innerHTML = `
+                <div class="map-node-shape">
+                    <div class="map-node-face">
+                        <svg viewBox="0 0 24 24">${window.ROUTE_ICONS[node.type] || ''}</svg>
+                    </div>
+                </div>
+                <div class="node-name" style="color:${nType.color}">${nType.name}</div>`;
 
             if (node.status === 'reachable') {
                 btn.onclick = () => activateNode(node);
