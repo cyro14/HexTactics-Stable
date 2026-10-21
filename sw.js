@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v2'; // Mudei o v1 para v2 para forçar a atualização
+const CACHE_NAME = 'hextactics-v3'; // v3: fix dropdowns mobile (overflow/z-index) + modal clicável
 const ASSETS = [
     './',
     './index.html',
