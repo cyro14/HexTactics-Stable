@@ -461,12 +461,17 @@ function toggleCombatLog() {
     localStorage.setItem('ht_log_collapsed', log.classList.contains('collapsed'));
 }
 
-// Inicializa estado do log
+// Inicializa estado do log (no mobile começa recolhida para não
+// roubar tela do mapa — a preferência salva do jogador prevalece)
 function initCombatLog() {
     const log = $('combat-log-container');
     if (!log) return;
-    const collapsed = localStorage.getItem('ht_log_collapsed') === 'true';
-    if (collapsed) log.classList.add('collapsed');
+    const saved = localStorage.getItem('ht_log_collapsed');
+    if (saved === 'true') {
+        log.classList.add('collapsed');
+    } else if (saved === null && window.innerWidth <= 760) {
+        log.classList.add('collapsed'); // padrão mobile: só a fita do cabeçalho
+    }
 }
 
 // Configura listeners do log

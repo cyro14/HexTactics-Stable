@@ -745,86 +745,6 @@ button.btn-success {
         font-size: 2.4rem;
     }
 
-    /* --- 1. CABEÇALHO LADO A LADO (CORRIGIDO PARA MOBILE) --- */
-    #top-bar {
-        padding: 8px 8px 6px 8px;
-        align-items: flex-start !important;
-        padding-top: 24px;
-        /* Espaço para o indicador de fase */
-        flex-direction: row;
-        flex-wrap: wrap;
-        /* Permite que os itens quebrem linha */
-        align-items: center;
-        justify-content: space-between;
-        max-height: none !important;
-        /* Libera a altura da caixa preta! */
-        gap: 8px;
-    }
-
-    /* 1. Joga a Mana para debaixo da badge de Turno */
-    .hud-top-left {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 6px !important;
-        max-width: 45% !important;
-        /* Garante que não invada a área dos botões */
-    }
-
-    .hud-top-right {
-        justify-content: flex-end !important;
-        flex-wrap: wrap !important;
-        max-width: 55% !important;
-        gap: 4px !important;
-    }
-
-    /* Dá um respiro para a linha de Recursos embaixo */
-    .hud-top-center {
-        margin-top: 6px !important;
-    }
-
-    /* Ajuste fino do botão de Cancelar para telas menores */
-    #btn-cancel-action {
-        bottom: 115px !important;
-    }
-
-    .turn-section {
-        flex: 1;
-        min-width: 0;
-        gap: 6px;
-    }
-
-    #unit-info-container {
-        flex: 1;
-        justify-content: flex-end;
-        align-items: flex-start;
-        min-width: 0;
-    }
-
-    #unit-stats-block {
-        text-align: right;
-    }
-
-    #unit-portrait {
-        width: 44px;
-        height: 44px;
-        font-size: 24px;
-        margin-top: 2px;
-    }
-
-    #gold-display {
-        font-size: 13px;
-        margin-top: 3px;
-    }
-
-    #turn-badge {
-        font-size: 9px;
-        padding: 4px 6px;
-    }
-
-    .btn-icon {
-        padding: 7px 10px;
-    }
-
     .shop-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -833,96 +753,10 @@ button.btn-success {
         grid-template-columns: repeat(3, 1fr);
     }
 
-    /* Reposiciona o indicador de FASE para o centro-topo, igual no PC */
-    #stage-indicator {
-        top: 2px;
-        bottom: auto;
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%);
-        font-size: 9px;
-        padding: 2px 10px;
-    }
-
-    #action-bar {
-        display: flex;
-        gap: 4px;
-        padding: 6px;
-        flex-wrap: nowrap !important;
-        /* Impede quebra de linha */
-    }
-
-    #action-bar button {
-        flex: 1 1 0 !important;
-        /* Força larguras exatamente iguais */
-        justify-content: center;
-        text-align: center;
-        padding: 8px 2px;
-        font-size: 9.5px;
-        /* Fonte levemente reduzida para caber "Fim de Turno" */
-        letter-spacing: 0;
-    }
-
-    .spell-btn {
-        min-width: unset !important;
-        /* Remove a largura extra forçada que causava o vazio */
-        padding: 4px 8px;
-    }
-
-    /* Sobe o log de combate e a barra de magias para não colidirem com o rodapé novo */
-    #log-wrapper {
-        width: 220px;
-        bottom: 55px;
-        left: 5px;
-    }
-
-    #spell-bar {
-        position: absolute;
-        bottom: 85px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        flex-direction: row;
-        gap: 10px;
-        overflow-x: auto;
-        padding: 12px;
-        max-width: 90%;
-        background: rgba(10, 12, 18, 0.95);
-        border: 1px solid var(--gold-dark);
-        border-radius: 8px;
-        z-index: 110;
-        width: auto;
-    }
-
-    .shop-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .bestiary-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-
-    /* Garante que os botões caibam lado a lado se distribuindo igualmente sem quebrar o layout */
-    .hud-actions-row {
-        gap: 4px !important;
-        padding-top: 6px !important;
-    }
-
-    .btn-hud-action {
-        font-size: 9px !important;
-        padding: 6px 2px !important;
-        flex: 1 1 0 !important;
-        /* Força distribuição perfeitamente simétrica e encolhimento seguro */
-        justify-content: center;
-        white-space: nowrap;
-        letter-spacing: 0px !important;
-        gap: 2px !important;
-    }
-
-    /* Mochila: o botão está na action bar (ribbon do topo) — o menu abre
+    /* Mochila: o botão está na ribbon compacta do topo — o menu abre
        logo abaixo dela, no lado esquerdo */
     #field-item-menu {
-        top: 196px !important;
+        top: 96px !important;
         left: 8px !important;
         right: auto !important;
         bottom: auto !important;
@@ -5190,30 +5024,65 @@ button.btn-success {
    RESPONSIVO: Mobile
    ------------------------------------------ */
 @media (max-width: 760px) {
-    .battle-side-panel { width: 100%; height: auto; max-height: 55vh; bottom: 0; top: auto; right: 0; left: 0; border-radius: 16px 16px 0 0; flex-direction: column; }
-    .battle-side-panel > .side-panel-frame { border-radius: 16px 16px 0 0; border-top-width: 2px; }
-    .side-corner.tr { border-radius: 0 16px 0 0; }
-    .side-corner.br { border-radius: 0 0 0 0; }
-    .side-panel-content { padding: 12px 12px 14px; gap: 12px; }
-    .unit-portrait-frame { width: 120px; height: 120px; }
-    .unit-portrait { border-width: 2px; }
-    .side-unit-name { font-size: 15px; }
-    .stat-bar-side-bg { height: 14px; }
-    .sb-val { min-width: 48px; font-size: 10px; }
-    .sc-chip-side { font-size: 11px; padding: 6px 10px; }
-    .sc-chip-side b { font-size: 12px; }
-    .btn-side-action { font-size: 10px; padding: 8px 10px; gap: 6px; }
-    .btn-side-action .hud-btn-art { width: 20px; height: 26px; }
-    .btn-side-action .mm-ico { width: 16px; height: 16px; }
-    .trait-badge { font-size: 8px; padding: 3px 7px; }
+    /* ---- Painel: bottom-sheet COMPACTO (retrato deitado, info ao lado) ---- */
+    .battle-side-panel { width: 100%; height: auto; max-height: 46vh; bottom: 0; top: auto; right: 0; left: 0; border-radius: 14px 14px 0 0; flex-direction: column; }
+    .battle-side-panel > .side-panel-frame { border-radius: 14px 14px 0 0; border-top-width: 2px; }
+    .side-corner.tr { border-radius: 0 14px 0 0; }
+    .side-corner.br { border-radius: 0; }
+    .side-panel-content { padding: 8px 10px 6px; gap: 8px; }
 
-    /* Action bar: ribbon horizontal no topo (abaixo da barra empilhada),
-       para não brigar com o bottom-sheet do painel na base */
-    .battle-action-bar { left: 0; right: 0; bottom: auto; top: 132px; border-radius: 0 0 10px 10px; max-width: none; padding: 8px 10px; gap: 10px; }
-    .ab-btn { width: 42px; height: 42px; }
-    .ab-spells { max-width: calc(100vw - 190px); }
-    .spell-slot-lol { width: 46px; height: 46px; }
-    .spell-slot-lol .sl-icon { font-size: 21px; }
+    /* retrato + nome lado a lado: economiza ~90px de altura */
+    .side-portrait-section { flex-direction: row; align-items: center; gap: 10px; padding-bottom: 6px; }
+    .unit-portrait-frame { width: 72px; height: 72px; }
+    .unit-portrait { border-width: 2px; }
+    .unit-portrait img { transform: scale(1.35); }
+    .unit-portrait.is-terrain { font-size: 34px; }
+    .portrait-frame-overlay { display: none; }
+    .portrait-rank { width: 22px; height: 22px; font-size: 8px; top: -5px; right: -5px; }
+    .side-unit-name { font-size: 14px; text-align: left; }
+    .side-unit-class { font-size: 9px; text-align: left; letter-spacing: 1px; }
+
+    /* barras finas */
+    .side-stat-bars { gap: 4px; }
+    .stat-bar-side-row { gap: 6px; font-size: 9.5px; }
+    .stat-bar-side-row .sb-ico { width: 12px; height: 12px; }
+    .stat-bar-side-bg { height: 11px; border-radius: 3px; }
+    .sb-val { min-width: 42px; font-size: 8.5px; }
+
+    /* chips de combate em 2 colunas */
+    .side-combat-stats { flex-direction: row; flex-wrap: wrap; gap: 5px; }
+    .sc-chip-side { flex: 1 1 45%; padding: 4px 8px; font-size: 9.5px; gap: 5px; }
+    .sc-chip-side b { font-size: 11px; }
+    .sc-chip-side .mm-ico { width: 12px; height: 12px; }
+    .sc-chip-side span { font-size: 8px; }
+
+    /* terreno em 2 colunas */
+    .terrain-label, .traits-label { font-size: 8px; letter-spacing: 1.5px; margin-bottom: 3px; }
+    .side-terrain-info { flex-direction: row; flex-wrap: wrap; gap: 5px; }
+    .terrain-chip { flex: 1 1 45%; padding: 4px 7px; font-size: 9px; }
+
+    .trait-badge { font-size: 8px; padding: 2px 6px; gap: 3px; }
+
+    /* ações em LINHA: [Domar][PRONTO] para poupar altura */
+    .side-actions-section { flex-direction: row; flex-wrap: wrap; align-items: stretch; padding: 7px 10px 9px; gap: 6px; }
+    .btn-side-action { padding: 7px 8px; font-size: 10px; letter-spacing: .5px; gap: 5px; }
+    #btn-tame { flex: 1 1 38%; }
+    #btn-end-turn { flex: 1 1 56%; min-width: 0; }
+    .btn-side-action .hud-btn-art { width: 15px; height: 19px; }
+    .btn-cancel-action { flex: 1 1 100%; margin-top: 2px; padding: 7px 10px; font-size: 9.5px; }
+
+    /* ---- Action bar: ribbon FINA no topo (abaixo da barra compacta) ---- */
+    .battle-action-bar { left: 0; right: 0; bottom: auto; top: 46px; border-radius: 0 0 8px 8px; max-width: none; padding: 4px 8px; gap: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, .7), inset 0 1px 0 rgba(232, 200, 74, .1); }
+    .ab-utilities { gap: 6px; }
+    .ab-btn { width: 34px; height: 34px; border-radius: 5px; }
+    .ab-btn .mm-ico { width: 14px; height: 14px; }
+    .ab-btn img { width: 17px; height: 17px; }
+    .ab-spells { max-width: calc(100vw - 180px); gap: 6px; }
+    .ab-spells::before { height: 24px; margin-right: 2px; }
+    .spell-slot-lol { width: 34px; height: 34px; border-radius: 5px; }
+    .spell-slot-lol .sl-icon { font-size: 16px; }
+    .spell-slot-lol .sl-cost { font-size: 8px; bottom: 1px; right: 3px; gap: 2px; }
+    .spell-slot-lol .sl-cd { font-size: 12px; border-radius: 4px; }
 
 /* ------------------------------------------
    MODAL DE HISTÓRICO COMPLETO
@@ -5275,32 +5144,43 @@ button.btn-success {
    RESPONSIVO: Mobile
    ------------------------------------------ */
 @media (max-width: 760px) {
+    /* ---- Barra superior: LINHA ÚNICA compacta (~40px) ---- */
     .battle-top-bar {
-        flex-wrap: wrap;
-        padding: 8px 10px;
-        gap: 8px;
+        flex-wrap: nowrap;
+        padding: 4px 8px;
+        margin: 4px 8px 0;
+        gap: 6px;
+        overflow: hidden;
     }
-    .top-bar-left { order: 1; flex: 1; min-width: 0; gap: 8px; }
-    .top-bar-center { order: 3; width: 100%; justify-content: center; margin-top: 4px; }
-    .top-bar-right { order: 2; flex: 1; justify-content: flex-end; }
-    .turn-badge { font-size: 9.5px; padding: 4px 8px; }
-    .turn-badge-ico { width: 14px; height: 14px; }
-    .tod-indicator { font-size: 9px; padding: 3px 8px; }
+    .top-bar-left { order: 1; flex: 1; min-width: 0; gap: 5px; }
+    .top-bar-center { order: 2; width: auto; margin-top: 0; flex: 0 0 auto; }
+    .top-bar-right { order: 3; flex: 0 0 auto; gap: 4px; }
+    .turn-badge { font-size: 8px; padding: 3px 6px; gap: 4px; letter-spacing: .5px; }
+    .turn-badge-ico { width: 12px; height: 12px; }
+    .tod-indicator { font-size: 8px; padding: 3px 5px; gap: 3px; }
     .tod-label { display: none; }
-    .resource-chip { font-size: 10.5px; padding: 4px 10px; }
-    .mana-bar-top { max-width: 160px; }
-    .mana-pip-top { width: 11px; height: 11px; }
+    #mana-trigger { font-size: 9px; gap: 3px; padding: 2px; }
+    #mana-trigger img { width: 12px; height: 12px; }
+    .mana-bar-top { max-width: 92px; }
+    .resource-chip { font-size: 10px; padding: 3px 7px; gap: 4px; }
+    .resource-chip .mm-ico { width: 11px; height: 11px; }
+    .chip-value { font-size: 10px; }
+    .chip-caret { width: 9px; height: 9px; }
+    .top-btn-icon { width: 28px; height: 28px; padding: 3px; border-radius: 4px; }
+    .top-btn-icon img { width: 15px; height: 15px; }
 
-    /* Em telas estreitas: action bar vira ribbon no topo e o painel vira
-       bottom-sheet — a crônica fica no canto superior direito, abaixo da ribbon */
-    .battle-log { left: auto; right: 8px; width: 240px; top: 196px; bottom: auto; max-height: 18vh; font-size: 10px; }
-    .battle-log.collapsed { max-height: 38px !important; }
+    /* ---- Crônica: fita fina no topo-direita (recolhida por padrão via JS) ---- */
+    .battle-log { left: auto; right: 8px; width: 210px; top: 92px; bottom: auto; max-height: 16vh; font-size: 9px; border-radius: 4px; }
+    .battle-log.collapsed { max-height: 32px !important; }
+    .battle-log-header { padding: 5px 8px; }
+    .battle-log-title { font-size: 8.5px; letter-spacing: 1px; gap: 5px; }
+    .battle-log-title .mm-ico { width: 11px; height: 11px; }
+    .log-toggle-btn, .log-history-btn { width: 22px; height: 22px; border-radius: 3px; }
+    .log-toggle-btn .mm-ico, .log-history-btn .mm-ico { width: 11px; height: 11px; }
 
-    .btn-label { display: none; }
-
-    .turn-banner { gap: 14px; padding: 14px 20px; }
-    .turn-banner-flourish { width: 36px; height: 36px; }
-    .turn-banner-ico { width: 28px; height: 28px; }
-    #turn-banner-title { font-size: 1.1rem; letter-spacing: 2px; }
-    .turn-banner-sub { font-size: 9.5px; letter-spacing: 3px; }
+    .turn-banner { gap: 10px; padding: 10px 14px; }
+    .turn-banner-flourish { width: 26px; height: 26px; }
+    .turn-banner-ico { width: 22px; height: 22px; }
+    #turn-banner-title { font-size: .95rem; letter-spacing: 1.5px; }
+    .turn-banner-sub { font-size: 8.5px; letter-spacing: 2px; }
 }

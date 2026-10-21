@@ -148,15 +148,16 @@ elif kind == "battle":
     # top-bar: badge de turno + chip de ouro dourados
     top_gold = count(0, w, int(h * 0.02), int(h * 0.15), lambda r, g, b: r > 170 and g > 130 and b < 100, 2)
     if mobile:
-        # painel vira bottom-sheet na base; action bar vira ribbon no topo
+        # layout compacto: painel bottom-sheet 46vh; ribbon fina no topo
+        # (y ~46-90) e crônica recolhida logo abaixo (y ~92-124)
         panel_gold = count(int(w * 0.5), w, int(h * 0.5), h, lambda r, g, b: r > 170 and g > 120 and b < 100, 2)
         hp_red = count(0, w, int(h * 0.5), h, lambda r, g, b: r > 150 and g < 110 and b < 100, 2)
         mp_blue = count(0, w, int(h * 0.5), h, lambda r, g, b: r < 130 and g > 80 and b > 150, 2)
         ready_gold = count(int(w * 0.3), w, int(h * 0.75), h, lambda r, g, b: r > 180 and g > 140 and b < 100, 2)
-        # crônica: canto superior direito, abaixo da ribbon (top: ~196px)
-        log_gold = count(int(w * 0.25), w, int(h * 0.23), int(h * 0.42), lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
-        # action bar: ribbon horizontal no topo (y ~124-196px)
-        action_gold = count(0, w, int(h * 0.155), int(h * 0.245), lambda r, g, b: r > 150 and g > 100 and b < 90, 2)
+        # crônica recolhida no topo-direita: header dourado (top: ~92px)
+        log_gold = count(int(w * 0.3), w, int(h * 0.105), int(h * 0.18), lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
+        # action bar: ribbon compacta no topo (y ~46-90px)
+        action_gold = count(0, w, int(h * 0.055), int(h * 0.115), lambda r, g, b: r > 150 and g > 100 and b < 90, 2)
         panel_thresh = 8
     else:
         # painel lateral direito: 280px colados à direita

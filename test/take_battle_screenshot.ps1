@@ -63,6 +63,10 @@ $url = "file:///" + ($path -replace '\\', '/')
 $img = Join-Path $artDir 'battle_visual.png'
 & $chrome --headless --disable-gpu --no-sandbox --screenshot="$img" --window-size=1280,800 --virtual-time-budget=8000 $url 2>$null | Out-Null
 
+# Tira screenshot (mobile) para validar o layout compacto
+$imgMobile = Join-Path $artDir 'battle_visual_mobile.png'
+& $chrome --headless --disable-gpu --no-sandbox --screenshot="$imgMobile" --window-size=400,800 --virtual-time-budget=8000 $url 2>$null | Out-Null
+
 # Valida erros de JS via dump-dom
 $dom = & $chrome --headless --disable-gpu --no-sandbox --virtual-time-budget=8000 --dump-dom $url 2>$null | Out-String
 if ($dom -match 'data-js-errors="([^"]*)"') {
@@ -72,3 +76,4 @@ if ($dom -match 'data-js-errors="([^"]*)"') {
 }
 
 Write-Output "Screenshot salvo em: $img"
+Write-Output "Screenshot salvo em: $imgMobile"
