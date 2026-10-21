@@ -680,6 +680,39 @@ window.showAbility = function (id, e, n, f = 'none') {
 window.showBeastDetails = function (b, bypassUnlock = false) {
     const isUnlocked = bypassUnlock || unlockedBeasts.includes(b.name);
     if (!isUnlocked && !bypassUnlock) return;
+
+    // ---- Bloco "Status Atual": só para instâncias vivas do tabuleiro
+    // (templates do bestiário não têm os métodos de instância). No modo
+    // retrato é aqui que ficam TODOS os stats — clicar na foto do card
+    // abre este modal com barras, chips, terreno e traços. ----
+    const statsBox = document.getElementById('bd-stats');
+    if (statsBox) {
+        if (typeof b.getEffectiveAtk === 'function' && typeof game !== 'undefined' && game) {
+            const facCol = b.faction === 1 ? '#4a9edd' : b.faction === 2 ? '#c0392b' : '#27ae60';
+            const portHtml = b.sprite
+                ? `<img src="${b.sprite}" alt="${b.name}">`
+                : `<span style="font-size:30px; line-height:1;">${b.emoji}</span>`;
+            const terrainHtml = unitTerrainHtml(b);
+            const traitsHtml = unitTraitsHtml(b);
+            statsBox.innerHTML = `
+                <div class="bds-head">
+                    <div class="bds-portrait" style="--fac-col:${facCol}">${portHtml}</div>
+                    <div class="bds-tit">
+                        <div class="bds-name">${b.name}</div>
+                        <div class="bds-sub">${b.baseName || b.name} · Nível ${b.level}</div>
+                    </div>
+                </div>
+                <div class="side-stat-bars">${unitBarsHtml(b)}</div>
+                <div class="side-combat-stats">${unitChipsHtml(b)}</div>
+                ${terrainHtml ? `<div class="bds-terrain">${terrainHtml}</div>` : ''}
+                ${traitsHtml ? `<div class="bds-traits">${traitsHtml}</div>` : ''}`;
+            statsBox.classList.remove('hidden');
+        } else {
+            statsBox.classList.add('hidden');
+            statsBox.innerHTML = '';
+        }
+    }
+
     let evArr = EVOS[b.name] || [b.name + ' Alfa', b.name + ' Supremo'];
     let e1 = b.e || b.emoji, n1 = b.name, f1 = b.filter || 'none';
     let e2 = e1, n2 = evArr[0], f2 = f1; let e3 = e1, n3 = evArr[1], f3 = f1;
@@ -850,8 +883,10 @@ function updateUI() {
     }
 }
 
-// Renderiza barras de status SVG (HP, MP, XP) — formato painel lateral
-function renderUnitStatBars(u) {
+// ---- Helpers de HTML (compartilhados entre painel e modal de detalhes) ----
+
+// HTML das barras de status (HP, MP, XP)
+function unitBarsHtml(u) {
     const hpPct = Math.max(0, Math.min(100, (u.hp / u.maxHp) * 100));
     const mpPct = Math.max(0, Math.min(100, (u.mp / u.maxMp) * 100));
     const showXP = u.faction === 1 && !u.isBoss;
@@ -884,11 +919,11 @@ function renderUnitStatBars(u) {
         </div>`;
     }
 
-    $('unit-bars').innerHTML = html;
+    return html;
 }
 
-// Renderiza chips de combate (ATK, ALC, DEF, MOV) — formato painel lateral
-function renderCombatChips(u) {
+// HTML dos chips de combate (ATK, ALC, DEF, MOV)
+function unitChipsHtml(u) {
     let defInfo = '';
     const uH = game?.map?.get(`${u.q},${u.r}`);
     if (uH) {
@@ -897,15 +932,15 @@ function renderCombatChips(u) {
         defInfo = `<div class="sc-chip-side def"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><b>${Math.round(defV * 100)}%</b><span>DEF</span></div>`;
     }
 
-    $('unit-combat-stats').innerHTML = `
+    return `
         <div class="sc-chip-side atk"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L2 7l10 15 10-15-10-5zM12 22l8-5-8-10-8 5 8 10z"/></svg><b>${u.getEffectiveAtk(game)}</b><span>ATK</span></div>
         <div class="sc-chip-side range"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M12 2l10 5-10 10-10-5 10-5z"/></svg><b>${u.getEffectiveRange(game)}</b><span>ALC</span></div>
         <div class="sc-chip-side move"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M12 2l10 5-10 10-10-5 10-5z"/></svg><b>${u.maxMp}</b><span>MOV</span></div>
         ${defInfo}`;
 }
 
-// Renderiza tags e habilidades da unidade — formato trait badges
-function renderUnitTagsAbilities(u) {
+// HTML dos trait badges (debuffs, tags, habilidades, efeitos)
+function unitTraitsHtml(u) {
     const ABILITY_ICONS = {
         dodge: '💨', lifesteal: '🦇', poison: '☠️', stun: '⚡', bind: '🕸️', burn: '🔥', pierce: '🗡️', counter: '↩️', freeze: '🧊', leadership: '👑', electric: '🌩️', hit_run: '🐎', swift: '🐇', crystal_skin: '💎', corte_amplo: '🪓', carapace: '🐢', flying: '🪽', frost_armor: '🛡️', camouflage: '🍃', dive: '🌊', undying: '☠️', regeneration: '💚', venomous: '☠️', ambush: '🌿', trample: '🐘', aerial: '🪽', aquatic: '🌊', burrower: '🕳️', siege: '🏰', alpha: '👑'
     };
@@ -939,23 +974,19 @@ function renderUnitTagsAbilities(u) {
     if (u.undyingTurns > 0) iconsHtml += getTraitHTML('☠️', 'Imortal', `Não morre por ${u.undyingTurns} turno(s).`, 'status');
     if (u.furyAtk > 0) iconsHtml += getTraitHTML('😤', 'Fúria', `+${u.furyAtk} ATK temporário.`, 'status');
 
-    $('unit-tags-abilities').innerHTML = iconsHtml || '<span style="font-size:10px; color:#555;">Normal</span>';
+    return iconsHtml;
 }
 
-// Renderiza info de terreno da unidade selecionada
-function renderTerrainInfo(u) {
+// HTML dos chips de terreno atual da unidade
+function unitTerrainHtml(u) {
     const uH = game?.map?.get(`${u.q},${u.r}`);
-    if (!uH) {
-        $('terrain-info').style.display = 'none';
-        return;
-    }
+    if (!uH) return '';
     const t = uH.terrain;
     const defPct = Math.round(t.def * 100);
     const defCol = t.def > 0 ? 'var(--success)' : (t.def < 0 ? 'var(--enemy-color)' : '#aaa');
     const costCol = t.cost === 1 ? 'var(--success)' : (t.cost >= 3 ? 'var(--enemy-color)' : '#aaa');
 
-    $('terrain-info').style.display = 'block';
-    $('unit-terrain').innerHTML = `
+    return `
         <div class="terrain-chip">
             <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">${t.iconSvg || ''}</svg>
             <b style="color:${defCol}">${defPct}%</b><span>DEF</span>
@@ -966,8 +997,31 @@ function renderTerrainInfo(u) {
         </div>
         <div class="terrain-chip" style="flex:1; text-align:left;">
             <b>${t.name}</b>
-        </div>
-    `;
+        </div>`;
+}
+
+// ---- Renders do painel (usam os helpers) ----
+
+// Renderiza barras de status SVG (HP, MP, XP) — formato painel lateral
+function renderUnitStatBars(u) {
+    $('unit-bars').innerHTML = unitBarsHtml(u);
+}
+
+// Renderiza chips de combate (ATK, ALC, DEF, MOV) — formato painel lateral
+function renderCombatChips(u) {
+    $('unit-combat-stats').innerHTML = unitChipsHtml(u);
+}
+
+// Renderiza tags e habilidades da unidade — formato trait badges
+function renderUnitTagsAbilities(u) {
+    $('unit-tags-abilities').innerHTML = unitTraitsHtml(u) || '<span style="font-size:10px; color:#555;">Normal</span>';
+}
+
+// Renderiza info de terreno da unidade selecionada
+function renderTerrainInfo(u) {
+    const html = unitTerrainHtml(u);
+    $('terrain-info').style.display = html ? 'block' : 'none';
+    $('unit-terrain').innerHTML = html;
 }
 
 // Renderiza info de terreno quando hex selecionado (sem unidade)

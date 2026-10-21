@@ -148,17 +148,18 @@ elif kind == "battle":
     # top-bar: badge de turno + chip de ouro dourados
     top_gold = count(0, w, int(h * 0.02), int(h * 0.15), lambda r, g, b: r > 170 and g > 130 and b < 100, 2)
     if mobile:
-        # layout compacto: painel bottom-sheet 46vh; ribbon fina no topo
-        # (y ~46-90) e crônica recolhida logo abaixo (y ~92-124)
-        panel_gold = count(int(w * 0.5), w, int(h * 0.5), h, lambda r, g, b: r > 170 and g > 120 and b < 100, 2)
-        hp_red = count(0, w, int(h * 0.5), h, lambda r, g, b: r > 150 and g < 110 and b < 100, 2)
-        mp_blue = count(0, w, int(h * 0.5), h, lambda r, g, b: r < 130 and g > 80 and b > 150, 2)
-        ready_gold = count(int(w * 0.3), w, int(h * 0.75), h, lambda r, g, b: r > 180 and g > 140 and b < 100, 2)
-        # crônica recolhida no topo-direita: header dourado (top: ~92px)
-        log_gold = count(int(w * 0.3), w, int(h * 0.105), int(h * 0.18), lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
-        # action bar: ribbon compacta no topo (y ~46-90px)
-        action_gold = count(0, w, int(h * 0.055), int(h * 0.115), lambda r, g, b: r > 150 and g > 100 and b < 90, 2)
-        panel_thresh = 8
+        # modo retrato: mini-card no topo (foto 40px + nome + HP/MP micro),
+        # stats completos no modal; crônica recolhida abaixo do card;
+        # action bar bottom-left; Pronto é FAB no canto inferior direito
+        panel_gold = count(0, w, int(h * 0.055), int(h * 0.17), lambda r, g, b: r > 150 and g > 100 and b < 90, 2)
+        hp_red = count(0, w, int(h * 0.055), int(h * 0.17), lambda r, g, b: r > 150 and g < 110 and b < 100, 2)
+        mp_blue = count(0, w, int(h * 0.055), int(h * 0.17), lambda r, g, b: r < 130 and g > 80 and b > 150, 2)
+        ready_gold = count(w - 130, w, h - 110, h, lambda r, g, b: r > 180 and g > 140 and b < 100, 2)
+        # crônica recolhida no topo-direita (top: ~134px)
+        log_gold = count(int(w * 0.3), w, int(h * 0.155), int(h * 0.24), lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
+        # action bar: canto inferior esquerdo
+        action_gold = count(0, int(w * 0.62), h - 90, h, lambda r, g, b: r > 150 and g > 100 and b < 90, 2)
+        panel_thresh = 3
     else:
         # painel lateral compacto: 232px colados à direita, altura AUTO
         # (ancorado no topo, ~400px) — Pronto fica no meio da tela
@@ -178,6 +179,21 @@ elif kind == "battle":
         ("action_bar_inferior", action_gold > 2),
         ("botao_pronto_dourado", ready_gold > 5),
         ("painel_lateral_detalhes", panel_gold > panel_thresh),
+    ]
+elif kind == "battle-details":
+    # modal "Detalhes da Unidade" aberto sobre a batalha (a "outra tela"
+    # dos stats no modo retrato): backdrop escurecido + bloco Status
+    # Atual com retrato, barras HP/MP/XP, chips e título dourado
+    total_samples = (w // 4) * (h // 4)
+    dark = count(0, w, 0, h, lambda r, g, b: r < 50 and g < 50 and b < 55, 4)
+    gold = count(0, w, 0, h, lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
+    hp_red = count(0, w, 0, h, lambda r, g, b: r > 150 and g < 110 and b < 100, 2)
+    xp_green = count(0, w, 0, h, lambda r, g, b: r < 120 and 80 < g < 190 and b < 110, 2)
+    checks += [
+        ("modal_escurecendo_a_tela", dark > total_samples // 2),
+        ("titulo_e_dourados_do_modal", gold > 20),
+        ("barra_hp_no_status_atual", hp_red > 2),
+        ("barra_xp_no_status_atual", xp_green > 2),
     ]
 else:
     print(f"[FAIL] tipo desconhecido: {kind}")

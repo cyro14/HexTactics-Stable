@@ -89,6 +89,12 @@ foreach ($js in (Get-ChildItem (Join-Path $root 'js') -Filter *.js) + (Get-Item 
 
 # ---------- 2. telas: screenshot + asserts ----------
 Write-Output "=== 2. TELAS (screenshot + pixels) ==="
+
+# Setup de batalha compartilhado: abre a batalha de verdade (game-container
+# visível), cria um líder do jogador com uma magia e seleciona — assim o
+# painel/card, a action bar e os slots LoL são exercitados em cada execução
+$battleSetup = 'document.getElementById("main-menu").classList.add("hidden"); document.getElementById("game-container").classList.remove("hidden"); game.leaderData=LEADERS[0]; game.currentRouteType="BATTLE"; game.generateCampaignMap([]); var ld=game.leaderData; var lu=game.units.find(u=>u.faction===1&&u.isLeader); if(!lu){var sp=[...game.map.values()].find(h=>!game.getUnitAt(h.q,h.r)&&h.terrain.id!=="WATER"&&h.terrain.id!=="MOUNTAIN"); lu=new Unit({q:sp.q,r:sp.r,faction:1,isLeader:true,name:ld.name,baseName:ld.name,emoji:ld.emoji,sprite:ld.sprite,hp:ld.hp,maxHp:ld.hp,mp:ld.mp,maxMp:ld.mp,atk:ld.atk,range:ld.range,level:1,xp:0,tags:(ld.tags||[]),abilities:[],fav:(ld.fav||[]),knownSpells:[],filter:"none"}); game.units.push(lu);} if(!lu.knownSpells.length&&typeof SPELLS!=="undefined"){var c1=SPELLS.find(s=>s.level===1&&(ld.tags||[]).some(t=>s.tags.includes(t)))||SPELLS[0]; lu.knownSpells.push(c1.id);} game.selectPlayerLeader(); game.selectedUnit=lu; game.calculateReachable(lu); updateUI();'
+
 $screens = @(
     @{ id = 'menu';        kind = 'menu';         size = '1280,800'; show = @() },
     @{ id = 'menu-wide';   kind = 'menu';         size = '1920,1080'; show = @() },
@@ -104,8 +110,9 @@ $screens = @(
     @{ id = 'route-mobile'; kind = 'route';       size = '400,800';  show = @(); after = 'game.leaderData=LEADERS[0]; generateRouteMap(); renderRouteMap();' },
     @{ id = 'prep';        kind = 'prep';         size = '1280,800'; show = @(); after = 'game.currentRouteType="ELITE"; openManagement();' },
     @{ id = 'prep-mobile'; kind = 'prep';         size = '400,800';  show = @(); after = 'game.currentRouteType="ELITE"; openManagement();' },
-    @{ id = 'battle';      kind = 'battle';       size = '1280,800'; show = @(); after = 'document.getElementById("main-menu").classList.add("hidden"); document.getElementById("game-container").classList.remove("hidden"); game.leaderData=LEADERS[0]; game.currentRouteType="BATTLE"; game.generateCampaignMap([]); var ld=game.leaderData; var lu=game.units.find(u=>u.faction===1&&u.isLeader); if(!lu){var sp=[...game.map.values()].find(h=>!game.getUnitAt(h.q,h.r)&&h.terrain.id!=="WATER"&&h.terrain.id!=="MOUNTAIN"); lu=new Unit({q:sp.q,r:sp.r,faction:1,isLeader:true,name:ld.name,baseName:ld.name,emoji:ld.emoji,sprite:ld.sprite,hp:ld.hp,maxHp:ld.hp,mp:ld.mp,maxMp:ld.mp,atk:ld.atk,range:ld.range,level:1,xp:0,tags:(ld.tags||[]),abilities:[],fav:(ld.fav||[]),knownSpells:[],filter:"none"}); game.units.push(lu);} if(!lu.knownSpells.length&&typeof SPELLS!=="undefined"){var c1=SPELLS.find(s=>s.level===1&&(ld.tags||[]).some(t=>s.tags.includes(t)))||SPELLS[0]; lu.knownSpells.push(c1.id);} game.selectPlayerLeader(); game.selectedUnit=lu; game.calculateReachable(lu); updateUI();' },
-    @{ id = 'battle-mobile'; kind = 'battle';    size = '400,800';  show = @(); after = 'document.getElementById("main-menu").classList.add("hidden"); document.getElementById("game-container").classList.remove("hidden"); game.leaderData=LEADERS[0]; game.currentRouteType="BATTLE"; game.generateCampaignMap([]); var ld=game.leaderData; var lu=game.units.find(u=>u.faction===1&&u.isLeader); if(!lu){var sp=[...game.map.values()].find(h=>!game.getUnitAt(h.q,h.r)&&h.terrain.id!=="WATER"&&h.terrain.id!=="MOUNTAIN"); lu=new Unit({q:sp.q,r:sp.r,faction:1,isLeader:true,name:ld.name,baseName:ld.name,emoji:ld.emoji,sprite:ld.sprite,hp:ld.hp,maxHp:ld.hp,mp:ld.mp,maxMp:ld.mp,atk:ld.atk,range:ld.range,level:1,xp:0,tags:(ld.tags||[]),abilities:[],fav:(ld.fav||[]),knownSpells:[],filter:"none"}); game.units.push(lu);} if(!lu.knownSpells.length&&typeof SPELLS!=="undefined"){var c1=SPELLS.find(s=>s.level===1&&(ld.tags||[]).some(t=>s.tags.includes(t)))||SPELLS[0]; lu.knownSpells.push(c1.id);} game.selectPlayerLeader(); game.selectedUnit=lu; game.calculateReachable(lu); updateUI();' }
+    @{ id = 'battle';      kind = 'battle';       size = '1280,800'; show = @(); after = $battleSetup },
+    @{ id = 'battle-mobile'; kind = 'battle';     size = '400,800';  show = @(); after = $battleSetup },
+    @{ id = 'battle-details'; kind = 'battle-details'; size = '400,800'; show = @(); after = "$battleSetup showBeastDetails(lu, true);" }
 )
 
 $pages = @{}
@@ -151,6 +158,14 @@ foreach ($key in $pages.Keys) {
         $lineCount = ([regex]::Matches($dom, '<line ')).Count
         if ($nodeCount -ge 20 -and $lineCount -ge 10) { Write-Output "[PASS] mapa de rotas completo ($nodeCount nos, $lineCount linhas)" }
         else { $failures += "mapa de rotas incompleto ($nodeCount nos, $lineCount linhas)"; Write-Output "[FAIL] mapa de rotas incompleto ($nodeCount nos, $lineCount linhas)" }
+    }
+    # check do bloco "Status Atual" do modal de detalhes (a "outra tela"
+    # dos stats no modo retrato — clicar na foto do card abre isto)
+    if ($key -match 'showBeastDetails') {
+        $statsVisible = ($dom -notmatch 'id="bd-stats" class="bd-stats hidden"')
+        $statsFilled = ($dom -match 'bds-portrait') -and ($dom -match 'bds-name')
+        if ($statsVisible -and $statsFilled) { Write-Output "[PASS] modal de detalhes com status atual da unidade" }
+        else { $failures += "modal de detalhes sem status atual (visivel=$statsVisible populado=$statsFilled)"; Write-Output "[FAIL] modal de detalhes sem status atual (visivel=$statsVisible populado=$statsFilled)" }
     }
     # check do painel lateral + action bar da batalha: unidade selecionada
     # DEVE renderizar retrato + barras HP/MP/XP + chips de combate, e as
