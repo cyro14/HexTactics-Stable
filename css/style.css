@@ -3868,7 +3868,8 @@ button.btn-success {
         inset 0 1px 0 rgba(232, 200, 74, .12),
         inset 0 0 20px rgba(0, 0, 0, .6);
     position: relative;
-    z-index: 30;
+    z-index: 40; /* acima do painel/card (z 30): os dropdowns de mana e
+                   recursos precisam abrir POR CIMA da barra de unidade */
     pointer-events: auto;
 }
 
@@ -3890,6 +3891,8 @@ button.btn-success {
     display: flex;
     align-items: center;
     gap: 10px;
+    position: relative; /* âncora dos dropdowns de mana/recursos: eles abrem
+                           logo abaixo DO CHIP, não da barra inteira */
 }
 
 .top-bar-left { gap: 12px; }
@@ -3972,6 +3975,7 @@ button.btn-success {
     gap: 3px;
     flex-wrap: wrap;
     max-width: 220px;
+    position: relative; /* âncora do dropdown de mana (abre embaixo do chip) */
 }
 .mana-pip-top {
     width: 14px;
@@ -4361,8 +4365,9 @@ button.btn-success {
     top: 58px; /* abaixo da barra superior — não cobre os botões do menu */
     right: 0;
     width: 232px;
-    height: auto; /* cresce com o conteúdo; não rouba a tela inteira */
-    max-height: calc(100vh - 70px);
+    height: calc(100vh - 58px); /* altura CHEIA da tela (abaixo da barra);
+                                    o conteúdo compacto fica no topo e as
+                                    ações ancoram na base */
     z-index: 30;
     pointer-events: none; /* Deixa cliques passarem para o canvas; só o conteúdo captura */
     display: flex;
