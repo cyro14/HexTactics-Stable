@@ -4241,7 +4241,7 @@ button.btn-success {
 .battle-log {
     position: fixed;
     top: 66px;
-    right: 292px; /* 280px do painel lateral + 12px de folga */
+    right: 244px; /* 232px do painel lateral + 12px de folga */
     left: auto;
     bottom: auto;
     width: 320px;
@@ -4354,14 +4354,15 @@ button.btn-success {
 .log-entry.event { border-left-color: #f39c12; }
 
 /* ==========================================
-   SIDE PANEL — Painel Lateral Direito (Estilo Wesnoth)
+   SIDE PANEL — Painel Lateral Direito (compacto, estilo Wesnoth)
    ========================================== */
 .battle-side-panel {
     position: fixed;
     top: 58px; /* abaixo da barra superior — não cobre os botões do menu */
     right: 0;
-    width: 280px;
-    height: calc(100vh - 58px);
+    width: 232px;
+    height: auto; /* cresce com o conteúdo; não rouba a tela inteira */
+    max-height: calc(100vh - 70px);
     z-index: 30;
     pointer-events: none; /* Deixa cliques passarem para o canvas; só o conteúdo captura */
     display: flex;
@@ -4372,8 +4373,8 @@ button.btn-success {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    right: 0;
+    bottom: 0;
     background: linear-gradient(180deg, rgba(6, 5, 3, .97) 0%, rgba(3, 3, 6, .98) 50%, rgba(1, 2, 4, .99) 100%);
     border-left: 1px solid rgba(138, 109, 18, .5);
     border-top: 1px solid rgba(232, 200, 74, .3);
@@ -4420,29 +4421,29 @@ button.btn-success {
     flex: 1;
     min-height: 0; /* essencial para o overflow-y funcionar dentro do flex */
     overflow-y: auto;
-    padding: 16px 14px 12px;
+    padding: 10px 10px 8px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 9px;
     pointer-events: auto; /* Só o conteúdo captura cliques */
 }
 
 /* ------------------------------------------
-   RETRATO GRANDE (Estilo Warcraft/Wesnoth)
+   RETRATO COMPACTO (deitado, nome ao lado)
    ------------------------------------------ */
 .side-portrait-section {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 8px;
-    padding-bottom: 12px;
+    gap: 10px;
+    padding-bottom: 8px;
     border-bottom: 1px solid rgba(138, 109, 18, .25);
 }
 .unit-portrait-frame {
     position: relative;
     flex-shrink: 0;
-    width: 160px;
-    height: 160px;
+    width: 76px;
+    height: 76px;
 }
 .unit-portrait {
     width: 100%;
@@ -4451,25 +4452,25 @@ button.btn-success {
     justify-content: center;
     align-items: flex-start;
     background: radial-gradient(circle at 35% 20%, rgba(40, 35, 20, .95), rgba(8, 8, 12, .98));
-    border: 3px solid var(--fac-col, #555);
-    border-radius: 6px;
+    border: 2px solid var(--fac-col, #555);
+    border-radius: 5px;
     overflow: hidden;
     position: relative;
     cursor: pointer;
     box-shadow:
-        0 0 0 2px rgba(0, 0, 0, .9),
-        0 0 0 5px rgba(138, 109, 18, .4),
-        0 0 30px -4px var(--fac-col, #555),
-        inset 0 0 24px rgba(0, 0, 0, .95);
+        0 0 0 1px rgba(0, 0, 0, .9),
+        0 0 0 3px rgba(138, 109, 18, .4),
+        0 0 20px -4px var(--fac-col, #555),
+        inset 0 0 16px rgba(0, 0, 0, .95);
     transition: border-color .2s, box-shadow .2s, transform .15s;
 }
 .unit-portrait:hover {
-    transform: scale(1.015);
+    transform: scale(1.02);
     box-shadow:
-        0 0 0 2px rgba(0, 0, 0, .9),
-        0 0 0 5px rgba(138, 109, 18, .6),
-        0 0 40px -4px var(--fac-col, #555),
-        inset 0 0 24px rgba(0, 0, 0, .95);
+        0 0 0 1px rgba(0, 0, 0, .9),
+        0 0 0 3px rgba(138, 109, 18, .6),
+        0 0 28px -4px var(--fac-col, #555),
+        inset 0 0 16px rgba(0, 0, 0, .95);
 }
 .unit-portrait::after {
     content: '';
@@ -4483,39 +4484,28 @@ button.btn-success {
     height: 100%;
     object-fit: cover;
     object-position: center 8%;
-    transform: scale(1.6);
+    transform: scale(1.35);
     transform-origin: top center;
     pointer-events: none;
 }
 .unit-portrait.is-terrain {
     align-items: center;
-    font-size: 64px;
-    text-shadow: 0 4px 8px #000;
-}
-
-/* Moldura decorativa sobre o retrato */
-.portrait-frame-overlay {
-    position: absolute;
-    inset: -4px;
-    border: 2px solid var(--gold);
-    border-radius: 10px;
-    pointer-events: none;
-    opacity: .6;
-    background: linear-gradient(135deg, rgba(232, 200, 74, .15), transparent 60%);
+    font-size: 34px;
+    text-shadow: 0 3px 6px #000;
 }
 
 /* Badge de rank/estrela */
 .portrait-rank {
     position: absolute;
-    top: -8px;
-    right: -8px;
-    width: 32px;
-    height: 32px;
+    top: -5px;
+    right: -5px;
+    width: 22px;
+    height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: Cinzel, serif;
-    font-size: 11px;
+    font-size: 8px;
     font-weight: 700;
     color: #1a1204;
     text-shadow: 0 1px 0 rgba(255, 255, 255, .3);
@@ -4529,68 +4519,73 @@ button.btn-success {
 /* Nome da Unidade */
 .side-unit-name {
     font-family: Cinzel, serif;
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 700;
-    letter-spacing: 1px;
+    letter-spacing: .5px;
     color: var(--gold-light);
-    text-shadow: 0 2px 4px #000, 0 0 16px rgba(232, 200, 74, .25);
-    text-align: center;
+    text-shadow: 0 1px 3px #000, 0 0 12px rgba(232, 200, 74, .25);
+    text-align: left;
     text-transform: uppercase;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+    min-width: 0;
 }
 .side-unit-class {
-    font-size: 11px;
+    font-size: 9px;
     font-weight: 600;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     color: var(--text-muted);
-    text-align: center;
+    text-align: left;
     opacity: .8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
 
 /* ------------------------------------------
-   BARRAS DE STATUS (HP, MP, XP)
+   BARRAS DE STATUS (HP, MP, XP) — compactas
    ------------------------------------------ */
 .side-stats-section {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 .side-stat-bars {
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 4px;
 }
 .stat-bar-side-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 11px;
+    gap: 6px;
+    font-size: 9.5px;
     font-weight: 700;
     color: #e8dfc2;
 }
 .stat-bar-side-row .sb-ico {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     flex: 0 0 auto;
-    filter: drop-shadow(0 0 4px rgba(0, 0, 0, .7));
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, .7));
 }
-.stat-bar-side-row .sb-ico.ico-hp { color: #e8574a; filter: drop-shadow(0 0 5px rgba(232, 87, 74, .6)); }
-.stat-bar-side-row .sb-ico.ico-mp { color: #4aa3e8; filter: drop-shadow(0 0 5px rgba(74, 163, 232, .6)); }
-.stat-bar-side-row .sb-ico.ico-xp { color: #58d68d; filter: drop-shadow(0 0 5px rgba(88, 214, 141, .55)); }
+.stat-bar-side-row .sb-ico.ico-hp { color: #e8574a; filter: drop-shadow(0 0 4px rgba(232, 87, 74, .6)); }
+.stat-bar-side-row .sb-ico.ico-mp { color: #4aa3e8; filter: drop-shadow(0 0 4px rgba(74, 163, 232, .6)); }
+.stat-bar-side-row .sb-ico.ico-xp { color: #58d68d; filter: drop-shadow(0 0 4px rgba(88, 214, 141, .55)); }
 
 .stat-bar-side-bg {
     flex: 1;
-    height: 16px;
+    height: 11px;
     background: linear-gradient(180deg, #030408, #0d1018);
     border: 1px solid rgba(138, 109, 18, .5);
-    border-radius: 4px;
+    border-radius: 3px;
     overflow: hidden;
     position: relative;
-    box-shadow: inset 0 1px 4px rgba(0, 0, 0, .95), 0 1px 0 rgba(232, 200, 74, .08);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .95), 0 1px 0 rgba(232, 200, 74, .08);
 }
 .stat-bar-side-fill {
     height: 100%;
@@ -4611,17 +4606,17 @@ button.btn-success {
 
 .sb-val {
     flex: 0 0 auto;
-    min-width: 58px;
+    min-width: 44px;
     text-align: right;
     font-variant-numeric: tabular-nums;
     font-family: Cinzel, serif;
-    font-size: 10.5px;
+    font-size: 9px;
     text-shadow: 0 1px 2px #000;
     color: #fff;
 }
 
 /* ------------------------------------------
-   ESTATÍSTICAS DE COMBATE (Chips maiores)
+   ESTATÍSTICAS DE COMBATE — chips em 2 colunas
    ------------------------------------------ */
 .side-combat-section {
     padding-top: 6px;
@@ -4629,35 +4624,39 @@ button.btn-success {
 }
 .side-combat-stats {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 5px;
 }
 .sc-chip-side {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
+    gap: 5px;
+    flex: 1 1 45%;
+    padding: 4px 8px;
     font-family: Cinzel, serif;
-    font-size: 12px;
+    font-size: 9.5px;
     font-weight: 700;
     letter-spacing: .5px;
     color: #f0e6c8;
     background: linear-gradient(180deg, rgba(28, 22, 10, .94), rgba(8, 8, 14, .97));
     border: 1px solid rgba(138, 109, 18, .5);
-    border-radius: 4px;
-    box-shadow: inset 0 1px 0 rgba(232, 200, 74, .12), 0 2px 6px rgba(0, 0, 0, .6);
+    border-radius: 3px;
+    box-shadow: inset 0 1px 0 rgba(232, 200, 74, .12), 0 1px 4px rgba(0, 0, 0, .6);
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 .sc-chip-side .mm-ico {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     color: var(--gold);
 }
-.sc-chip-side b { color: #fff; text-shadow: 0 1px 2px #000; font-size: 14px; }
-.sc-chip-side.atk { border-left: 3px solid #e8574a; }
-.sc-chip-side.range { border-left: 3px solid #4aa3e8; }
-.sc-chip-side.def { border-left: 3px solid #58d68d; }
-.sc-chip-side.move { border-left: 3px solid #f39c12; }
+.sc-chip-side b { color: #fff; text-shadow: 0 1px 2px #000; font-size: 11px; }
+.sc-chip-side span { font-size: 8px; opacity: .7; }
+.sc-chip-side.atk { border-left: 2px solid #e8574a; }
+.sc-chip-side.range { border-left: 2px solid #4aa3e8; }
+.sc-chip-side.def { border-left: 2px solid #58d68d; }
+.sc-chip-side.move { border-left: 2px solid #f39c12; }
 
 /* ------------------------------------------
    TERRENO ATUAL
@@ -4670,32 +4669,35 @@ button.btn-success {
 .traits-label,
 .spells-label {
     font-family: Cinzel, serif;
-    font-size: 10px;
+    font-size: 8px;
     font-weight: 700;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     color: var(--gold-dark);
-    margin-bottom: 6px;
+    margin-bottom: 3px;
     opacity: .7;
 }
 .side-terrain-info {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 5px;
 }
 .terrain-chip {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
+    gap: 6px;
+    flex: 1 1 45%;
+    padding: 4px 7px;
     background: linear-gradient(180deg, rgba(22, 18, 8, .9), rgba(6, 6, 10, .95));
     border: 1px solid rgba(138, 109, 18, .4);
     border-radius: 3px;
-    font-size: 10px;
+    font-size: 9px;
     color: #ddd;
+    white-space: nowrap;
 }
-.terrain-chip .mm-ico { width: 14px; height: 14px; color: var(--gold); }
-.terrain-chip b { color: #fff; font-size: 11px; }
+.terrain-chip .mm-ico { width: 11px; height: 11px; color: var(--gold); }
+.terrain-chip b { color: #fff; font-size: 10px; }
 
 /* ------------------------------------------
    TRAÇOS & HABILIDADES
@@ -4714,10 +4716,10 @@ button.btn-success {
 .trait-badge {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 4px 9px;
+    gap: 4px;
+    padding: 2px 6px;
     font-family: Cinzel, serif;
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 700;
     letter-spacing: .5px;
     text-transform: uppercase;
@@ -4731,7 +4733,7 @@ button.btn-success {
     transition: transform .15s, box-shadow .15s;
 }
 .trait-badge:hover { transform: scale(1.08); box-shadow: 0 0 10px rgba(201, 162, 39, .25); }
-.trait-badge .mm-ico { width: 12px; height: 12px; color: var(--gold); }
+.trait-badge .mm-ico { width: 10px; height: 10px; color: var(--gold); }
 .trait-badge.debuff { border-left: 2px solid #e74c3c; }
 .trait-badge.ability { border-left: 2px solid #3498db; }
 .trait-badge.tag { border-left: 2px solid #f39c12; }
@@ -4760,7 +4762,7 @@ button.btn-success {
         inset 0 0 24px rgba(0, 0, 0, .6);
     z-index: 30;
     pointer-events: auto;
-    max-width: calc(100vw - 330px); /* não invade o painel lateral */
+    max-width: calc(100vw - 250px); /* não invade o painel lateral (232px) */
 }
 
 /* Botões utilitários (Desfazer / Próxima / Mochila) */
@@ -4931,21 +4933,25 @@ button.btn-success {
    ------------------------------------------ */
 .side-actions-section {
     flex-shrink: 0;
-    padding: 12px 14px 14px;
+    padding: 8px 10px 10px;
     border-top: 1px solid rgba(138, 109, 18, .35);
     background: linear-gradient(180deg, rgba(10, 8, 5, .9), rgba(4, 4, 8, .98));
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 6px;
     pointer-events: auto;
 }
+#btn-tame { flex: 1 1 38%; }
+#btn-end-turn { flex: 1 1 56%; min-width: 0; }
 .btn-side-action {
     font-family: Cinzel, serif;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
-    letter-spacing: 1px;
+    letter-spacing: .5px;
     text-transform: uppercase;
-    padding: 10px 14px;
+    padding: 7px 8px;
     border-radius: 4px;
     background: linear-gradient(180deg, rgba(38, 30, 14, .94) 0%, rgba(14, 12, 8, .97) 100%);
     border: 1px solid var(--gold-dark);
@@ -4998,11 +5004,11 @@ button.btn-success {
 
 /* Botão Cancelar */
 .btn-cancel-action {
-    align-self: center;
-    margin-top: 8px;
-    padding: 10px 24px;
+    flex: 1 1 100%;
+    margin-top: 2px;
+    padding: 7px 10px;
     font-family: Cinzel, serif;
-    font-size: 11px;
+    font-size: 9.5px;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -5024,52 +5030,17 @@ button.btn-success {
    RESPONSIVO: Mobile
    ------------------------------------------ */
 @media (max-width: 760px) {
-    /* ---- Painel: bottom-sheet COMPACTO (retrato deitado, info ao lado) ---- */
+    /* ---- Painel: a base já é compacta; aqui só o posicionamento
+       em bottom-sheet + afinação fina ---- */
     .battle-side-panel { width: 100%; height: auto; max-height: 46vh; bottom: 0; top: auto; right: 0; left: 0; border-radius: 14px 14px 0 0; flex-direction: column; }
     .battle-side-panel > .side-panel-frame { border-radius: 14px 14px 0 0; border-top-width: 2px; }
     .side-corner.tr { border-radius: 0 14px 0 0; }
     .side-corner.br { border-radius: 0; }
-    .side-panel-content { padding: 8px 10px 6px; gap: 8px; }
-
-    /* retrato + nome lado a lado: economiza ~90px de altura */
-    .side-portrait-section { flex-direction: row; align-items: center; gap: 10px; padding-bottom: 6px; }
-    .unit-portrait-frame { width: 72px; height: 72px; }
-    .unit-portrait { border-width: 2px; }
-    .unit-portrait img { transform: scale(1.35); }
-    .unit-portrait.is-terrain { font-size: 34px; }
-    .portrait-frame-overlay { display: none; }
-    .portrait-rank { width: 22px; height: 22px; font-size: 8px; top: -5px; right: -5px; }
-    .side-unit-name { font-size: 14px; text-align: left; }
-    .side-unit-class { font-size: 9px; text-align: left; letter-spacing: 1px; }
-
-    /* barras finas */
-    .side-stat-bars { gap: 4px; }
-    .stat-bar-side-row { gap: 6px; font-size: 9.5px; }
-    .stat-bar-side-row .sb-ico { width: 12px; height: 12px; }
-    .stat-bar-side-bg { height: 11px; border-radius: 3px; }
-    .sb-val { min-width: 42px; font-size: 8.5px; }
-
-    /* chips de combate em 2 colunas */
-    .side-combat-stats { flex-direction: row; flex-wrap: wrap; gap: 5px; }
-    .sc-chip-side { flex: 1 1 45%; padding: 4px 8px; font-size: 9.5px; gap: 5px; }
-    .sc-chip-side b { font-size: 11px; }
-    .sc-chip-side .mm-ico { width: 12px; height: 12px; }
-    .sc-chip-side span { font-size: 8px; }
-
-    /* terreno em 2 colunas */
-    .terrain-label, .traits-label { font-size: 8px; letter-spacing: 1.5px; margin-bottom: 3px; }
-    .side-terrain-info { flex-direction: row; flex-wrap: wrap; gap: 5px; }
-    .terrain-chip { flex: 1 1 45%; padding: 4px 7px; font-size: 9px; }
-
-    .trait-badge { font-size: 8px; padding: 2px 6px; gap: 3px; }
-
-    /* ações em LINHA: [Domar][PRONTO] para poupar altura */
-    .side-actions-section { flex-direction: row; flex-wrap: wrap; align-items: stretch; padding: 7px 10px 9px; gap: 6px; }
-    .btn-side-action { padding: 7px 8px; font-size: 10px; letter-spacing: .5px; gap: 5px; }
-    #btn-tame { flex: 1 1 38%; }
-    #btn-end-turn { flex: 1 1 56%; min-width: 0; }
+    .side-panel-content { padding: 8px 10px 6px; gap: 7px; }
+    .side-portrait-section { padding-bottom: 6px; }
+    .unit-portrait-frame { width: 68px; height: 68px; }
+    .sb-val { min-width: 40px; }
     .btn-side-action .hud-btn-art { width: 15px; height: 19px; }
-    .btn-cancel-action { flex: 1 1 100%; margin-top: 2px; padding: 7px 10px; font-size: 9.5px; }
 
     /* ---- Action bar: ribbon FINA no topo (abaixo da barra compacta) ---- */
     .battle-action-bar { left: 0; right: 0; bottom: auto; top: 46px; border-radius: 0 0 8px 8px; max-width: none; padding: 4px 8px; gap: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, .7), inset 0 1px 0 rgba(232, 200, 74, .1); }
