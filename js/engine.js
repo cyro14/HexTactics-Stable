@@ -1731,7 +1731,23 @@ class Game {
         this.checkWin();
     }
 
-    updateTurnUI(txt, col) { const tb = document.getElementById('turn-badge'); if (tb) { tb.innerText = txt; tb.style.color = col; tb.style.borderColor = col; } if (typeof showMessage === 'function') showMessage(txt, col); }
+    updateTurnUI(txt, col) {
+        // Atualiza APENAS o texto interno — nunca sobrescrever o badge
+        // inteiro (ele contém o ícone SVG e o span #turn-badge-text)
+        const badge = document.getElementById('turn-badge');
+        const badgeText = document.getElementById('turn-badge-text');
+        if (badge) badge.style.setProperty('--turn-col', col);
+        if (badgeText) {
+            badgeText.innerText = txt;
+            badgeText.style.color = col;
+        }
+        if (typeof showMessage === 'function') showMessage(txt, col);
+
+        // Mostra banner animado se for turno do jogador
+        if (typeof showTurnBanner === 'function' && this.currentTurn === 1) {
+            showTurnBanner('Seu Turno', `Turno ${this.turnCount}`, 1);
+        }
+    }
 
     checkWin() {
         if (this.gameOver) return;

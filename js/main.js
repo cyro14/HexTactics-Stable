@@ -1324,16 +1324,9 @@ window.openContinentMap = function() {
             alert(`${title}\n${desc}\n${progress}`);
         }
     });
-    $('btn-toggle-spells')?.addEventListener('click', () => {
-        const bar = $('spell-bar');
-        if (bar.classList.contains('hidden')) {
-            bar.classList.remove('hidden');
-            renderSpellBar();
-        } else {
-            bar.classList.add('hidden');
-        }
-    });
     // (btn-duel agora é tratado apenas no fluxo chooseMode, acima)
+    // (btn-toggle-spells foi removido: os slots de magia ficam sempre
+    //  abertos na action bar inferior, estilo League of Legends)
 
     $('btn-duel-history')?.addEventListener('click', openDuelHistory);
     $('btn-hall-fame')?.addEventListener('click', openHallOfFame);
@@ -1411,3 +1404,6 @@ Game.prototype.handleDeath = function(deadUnit, killerUnit) {
     // Continua a morte normal
     if (origHandleDeath) origHandleDeath.call(this, deadUnit, killerUnit);
 };  
+// Inicializa log de combate e listeners
+if (typeof initCombatLog === 'function') initCombatLog();
+if (typeof setupLogListeners === 'function') setupLogListeners();

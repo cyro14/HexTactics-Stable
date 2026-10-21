@@ -41,7 +41,7 @@ $visRules = @{
     'save-chooser' = @{ match = '<div id="save-chooser" class="layer screen save-chooser-screen hidden">'; }
 }
 
-function New-TestPage([string[]]$Show, [string]$After) {
+function New-TestPage([string[]]$Show, [string]$After, [string]$Tag = '') {
     $html = Get-Content (Join-Path $root 'index.html') -Raw
     # injeta a armadilha de erros + desliga animações de entrada (determinismo
     # do screenshot) e remove a fonte remota (evita flake de rede; o layout
@@ -63,11 +63,17 @@ function New-TestPage([string[]]$Show, [string]$After) {
         $inject = "<script>document.addEventListener('DOMContentLoaded',function(){try{ $After }catch(e){window.__jsErrors.push('teste: '+e);}if(window.__flushJsErrors)window.__flushJsErrors();});</script>"
         $html = $html -replace '</body>', "$inject`n</body>"
     }
-    # nome de arquivo seguro: apenas [a-zA-Z0-9] ('|' e outros chars sao
-    # ilegais em nomes de arquivo no Windows)
-    $safe = (($Show -join '+') + '|' + $After) -replace '[^a-zA-Z0-9]', ''
-    if (-not $safe) { $safe = 'menu' }
-    $name = '_test_tmp_' + $safe
+    # nome de arquivo: tag curta e determinística (scripts $After longos
+    # geravam nomes >260 chars e estouravam o limite de caminho do Windows);
+    # fallback legível para páginas sem tag
+    if ($Tag) {
+        $name = '_test_tmp_' + $Tag
+    } else {
+        $safe = (($Show -join '+') + '|' + $After) -replace '[^a-zA-Z0-9]', ''
+        if (-not $safe) { $safe = 'menu' }
+        if ($safe.Length -gt 40) { $safe = $safe.Substring(0, 40) }
+        $name = '_test_tmp_' + $safe
+    }
     $path = Join-Path $root ($name + '.html')
     Set-Content $path $html -Encoding UTF8
     return $path
@@ -97,15 +103,18 @@ $screens = @(
     @{ id = 'route';       kind = 'route';        size = '1280,800'; show = @(); after = 'game.leaderData=LEADERS[0]; generateRouteMap(); renderRouteMap();' },
     @{ id = 'route-mobile'; kind = 'route';       size = '400,800';  show = @(); after = 'game.leaderData=LEADERS[0]; generateRouteMap(); renderRouteMap();' },
     @{ id = 'prep';        kind = 'prep';         size = '1280,800'; show = @(); after = 'game.currentRouteType="ELITE"; openManagement();' },
-    @{ id = 'prep-mobile'; kind = 'prep';         size = '400,800';  show = @(); after = 'game.currentRouteType="ELITE"; openManagement();' }
+    @{ id = 'prep-mobile'; kind = 'prep';         size = '400,800';  show = @(); after = 'game.currentRouteType="ELITE"; openManagement();' },
+    @{ id = 'battle';      kind = 'battle';       size = '1280,800'; show = @(); after = 'document.getElementById("main-menu").classList.add("hidden"); document.getElementById("game-container").classList.remove("hidden"); game.leaderData=LEADERS[0]; game.currentRouteType="BATTLE"; game.generateCampaignMap([]); var ld=game.leaderData; var lu=game.units.find(u=>u.faction===1&&u.isLeader); if(!lu){var sp=[...game.map.values()].find(h=>!game.getUnitAt(h.q,h.r)&&h.terrain.id!=="WATER"&&h.terrain.id!=="MOUNTAIN"); lu=new Unit({q:sp.q,r:sp.r,faction:1,isLeader:true,name:ld.name,baseName:ld.name,emoji:ld.emoji,sprite:ld.sprite,hp:ld.hp,maxHp:ld.hp,mp:ld.mp,maxMp:ld.mp,atk:ld.atk,range:ld.range,level:1,xp:0,tags:(ld.tags||[]),abilities:[],fav:(ld.fav||[]),knownSpells:[],filter:"none"}); game.units.push(lu);} if(!lu.knownSpells.length&&typeof SPELLS!=="undefined"){var c1=SPELLS.find(s=>s.level===1&&(ld.tags||[]).some(t=>s.tags.includes(t)))||SPELLS[0]; lu.knownSpells.push(c1.id);} game.selectPlayerLeader(); game.selectedUnit=lu; game.calculateReachable(lu); updateUI();' },
+    @{ id = 'battle-mobile'; kind = 'battle';    size = '400,800';  show = @(); after = 'document.getElementById("main-menu").classList.add("hidden"); document.getElementById("game-container").classList.remove("hidden"); game.leaderData=LEADERS[0]; game.currentRouteType="BATTLE"; game.generateCampaignMap([]); var ld=game.leaderData; var lu=game.units.find(u=>u.faction===1&&u.isLeader); if(!lu){var sp=[...game.map.values()].find(h=>!game.getUnitAt(h.q,h.r)&&h.terrain.id!=="WATER"&&h.terrain.id!=="MOUNTAIN"); lu=new Unit({q:sp.q,r:sp.r,faction:1,isLeader:true,name:ld.name,baseName:ld.name,emoji:ld.emoji,sprite:ld.sprite,hp:ld.hp,maxHp:ld.hp,mp:ld.mp,maxMp:ld.mp,atk:ld.atk,range:ld.range,level:1,xp:0,tags:(ld.tags||[]),abilities:[],fav:(ld.fav||[]),knownSpells:[],filter:"none"}); game.units.push(lu);} if(!lu.knownSpells.length&&typeof SPELLS!=="undefined"){var c1=SPELLS.find(s=>s.level===1&&(ld.tags||[]).some(t=>s.tags.includes(t)))||SPELLS[0]; lu.knownSpells.push(c1.id);} game.selectPlayerLeader(); game.selectedUnit=lu; game.calculateReachable(lu); updateUI();' }
 )
 
 $pages = @{}
+$pageSeq = 0
 foreach ($s in $screens) {
     $after = ''
     if ($s.after) { $after = $s.after }
     $key = ($s.show -join '+') + '|' + $after
-    if (-not $pages.ContainsKey($key)) { $pages[$key] = New-TestPage $s.show $after }
+    if (-not $pages.ContainsKey($key)) { $pageSeq++; $pages[$key] = New-TestPage $s.show $after ("p" + $pageSeq) }
     $page = $pages[$key]
     $img = Join-Path $artDir "$($s.id).png"
     $url = "file:///" + ($page -replace '\\', '/')
@@ -142,6 +151,19 @@ foreach ($key in $pages.Keys) {
         $lineCount = ([regex]::Matches($dom, '<line ')).Count
         if ($nodeCount -ge 20 -and $lineCount -ge 10) { Write-Output "[PASS] mapa de rotas completo ($nodeCount nos, $lineCount linhas)" }
         else { $failures += "mapa de rotas incompleto ($nodeCount nos, $lineCount linhas)"; Write-Output "[FAIL] mapa de rotas incompleto ($nodeCount nos, $lineCount linhas)" }
+    }
+    # check do painel lateral + action bar da batalha: unidade selecionada
+    # DEVE renderizar retrato + barras HP/MP/XP + chips de combate, e as
+    # magias aparecem como slots horizontais na action bar (pega crash do updateUI)
+    if ($key -match 'generateCampaignMap') {
+        $panelVisible = ($dom -notmatch 'battle-side-panel hidden')
+        $barsOk = ($dom -match 'stat-bar-side-fill')
+        $chipsOk = ($dom -match 'sc-chip-side')
+        $terrainOk = ($dom -match 'terrain-chip')
+        $actionOk = ($dom -match 'id="action-bar"')
+        $slotOk = ($dom -match 'spell-slot-lol')
+        if ($panelVisible -and $barsOk -and $chipsOk -and $terrainOk -and $actionOk -and $slotOk) { Write-Output "[PASS] painel lateral + action bar com detalhes da unidade" }
+        else { $failures += "batalha sem detalhes (painel=$panelVisible barras=$barsOk chips=$chipsOk terreno=$terrainOk action=$actionOk slot=$slotOk)"; Write-Output "[FAIL] batalha sem detalhes (painel=$panelVisible barras=$barsOk chips=$chipsOk terreno=$terrainOk action=$actionOk slot=$slotOk)" }
     }
 }
 

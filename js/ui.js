@@ -311,12 +311,17 @@ function renderSpellBar() {
     const bar = $('spell-bar');
     if (!bar) return;
     bar.innerHTML = '';
-    if (!game || game.currentTurn !== 1) return;
 
-    // Se a unidade selecionada não tiver magias, não mostramos as magias do líder por engano!
+    // Slots horizontais estilo LoL: só aparecem com um conjurador do
+    // jogador selecionado que conheça magias (a action bar fica visível
+    // mesmo sem magias — utilitários sempre acessíveis)
+    if (!game || game.currentTurn !== 1) { bar.classList.add('hidden'); return; }
+
     let caster = game.selectedUnit;
-    if (!caster || caster.faction !== 1) return;
-    if (!caster.knownSpells || caster.knownSpells.length === 0) return;
+    if (!caster || caster.faction !== 1) { bar.classList.add('hidden'); return; }
+    if (!caster.knownSpells || caster.knownSpells.length === 0) { bar.classList.add('hidden'); return; }
+
+    bar.classList.remove('hidden');
 
     caster.knownSpells.forEach(sid => {
         const spell = typeof SPELLS !== 'undefined' ? SPELLS.find(s => s.id === sid) : null;
@@ -333,18 +338,21 @@ function renderSpellBar() {
 
         const isActive = game.activeSpell === sid;
 
+        // Custo compacto no canto do slot (ícone de mana + quantidade)
         let costHtml = caster.isLeader ? Object.entries(spell.cost).map(([tag, amt]) => {
             const mt = MANA_TYPES[tag]; if (!mt) return '';
-            return `<span style="color:${mt.col};font-size:9px;">${mt.icon}x${amt}</span>`;
-        }).join(' ') : `<span style="color:#2ecc71;font-size:9px;">Custo: 0 (Ação)</span>`;
+            return `<b style="color:${mt.col}">${mt.icon}${amt}</b>`;
+        }).join('') : `<b style="color:#2ecc71">0</b>`;
 
-        let cdText = cd > 0 ? `<span style="color:#f39c12; font-weight:bold;">[CD: ${cd}]</span> ` : '';
-        const btn = document.createElement('div');
-        btn.style.flexShrink = '0';
-        btn.className = `spell-btn ${isActive ? 'spell-active' : ''} ${!can ? 'spell-disabled' : ''}`;
-        btn.innerHTML = `<span style="font-size:16px;">${spell.icon}</span><div style="flex:1; line-height:1.2; text-align:left;"><div style="font-family:Cinzel,serif;font-size:11px;color:${isActive ? '#ff8888' : 'var(--gold-light)'};">${cdText}${spell.name}</div><div style="font-size:9px;color:#888;">Nv${spell.level} · ${costHtml}</div></div>`;
-
-        btn.title = spell.desc;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `spell-slot-lol ${isActive ? 'spell-active' : ''} ${!can ? 'spell-disabled' : ''}`;
+        btn.innerHTML = `
+            <span class="sl-icon" aria-hidden="true">${spell.icon}</span>
+            <span class="sl-cost">${costHtml}</span>
+            ${cd > 0 ? `<span class="sl-cd" aria-hidden="true">${cd}</span>` : ''}`;
+        btn.title = `${spell.name} (Nv${spell.level}) — ${spell.desc}${caster.isLeader ? '' : ' · Custo: ação da fera'}`;
+        btn.setAttribute('aria-label', `Magia ${spell.name}`);
 
         if (can) {
             btn.addEventListener('click', () => {
@@ -354,23 +362,152 @@ function renderSpellBar() {
                     game.activeSpell = null;
                 } else {
                     game.activeSpell = sid;
-                    game.selectedUnit = caster; // Crava o conjurador como alvo selecionado
+                    game.selectedUnit = caster;
                     game.calculateReachable(caster);
                     updateUI();
                     if (typeof renderer !== 'undefined') renderer.draw();
                     showMessage(`✨ ${spell.name}: ${spell.desc}`, '#e8c84a');
-
-                    // BLINDAGEM: Força o fechamento da barra com delay de segurança!
-                    setTimeout(() => {
-                        const b = $('spell-bar');
-                        if (b) b.classList.add('hidden');
-                    }, 50);
                 }
                 renderSpellBar();
             });
         }
         bar.appendChild(btn);
     });
+}
+
+// ==========================================
+// 5. BATTLE UI HELPERS — Turn Banner, Time of Day, Log Toggle
+// ==========================================
+
+// Exibe o banner de turno estilo Wesnoth
+function showTurnBanner(title, subText, faction = 1) {
+    const banner = $('turn-banner');
+    if (!banner) return;
+
+    const titleEl = $('turn-banner-title');
+    const subEl = $('turn-banner-sub');
+
+    // Configura cores por facção
+    banner.classList.remove('enemy', 'wild');
+    if (faction === 2) banner.classList.add('enemy');
+    else if (faction === 0) banner.classList.add('wild');
+
+    // Atualiza textos
+    if (titleEl) titleEl.textContent = title;
+    if (subEl) subEl.textContent = subText;
+
+    // Mostra com animação
+    banner.classList.remove('hidden');
+    banner.style.animation = 'none';
+    banner.offsetHeight; // force reflow
+    banner.style.animation = '';
+}
+
+// Atualiza a UI do turno (badge + banner)
+function updateTurnUI() {
+    if (!game) return;
+
+    const isPlayerTurn = game.currentTurn === 1;
+    const turnNum = game.turnCount || 1;
+
+    // Turn Badge
+    const badge = $('turn-badge');
+    const badgeText = $('turn-badge-text');
+    if (badge && badgeText) {
+        const facCol = isPlayerTurn ? '#4a9edd' : '#c0392b';
+        const facName = isPlayerTurn ? 'Jogador' : 'Inimigo';
+        badge.style.setProperty('--turn-col', facCol);
+        badgeText.textContent = `Turno: ${facName}`;
+    }
+
+    // Turn Banner (só mostra no início do turno do jogador)
+    if (isPlayerTurn && !game._turnBannerShown) {
+        showTurnBanner('Seu Turno', `Turno ${turnNum}`, 1);
+        game._turnBannerShown = true;
+    } else if (!isPlayerTurn) {
+        game._turnBannerShown = false;
+    }
+}
+
+// Atualiza indicador de fase do dia
+function updateTimeOfDayUI() {
+    if (!game) return;
+
+    const todEl = $('tod-indicator');
+    if (!todEl) return;
+
+    const cycle = game.turnCount % 10;
+    let tod = 'day';
+    let label = 'Dia';
+
+    if (cycle === 0 || cycle === 9) { tod = 'deepnight'; label = 'Noite Profunda'; }
+    else if (cycle >= 6 && cycle <= 8) { tod = 'night'; label = 'Noite'; }
+    else if (cycle === 5) { tod = 'dusk'; label = 'Crepúsculo'; }
+    else if (cycle === 1) { tod = 'dawn'; label = 'Alvorada'; }
+    else { tod = 'day'; label = 'Dia'; }
+
+    todEl.dataset.tod = tod;
+    const labelEl = todEl.querySelector('.tod-label');
+    if (labelEl) labelEl.textContent = label;
+}
+
+// Alterna visibilidade do log de combate
+function toggleCombatLog() {
+    const log = $('combat-log-container');
+    if (!log) return;
+    log.classList.toggle('collapsed');
+
+    // Persiste preferência
+    localStorage.setItem('ht_log_collapsed', log.classList.contains('collapsed'));
+}
+
+// Inicializa estado do log
+function initCombatLog() {
+    const log = $('combat-log-container');
+    if (!log) return;
+    const collapsed = localStorage.getItem('ht_log_collapsed') === 'true';
+    if (collapsed) log.classList.add('collapsed');
+}
+
+// Configura listeners do log
+function setupLogListeners() {
+    const toggleBtn = $('btn-toggle-log');
+    const fullLogBtn = $('btn-full-log');
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleCombatLog();
+        });
+    }
+
+    if (fullLogBtn) {
+        fullLogBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openFullLogModal();
+        });
+    }
+}
+
+// Abre modal de histórico completo
+function openFullLogModal() {
+    const modal = $('full-log-modal');
+    const content = $('full-log-content');
+    if (!modal || !content) return;
+
+    content.innerHTML = '';
+    if (window.fullCombatHistory && window.fullCombatHistory.length > 0) {
+        window.fullCombatHistory.forEach(entry => {
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.style.borderLeftColor = entry.color;
+            div.textContent = entry.text;
+            content.appendChild(div);
+        });
+    } else {
+        content.innerHTML = '<div style="color:#666; font-style:italic; text-align:center; padding:20px;">Nenhum registro ainda.</div>';
+    }
+    modal.classList.remove('hidden');
 }
 
 function openGrimoire() {
@@ -612,101 +749,242 @@ function updateUI() {
             btnCancel.classList.add('hidden');
         }
     }
-    // ==========================================
 
-    // Atualiza os contadores individuais de Ouro e DNA
-    const goldDisplay = $('ui-gold');
-    if (goldDisplay && game) {
-        goldDisplay.innerText = game.gold;
-        // ADICIONE ESTA LINHA:
+    // Atualiza recursos na top bar
+    if (game) {
+        if ($('ui-gold')) $('ui-gold').innerText = game.gold;
         if ($('ui-gold-trigger')) $('ui-gold-trigger').innerText = game.gold;
+        if ($('ui-dna')) $('ui-dna').innerText = game.dna || 0;
+        let res = game.resources || {};
+        if ($('res-wood')) $('res-wood').innerText = res.wood || 0;
+        if ($('res-stone')) $('res-stone').innerText = res.stone || 0;
+        if ($('res-scales')) $('res-scales').innerText = res.scales || 0;
+        if ($('res-sand')) $('res-sand').innerText = res.sand || 0;
     }
-
-    const dnaDisplay = $('ui-dna');
-    if (dnaDisplay && game) dnaDisplay.innerText = game.dna || 0;
-
-    let res = game.resources || {};
-    if ($('ui-dna')) $('ui-dna').innerText = game.dna || 0;
-    if ($('res-wood')) $('res-wood').innerText = res.wood || 0;
-    if ($('res-stone')) $('res-stone').innerText = res.stone || 0;
-    if ($('res-scales')) $('res-scales').innerText = res.scales || 0;
-    if ($('res-sand')) $('res-sand').innerText = res.sand || 0;
 
     updateManaUI();
+    updateTurnUI();
+    updateTimeOfDayUI();
+
     if (game && game.selectedUnit) {
-        $('bottom-hud').classList.remove('hidden'); // Exibe a HUD inferior
+        $('side-panel').classList.remove('hidden');
 
         const u = game.selectedUnit;
-        const col = u.faction === 1 ? '#4a9edd' : u.faction === 2 ? '#c0392b' : '#27ae60';
+        const facCol = u.faction === 1 ? '#4a9edd' : u.faction === 2 ? '#c0392b' : '#27ae60';
 
-        // Aplica uma máscara (overflow: hidden) na caixinha do retrato
-        $('unit-portrait').style.cssText = `border-color:${col}; box-shadow:0 0 10px ${col}40; filter:${u.filter}; overflow: hidden; display: flex; align-items: flex-start; justify-content: center;`;
+        // Retrato da unidade (grande)
+        const portraitEl = $('unit-portrait');
+        portraitEl.style.setProperty('--fac-col', facCol);
+        portraitEl.classList.remove('is-terrain');
 
         if (u.sprite) {
-            // Se tiver sprite, dá um zoom de 1.8x e foca no topo (rosto) do personagem
-            $('unit-portrait').innerHTML = `<img src="${u.sprite}" style="width: 100%; height: 100%; object-fit: cover; object-position: center 10%; transform: scale(1.8); transform-origin: top center; pointer-events: none;">`;
+            portraitEl.innerHTML = `<img src="${u.sprite}" alt="${u.name}" style="width:100%;height:100%;object-fit:cover;object-position:center 8%;transform:scale(1.6);transform-origin:top center;pointer-events:none;">`;
         } else {
-            // Mantém o emoji se não houver arte
-            $('unit-portrait').innerHTML = u.emoji;
+            portraitEl.classList.add('is-terrain');
+            portraitEl.innerHTML = u.emoji;
+        }
+        portraitEl.onclick = () => { window.showBeastDetails(u, true); };
+        portraitEl.setAttribute('aria-label', `Ver detalhes de ${u.name}`);
+
+        // Badge de rank/estrela
+        const rankBadge = $('unit-rank-badge');
+        if (u.starLevel && u.starLevel > 1) {
+            const stars = ['', '🥉', '🥈', '🌟'];
+            rankBadge.innerHTML = stars[Math.min(u.starLevel, 3)] || '★';
+            rankBadge.style.display = 'flex';
+        } else {
+            rankBadge.style.display = 'none';
         }
 
-        $('unit-portrait').onclick = () => { window.showBeastDetails(u, true); };
-
+        // Nome e Classe
         let starIcon = u.starLevel === 2 ? '🥉' : u.starLevel === 3 ? '🥈' : u.starLevel >= 4 ? '🌟' : '';
-        $('unit-name').innerHTML = `${u.name} <span style="color:#aaa; font-size:11px;">Lv${u.level}${starIcon}</span>`;
+        $('unit-name').textContent = u.name;
+        $('unit-class').textContent = `${u.baseName || u.name} · Nv${u.level}${starIcon}`;
 
-        // Barras Compactas (HP, MP, XP)
-        let hpHtml = `<div class="stat-bar-row"><span style="width:18px;color:#e74c3c;">HP</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-hp" style="width:${(u.hp / u.maxHp) * 100}%"></div></div><span style="width:35px;text-align:right;">${Math.floor(u.hp)}/${u.maxHp}</span></div>`;
-        let mpHtml = `<div class="stat-bar-row"><span style="width:18px;color:#3498db;">MP</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-mp" style="width:${(u.mp / u.maxMp) * 100}%"></div></div><span style="width:35px;text-align:right;">${Math.floor(u.mp)}/${u.maxMp}</span></div>`;
-        let xpHtml = u.faction === 1 && !u.isBoss ? `<div class="stat-bar-row"><span style="width:18px;color:#2ecc71;">XP</span><div class="stat-bar-bg"><div class="stat-bar-fill fill-xp" style="width:${(u.xp / u.maxXp) * 100}%"></div></div><span style="width:35px;text-align:right;">${u.xp}/${u.maxXp}</span></div>` : '';
-        $('unit-bars').innerHTML = hpHtml + mpHtml + xpHtml;
+        // Barras SVG (HP, MP, XP) - novo formato lateral
+        renderUnitStatBars(u);
 
-        // Status de Combate
-        let defInfo = ''; const uH = game.map.get(`${u.q},${u.r}`);
-        if (uH) { let defV = uH.terrain.def; if (u.fav.includes(uH.terrain.id)) defV += 0.2; defInfo = `<br>📍 ${uH.terrain.icon} Def: ${Math.round(defV * 100)}%`; }
-        $('unit-combat-stats').innerHTML = `<strong style="color:#fff;">ATK:</strong> ${u.getEffectiveAtk(game)} &nbsp;|&nbsp; <strong style="color:#fff;">ALC:</strong> ${u.getEffectiveRange(game)}${defInfo}`;
+        // Chips de combate (ATK, ALC, DEF, MOV)
+        renderCombatChips(u);
 
-        // Mapeamento das Habilidades e Tags para Ícones Limpos
-        const ABILITY_ICONS = {
-            dodge: '💨', lifesteal: '🦇', poison: '☠️', stun: '⚡', bind: '🕸️', burn: '🔥', pierce: '🗡️', counter: '↩️', freeze: '🧊', leadership: '👑', electric: '🌩️', hit_run: '🐎', swift: '🐇', crystal_skin: '💎', corte_amplo: '🪓', carapace: '🐢', flying: '🪽', frost_armor: '🛡️', camouflage: '🍃', dive: '🌊'
-        };
-
-        const getIconHTML = (icon, title, desc) => `<div class="qol-tooltip icon-badge">${icon}<span class="qol-tooltiptext" style="font-family:sans-serif; text-align:left;"><strong>${title}</strong><br>${desc}</span></div>`;
-
-        let iconsHtml = '';
-
-        // Efeitos Negativos (Debuffs visíveis primeiro)
-        if (u.status === 'poison') iconsHtml += getIconHTML('🤢', 'Envenenado', 'Perde HP a cada turno.');
-        if (u.status === 'stun') iconsHtml += getIconHTML('💫', 'Atordoado', 'Perde o turno atual.');
-        if (u.status === 'bind') iconsHtml += getIconHTML('⛓️', 'Preso', 'Movimento 0.');
-        if (u.status === 'silenced') iconsHtml += getIconHTML('🔕', 'Silenciado', 'Não pode lançar magias.');
-        if (u.faction === 0 && u.alerted) iconsHtml += getIconHTML('⚠️', 'Alerta', 'Em estado de agressão.');
+        // Terreno atual
+        renderTerrainInfo(u);
 
         // Tags e Habilidades
-        (u.tags || []).forEach(t => { let tDef = TAGS[t]; if (tDef) iconsHtml += getIconHTML(MANA_TYPES[t]?.icon || '✨', tDef.name, tDef.desc); });
-        u.abilities.forEach(ab => { if (ABILITY_DESCRIPTIONS[ab]) iconsHtml += getIconHTML(ABILITY_ICONS[ab] || '📖', ab.toUpperCase(), ABILITY_DESCRIPTIONS[ab]); });
+        renderUnitTagsAbilities(u);
 
-        $('unit-tags-abilities').innerHTML = iconsHtml || '<span style="font-size:10px; color:#555;">Normal</span>';
+        // Magias
+        renderSpellBar();
 
-        if (u.isLeader && u.faction === 1 && !u.hasAttacked && u.status !== 'stun' && u.status !== 'bind') { show('btn-tame'); $('btn-tame').classList.toggle('active', game.tameMode); } else { hide('btn-tame'); }
+        // Botão de Doma
+        if (u.isLeader && u.faction === 1 && !u.hasAttacked && u.status !== 'stun' && u.status !== 'bind') {
+            show('btn-tame');
+            $('btn-tame').classList.toggle('active', game.tameMode);
+        } else {
+            hide('btn-tame');
+        }
 
     } else if (game && game.selectedHex) {
-        $('bottom-hud').classList.remove('hidden');
+        $('side-panel').classList.remove('hidden');
         const h = game.selectedHex, t = h.terrain;
-        $('unit-portrait').style.cssText = `border-color:#555; background:#222;`; $('unit-portrait').innerText = t.icon || '⬛';
-        $('unit-name').innerHTML = `${t.name}`;
-        $('unit-bars').innerHTML = `<div style="font-size:12px; color:#aaa; margin-top:5px;">Custo Mov: ${t.cost}<br>Defesa Base: ${Math.round(t.def * 100)}%</div>`;
-        $('unit-combat-stats').innerHTML = ''; $('unit-tags-abilities').innerHTML = ''; hide('btn-tame');
-        $('unit-portrait').onclick = null;
+        const portraitEl = $('unit-portrait');
+        portraitEl.style.setProperty('--fac-col', '#555');
+        portraitEl.classList.add('is-terrain');
+        portraitEl.innerHTML = t.icon || '⬛';
+        $('unit-rank-badge').style.display = 'none';
+        $('unit-name').textContent = t.name;
+        $('unit-class').textContent = '';
+        renderTerrainInfoForHex(t);
+        $('unit-combat-stats').innerHTML = '';
+        $('unit-tags-abilities').innerHTML = '';
+        hide('btn-tame');
+        renderSpellBar(); // sem conjurador selecionado: esconde os slots
+        portraitEl.onclick = null;
     } else {
-        $('bottom-hud').classList.add('hidden'); // Esconde a HUD inteira se clicar no nada!
+        $('side-panel').classList.add('hidden');
     }
-    // Garante que os menus fechem se o jogador clicar em qualquer outro ponto do mapa
-    window.addEventListener('click', () => {
-        $('mana-dropdown-list')?.classList.add('hidden');
-        $('resources-dropdown-list')?.classList.add('hidden'); // <-- Adicione esta linha!
+}
+
+// Renderiza barras de status SVG (HP, MP, XP) — formato painel lateral
+function renderUnitStatBars(u) {
+    const hpPct = Math.max(0, Math.min(100, (u.hp / u.maxHp) * 100));
+    const mpPct = Math.max(0, Math.min(100, (u.mp / u.maxMp) * 100));
+    const showXP = u.faction === 1 && !u.isBoss;
+    const xpPct = showXP ? Math.max(0, Math.min(100, (u.xp / u.maxXp) * 100)) : 0;
+
+    let html = `
+        <div class="stat-bar-side-row">
+            <svg class="sb-ico ico-hp" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            <div class="stat-bar-side-bg" role="progressbar" aria-label="Vida" aria-valuenow="${Math.floor(u.hp)}" aria-valuemin="0" aria-valuemax="${u.maxHp}">
+                <div class="stat-bar-side-fill fill-hp" style="width:${hpPct}%"></div>
+            </div>
+            <span class="sb-val">${Math.floor(u.hp)}/${u.maxHp}</span>
+        </div>
+        <div class="stat-bar-side-row">
+            <svg class="sb-ico ico-mp" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+            <div class="stat-bar-side-bg" role="progressbar" aria-label="Movimento" aria-valuenow="${Math.floor(u.mp)}" aria-valuemin="0" aria-valuemax="${u.maxMp}">
+                <div class="stat-bar-side-fill fill-mp" style="width:${mpPct}%"></div>
+            </div>
+            <span class="sb-val">${Math.floor(u.mp)}/${u.maxMp}</span>
+        </div>`;
+
+    if (showXP) {
+        html += `
+        <div class="stat-bar-side-row">
+            <svg class="sb-ico ico-xp" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.24c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+            <div class="stat-bar-side-bg" role="progressbar" aria-label="Experiência" aria-valuenow="${u.xp}" aria-valuemin="0" aria-valuemax="${u.maxXp}">
+                <div class="stat-bar-side-fill fill-xp" style="width:${xpPct}%"></div>
+            </div>
+            <span class="sb-val">${u.xp}/${u.maxXp}</span>
+        </div>`;
+    }
+
+    $('unit-bars').innerHTML = html;
+}
+
+// Renderiza chips de combate (ATK, ALC, DEF, MOV) — formato painel lateral
+function renderCombatChips(u) {
+    let defInfo = '';
+    const uH = game?.map?.get(`${u.q},${u.r}`);
+    if (uH) {
+        let defV = uH.terrain.def;
+        if (u.fav?.includes(uH.terrain.id)) defV += 0.2;
+        defInfo = `<div class="sc-chip-side def"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><b>${Math.round(defV * 100)}%</b><span>DEF</span></div>`;
+    }
+
+    $('unit-combat-stats').innerHTML = `
+        <div class="sc-chip-side atk"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L2 7l10 15 10-15-10-5zM12 22l8-5-8-10-8 5 8 10z"/></svg><b>${u.getEffectiveAtk(game)}</b><span>ATK</span></div>
+        <div class="sc-chip-side range"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M12 2l10 5-10 10-10-5 10-5z"/></svg><b>${u.getEffectiveRange(game)}</b><span>ALC</span></div>
+        <div class="sc-chip-side move"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M12 2l10 5-10 10-10-5 10-5z"/></svg><b>${u.maxMp}</b><span>MOV</span></div>
+        ${defInfo}`;
+}
+
+// Renderiza tags e habilidades da unidade — formato trait badges
+function renderUnitTagsAbilities(u) {
+    const ABILITY_ICONS = {
+        dodge: '💨', lifesteal: '🦇', poison: '☠️', stun: '⚡', bind: '🕸️', burn: '🔥', pierce: '🗡️', counter: '↩️', freeze: '🧊', leadership: '👑', electric: '🌩️', hit_run: '🐎', swift: '🐇', crystal_skin: '💎', corte_amplo: '🪓', carapace: '🐢', flying: '🪽', frost_armor: '🛡️', camouflage: '🍃', dive: '🌊', undying: '☠️', regeneration: '💚', venomous: '☠️', ambush: '🌿', trample: '🐘', aerial: '🪽', aquatic: '🌊', burrower: '🕳️', siege: '🏰', alpha: '👑'
+    };
+
+    const getTraitHTML = (icon, title, desc, type) => `<div class="qol-tooltip trait-badge ${type}">${icon}<span class="qol-tooltiptext" style="font-family:sans-serif; text-align:left;"><strong>${title}</strong><br>${desc}</span></div>`;
+
+    let iconsHtml = '';
+
+    // Debuffs (prioridade visual)
+    if (u.status === 'poison') iconsHtml += getTraitHTML('🤢', 'Envenenado', 'Perde HP a cada turno.', 'status debuff');
+    if (u.status === 'stun') iconsHtml += getTraitHTML('💫', 'Atordoado', 'Perde o turno atual.', 'status debuff');
+    if (u.status === 'bind') iconsHtml += getTraitHTML('⛓️', 'Preso', 'Movimento 0.', 'status debuff');
+    if (u.status === 'silenced') iconsHtml += getTraitHTML('🔕', 'Silenciado', 'Não pode lançar magias.', 'status debuff');
+    if (u.status === 'chilled') iconsHtml += getTraitHTML('🧊', 'Resfriado', 'Movimento e ataque reduzidos.', 'status debuff');
+    if (u.status === 'marked') iconsHtml += getTraitHTML('🎯', 'Marcado', 'Recebe dano dobrado de Stalkers.', 'status debuff');
+    if (u.faction === 0 && u.alerted) iconsHtml += getTraitHTML('⚠️', 'Alerta', 'Em estado de agressão.', 'status');
+
+    // Tags (geram mana)
+    (u.tags || []).forEach(t => {
+        let tDef = TAGS[t];
+        let mt = MANA_TYPES[t];
+        if (tDef) iconsHtml += getTraitHTML(mt?.icon || '✨', tDef.name, tDef.desc, 'tag');
     });
 
+    // Habilidades
+    u.abilities?.forEach(ab => {
+        if (ABILITY_DESCRIPTIONS[ab]) iconsHtml += getTraitHTML(ABILITY_ICONS[ab] || '📖', ab.toUpperCase(), ABILITY_DESCRIPTIONS[ab], 'ability');
+    });
+
+    // Efeitos especiais
+    if (u.undyingTurns > 0) iconsHtml += getTraitHTML('☠️', 'Imortal', `Não morre por ${u.undyingTurns} turno(s).`, 'status');
+    if (u.furyAtk > 0) iconsHtml += getTraitHTML('😤', 'Fúria', `+${u.furyAtk} ATK temporário.`, 'status');
+
+    $('unit-tags-abilities').innerHTML = iconsHtml || '<span style="font-size:10px; color:#555;">Normal</span>';
+}
+
+// Renderiza info de terreno da unidade selecionada
+function renderTerrainInfo(u) {
+    const uH = game?.map?.get(`${u.q},${u.r}`);
+    if (!uH) {
+        $('terrain-info').style.display = 'none';
+        return;
+    }
+    const t = uH.terrain;
+    const defPct = Math.round(t.def * 100);
+    const defCol = t.def > 0 ? 'var(--success)' : (t.def < 0 ? 'var(--enemy-color)' : '#aaa');
+    const costCol = t.cost === 1 ? 'var(--success)' : (t.cost >= 3 ? 'var(--enemy-color)' : '#aaa');
+
+    $('terrain-info').style.display = 'block';
+    $('unit-terrain').innerHTML = `
+        <div class="terrain-chip">
+            <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">${t.iconSvg || ''}</svg>
+            <b style="color:${defCol}">${defPct}%</b><span>DEF</span>
+        </div>
+        <div class="terrain-chip">
+            <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M12 2l10 5-10 10-10-5 10-5z"/></svg>
+            <b style="color:${costCol}">${t.cost}</b><span>MOV</span>
+        </div>
+        <div class="terrain-chip" style="flex:1; text-align:left;">
+            <b>${t.name}</b>
+        </div>
+    `;
+}
+
+// Renderiza info de terreno quando hex selecionado (sem unidade)
+function renderTerrainInfoForHex(t) {
+    const defPct = Math.round(t.def * 100);
+    const defCol = t.def > 0 ? 'var(--success)' : (t.def < 0 ? 'var(--enemy-color)' : '#aaa');
+    const costCol = t.cost === 1 ? 'var(--success)' : (t.cost >= 3 ? 'var(--enemy-color)' : '#aaa');
+
+    $('terrain-info').style.display = 'block';
+    $('unit-terrain').innerHTML = `
+        <div class="terrain-chip">
+            <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">${t.iconSvg || ''}</svg>
+            <b style="color:${defCol}">${defPct}%</b><span>DEF</span>
+        </div>
+        <div class="terrain-chip">
+            <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M12 2l10 5-10 10-10-5 10-5z"/></svg>
+            <b style="color:${costCol}">${t.cost}</b><span>MOV</span>
+        </div>
+        <div class="terrain-chip" style="flex:1; text-align:left;">
+            <b>${t.name}</b>
+        </div>
+    `;
 }
 
 // ==========================================

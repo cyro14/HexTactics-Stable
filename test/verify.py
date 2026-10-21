@@ -140,6 +140,43 @@ elif kind == "prep":
         ("selo_elite_vermelho", elite_red > 4),
         ("botao_avancar_combate", gold_band(0.60, 1.0, 40)),
     ]
+elif kind == "battle":
+    # tela de batalha real: mapa hexagonal + top-bar + painel lateral
+    # direito (Wesnoth) + crônica no TOPO-DIREITA (abaixo da barra) +
+    # action bar bottom-left (utilitários + magias em slots LoL)
+    mobile = w <= 760
+    # top-bar: badge de turno + chip de ouro dourados
+    top_gold = count(0, w, int(h * 0.02), int(h * 0.15), lambda r, g, b: r > 170 and g > 130 and b < 100, 2)
+    if mobile:
+        # painel vira bottom-sheet na base; action bar vira ribbon no topo
+        panel_gold = count(int(w * 0.5), w, int(h * 0.5), h, lambda r, g, b: r > 170 and g > 120 and b < 100, 2)
+        hp_red = count(0, w, int(h * 0.5), h, lambda r, g, b: r > 150 and g < 110 and b < 100, 2)
+        mp_blue = count(0, w, int(h * 0.5), h, lambda r, g, b: r < 130 and g > 80 and b > 150, 2)
+        ready_gold = count(int(w * 0.3), w, int(h * 0.75), h, lambda r, g, b: r > 180 and g > 140 and b < 100, 2)
+        # crônica: canto superior direito, abaixo da ribbon (top: ~196px)
+        log_gold = count(int(w * 0.25), w, int(h * 0.23), int(h * 0.42), lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
+        # action bar: ribbon horizontal no topo (y ~124-196px)
+        action_gold = count(0, w, int(h * 0.155), int(h * 0.245), lambda r, g, b: r > 150 and g > 100 and b < 90, 2)
+        panel_thresh = 8
+    else:
+        # painel lateral direito: 280px colados à direita
+        panel_gold = count(w - 260, w, int(h * 0.08), h, lambda r, g, b: r > 170 and g > 120 and b < 100, 2)
+        hp_red = count(w - 260, w, int(h * 0.08), h, lambda r, g, b: r > 150 and g < 110 and b < 100, 2)
+        mp_blue = count(w - 260, w, int(h * 0.08), h, lambda r, g, b: r < 130 and g > 80 and b > 150, 2)
+        ready_gold = count(w - 260, w, int(h * 0.7), h, lambda r, g, b: r > 180 and g > 140 and b < 100, 2)
+        # crônica: topo-direita, à esquerda do painel (right: 292px, top: 66px)
+        log_gold = count(int(w * 0.45), w - 280, int(h * 0.07), int(h * 0.30), lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
+        # action bar: bottom-left (left: 12, bottom: 12)
+        action_gold = count(0, int(w * 0.45), h - 90, h, lambda r, g, b: r > 150 and g > 100 and b < 90, 2)
+        panel_thresh = 15
+    checks += [
+        ("topbar_ouro_mana", top_gold > 2),
+        ("hud_barras_hp_mp", hp_red > 2 and mp_blue > 2),
+        ("cronica_topo_direita", log_gold > 2),
+        ("action_bar_inferior", action_gold > 2),
+        ("botao_pronto_dourado", ready_gold > 5),
+        ("painel_lateral_detalhes", panel_gold > panel_thresh),
+    ]
 else:
     print(f"[FAIL] tipo desconhecido: {kind}")
     sys.exit(1)
