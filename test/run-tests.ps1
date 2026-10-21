@@ -95,7 +95,9 @@ $screens = @(
     @{ id = 'hexis';       kind = 'hexis';        size = '1280,800'; show = @(); after = 'game.leaderData=LEADERS[0]; game.conqueredRegions=["WEST","NW"]; openContinentMap();' },
     @{ id = 'hexis-mobile'; kind = 'hexis';       size = '400,800';  show = @(); after = 'game.leaderData=LEADERS[0]; game.conqueredRegions=["WEST","NW"]; openContinentMap();' },
     @{ id = 'route';       kind = 'route';        size = '1280,800'; show = @(); after = 'game.leaderData=LEADERS[0]; generateRouteMap(); renderRouteMap();' },
-    @{ id = 'route-mobile'; kind = 'route';       size = '400,800';  show = @(); after = 'game.leaderData=LEADERS[0]; generateRouteMap(); renderRouteMap();' }
+    @{ id = 'route-mobile'; kind = 'route';       size = '400,800';  show = @(); after = 'game.leaderData=LEADERS[0]; generateRouteMap(); renderRouteMap();' },
+    @{ id = 'prep';        kind = 'prep';         size = '1280,800'; show = @(); after = 'game.currentRouteType="ELITE"; openManagement();' },
+    @{ id = 'prep-mobile'; kind = 'prep';         size = '400,800';  show = @(); after = 'game.currentRouteType="ELITE"; openManagement();' }
 )
 
 $pages = @{}

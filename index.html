@@ -549,44 +549,107 @@
         </div>
     </div>
 
-    <div id="management-screen" class="layer screen hidden">
-        <h1 class="screen-title" style="font-size:2.2rem;">Gerenciamento</h1>
-        <p class="screen-subtitle">Escale suas Lendas (Limite: <span id="mgmt-limit">0</span>)</p>
+    <div id="management-screen" class="layer screen mm-screen hidden" style="background: #06070d;">
+        <canvas class="mm-bg-canvas"></canvas>
 
-        <div class="mgmt-tabs">
-            <button class="mgmt-tab-btn active" onclick="switchMgmtTab('deploy', this)">⚔️ Campo</button>
-            <button class="mgmt-tab-btn" onclick="switchMgmtTab('box', this)">📦 Box</button>
-            <button class="mgmt-tab-btn" onclick="switchMgmtTab('inv', this)">🎒 Mochila</button>
-            <button class="mgmt-tab-btn" onclick="switchMgmtTab('syn', this)">🔗 Sinergias</button>
+        <div class="mm-content mgmt-content">
+            <h1 class="mode-title" id="mgmt-title">Preparação de Combate</h1>
+            <div class="mm-rule mode-rule"><i></i><b></b><i></i></div>
+
+            <div class="mgmt-topline">
+                <span class="mgmt-limit-chip">Lendas em campo: <b id="mgmt-limit">0</b></span>
+                <span id="mgmt-battle-badge" class="mgmt-battle-badge hidden"></span>
+            </div>
+
+            <div class="mgmt-tabs">
+                <button id="mgmt-tab-deploy" class="mgmt-tab-btn active" onclick="switchMgmtTab('deploy', this)">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4.5 19.5 16 8 M16 8l2.5-2.5 M6.5 15.5l3 3" />
+                        <path d="M19.5 19.5 8 8 M8 8 5.5 5.5 M17.5 15.5l-3 3" />
+                    </svg>
+                    <span>Campo</span>
+                    <b id="mgmt-count-deploy">0</b>
+                </button>
+                <button id="mgmt-tab-box" class="mgmt-tab-btn" onclick="switchMgmtTab('box', this)">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 8l8-4.5L20 8v8l-8 4.5L4 16Z M4 8l8 4.5L20 8 M12 12.5V20.5" />
+                    </svg>
+                    <span>Box</span>
+                    <b id="mgmt-count-box">0</b>
+                </button>
+                <button id="mgmt-tab-inv" class="mgmt-tab-btn" onclick="switchMgmtTab('inv', this)">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M7 8V6a5 5 0 0 1 10 0v2 M5 8h14l1.5 12.5h-17Z" />
+                    </svg>
+                    <span>Mochila</span>
+                    <b id="mgmt-count-inv">0</b>
+                </button>
+                <button id="mgmt-tab-syn" class="mgmt-tab-btn" onclick="switchMgmtTab('syn', this)">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M9.5 14.5 14.5 9.5 M8 12l-2.5 2.5a3.5 3.5 0 1 0 5 5L13 17 M16 12l2.5-2.5a3.5 3.5 0 1 0-5-5L11 7" />
+                    </svg>
+                    <span>Sinergias</span>
+                    <b id="mgmt-count-syn">0</b>
+                </button>
+            </div>
+
+            <div class="mgmt-container">
+                <div id="panel-deploy" class="mgmt-panel active-panel">
+                    <div class="mgmt-header mgmt-header-deploy">
+                        <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4.5 19.5 16 8 M16 8l2.5-2.5 M6.5 15.5l3 3" />
+                            <path d="M19.5 19.5 8 8 M8 8 5.5 5.5 M17.5 15.5l-3 3" />
+                        </svg>
+                        Em Campo
+                    </div>
+                    <div id="mgmt-deploy-grid" class="mgmt-grid"></div>
+                </div>
+
+                <div id="panel-box" class="mgmt-panel">
+                    <div class="mgmt-header mgmt-header-box">
+                        <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 8l8-4.5L20 8v8l-8 4.5L4 16Z M4 8l8 4.5L20 8 M12 12.5V20.5" />
+                        </svg>
+                        A Box (Reservas)
+                    </div>
+                    <div id="mgmt-box-grid" class="mgmt-grid"></div>
+                </div>
+
+                <div id="panel-inv" class="mgmt-panel">
+                    <div class="mgmt-header mgmt-header-inv">
+                        <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M7 8V6a5 5 0 0 1 10 0v2 M5 8h14l1.5 12.5h-17Z" />
+                        </svg>
+                        Mochila
+                    </div>
+                    <div id="mgmt-inv-grid" class="mgmt-grid"></div>
+                </div>
+
+                <div id="panel-syn" class="mgmt-panel">
+                    <div class="mgmt-header mgmt-header-syn">
+                        <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M9.5 14.5 14.5 9.5 M8 12l-2.5 2.5a3.5 3.5 0 1 0 5 5L13 17 M16 12l2.5-2.5a3.5 3.5 0 1 0-5-5L11 7" />
+                        </svg>
+                        Sinergias Ativas
+                    </div>
+                    <div id="mgmt-synergy-list" class="syn-list"></div>
+                </div>
+            </div>
+
+            <div class="mgmt-actions">
+                <button id="btn-start-stage" class="mm-btn mm-btn-primary">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4.5 19.5 16 8 M16 8l2.5-2.5 M6.5 15.5l3 3" />
+                        <path d="M19.5 19.5 8 8 M8 8 5.5 5.5 M17.5 15.5l-3 3" />
+                    </svg>
+                    <span id="btn-start-stage-label">Avançar Combate</span>
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 5.5 14.5 12 8 18.5" />
+                    </svg>
+                </button>
+                <button id="btn-close-team" class="mm-btn mm-btn-danger hidden">Voltar ao Menu</button>
+            </div>
         </div>
-
-        <div class="mgmt-container">
-            <div id="panel-inv" class="mgmt-panel" style="flex:0.8; border-color:var(--gold);">
-                <div class="mgmt-header" style="color:var(--gold);">🎒 Mochila</div>
-                <div id="mgmt-inv-grid" class="mgmt-grid"
-                    style="grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));"></div>
-            </div>
-
-            <div id="panel-box" class="mgmt-panel" style="flex:2;">
-                <div class="mgmt-header">📦 A Box (Reservas)</div>
-                <div id="mgmt-box-grid" class="mgmt-grid"></div>
-            </div>
-
-            <div id="panel-deploy" class="mgmt-panel active-panel" style="flex:2;border-color:var(--tame-color);">
-                <div class="mgmt-header" style="color:var(--tame-color);">⚔️ Em Campo</div>
-                <div id="mgmt-deploy-grid" class="mgmt-grid"></div>
-            </div>
-
-            <div id="panel-syn" class="mgmt-panel" style="flex:1.5;border-color:var(--warning);">
-                <div class="mgmt-header" style="color:var(--warning);">🔗 Sinergias</div>
-                <div id="mgmt-synergy-list" class="syn-list"></div>
-            </div>
-        </div>
-
-        <button id="btn-start-stage" class="btn-success"
-            style="margin-top:15px;font-size:14px;padding:12px 30px;">Avançar Combate →</button>
-        <button id="btn-close-team" class="btn-danger hidden" style="margin-top:15px;width:100%;">Voltar ao
-            Menu</button>
     </div>
 
     <div id="continent-map-screen" class="layer screen mm-screen hidden" style="background: #06070d; z-index: 150;">

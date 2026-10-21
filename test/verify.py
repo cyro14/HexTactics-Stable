@@ -128,6 +128,18 @@ elif kind == "hexis":
         ("fronteira_atacavel_vermelha", red > max(20, w // 24)),
         ("rotas_e_rotulos_dourados", gold > max(40, w // 12)),
     ]
+elif kind == "prep":
+    # tela de preparação: abas sempre visíveis (Campo ativa = dourada),
+    # selo do próximo combate (Elite = vermelho), painel ativo e botão de avançar
+    tab_gold = count(0, w, int(h * 0.18), int(h * 0.32), lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
+    elite_red = count(0, w, int(h * 0.08), int(h * 0.24), lambda r, g, b: r > 150 and g < 100 and b < 90, 2)
+    checks += [
+        ("ceu_pintado_nas_margens", sky_painted()),
+        ("titulo_preparacao", title_upper_half(max(20, w // 40))),
+        ("aba_campo_ativa_dourada", tab_gold > 15),
+        ("selo_elite_vermelho", elite_red > 4),
+        ("botao_avancar_combate", gold_band(0.60, 1.0, 40)),
+    ]
 else:
     print(f"[FAIL] tipo desconhecido: {kind}")
     sys.exit(1)

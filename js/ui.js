@@ -1067,7 +1067,7 @@ function renderManagement(mode = 'prep') {
 
     const renderBeast = (u, container, isBox) => {
         let card = document.createElement('div');
-        card.className = 'beast-card unlocked';
+        card.className = u.isLeader ? 'beast-card unlocked leader-card' : 'beast-card unlocked';
         card.style.background = u.isLeader ? 'rgba(40,30,10,0.9)' : 'rgba(20,16,8,.8)';
         card.style.paddingBottom = "18px";
 
@@ -1090,30 +1090,81 @@ function renderManagement(mode = 'prep') {
         container.appendChild(card);
     };
 
+    const addEmpty = (grid, msg) => {
+        if (grid.children.length) return;
+        const el = document.createElement('div');
+        el.className = 'mgmt-empty';
+        el.innerText = msg;
+        grid.appendChild(el);
+    };
+
     let depGrid = $('mgmt-deploy-grid'); depGrid.innerHTML = '';
     deployedRoster.forEach(u => renderBeast(u, depGrid, false));
+    addEmpty(depGrid, 'Nenhuma lenda em campo.');
 
     let boxGrid = $('mgmt-box-grid'); boxGrid.innerHTML = '';
     rosterMemory.forEach(u => renderBeast(u, boxGrid, true));
+    addEmpty(boxGrid, 'A Box está vazia. Dome feras ou compre tropas na loja.');
+
+    let invGrid2 = $('mgmt-inv-grid');
+    addEmpty(invGrid2, 'Mochila vazia. Vitórias e eventos trazem itens.');
 
     let synList = $('mgmt-synergy-list'); synList.innerHTML = '';
     let sys = calculateSynergies(deployedRoster);
     Object.keys(TAGS).forEach(tag => {
         let tData = TAGS[tag]; let count = sys[tag] || 0;
-        if (count > 0) { let active = count >= tData.req; let el = document.createElement('div'); el.className = 'syn-item'; el.innerHTML = `<span style="color:${tData.col};${active ? 'font-weight:bold;text-shadow:0 0 5px ' + tData.col : ''}">${tData.name} (${count}/${tData.req})</span><span style="font-size:9px;flex:1;text-align:right;margin-left:10px;color:${active ? '#fff' : '#666'}">${tData.desc}</span>`; synList.appendChild(el); }
+        if (count > 0) { let active = count >= tData.req; let el = document.createElement('div'); el.className = 'syn-item'; el.style.borderLeftColor = tData.col; el.innerHTML = `<span style="color:${tData.col};${active ? 'font-weight:bold;text-shadow:0 0 5px ' + tData.col : ''}">${tData.name} (${count}/${tData.req})</span><span style="font-size:9px;flex:1;text-align:right;margin-left:10px;color:${active ? '#fff' : '#666'}">${tData.desc}</span>`; synList.appendChild(el); }
     });
+    addEmpty(synList, 'Nenhuma sinergia ativa — deplore unidades com tags em comum.');
+
+    // contadores das abas (sempre visíveis no topo)
+    const tabCounts = {
+        'mgmt-count-deploy': deployedRoster.length,
+        'mgmt-count-box': rosterMemory.length,
+        'mgmt-count-inv': (game.inventory || []).length,
+        'mgmt-count-syn': synList.querySelectorAll('.syn-item').length
+    };
+    Object.keys(tabCounts).forEach(id => {
+        const el = $(id);
+        if (el) el.innerText = tabCounts[id];
+    });
+}
+
+// selo do tipo do próximo combate na preparação
+function updateMgmtBattleBadge() {
+    const badge = $('mgmt-battle-badge');
+    if (!badge) return;
+    const routeType = game.currentRouteType;
+    const names = { BATTLE: 'Batalha', ELITE: 'Elite', BOSS: 'CHEFE' };
+    const icons = {
+        BATTLE: '<svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5 16 8 M16 8l2.5-2.5 M6.5 15.5l3 3"/><path d="M19.5 19.5 8 8 M8 8 5.5 5.5 M17.5 15.5l-3 3"/></svg>',
+        ELITE: '<svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a7 7 0 0 0-7 7c0 2.6 1.4 4.4 3 5.4V19h2v-2h4v2h2v-3.6c1.6-1 3-2.8 3-5.4a7 7 0 0 0-7-7Z"/><circle cx="9.3" cy="11" r="1.2" fill="currentColor" stroke="none"/><circle cx="14.7" cy="11" r="1.2" fill="currentColor" stroke="none"/><path d="M11 19v-2 M13 19v-2"/></svg>',
+        BOSS: '<svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18h16 M4 18 2.5 8l5.5 4 4-6.5 4 6.5 5.5-4L20 18"/></svg>'
+    };
+    if (routeType && names[routeType]) {
+        badge.className = 'mgmt-battle-badge t-' + routeType;
+        badge.innerHTML = (icons[routeType] || '') + '<span>Próximo: ' + names[routeType] + '</span>';
+    } else {
+        badge.classList.add('hidden');
+    }
 }
 
 function openManagement() {
     hide('shop-screen');
+    hide('main-menu');
     show('management-screen');
     hide('btn-close-team');
     show('btn-start-stage');
 
+    const titleEl = $('mgmt-title');
+    if (titleEl) titleEl.innerText = 'Preparação de Combate';
+    updateMgmtBattleBadge();
+
     // CORREÇÃO: Declaramos a variável 'btn' antes de tentar mudar o texto dela!
     const btn = $('btn-start-stage');
     if (btn) {
-        btn.innerText = "Avançar Combate →";
+        const lbl = $('btn-start-stage-label');
+        if (lbl) lbl.innerText = 'Avançar Combate';
         btn.onclick = () => { advanceCampaign(); };
     }
 
@@ -1128,6 +1179,11 @@ function openTeamView() {
     show('management-screen');
     hide('btn-start-stage');
     show('btn-close-team');
+
+    const titleEl = $('mgmt-title');
+    if (titleEl) titleEl.innerText = 'Seu Exército';
+    const badge = $('mgmt-battle-badge');
+    if (badge) badge.classList.add('hidden');
 
     // Reseta o comportamento do botão especificamente para o modo de Batalha
     const btnClose = $('btn-close-team');
