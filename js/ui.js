@@ -286,7 +286,7 @@ function updateManaUI() {
     // Injeta o gatilho compacto e a caixinha absoluta oculta
     container.innerHTML = `
         <div id="mana-trigger" style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px; font-weight:bold; color:var(--gold-light); padding:2px 4px; user-select:none;">
-            <img src="img/icons/icone-mana.png" style="width: 16px; height: 16px;"> <span>Mana: ${totalAvailable}</span> <small style="font-size:8px; opacity:0.5; transform:scale(0.8);">▼</small>
+            <svg class="mm-art" style="width:16px;height:16px;" viewBox="0 0 24 24" aria-hidden="true"><defs><radialGradient id="g-mana" cx=".35" cy=".3" r=".95"><stop offset="0" stop-color="#e2d1ff"/><stop offset=".55" stop-color="#9b59b6"/><stop offset="1" stop-color="#4a2060"/></radialGradient></defs><circle cx="12" cy="13.5" r="6.2" fill="url(#g-mana)" stroke="#d9c2ff" stroke-width=".9"/><path d="M8.8 11.2c.5-1.7 1.9-3 3.7-3.2" stroke="#e9dcff" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M12 1.6l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8Z" fill="#c9a8ff"/></svg> <span>Mana: ${totalAvailable}</span> <small style="font-size:8px; opacity:0.5; transform:scale(0.8);">▼</small>
         </div>
         <div id="mana-dropdown-list" class="hidden" style="position:absolute; top:calc(100% + 6px); left:0; background:rgba(10,10,15,0.98); border:1px solid var(--gold-dark); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,0.9); z-index:2500; min-width:150px; display:flex; flex-direction:column; backdrop-filter:blur(10px);">
             ${hasMana ? listHtml : '<div style="color:#666; padding:10px; font-size:11px; font-style:italic; text-align:center;">Sem Mana</div>'}
@@ -976,14 +976,14 @@ function unitBarsHtml(u) {
 
     let html = `
         <div class="stat-bar-side-row">
-            <svg class="sb-ico ico-hp" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            <svg class="sb-ico ico-hp" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="g-hp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9d8a"/><stop offset=".5" stop-color="#e0492e"/><stop offset="1" stop-color="#8f1d10"/></linearGradient></defs><path d="M12 21C6.4 16.3 2.6 13 2.6 8.8c0-3 2.3-5.4 5.3-5.4 1.6 0 3.1.8 4.1 2 1-1.2 2.5-2 4.1-2 3 0 5.3 2.4 5.3 5.4 0 4.2-3.8 7.5-9.4 12.2Z" fill="url(#g-hp)" stroke="#ffc4b4" stroke-width=".8"/><path d="M7.6 5.4c-1.5.3-2.5 1.3-2.7 2.7" stroke="#ffd9d0" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>
             <div class="stat-bar-side-bg" role="progressbar" aria-label="Vida" aria-valuenow="${Math.floor(u.hp)}" aria-valuemin="0" aria-valuemax="${u.maxHp}">
                 <div class="stat-bar-side-fill fill-hp" style="width:${hpPct}%"></div>
             </div>
             <span class="sb-val">${Math.floor(u.hp)}/${u.maxHp}</span>
         </div>
         <div class="stat-bar-side-row">
-            <svg class="sb-ico ico-mp" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+            <svg class="sb-ico ico-mp" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="g-mp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd4ff"/><stop offset=".5" stop-color="#3d8fd9"/><stop offset="1" stop-color="#1b4f8a"/></linearGradient></defs><path d="M6 3h6v8c0 1 .5 1.9 1.4 2.4l4.2 2.5c1.5.9 2.4 2.5 2.4 4.2V21H6z" fill="url(#g-mp)" stroke="#bfe0ff" stroke-width=".8"/><path d="M6.5 18.8h13" stroke="#d6ecff" stroke-width="1.1" stroke-linecap="round"/><path d="M7.7 5.3h2.6M7.7 7.8h2.6" stroke="#d6ecff" stroke-width="1" stroke-linecap="round"/></svg>
             <div class="stat-bar-side-bg" role="progressbar" aria-label="Movimento" aria-valuenow="${Math.floor(u.mp)}" aria-valuemin="0" aria-valuemax="${u.maxMp}">
                 <div class="stat-bar-side-fill fill-mp" style="width:${mpPct}%"></div>
             </div>
@@ -993,7 +993,7 @@ function unitBarsHtml(u) {
     if (showXP) {
         html += `
         <div class="stat-bar-side-row">
-            <svg class="sb-ico ico-xp" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.24c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+            <svg class="sb-ico ico-xp" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="g-xp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b2f7cf"/><stop offset=".55" stop-color="#3ec46d"/><stop offset="1" stop-color="#1c7a44"/></linearGradient></defs><path d="M12 2.6c.7 4.4 2.4 7.1 8.9 9.4-6.5 2.3-8.2 5-8.9 9.4-.7-4.4-2.4-7.1-8.9-9.4 6.5-2.3 8.2-5 8.9-9.4Z" fill="url(#g-xp)" stroke="#c9f7db" stroke-width=".8"/><circle cx="17.6" cy="5.4" r="1.1" fill="#a9f5c6"/></svg>
             <div class="stat-bar-side-bg" role="progressbar" aria-label="Experiência" aria-valuenow="${u.xp}" aria-valuemin="0" aria-valuemax="${u.maxXp}">
                 <div class="stat-bar-side-fill fill-xp" style="width:${xpPct}%"></div>
             </div>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v5'; // v5: icones de atributos (espada/alvo/bota)
+const CACHE_NAME = 'hextactics-v6'; // v6: icones preenchidos harmonizados (HP/MP/XP/mana/pronto/recursos)
 const ASSETS = [
     './',
     './index.html',
