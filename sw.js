@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v4'; // v4: menu de pausa remaster (ESC, confirmação, status)
+const CACHE_NAME = 'hextactics-v5'; // v5: icones de atributos (espada/alvo/bota)
 const ASSETS = [
     './',
     './index.html',

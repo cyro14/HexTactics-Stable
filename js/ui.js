@@ -1004,6 +1004,13 @@ function unitBarsHtml(u) {
     return html;
 }
 
+// Ícones de atributos — SVG linha (stroke: currentColor via .mm-ico),
+// desenhados no padrão dourado do jogo. Uso único: chips + terrenos.
+const ICON_ATK = '<path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/>';       // espada
+const ICON_ALC = '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>'; // alvo
+const ICON_MOV = '<path d="M6 3h6v8c0 1 .5 1.9 1.4 2.4l4.2 2.5c1.5.9 2.4 2.5 2.4 4.2V21H6z"/><path d="M6 18.5h14"/><path d="M7.5 5.5h3M7.5 8h3"/>';   // bota
+const ICON_DEF = '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>';                                                              // escudo
+
 // HTML dos chips de combate (ATK, ALC, DEF, MOV)
 function unitChipsHtml(u) {
     let defInfo = '';
@@ -1011,13 +1018,13 @@ function unitChipsHtml(u) {
     if (uH) {
         let defV = uH.terrain.def;
         if (u.fav?.includes(uH.terrain.id)) defV += 0.2;
-        defInfo = `<div class="sc-chip-side def"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><b>${Math.round(defV * 100)}%</b><span>DEF</span></div>`;
+        defInfo = `<div class="sc-chip-side def"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">${ICON_DEF}</svg><b>${Math.round(defV * 100)}%</b><span>DEF</span></div>`;
     }
 
     return `
-        <div class="sc-chip-side atk"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L2 7l10 15 10-15-10-5zM12 22l8-5-8-10-8 5 8 10z"/></svg><b>${u.getEffectiveAtk(game)}</b><span>ATK</span></div>
-        <div class="sc-chip-side range"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M12 2l10 5-10 10-10-5 10-5z"/></svg><b>${u.getEffectiveRange(game)}</b><span>ALC</span></div>
-        <div class="sc-chip-side move"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M12 2l10 5-10 10-10-5 10-5z"/></svg><b>${u.maxMp}</b><span>MOV</span></div>
+        <div class="sc-chip-side atk"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">${ICON_ATK}</svg><b>${u.getEffectiveAtk(game)}</b><span>ATK</span></div>
+        <div class="sc-chip-side range"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">${ICON_ALC}</svg><b>${u.getEffectiveRange(game)}</b><span>ALC</span></div>
+        <div class="sc-chip-side move"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">${ICON_MOV}</svg><b>${u.maxMp}</b><span>MOV</span></div>
         ${defInfo}`;
 }
 
@@ -1074,7 +1081,7 @@ function unitTerrainHtml(u) {
             <b style="color:${defCol}">${defPct}%</b><span>DEF</span>
         </div>
         <div class="terrain-chip">
-            <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M12 2l10 5-10 10-10-5 10-5z"/></svg>
+            <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">${ICON_MOV}</svg>
             <b style="color:${costCol}">${t.cost}</b><span>MOV</span>
         </div>
         <div class="terrain-chip" style="flex:1; text-align:left;">
@@ -1119,7 +1126,7 @@ function renderTerrainInfoForHex(t) {
             <b style="color:${defCol}">${defPct}%</b><span>DEF</span>
         </div>
         <div class="terrain-chip">
-            <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M12 2l10 5-10 10-10-5 10-5z"/></svg>
+            <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">${ICON_MOV}</svg>
             <b style="color:${costCol}">${t.cost}</b><span>MOV</span>
         </div>
         <div class="terrain-chip" style="flex:1; text-align:left;">
