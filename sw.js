@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v6'; // v6: icones preenchidos harmonizados (HP/MP/XP/mana/pronto/recursos)
+const CACHE_NAME = 'hextactics-v7'; // v7: efeitos com ícones SVG (popups/crônica/toasts sem emojis)
 const ASSETS = [
     './',
     './index.html',

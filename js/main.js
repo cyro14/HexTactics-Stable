@@ -1334,7 +1334,7 @@ $('btn-full-log')?.addEventListener('click', () => {
     if (!window.fullCombatHistory || window.fullCombatHistory.length === 0) {
         content.innerHTML = '<div style="color:#aaa; text-align:center; padding: 20px;">A batalha está silenciosa... Nenhum evento registrado ainda.</div>';
     } else {
-        // Desenha todas as mensagens salvas
+        // Desenha todas as mensagens salvas (com ícones SVG no lugar dos emojis)
         window.fullCombatHistory.forEach(log => {
             let div = document.createElement('div');
             div.style.borderLeft = `3px solid ${log.color}`;
@@ -1342,7 +1342,7 @@ $('btn-full-log')?.addEventListener('click', () => {
             div.style.marginBottom = '6px';
             div.style.color = '#ddd';
             div.style.lineHeight = '1.4';
-            div.innerText = log.text;
+            div.innerHTML = replaceEffectIcons(log.text, log.color);
             content.appendChild(div);
         });
     }

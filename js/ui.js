@@ -140,7 +140,7 @@ function addLog(msg, col = '#9a8a6a') {
     const e = document.createElement('div');
     e.className = 'log-entry';
     e.style.borderLeftColor = col;
-    e.innerText = msg;
+    e.innerHTML = replaceEffectIcons(msg, col);
 
     window.fullCombatHistory.push({ text: msg, color: col });
 
@@ -151,13 +151,83 @@ function addLog(msg, col = '#9a8a6a') {
     }
 }
 
+// ==========================================
+// EFEITOS DE BATALHA — mapa emoji → SVG (popups, crônica, toasts)
+// Ícones de linha 24x24 que herdam a cor do efeito via currentColor.
+// emojis não mapeados permanecem como texto (degradação graciosa).
+// ==========================================
+const EFFECT_ICONS = {
+    '🚩': '<path d="M6 21V4"/><path d="M6 5h11l-2.5 3.5L17 12H6Z"/>',                                   // bandeira (vila)
+    '💨': '<path d="M4 8h8a2.5 2.5 0 1 0-2.5-2.5"/><path d="M4 12h12a2.5 2.5 0 1 1-2.5 2.5"/><path d="M4 16h6"/>', // vento (esquiva)
+    '🌲': '<path d="M12 3 7.5 9h3l-4 6h11l-4-6h3Z"/><path d="M12 15v5"/><path d="M9.5 20h5"/>',        // madeira
+    '🌳': '<path d="M12 3 7.5 9h3l-4 6h11l-4-6h3Z"/><path d="M12 15v5"/><path d="M9.5 20h5"/>',
+    '⛰': '<path d="M3 19 9 7l3.5 6L15.5 8 21 19H3Z"/>',                                                // pedra/montanha
+    '🪨': '<path d="M3 19 9 7l3.5 6L15.5 8 21 19H3Z"/>',
+    '🐟': '<path d="M3.5 12C6 8.5 9 7 12 7c4 0 7 2.2 8.5 5-1.5 2.8-4.5 5-8.5 5-3 0-6-1.5-8.5-5Z"/><path d="M17 12l4-3.5v7L17 12Z"/><path d="M14.5 10.5h.01"/>', // escamas
+    '⏳': '<path d="M7 3h10M7 21h10M8 3v3c0 2 2 3.5 4 6 2-2.5 4-4 4-6V3M8 21v-3c0-2 2-3.5 4-6 2 2.5 4 4 4 6v3"/>', // areia
+    '🧬': '<path d="M8 3c0 6 8 6 8 12M16 3c0 6-8 6-8 12"/><path d="M9 7.5h6M9 13.5h6"/>',                // DNA
+    '💰': '<circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.8 10c0-1.2 1-2 2.2-2s2.2.8 2.2 2-1 1.8-2.2 1.8-2.2.7-2.2 1.9 1 2 2.2 2 2.2-.8 2.2-2"/>', // ouro
+    '🔥': '<path d="M12 3c2 3 6 5 6 10a6 6 0 0 1-12 0c0-3 2-4 3-7 1 2 2 3 3 3 0-3-1-4 0-6Z"/>',          // fogo
+    '❄': '<path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/>',                                        // gelo
+    '🧊': '<path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/>',
+    '⚡': '<path d="M13 2 5 13h5l-2 9 9-12h-6l2-8Z"/>',                                                   // raio
+    '💫': '<path d="M12 4a8 8 0 1 1-8 8"/><path d="M12 8a4 4 0 1 0 4 4"/>',                              // atordoado
+    '⛓': '<path d="M9 15l6-6"/><rect x="3.5" y="10.5" width="7" height="7" rx="2"/><rect x="13.5" y="6.5" width="7" height="7" rx="2"/>', // preso
+    '🛡': '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',                                    // escudo
+    '❤': '<path d="M12 21c-5.5-4.7-9.5-8-9.5-12A5.4 5.4 0 0 1 8 3.5c1.6 0 3.1.8 4 2.1.9-1.3 2.4-2.1 4-2.1a5.4 5.4 0 0 1 5.5 5.5c0 4-4 7.3-9.5 12Z"/>', // vida
+    '💚': '<path d="M12 21c-5.5-4.7-9.5-8-9.5-12A5.4 5.4 0 0 1 8 3.5c1.6 0 3.1.8 4 2.1.9-1.3 2.4-2.1 4-2.1a5.4 5.4 0 0 1 5.5 5.5c0 4-4 7.3-9.5 12Z"/>',
+    '💧': '<path d="M12 3c3 4 6 7 6 10a6 6 0 0 1-12 0c0-3 3-6 6-10Z"/>',                                 // gota (cura)
+    '☠': '<path d="M12 3a7 7 0 0 0-7 7c0 2.6 1.4 4.4 3 5.4V19h2v-2h4v2h2v-3.6c1.6-1 3-2.8 3-5.4a7 7 0 0 0-7-7Z"/><circle cx="9.3" cy="10.5" r="1.4"/><circle cx="14.7" cy="10.5" r="1.4"/><path d="M10.8 21l1.2-2 1.2 2"/>', // veneno/morte
+    '💀': '<path d="M12 3a7 7 0 0 0-7 7c0 2.6 1.4 4.4 3 5.4V19h2v-2h4v2h2v-3.6c1.6-1 3-2.8 3-5.4a7 7 0 0 0-7-7Z"/><circle cx="9.3" cy="10.5" r="1.4"/><circle cx="14.7" cy="10.5" r="1.4"/>',
+    '✨': '<path d="M12 3c.5 3.5 1.9 5 6 6.5-4.1 1.5-5.5 3-6 6.5-.5-3.5-1.9-5-6-6.5 4.1-1.5 5.5-3 6-6.5Z"/><path d="M18.5 14.5l.6 1.9 1.9.6-1.9.6-.6 1.9-.6-1.9-1.9-.6 1.9-.6Z"/>', // faísca
+    '🔮': '<circle cx="12" cy="13" r="6.5"/><path d="M12 6.5V3M7 8.5 5 6.5M17 8.5 19 6.5M5.5 20h13"/>', // orbe (mana)
+    '🎯': '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/>',                            // alvo
+    '↩': '<path d="M4 10h9a5 5 0 0 1 0 10h-3"/><path d="M8 6l-4 4 4 4"/>',                              // revidar
+    '⚔': '<path d="M5 5l14 14M19 5L5 19"/><path d="M5 5h2.5M5 5v2.5M19 5h-2.5M19 5v2.5M5 19l2 2M19 19l-2 2"/>', // espadas
+    '🗡': '<path d="M5 5l14 14M19 5L5 19"/><path d="M5 5h2.5M5 5v2.5M19 5h-2.5M19 5v2.5M5 19l2 2M19 19l-2 2"/>',
+    '📦': '<rect x="4" y="8" width="16" height="12" rx="1"/><path d="M4 8l2-4h12l2 4M12 8v12M4 13h16"/>', // box
+    '🪄': '<path d="M5 19 15 9"/><path d="M15.5 3.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9Z"/>', // domar
+    '🧛': '<path d="M12 12c-1.5-3-4-4-8-4 2 3 3 6 8 6M12 12c1.5-3 4-4 8-4-2 3-3 6-8 6"/><path d="M10 14l1 2 1-2 1 2 1-2"/>', // vampiro
+    '🍃': '<path d="M5 19C5 9 12 5 20 4c0 8-4 15-15 15Z"/><path d="M5 19c4-6 8-9 12-11"/>',              // erva
+    '🦖': '<path d="M6 19c0-7 3-10 9-11"/><path d="M9.5 18c0-5 2-7 6-8M13 18c0-3 1-4 3-5"/>',            // fúria (garras)
+    '🐾': '<circle cx="8" cy="8" r="1.7"/><circle cx="14" cy="7" r="1.7"/><circle cx="18" cy="11" r="1.7"/><path d="M12 21c-2.8 0-4.8-1.4-4.8-3.3C7.2 15.6 9.4 14.5 12 14.5s4.8 1.1 4.8 3.2c0 1.9-2 3.3-4.8 3.3Z"/>', // garra
+    '🪽': '<path d="M20.5 3.5c-9 0-15 5-16 16 6-1 10-3 12-6"/><path d="M4.5 19.5c2-6 6-10 12-12"/>',   // asa
+    '🌿': '<path d="M12 21v-7"/><path d="M12 14c0-4 3-7 7-7 0 4-3 7-7 7Z"/><path d="M12 14c0-4-3-7-7-7 0 4 3 7 7 7Z"/>', // silvestre
+    '⬆': '<path d="M12 20V6M6 12l6-6 6 6"/>',                                                           // subir de nível
+    '🐎': '<path d="M4 12h11"/><path d="M11 6l6 6-6 6"/>',                                                // golpe e corrida
+    '💥': '<path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.8 2.8M19 19l-2.8-2.8M19 5l-2.8 2.8M5 19l2.8-2.8"/><circle cx="12" cy="12" r="2.5"/>', // explosão
+    '🌊': '<path d="M3 10c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 15c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>',              // mergulho
+};
+const EFFECT_ICON_KEYS = Object.keys(EFFECT_ICONS);
+
+// Troca emojis conhecidos por SVG inline (estilo linha, cor herdada).
+// Escapa < > antes, preservando o restante do texto.
+function replaceEffectIcons(txt, col) {
+    if (!txt) return '';
+    let s = String(txt).replace(/\uFE0F/g, '');   // remove variation selectors (🛡️ vira 🛡)
+    // escape mínimo de HTML para podermos usar innerHTML com segurança
+    s = s.split('&').join('&' + 'amp;');
+    s = s.split('<').join('&' + 'lt;');
+    s = s.split('>').join('&' + 'gt;');
+    let found = false;
+    for (const k of EFFECT_ICON_KEYS) { if (s.indexOf(k) >= 0) { found = true; break; } }
+    if (!found) return s;
+    const colorStyle = col ? ` style="color:${col}"` : '';
+    const svg = (paths) =>
+        `<svg class="fx-ico" viewBox="0 0 24 24"${colorStyle} aria-hidden="true">${paths}</svg>`;
+    for (const k of EFFECT_ICON_KEYS) {
+        if (s.indexOf(k) >= 0) s = s.split(k).join(svg(EFFECT_ICONS[k]));
+    }
+    return s;
+}
+
 function showPopup(txt, target, col) {
     if (!renderer) return;
     const p = renderer.getPos(target.vq || target.q, target.vr || target.r);
     const el = document.createElement('div');
     el.className = 'dmg-popup';
-    el.innerText = txt;
     el.style.color = col;
+    el.innerHTML = replaceEffectIcons(txt, col);
 
     const randomOffsetX = (Math.random() - 0.5) * 30;
     el.style.left = (p.x + randomOffsetX) + 'px';
@@ -177,7 +247,7 @@ function showPopup(txt, target, col) {
 function showMessage(txt, col) {
     const msgEl = $('messages');
     if (msgEl) {
-        msgEl.innerText = txt;
+        msgEl.innerHTML = replaceEffectIcons(txt, col);
         msgEl.style.color = col;
         msgEl.style.opacity = '1';
         msgEl.style.transition = 'opacity 0.5s';
@@ -506,7 +576,7 @@ function openFullLogModal() {
             const div = document.createElement('div');
             div.className = 'log-entry';
             div.style.borderLeftColor = entry.color;
-            div.textContent = entry.text;
+            div.innerHTML = replaceEffectIcons(entry.text, entry.color);
             content.appendChild(div);
         });
     } else {
