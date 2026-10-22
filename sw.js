@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v3'; // v3: fix dropdowns mobile (overflow/z-index) + modal clicável
+const CACHE_NAME = 'hextactics-v4'; // v4: menu de pausa remaster (ESC, confirmação, status)
 const ASSETS = [
     './',
     './index.html',

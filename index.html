@@ -786,21 +786,146 @@
         </div>
     </div>
 
-    <div id="pause-menu" class="layer screen hidden">
-        <div class="modal-card">
-            <h2 class="screen-title" style="font-size:1.6rem;margin-bottom:20px;">Pausado</h2>
-            <div class="menu-box" style="margin:0 auto;">
-                <button id="btn-resume" class="btn-success">▶ Retornar</button>
-                <div style="display:flex;gap:10px;">
-                    <button id="btn-open-bestiary-pause" style="flex:1;border-color:#3498db;">📖 Bestiário</button>
-                    <button id="btn-open-reliquary-pause" style="flex:1;border-color:#9b59b6;">🏺 Relicário</button>
+    <div id="pause-menu" class="layer screen pause-screen hidden">
+        <div class="pause-card">
+            <span class="hud-corner tl" aria-hidden="true"></span>
+            <span class="hud-corner tr" aria-hidden="true"></span>
+            <span class="hud-corner bl" aria-hidden="true"></span>
+            <span class="hud-corner br" aria-hidden="true"></span>
+
+            <div class="pause-head">
+                <div class="pause-gem">
+                    <svg viewBox="0 0 48 48" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="gemGoldPause" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stop-color="#fff3c4" />
+                                <stop offset=".45" stop-color="#e8c84a" />
+                                <stop offset="1" stop-color="#8a6d12" />
+                            </linearGradient>
+                        </defs>
+                        <polygon points="24,3.5 42.5,14.5 42.5,33.5 24,44.5 5.5,33.5 5.5,14.5"
+                            fill="url(#gemGoldPause)" stroke="#f5e6a0" stroke-width="1.5" />
+                        <polygon points="24,12 34.5,18.5 34.5,29.5 24,36 13.5,29.5 13.5,18.5"
+                            fill="none" stroke="rgba(70,45,5,.5)" stroke-width="1.2" />
+                    </svg>
                 </div>
-                <button id="btn-team-pause" style="border-color:var(--success);">🛡️ Ver Time</button>
-                <button id="btn-help-pause" style="border-color:#888;">❓ Guia Tático</button>
-                <button id="btn-check-objective" style="border-color:var(--warning); color:var(--warning); font-weight: bold;">🎯 Ver Objetivo da Fase</button>
-                <button id="btn-save" style="border-color:#3498db;">💾 Salvar e Sair</button>
-                <button id="btn-quit" class="btn-danger">✕ Abandonar Partida</button>
+                <div class="pause-head-txt">
+                    <h2 class="pause-title">Pausado</h2>
+                    <p class="pause-sub" id="pause-stage">Ato I · Nó 1</p>
+                </div>
             </div>
+
+            <div class="mm-rule"><i></i><b></b><i></i></div>
+
+            <!-- Situação da campanha: sempre visível ao pausar -->
+            <div class="pause-status">
+                <div class="ps-row">
+                    <span class="ps-chip">
+                        <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M18.5 3 9 12.5M18.5 3l-4.3.7M18.5 3l-.7 4.3" />
+                            <path d="M5.5 3 15 12.5M5.5 3l4.3.7M5.5 3l.7 4.3" />
+                        </svg>
+                        <span id="pause-turn">Turno 1</span>
+                    </span>
+                    <span class="ps-chip">
+                        <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="4" />
+                            <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" />
+                        </svg>
+                        <span id="pause-day">Dia</span>
+                    </span>
+                    <span class="ps-chip" id="pause-region-chip" style="display:none;">
+                        <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                        </svg>
+                        <span id="pause-region"></span>
+                    </span>
+                </div>
+                <div class="ps-objective">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="8" />
+                        <circle cx="12" cy="12" r="3.5" />
+                    </svg>
+                    <span id="pause-objective">Objetivo</span>
+                </div>
+                <div class="ps-objective-detail hidden" id="pause-objective-detail"></div>
+            </div>
+
+            <div class="pause-actions">
+                <button id="btn-resume" class="mm-btn mm-btn-primary">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 5.5v13l10-6.5Z" />
+                    </svg>
+                    <span>Retornar (ESC)</span>
+                </button>
+                <button id="btn-team-pause" class="mm-btn mm-btn-pause-team">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3l7 2.5V11c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V5.5Z" />
+                    </svg>
+                    <span>Exército</span>
+                </button>
+                <button id="btn-open-bestiary-pause" class="mm-btn mm-btn-bestiary">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 6.5C10 4.8 6.8 4.8 4.5 6.3V18c2.3-1.5 5.5-1.5 7.5.2 2-1.7 5.2-1.7 7.5-.2V6.3C17.2 4.8 14 4.8 12 6.5Z" />
+                        <path d="M12 6.5V18.2" />
+                    </svg>
+                    <span>Bestiário</span>
+                </button>
+                <button id="btn-open-reliquary-pause" class="mm-btn mm-btn-relic">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M9 4h6M10 4v3.2C6.6 9 6.6 14.5 12 18.5 17.4 14.5 17.4 9 14 7.2V4" />
+                        <path d="M9.5 5.8C6.8 6.3 6.6 10 9.8 10.4M14.5 5.8c2.7.5 2.9 4.2-.3 4.6" />
+                    </svg>
+                    <span>Relicário</span>
+                </button>
+                <button id="btn-help-pause" class="mm-btn mm-btn-help">
+                    <svg class="mm-ico" viewBox="0 0 24 24" transform="translate(0 1.5)" aria-hidden="true">
+                        <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3" />
+                        <path d="M12 17v.02" />
+                    </svg>
+                    <span>Guia Tático</span>
+                </button>
+                <button id="btn-check-objective" class="mm-btn mm-btn-objective" title="Detalhes do objetivo da fase">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="8" />
+                        <circle cx="12" cy="12" r="3.5" />
+                        <path d="M12 4V2M12 22v-2M4 12H2M22 12h-2" />
+                    </svg>
+                    <span>Detalhes do Objetivo</span>
+                </button>
+                <button id="btn-save" class="mm-btn mm-btn-save">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 4h11l3 3v13H5z" />
+                        <path d="M8 4v5h7V4M8 20v-6h8v6" />
+                    </svg>
+                    <span>Salvar e Sair</span>
+                </button>
+                <button id="btn-quit" class="mm-btn mm-btn-danger">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 6l12 12M18 6L6 18" />
+                    </svg>
+                    <span>Abandonar Partida</span>
+                </button>
+                <div id="pause-quit-confirm" class="pause-quit-confirm hidden">
+                    <p class="pq-text">Abandonar a partida? O progresso desde o último salvamento será perdido.</p>
+                    <div class="pq-actions">
+                        <button id="btn-quit-cancel" class="mm-btn">
+                            <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M14.5 5.5 8 12l6.5 6.5" />
+                            </svg>
+                            <span>Continuar Jogando</span>
+                        </button>
+                        <button id="btn-quit-yes" class="mm-btn mm-btn-danger">
+                            <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M6 6l12 12M18 6L6 18" />
+                            </svg>
+                            <span>Abandonar</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <p class="pause-footer">Biomancer Tactics</p>
         </div>
     </div>
 

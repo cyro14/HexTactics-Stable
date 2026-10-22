@@ -515,6 +515,88 @@ function openFullLogModal() {
     modal.classList.remove('hidden');
 }
 
+// ==========================================
+// MENU DE PAUSA — status da campanha e conexões
+// ==========================================
+
+// Info do objetivo atual (título curto + descrição + progresso)
+function objectiveInfo() {
+    if (!game) return null;
+    if (game.currentObjective === 'SURVIVE') {
+        return { title: 'Sobreviver', desc: 'Sobreviva ao ataque inimigo contínuo!', progress: `Turnos restantes: ${Math.max(0, 11 - game.turnCount)}` };
+    }
+    if (game.currentObjective === 'DOMINATE') {
+        let totalV = 0, playerV = 0;
+        game.map.forEach(h => { if (h.terrain && h.terrain.id === 'VILLAGE') { totalV++; if (h.owner === 1) playerV++; } });
+        return { title: 'Dominar Vilas', desc: 'Capture todas as vilas do mapa!', progress: `Vilas capturadas: ${playerV} / ${totalV}` };
+    }
+    if (game.currentObjective === 'BOSS') {
+        const boss = game.units.find(u => u.isObjectiveTarget);
+        return { title: 'Ameaça Suprema', desc: 'Elimine ou capture a Ameaça Suprema!', progress: boss ? `Alvo: ${boss.name} (HP: ${boss.hp}/${boss.maxHp})` : 'Alvo abatido!' };
+    }
+    const enemyLeader = game.units.find(u => u.faction === 2 && u.isLeader);
+    return { title: 'Derrotar o Líder', desc: 'Derrote o líder adversário para vencer a fase!', progress: enemyLeader ? `Alvo: ${enemyLeader.name} (HP: ${enemyLeader.hp}/${enemyLeader.maxHp})` : 'Avançar!' };
+}
+
+// Rótulo da fase do dia para um turno qualquer (mesmo ciclo do HUD)
+function todLabelForCycle(turnCount) {
+    const cycle = (turnCount || 0) % 10;
+    if (cycle === 0 || cycle === 9) return 'Noite Profunda';
+    if (cycle >= 6) return 'Noite';
+    if (cycle === 5) return 'Crepúsculo';
+    if (cycle === 1) return 'Alvorada';
+    return 'Dia';
+}
+
+// Preenche o cabeçalho de situação do menu de pausa
+function updatePauseStatus() {
+    if (!game) return;
+    const stageEl = $('pause-stage');
+    if (stageEl) {
+        if (game.isDuel) {
+            stageEl.textContent = 'Duelo Tático';
+        } else {
+            const act = game.currentLevel || 1;
+            const node = (typeof game.currentFloor === 'number' ? game.currentFloor : 0) + 1;
+            stageEl.textContent = `Ato ${toRoman(act)} · Nó ${node}`;
+        }
+    }
+    const turnEl = $('pause-turn');
+    if (turnEl) turnEl.textContent = `Turno ${game.turnCount || 1}`;
+    const dayEl = $('pause-day');
+    if (dayEl) dayEl.textContent = todLabelForCycle(game.turnCount);
+
+    const regChip = $('pause-region-chip');
+    const regEl = $('pause-region');
+    const reg = (typeof CONTINENT_REGIONS !== 'undefined' && game.currentRegionId && CONTINENT_REGIONS[game.currentRegionId]) ? CONTINENT_REGIONS[game.currentRegionId].name : '';
+    if (regChip && regEl) {
+        regChip.style.display = reg ? 'inline-flex' : 'none';
+        regEl.textContent = reg;
+    }
+
+    const info = objectiveInfo();
+    const objEl = $('pause-objective');
+    if (objEl && info) objEl.textContent = info.title;
+    const detEl = $('pause-objective-detail');
+    if (detEl && info) detEl.innerHTML = `<b style="color:var(--gold-light);">${info.title}:</b> ${info.desc}<br><span style="color:#ffd98a;">${info.progress}</span>`;
+}
+
+// Abre o menu de pausa sempre com estado limpo e status fresco
+function showPauseMenu() {
+    const qb = $('pause-quit-confirm');
+    if (qb) qb.classList.add('hidden');
+    const det = $('pause-objective-detail');
+    if (det) det.classList.add('hidden');
+    const objBtn = $('btn-check-objective');
+    if (objBtn) objBtn.classList.remove('active');
+    updatePauseStatus();
+    show('pause-menu');
+}
+
+function hidePauseMenu() {
+    hide('pause-menu');
+}
+
 function openGrimoire() {
     const leader = game && game.units.find(u => u.isLeader && u.faction === 1);
     $('grimoire-subtitle').innerText = leader ? `${leader.emoji} ${leader.name} — Nível ${leader.level}` : 'Grimório';
@@ -1508,11 +1590,17 @@ function openManagement() {
     renderManagement('prep');
 }
 
+// Origem da tela de exército: se veio do menu de pausa, fechar volta pra
+// pausa; se veio do botão da barra superior, fecha direto pro jogo
+let teamViewFromPause = false;
+
 function openTeamView() {
     if (game && !game.gameOver) {
         deployedRoster = game.units.filter(u => u.faction === 1);
     }
-    const pm = $('pause-menu'); if (pm) pm.classList.add('hidden');
+    const pm = $('pause-menu');
+    teamViewFromPause = !!(pm && !pm.classList.contains('hidden'));
+    if (pm) pm.classList.add('hidden');
     show('management-screen');
     hide('btn-start-stage');
     show('btn-close-team');
@@ -1527,8 +1615,9 @@ function openTeamView() {
     if (btnClose) {
         btnClose.onclick = () => {
             hide('management-screen');
-            // Como o canvas do jogo (combate) já está rodando no fundo, 
-            // basta esconder a tela de gerenciamento que ele volta pra luta normalmente!
+            // O canvas do combate segue rodando atrás; se a origem foi o
+            // menu de pausa, devolvemos o jogador pra ele
+            if (teamViewFromPause) show('pause-menu');
         };
     }
 
@@ -3867,6 +3956,38 @@ window.addEventListener('keydown', (e) => {
                 game.map.set(`${h.q},${h.r}`, hex);
             });
             renderer.draw();
+        }
+    }
+
+    // ESC: alterna o menu de pausa dentro da batalha (o tooltip do botão
+    // promete "(ESC)" — este handler cumpre). Fecha primeiro a confirmação
+    // de abandono, se aberta; não se mete em campos de texto nem no editor.
+    if (e.key === 'Escape' && !game.isEditorMode) {
+        const t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+
+        const gc = document.getElementById('game-container');
+        const pm = document.getElementById('pause-menu');
+        if (!gc || gc.classList.contains('hidden') || !pm) return;
+
+        if (!pm.classList.contains('hidden')) {
+            const qb = document.getElementById('pause-quit-confirm');
+            if (qb && !qb.classList.contains('hidden')) {
+                qb.classList.add('hidden');
+            } else {
+                hidePauseMenu();
+            }
+        } else if (!game.gameOver) {
+            // só abre quando nenhuma outra tela/modal está por cima da batalha
+            const blockers = ['management-screen', 'bestiary-screen', 'reliquary-screen',
+                'help-screen', 'shop-screen', 'result-screen', 'grimoire-screen',
+                'event-screen', 'unit-select-modal', 'spell-learn-modal', 'kingdom-screen',
+                'route-map-screen', 'continent-map-screen', 'full-log-modal', 'beast-details-modal',
+                'ability-replace-modal', 'item-popup', 'unit-details-modal', 'pause-quit-confirm'].every(id => {
+                    const el = document.getElementById(id);
+                    return !el || el.classList.contains('hidden');
+                });
+            if (blockers) showPauseMenu();
         }
     }
 });

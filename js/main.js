@@ -1087,8 +1087,8 @@ window.openContinentMap = function() {
     $('btn-tame')?.addEventListener('click', () => { game.tameMode = !game.tameMode; updateUI(); renderer.draw(); });
 
     // Botões de Pausa e Popups
-    $('btn-pause')?.addEventListener('click', () => { $('pause-menu').classList.remove('hidden'); });
-    $('btn-resume')?.addEventListener('click', () => { $('pause-menu').classList.add('hidden'); });
+    $('btn-pause')?.addEventListener('click', () => { showPauseMenu(); });
+    $('btn-resume')?.addEventListener('click', () => { hidePauseMenu(); });
     $('btn-close-details')?.addEventListener('click', () => { $('unit-details-modal').classList.add('hidden'); });
     $('btn-open-help')?.addEventListener('click', () => { $('help-screen').classList.remove('hidden'); });
     $('btn-help-pause')?.addEventListener('click', () => { $('pause-menu').classList.add('hidden'); $('help-screen').classList.remove('hidden'); });
@@ -1112,12 +1112,8 @@ window.openContinentMap = function() {
         $('btn-ingame-team').addEventListener('click', openTeamView);
     }
 
-    if ($('btn-close-team')) {
-        $('btn-close-team').addEventListener('click', () => {
-            hide('management-screen');
-            $('pause-menu').classList.remove('hidden');
-        });
-    }
+    // (btn-close-team é ligado no openTeamView com rastreio de origem:
+    //  voltar pra pausa só quando veio da pausa)
 
     // Botão de verificar exército de dentro do Mapa de Rotas
     if ($('btn-map-manage')) {
@@ -1136,7 +1132,17 @@ window.openContinentMap = function() {
         });
     }
 
-    $('btn-quit').addEventListener('click', () => { location.reload(); });
+    // Abandonar Partida: pede confirmação antes do reload (um clique
+    // descuidado não pode destruir a run)
+    $('btn-quit').addEventListener('click', () => {
+        const qb = $('pause-quit-confirm');
+        if (qb) qb.classList.remove('hidden');
+    });
+    $('btn-quit-yes')?.addEventListener('click', () => { location.reload(); });
+    $('btn-quit-cancel')?.addEventListener('click', () => {
+        const qb = $('pause-quit-confirm');
+        if (qb) qb.classList.add('hidden');
+    });
     $('btn-menu-from-lose').addEventListener('click', () => { location.reload(); });
     $('btn-play').addEventListener('click', () => { $('main-menu').classList.add('hidden'); $('mode-screen').classList.remove('hidden'); });
     $('btn-close-mode').addEventListener('click', () => { $('mode-screen').classList.add('hidden'); $('main-menu').classList.remove('hidden'); });
@@ -1287,42 +1293,14 @@ window.openContinentMap = function() {
     $('btn-refresh-shop')?.addEventListener('click', () => { if (game.gold >= 2) { game.gold -= 2; $('shop-gold-display').innerText = game.gold; generateShopItems(); renderShop(); } else { alert("Ouro insuficiente!"); } });
     $('btn-grimoire')?.addEventListener('click', () => { openGrimoire(); });
     $('btn-close-grimoire')?.addEventListener('click', () => { $('grimoire-screen').classList.add('hidden'); });
+    // Detalhes do Objetivo: expande DENTRO do menu (o resumo do objetivo
+    // já fica sempre visível no cabeçalho de situação)
     $('btn-check-objective')?.addEventListener('click', () => {
-        $('pause-menu').classList.add('hidden'); // Fecha o menu de pausa para ver o alerta limpo
-        
-        let title = "Objetivo da Fase";
-        let desc = "";
-        let progress = "";
-
-        if (game.currentObjective === 'SURVIVE') {
-            desc = "Sobreviva ao ataque inimigo contínuo!";
-            let turnsLeft = 11 - game.turnCount;
-            progress = `Turnos restantes: ${Math.max(0, turnsLeft)}`;
-        } else if (game.currentObjective === 'DOMINATE') {
-            desc = "Capture todas as vilas do mapa!";
-            let totalV = 0, playerV = 0;
-            game.map.forEach(h => {
-                if (h.terrain.id === 'VILLAGE') {
-                    totalV++;
-                    if (h.owner === 1) playerV++;
-                }
-            });
-            progress = `Vilas capturadas: ${playerV} / ${totalV}`;
-        } else if (game.currentObjective === 'BOSS') {
-            desc = "Elimine ou Capture a Ameaça Suprema!";
-            let boss = game.units.find(u => u.isObjectiveTarget);
-            progress = boss ? `Alvo: ${boss.name} (HP: ${boss.hp}/${boss.maxHp})` : "Alvo abatido!";
-        } else {
-            desc = "Derrote o líder adversário!";
-            let enemyLeader = game.units.find(u => u.faction === 2 && u.isLeader);
-            progress = enemyLeader ? `Alvo: ${enemyLeader.name} (HP: ${enemyLeader.hp}/${enemyLeader.maxHp})` : "Avançar!";
-        }
-
-        if (typeof showZeldaPopup === 'function') {
-            showZeldaPopup("🎯", title, `${desc}\n\n${progress}`);
-        } else {
-            alert(`${title}\n${desc}\n${progress}`);
-        }
+        const det = $('pause-objective-detail');
+        if (!det) return;
+        det.classList.toggle('hidden');
+        const btn = $('btn-check-objective');
+        if (btn) btn.classList.toggle('active', !det.classList.contains('hidden'));
     });
     // (btn-duel agora é tratado apenas no fluxo chooseMode, acima)
     // (btn-toggle-spells foi removido: os slots de magia ficam sempre

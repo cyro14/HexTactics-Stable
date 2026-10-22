@@ -5286,3 +5286,196 @@ button.btn-success {
     #turn-banner-title { font-size: .95rem; letter-spacing: 1.5px; }
     .turn-banner-sub { font-size: 8.5px; letter-spacing: 2px; }
 }
+
+/* ==========================================
+   MENU DE PAUSA — estilo Wesnoth
+   Backdrop translúcido: o campo de batalha
+   continua visível atrás
+   ========================================== */
+.pause-screen {
+    background: rgba(4, 6, 12, .6);
+    backdrop-filter: blur(4px);
+    z-index: 320;
+}
+
+.pause-card {
+    position: relative;
+    width: min(470px, 94vw);
+    background: linear-gradient(180deg, rgba(13, 11, 5, .97) 0%, rgba(4, 4, 8, .99) 100%);
+    border: 1px solid rgba(201, 162, 39, .5);
+    border-radius: 10px;
+    padding: 22px 24px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow:
+        0 24px 90px rgba(0, 0, 0, .92),
+        0 0 60px rgba(201, 162, 39, .08),
+        inset 0 1px 0 rgba(232, 200, 74, .15),
+        inset 0 0 40px rgba(0, 0, 0, .5);
+    animation: pauseCardIn .25s cubic-bezier(.2, .8, .25, 1) both;
+}
+@keyframes pauseCardIn {
+    from { opacity: 0; transform: translateY(14px) scale(.97); }
+    to { opacity: 1; transform: none; }
+}
+
+.pause-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.pause-gem {
+    width: 46px;
+    flex-shrink: 0;
+    animation: mmGemFloat 4s ease-in-out infinite;
+}
+.pause-gem svg { display: block; width: 100%; height: auto; }
+.pause-title {
+    font-family: Cinzel, serif;
+    font-size: 1.75rem;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin: 0;
+    line-height: 1;
+    background: linear-gradient(180deg, #fff3c4 0%, #e8c84a 35%, #a67c1b 62%, #f5e27a 88%, #8a6d12 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    filter: drop-shadow(0 2px 0 rgba(90, 60, 10, .9)) drop-shadow(0 6px 14px rgba(0, 0, 0, .85));
+}
+.pause-sub {
+    font-family: Cinzel, serif;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 4px 0 0;
+    text-shadow: 0 1px 2px #000;
+}
+.pause-head-txt { min-width: 0; }
+
+/* ---- situação da campanha ---- */
+.pause-status {
+    border-top: 1px solid rgba(138, 109, 18, .3);
+    border-bottom: 1px solid rgba(138, 109, 18, .3);
+    padding: 10px 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.ps-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.ps-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: Cinzel, serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #ddd;
+    background: rgba(0, 0, 0, .45);
+    border: 1px solid rgba(138, 109, 18, .4);
+    padding: 4px 11px;
+    border-radius: 20px;
+    text-shadow: 0 1px 2px #000;
+}
+.ps-chip .mm-ico { width: 13px; height: 13px; color: var(--gold); filter: drop-shadow(0 0 3px rgba(232, 200, 74, .35)); }
+.ps-objective {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-family: Cinzel, serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    text-shadow: 0 1px 3px #000, 0 0 12px rgba(232, 200, 74, .2);
+}
+.ps-objective .mm-ico { width: 16px; height: 16px; color: var(--warning); filter: drop-shadow(0 0 4px rgba(243, 156, 18, .5)); }
+.ps-objective-detail {
+    font-size: 11.5px;
+    color: #cbb98f;
+    line-height: 1.55;
+    background: rgba(0, 0, 0, .38);
+    border-left: 3px solid var(--warning);
+    padding: 9px 11px;
+    border-radius: 0 5px 5px 0;
+    text-shadow: 0 1px 2px #000;
+}
+
+/* ---- botões em grade 2 colunas ---- */
+.pause-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.pause-actions .mm-btn { margin: 0; font-size: 13px; padding: 12px 12px; }
+#btn-resume, #btn-quit, .pause-quit-confirm { grid-column: 1 / -1; }
+.mm-btn-objective {
+    box-shadow: inset 4px 0 0 rgba(243, 156, 18, .8), 0 3px 12px rgba(0, 0, 0, .7), inset 0 1px 0 rgba(232, 200, 74, .18);
+}
+.mm-btn-objective:hover:not(:disabled) {
+    box-shadow: inset 4px 0 0 var(--warning), 0 0 20px rgba(243, 156, 18, .35), 0 3px 12px rgba(0, 0, 0, .7);
+    border-color: var(--warning);
+}
+.mm-btn-objective.active {
+    border-color: var(--warning);
+    color: #ffd98a;
+    background: linear-gradient(180deg, rgba(84, 56, 14, .95) 0%, rgba(34, 24, 6, .97) 100%);
+}
+.mm-btn-save {
+    box-shadow: inset 4px 0 0 rgba(52, 152, 219, .8), 0 3px 12px rgba(0, 0, 0, .7), inset 0 1px 0 rgba(232, 200, 74, .18);
+}
+.mm-btn-save:hover:not(:disabled) { box-shadow: inset 4px 0 0 #5dade2, 0 0 20px rgba(52, 152, 219, .35), 0 3px 12px rgba(0, 0, 0, .7); border-color: #5dade2; }
+.mm-btn-pause-team {
+    box-shadow: inset 4px 0 0 rgba(46, 204, 113, .8), 0 3px 12px rgba(0, 0, 0, .7), inset 0 1px 0 rgba(232, 200, 74, .18);
+}
+.mm-btn-pause-team:hover:not(:disabled) { box-shadow: inset 4px 0 0 #2ecc71, 0 0 20px rgba(46, 204, 113, .35), 0 3px 12px rgba(0, 0, 0, .7); border-color: #2ecc71; }
+
+/* ---- confirmação de abandono ---- */
+.pause-quit-confirm {
+    border: 2px solid var(--blood-light);
+    background: linear-gradient(180deg, rgba(64, 14, 12, .96) 0%, rgba(22, 6, 6, .98) 100%);
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    box-shadow: 0 0 30px rgba(192, 57, 43, .25), inset 0 1px 0 rgba(255, 160, 140, .15);
+    animation: pauseCardIn .18s ease-out both;
+}
+.pq-text {
+    margin: 0;
+    font-size: 12.5px;
+    color: #f0c9c2;
+    line-height: 1.5;
+    text-shadow: 0 1px 2px #000;
+}
+.pq-actions { display: flex; gap: 10px; }
+.pq-actions .mm-btn { font-size: 11.5px; padding: 11px 10px; }
+
+.pause-footer {
+    margin: 0;
+    text-align: center;
+    font-family: Cinzel, serif;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: rgba(154, 138, 106, .5);
+    text-shadow: 0 1px 2px #000;
+}
+
+@media (max-width: 600px) {
+    .pause-card { padding: 16px 14px 10px; gap: 10px; }
+    .pause-title { font-size: 1.35rem; letter-spacing: 2.5px; }
+    .pause-gem { width: 38px; }
+    .pause-actions { gap: 8px; }
+    .pause-actions .mm-btn { font-size: 11px; padding: 10px 8px; letter-spacing: 1px; }
+    .ps-objective { font-size: 11px; }
+    .pq-actions { flex-direction: column; }
+}
