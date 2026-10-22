@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v7'; // v7: efeitos com ícones SVG (popups/crônica/toasts sem emojis)
+const CACHE_NAME = 'hextactics-v9'; // v9: vinculação sprites↔bestas + novas criaturas e líderes
 const ASSETS = [
     './',
     './index.html',

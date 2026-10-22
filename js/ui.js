@@ -968,7 +968,10 @@ function updateUI() {
         portraitEl.classList.remove('is-terrain');
 
         if (u.sprite) {
-            portraitEl.innerHTML = `<img src="${u.sprite}" alt="${u.name}" style="width:100%;height:100%;object-fit:cover;object-position:center 8%;transform:scale(1.6);transform-origin:top center;pointer-events:none;">`;
+            // o retrato aplica o MESMO filtro da unidade (coerência com o
+            // canvas: Cão Infernal, Salamandra, Lobo de Mana etc. tingidos)
+            const fStyle = u.filter && u.filter !== 'none' ? u.filter : 'none';
+            portraitEl.innerHTML = `<img src="${u.sprite}" alt="${u.name}" style="width:100%;height:100%;object-fit:cover;object-position:center 8%;transform:scale(1.6);transform-origin:top center;filter:${fStyle};pointer-events:none;">`;
         } else {
             portraitEl.classList.add('is-terrain');
             portraitEl.innerHTML = u.emoji;

@@ -42,7 +42,9 @@ class Unit {
                     (typeof BEASTS !== 'undefined' && BEASTS.ELITES && BEASTS.ELITES.some(e => e.name === bDef.name));
 
                 let folder = isEpic ? 'img/boss/' : 'img/units/';
-                finalSprite = folder + normalizeName(bDef.name || d.name) + '.png';
+                // VINCULAÇÃO: sprite declarado no banco tem prioridade;
+                // só então tenta o nome normalizado na pasta padrão
+                finalSprite = bDef.sprite || (folder + normalizeName(bDef.name || d.name) + '.png');
             }
         }
 
