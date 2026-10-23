@@ -1788,7 +1788,9 @@ class Renderer {
         if (force || this.hexSize < 35) {
             const mapW = this.game.cols * Math.sqrt(3);
             const mapH = this.game.rows * 1.5 + 0.5;
-            this.hexSize = Math.max(Math.min(this.canvas.width / mapW, this.canvas.height / mapH) * 0.75, 40);
+            // 0.95: mapa maior por padrão — sprites mais perto da resolução
+            // nativa da arte = nítidos sem precisar de zoom manual
+            this.hexSize = Math.max(Math.min(this.canvas.width / mapW, this.canvas.height / mapH) * 0.95, 40);
         }
         let pL = this.game.units.find(u => u.isLeader && u.faction === 1);
         if (pL) this.centerOn(pL.vq, pL.vr); else this.draw();
@@ -1862,24 +1864,20 @@ class Renderer {
                 let tileW = currentImg.naturalWidth / tCols;
                 let tileH = currentImg.naturalHeight / tRows;
 
-                let hexWidth = this.hexSize * Math.sqrt(3);
-                let hexHeight = this.hexSize * 2;
+                // ENCAIXE EXATO: as células do tileset são quadrados de
+                // textura CHEIOS (medidos: 155.7x140.4, arte de borda a
+                // borda). Mapear o quadrado EXATAMENTE no bbox do hexágono
+                // geométrico (largura √3·size, altura 2·size) e deixá-lo
+                // centrado em (p.x, p.y) faz as arestas entre hexes
+                // vizinhos casarem matematicamente — sem zoom/offset
+                // mágicos (os antigos 1.16 / 0.15 deixavam frestas).
+                let drawW = this.hexSize * Math.sqrt(3);
+                let drawH = this.hexSize * 2;
 
-                let zoom = 1.16;
-                let drawW = hexWidth * zoom;
-                let drawH = hexHeight * zoom;
-
-                // ==========================================
-                // 1. AJUSTE O VALOR AQUI PARA CORRIGIR O ENCAIXE!
-                // Mude de 0.15 para 0.25, 0.30 ou 0.10 até ficar perfeito.
-                // ==========================================
-                let offsetY = this.hexSize * 0.15; 
-
-                // Corrigido para 9 argumentos
                 ctx.drawImage(
                     currentImg,
                     selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
-                    p.x - (drawW / 2), p.y - (drawH / 2) - offsetY, drawW, drawH
+                    p.x - (drawW / 2), p.y - (drawH / 2), drawW, drawH
                 );
             } else {
                 ctx.fillStyle = (hex.terrain && hex.terrain.color) ? hex.terrain.color : '#000';
@@ -2086,8 +2084,31 @@ class Renderer {
                                 }
                                 tempCtx.putImageData(imgData, 0, 0);
                             }
-                            // Guarda o canvas processado e limpo no cache do jogo
-                            window.imageCache[u.sprite] = tempCanvas;
+                            // CONTORNO DA UNIDADE ("sticker" de tactics):
+                            // silhueta escura carimbada em 8 direções + a
+                            // arte original por cima — assado UMA vez no
+                            // cache, custo zero no draw. Faz a unidade
+                            // destacar do terreno (padrão Wesnoth/FE).
+                            const pad = Math.max(2, Math.round(img.naturalWidth / 80));
+                            const outC = document.createElement('canvas');
+                            outC.width = tempCanvas.width + pad * 2;
+                            outC.height = tempCanvas.height + pad * 2;
+                            const octx = outC.getContext('2d');
+                            const sil = document.createElement('canvas');
+                            sil.width = tempCanvas.width;
+                            sil.height = tempCanvas.height;
+                            const sctx = sil.getContext('2d');
+                            sctx.drawImage(tempCanvas, 0, 0);
+                            sctx.globalCompositeOperation = 'source-in';
+                            sctx.fillStyle = '#0b0912';
+                            sctx.fillRect(0, 0, sil.width, sil.height);
+                            for (let a = 0; a < 8; a++) {
+                                const ang = (a * Math.PI) / 4;
+                                octx.drawImage(sil, Math.cos(ang) * pad, Math.sin(ang) * pad);
+                            }
+                            octx.drawImage(tempCanvas, pad, pad);
+                            // Guarda o canvas processado (contornado) no cache
+                            window.imageCache[u.sprite] = outC;
                         } catch (e) {
                             // Caso dê erro de CORS local, mantém a imagem original como fallback
                             window.imageCache[u.sprite] = img;
@@ -2106,8 +2127,10 @@ class Renderer {
                     let isRealBoss = typeof BEASTS !== 'undefined' && BEASTS.BOSSES && BEASTS.BOSSES.some(b => b.name === u.name);
                     let isEpicMonster = isRealBoss || u.isElite;
 
-                    let maxW = this.hexSize * (isEpicMonster ? 2.1 : 1.25) * sMod;
-                    let maxH = this.hexSize * (isEpicMonster ? 2.4 : 1.5) * sMod;
+                    // 1.32: sprite ocupa mais do hexágono (compensa a folga
+                    // do contorno assado no cache e dá presença no mapa)
+                    let maxW = this.hexSize * (isEpicMonster ? 2.1 : 1.32) * sMod;
+                    let maxH = this.hexSize * (isEpicMonster ? 2.4 : 1.58) * sMod;
 
                     // Funciona perfeitamente tanto com Image quanto com Canvas processado
                     let naturalW = cachedAsset.naturalWidth || cachedAsset.width;
@@ -2392,20 +2415,16 @@ class KingdomRenderer {
                 let tileW = currentImg.naturalWidth / tCols;
                 let tileH = currentImg.naturalHeight / tRows;
 
-                let hexWidth = this.hexSize * Math.sqrt(3);
-                let hexHeight = this.hexSize * 2;
-
-                let zoom = 1.15;
-                let drawW = hexWidth * zoom;
-                let drawH = hexHeight * zoom;
-
-                // AJUSTE VERTICAL: Sobe a imagem em 15% para centralizar perfeitamente no Hexágono!
-                let offsetY = this.hexSize * 0.15;
+                // ENCAIXE EXATO (igual ao mapa de batalha): célula quadrada
+                // cheia mapeada no bbox geométrico do hex, centrada em
+                // (p.x, p.y) — sem zoom/offset mágicos
+                let drawW = this.hexSize * Math.sqrt(3);
+                let drawH = this.hexSize * 2;
 
                 ctx.drawImage(
                     currentImg,
                     selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
-                    p.x - (drawW / 2), p.y - (drawH / 2) - offsetY, drawW, drawH
+                    p.x - (drawW / 2), p.y - (drawH / 2), drawW, drawH
                 );
             } else {
                 ctx.fillStyle = (hex.terrain && hex.terrain.color) ? hex.terrain.color : '#000';

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v10'; // v10: fundos transparentes + sprites nítidos
+const CACHE_NAME = 'hextactics-v11'; // v11: mapa maior, contornos nas unidades, tileset preciso
 const ASSETS = [
     './',
     './index.html',
