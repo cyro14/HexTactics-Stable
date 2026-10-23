@@ -2048,30 +2048,44 @@ class Renderer {
                     let img = new Image();
                     img.onload = () => {
                         try {
+                            // canvas local de processamento (ANTES: tempCanvas/
+                            // tempCtx indefinidos => ReferenceError => o chroma-
+                            // key NUNCA rodava e o fundo cinza ia pro jogo)
+                            let tempCanvas = document.createElement('canvas');
+                            tempCanvas.width = img.naturalWidth;
+                            tempCanvas.height = img.naturalHeight;
+                            let tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+                            tempCtx.drawImage(img, 0, 0);
                             let imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
                             let data = imgData.data;
 
-                            // Coleta a cor exata do fundo lendo o primeiríssimo pixel (superior esquerdo)
-                            let bgR = data[0];
-                            let bgG = data[1];
-                            let bgB = data[2];
-
-                            // Margem de tolerância para pequenas variações do cinza
-                            let tolerance = 20;
-
-                            // Varre a imagem inteira trocando a cor de fundo por transparência
-                            for (let i = 0; i < data.length; i += 4) {
-                                let r = data[i];
-                                let g = data[i + 1];
-                                let b = data[i + 2];
-
-                                if (Math.abs(r - bgR) < tolerance &&
-                                    Math.abs(g - bgG) < tolerance &&
-                                    Math.abs(b - bgB) < tolerance) {
-                                    data[i + 3] = 0; // Transparência absoluta!
-                                }
+                            // PNG já transparente (fundo removido offline
+                            // por tools/strip_backgrounds.py)? Confia no alfa.
+                            let hasAlpha = false;
+                            for (let i = 3; i < data.length; i += 397) {
+                                if (data[i] < 250) { hasAlpha = true; break; }
                             }
-                            tempCtx.putImageData(imgData, 0, 0);
+
+                            if (!hasAlpha) {
+                                // LEGADO: sprite com fundo sólido — chroma-key
+                                // lê o primeiro pixel como cor de fundo
+                                let bgR = data[0];
+                                let bgG = data[1];
+                                let bgB = data[2];
+                                let tolerance = 20;
+                                for (let i = 0; i < data.length; i += 4) {
+                                    let r = data[i];
+                                    let g = data[i + 1];
+                                    let b = data[i + 2];
+
+                                    if (Math.abs(r - bgR) < tolerance &&
+                                        Math.abs(g - bgG) < tolerance &&
+                                        Math.abs(b - bgB) < tolerance) {
+                                        data[i + 3] = 0; // Transparência absoluta!
+                                    }
+                                }
+                                tempCtx.putImageData(imgData, 0, 0);
+                            }
                             // Guarda o canvas processado e limpo no cache do jogo
                             window.imageCache[u.sprite] = tempCanvas;
                         } catch (e) {
@@ -2130,8 +2144,19 @@ class Renderer {
                     ctx.shadowBlur = 12;
                     ctx.shadowOffsetY = 6;
 
+                    // QUALIDADE: ao REDUZIR artes grandes (pintadas, 300px+),
+                    // nearest-neighbor deixa serrilhado/borrado — usa filtro
+                    // de alta qualidade. Ao AMPLIAR, mantém nearest (nitidez
+                    // "pixel" que fica ótima no zoom máximo da câmera).
+                    const reduzindo = finalW < naturalW * 0.95;
+                    ctx.imageSmoothingEnabled = reduzindo;
+                    ctx.imageSmoothingQuality = 'high';
+
                     // Carimba o sprite com o tamanho e posições corrigidas!
                     ctx.drawImage(cachedAsset, finalX, finalY, finalW, finalH);
+
+                    // restaura o padrão do render (pixel-art nítida)
+                    ctx.imageSmoothingEnabled = false;
 
                     // RESET DE SOMBRA
                     ctx.shadowColor = 'transparent';

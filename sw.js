@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v9'; // v9: vinculação sprites↔bestas + novas criaturas e líderes
+const CACHE_NAME = 'hextactics-v10'; // v10: fundos transparentes + sprites nítidos
 const ASSETS = [
     './',
     './index.html',
