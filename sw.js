@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v21'; // v21: banner de objetivo refeito + 14 criaturas novas
+const CACHE_NAME = 'hextactics-v23'; // v23: highlights de ação profissionais (turquesa/carmesim/violeta/esmeralda/âmbar/ouro)
 const ASSETS = [
     './',
     './index.html',

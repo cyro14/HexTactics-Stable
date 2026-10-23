@@ -1827,6 +1827,58 @@ class Renderer {
     getPos(q, r) { const u = this.getPosUnscaled(q, r); return { x: u.x + this.offsetX, y: u.y + this.offsetY }; }
     centerOn(q, r) { const p = this.getPosUnscaled(q, r); this.offsetX = (this.canvas.width / 2) - p.x; this.offsetY = (this.canvas.height / 2) - p.y; this.draw(); }
 
+    // ==========================================
+    // HIGHLIGHTS DE AÇÃO (mover/atacar/domar/magia/item)
+    // Pintura em camadas: anel escuro externo (contraste em fundos
+    // claros — neve), fill translúcido, contorno com GLOW na cor da
+    // ação e uma gema central. Linguagem de cores:
+    //   mover = turquesa | atacar = carmesim | domar = violeta
+    //   magia def = esmeralda | magia atk = âmbar | item = ouro
+    // ==========================================
+    paintHexAction(x, y, col, opts = {}) {
+        const ctx2 = this.ctx;
+        const fillA = opts.fill !== undefined ? opts.fill : 0.20;
+        const strokeA = opts.stroke !== undefined ? opts.stroke : 0.85;
+        const glow = opts.glow !== undefined ? opts.glow : 9;
+
+        // 1. anel escuro externo — contraste garantido até na neve
+        this.hexPath(ctx2, x, y, this.hexSize + 0.5);
+        ctx2.strokeStyle = 'rgba(8, 10, 18, 0.55)';
+        ctx2.lineWidth = 1.5;
+        ctx2.stroke();
+
+        // 2. fill translúcido da ação
+        this.hexPath(ctx2, x, y, this.hexSize - 1.5);
+        ctx2.fillStyle = `rgba(${col}, ${fillA})`;
+        ctx2.fill();
+
+        // 3. contorno com glow na cor
+        ctx2.save();
+        ctx2.shadowColor = `rgba(${col}, 0.9)`;
+        ctx2.shadowBlur = glow;
+        ctx2.strokeStyle = `rgba(${col}, ${strokeA})`;
+        ctx2.lineWidth = 2.5;
+        ctx2.stroke();
+        ctx2.restore();
+
+        // 4. gema central (losango)
+        if (opts.pip !== false) {
+            const s = this.hexSize * 0.13;
+            ctx2.beginPath();
+            ctx2.moveTo(x, y - s);
+            ctx2.lineTo(x + s, y);
+            ctx2.lineTo(x, y + s);
+            ctx2.lineTo(x - s, y);
+            ctx2.closePath();
+            ctx2.save();
+            ctx2.shadowColor = `rgba(${col}, 1)`;
+            ctx2.shadowBlur = 6;
+            ctx2.fillStyle = `rgba(${col}, 0.95)`;
+            ctx2.fill();
+            ctx2.restore();
+        }
+    }
+
     hexPath(ctx, cx, cy, size) { ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = (Math.PI / 180) * (60 * i - 30); const px = cx + size * Math.cos(a); const py = cy + size * Math.sin(a); i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); } ctx.closePath(); }
 
     draw() {
@@ -1955,7 +2007,10 @@ class Renderer {
             this.hexPath(ctx, p.x, p.y, this.hexSize - 0.5);
 
             if (hex.isCrystal) { ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = 'rgba(0,255,255,0.2)'; ctx.fill(); }
-            if (this.game.reachableHexes.has(hex.getKey())) { ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3; ctx.stroke(); }
+            if (this.game.reachableHexes.has(hex.getKey())) {
+                // MOVER: turquesa com anel de contraste (legível na neve)
+                this.paintHexAction(p.x, p.y, '64, 224, 208', { fill: 0.16 });
+            }
             else {
                 // Borda super suave (Espessura 0.5 e Opacidade 15%)
                 ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
@@ -1983,25 +2038,32 @@ class Renderer {
             const spell = typeof SPELLS !== 'undefined' ? SPELLS.find(s => s.id === this.game.activeSpell) : null;
             if (spell) {
                 let spRange = spell.range !== undefined ? spell.range : 99; let isGlobal = ['sl_regen', 'sl_shadow_step', 'sl_primal_rage', 'sl_sandstorm', 'sl_inferno', 'sl_blizzard', 'sl_mass_venom', 'sl_storm_wing', 'sl_meteor', 'sl_tidal_wave', 'sl_apocalypse', 'sl_world_freeze', 'sl_soul_harvest', 'sl_phoenix_rebirth'].includes(spell.id); let targets = [];
-                if (isGlobal) { targets = spell.type === 'def' ? this.game.units.filter(u => u.faction === 1) : this.game.units.filter(u => u.faction !== 1); } else if (spRange === 0) { targets = [su]; } else { this.game.map.forEach(hex => { if (Hex.distance(su, hex) <= spRange) { const p = this.getPos(hex.q, hex.r); this.hexPath(ctx, p.x, p.y, this.hexSize - 1); ctx.fillStyle = spell.type === 'def' ? 'rgba(46,204,113,0.15)' : 'rgba(231,76,60,0.15)'; ctx.fill(); } }); if (spell.id === 'sl_resurrection') { Hex.getNeighbors(su.q, su.r).forEach(n => { if (this.game.map.has(`${n.q},${n.r}`) && !this.game.getUnitAt(n.q, n.r)) { targets.push({ vq: n.q, vr: n.r }); } }); } else if (spell.type === 'atk') { targets = this.game.units.filter(u => u.faction !== 1 && u.hp > 0 && Hex.distance(su, u) <= spRange); } else { targets = this.game.units.filter(u => u.faction === 1 && u.hp > 0 && Hex.distance(su, u) <= spRange); } }
-                let fCol = spell.type === 'def' ? 'rgba(46,204,113,0.3)' : 'rgba(231,76,60,0.3)'; let sCol = spell.type === 'def' ? 'rgba(46,204,113,0.9)' : 'rgba(231,76,60,0.9)'; targets.forEach(t => { const p = this.getPos(t.vq, t.vr); this.hexPath(ctx, p.x, p.y, this.hexSize - 1); ctx.fillStyle = fCol; ctx.fill(); ctx.strokeStyle = sCol; ctx.lineWidth = 2.5; ctx.stroke(); });
+                if (isGlobal) { targets = spell.type === 'def' ? this.game.units.filter(u => u.faction === 1) : this.game.units.filter(u => u.faction !== 1); } else if (spRange === 0) { targets = [su]; } else { const spellAreaCol = spell.type === 'def' ? '64, 220, 130' : '240, 140, 50'; this.game.map.forEach(hex => { if (Hex.distance(su, hex) <= spRange) { const p = this.getPos(hex.q, hex.r); this.paintHexAction(p.x, p.y, spellAreaCol, { fill: 0.07, stroke: 0.3, glow: 5, pip: false }); } }); if (spell.id === 'sl_resurrection') { Hex.getNeighbors(su.q, su.r).forEach(n => { if (this.game.map.has(`${n.q},${n.r}`) && !this.game.getUnitAt(n.q, n.r)) { targets.push({ vq: n.q, vr: n.r }); } }); } else if (spell.type === 'atk') { targets = this.game.units.filter(u => u.faction !== 1 && u.hp > 0 && Hex.distance(su, u) <= spRange); } else { targets = this.game.units.filter(u => u.faction === 1 && u.hp > 0 && Hex.distance(su, u) <= spRange); } }
+                // ALVOS da magia: esmeralda (defesa) ou âmbar (ataque)
+                const spellTgtCol = spell.type === 'def' ? '64, 220, 130' : '240, 140, 50';
+                targets.forEach(t => { const p = this.getPos(t.vq, t.vr); this.paintHexAction(p.x, p.y, spellTgtCol, { fill: 0.26 }); });
             }
         }
 
         if (this.game.activeItem && su && su.isLeader) {
             let range = this.game.itemRange;
+            // ITEM: ouro (a linguagem de tesouro do jogo) — substitui o
+            // roxo fluorescente de 90% por um convite sutil e legível
             this.game.map.forEach(hex => {
                 if (Hex.distance(su, hex) <= range) {
                     const p = this.getPos(hex.q, hex.r);
-                    this.hexPath(ctx, p.x, p.y, this.hexSize - 1);
-                    ctx.fillStyle = 'rgba(80, 82, 255, 0.9)'; // Cor especial para Itens
-                    ctx.fill(); ctx.strokeStyle = 'rgba(155,89,182,0.8)'; ctx.lineWidth = 2; ctx.stroke();
+                    this.paintHexAction(p.x, p.y, '232, 200, 74', { fill: 0.14 });
                 }
             });
         }
         if (su && this.game.currentTurn === 1 && !this.game.activeSpell) {
             this.game.units.forEach(tg => {
-                if (tg.faction !== 1 && Hex.distance(su, tg) <= su.getEffectiveRange(game) && !su.hasAttacked) { const isTame = this.game.tameMode && tg.faction === 0 && Hex.distance(su, tg) === 1; const p = this.getPos(tg.vq, tg.vr); this.hexPath(ctx, p.x, p.y, this.hexSize - 1); ctx.fillStyle = isTame ? 'rgba(155,89,182,0.35)' : 'rgba(192,57,43,0.35)'; ctx.fill(); ctx.strokeStyle = isTame ? 'rgba(155,89,182,0.9)' : 'rgba(231,76,60,0.85)'; ctx.lineWidth = 2; ctx.stroke(); }
+                if (tg.faction !== 1 && Hex.distance(su, tg) <= su.getEffectiveRange(game) && !su.hasAttacked) {
+                    // ATACAR: carmesim | DOMAR: violeta refinado
+                    const isTame = this.game.tameMode && tg.faction === 0 && Hex.distance(su, tg) === 1;
+                    const p = this.getPos(tg.vq, tg.vr);
+                    this.paintHexAction(p.x, p.y, isTame ? '168, 108, 232' : '224, 86, 72', { fill: 0.24 });
+                }
             });
             const sp = this.getPos(su.vq, su.vr); this.hexPath(ctx, sp.x, sp.y, this.hexSize - 1); ctx.strokeStyle = '#c9a227'; ctx.lineWidth = 2.5; ctx.stroke();
         } else if (!su && this.game.selectedHex) { const sh = this.getPos(this.game.selectedHex.q, this.game.selectedHex.r); this.hexPath(ctx, sh.x, sh.y, this.hexSize - 1); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2; ctx.stroke(); }
