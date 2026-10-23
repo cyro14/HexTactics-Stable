@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v23'; // v23: highlights de ação profissionais (turquesa/carmesim/violeta/esmeralda/âmbar/ouro)
+const CACHE_NAME = 'hextactics-v24'; // v24: campo de turno ao lado da mana + crônica à esquerda + popups 4s
 const ASSETS = [
     './',
     './index.html',

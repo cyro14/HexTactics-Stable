@@ -233,15 +233,17 @@ function showPopup(txt, target, col) {
     el.style.left = (p.x + randomOffsetX) + 'px';
     el.style.top = (p.y - 25) + 'px';
 
-    el.style.transition = 'top 2.5s ease-out, opacity 2.5s ease-out';
+    // DADOS FLUTUANTES: sobe DEVAGINHO por 4s; o fade só começa aos 3.2s
+    // (antes sumiam rápido demais pra ler dano/crit/efeitos)
+    el.style.transition = 'top 4s ease-out, opacity .8s ease-out 3.2s';
     $('popup-layer').appendChild(el);
 
     setTimeout(() => {
-        el.style.top = (p.y - 85) + 'px';
+        el.style.top = (p.y - 105) + 'px';
         el.style.opacity = '0';
     }, 50);
 
-    setTimeout(() => el.remove(), 2500);
+    setTimeout(() => el.remove(), 4200);
 }
 
 function showMessage(txt, col) {
@@ -604,14 +606,15 @@ function updateTurnUI() {
     const isPlayerTurn = game.currentTurn === 1;
     const turnNum = game.turnCount || 1;
 
-    // Turn Badge
+    // Turn Badge (campo fixo ao lado da mana: icone + quem joga + contador)
     const badge = $('turn-badge');
     const badgeText = $('turn-badge-text');
     if (badge && badgeText) {
         const facCol = isPlayerTurn ? '#4a9edd' : '#c0392b';
-        const facName = isPlayerTurn ? 'Jogador' : 'Inimigo';
         badge.style.setProperty('--turn-col', facCol);
-        badgeText.textContent = `Turno: ${facName}`;
+        badgeText.textContent = isPlayerTurn ? 'Seu Turno' : 'Turno Inimigo';
+        const bCount = $('turn-badge-count');
+        if (bCount) bCount.textContent = `T${turnNum}`;
     }
 
     // Turn Banner (só mostra no início do turno do jogador — mas NUNCA

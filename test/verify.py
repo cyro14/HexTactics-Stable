@@ -168,8 +168,8 @@ elif kind == "battle":
         hp_red = count(w - 240, w, 56, h, lambda r, g, b: r > 150 and g < 110 and b < 100, 2)
         mp_blue = count(w - 240, w, 56, h, lambda r, g, b: r < 130 and g > 80 and b > 150, 2)
         ready_gold = count(w - 240, w, int(h * 0.7), h, lambda r, g, b: r > 180 and g > 140 and b < 100, 2)
-        # crônica: topo-direita, à esquerda do painel (right: 244px, top: 66px)
-        log_gold = count(int(w * 0.55), w - 240, int(h * 0.07), int(h * 0.30), lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
+        # crônica: TOPO-ESQUERDA (left: 12, top: 66) — desktop
+        log_gold = count(0, 380, int(h * 0.07), int(h * 0.30), lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
         # action bar: bottom-left (left: 12, bottom: 12)
         action_gold = count(0, int(w * 0.45), h - 90, h, lambda r, g, b: r > 150 and g > 100 and b < 90, 2)
         panel_thresh = 15
@@ -186,7 +186,7 @@ elif kind == "battle":
     checks += [
         ("topbar_ouro_mana", top_gold > 2),
         ("hud_barras_hp_mp", hp_red > 2 and mp_blue > 2),
-        ("cronica_topo_direita", log_gold > 2),
+        ("cronica_topo_esquerda", log_gold > 2),
         ("action_bar_inferior", action_gold > 2),
         ("botao_pronto_dourado", ready_gold > 5),
         ("painel_lateral_detalhes", panel_gold > panel_thresh),
