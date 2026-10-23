@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v14'; // v14: tiles especiais procedurais harmonizados
+const CACHE_NAME = 'hextactics-v16'; // v16: cols das jazidas corrigidas + tiles otimizados + vinheta
 const ASSETS = [
     './',
     './index.html',

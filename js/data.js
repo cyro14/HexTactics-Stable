@@ -80,8 +80,8 @@ const TERRAINS = {
     MANA_RIFT: { id: 'MANA_RIFT', name: 'Fenda de Mana', cost: 2, def: 0.10, color: '#9b59b6', icon: '🔮', customSprite: 'img/tiles/fenda_mana.png', cols: 6 },
     REEF: { id: 'REEF', name: 'Recife', cost: 2, def: 0.30, color: '#1abc9c', icon: '🪸', customSprite: 'img/tiles/recife.png', cols: 6 },
     DNA_DEPOSIT: { id: 'DNA_DEPOSIT', name: 'Jazida de DNA', cost: 1, def: 0.10, color: '#2ecc71', icon: '🧬', customSprite: 'img/tiles/jazida_dna.png', cols: 6 },
-    GOLD_DEPOSIT: { id: 'GOLD_DEPOSIT', name: 'Jazida de Ouro', cost: 1, def: 0.10, color: '#f1c40f', icon: '💰', customSprite: 'img/tiles/jazida_ouro.png', cols: 3 },
-    BLACK_MARKET: { id: 'BLACK_MARKET', name: 'Mercado Negro', cost: 1, def: 0.20, color: '#2c3e50', icon: '⛺', customSprite: 'img/tiles/mercado_negro.png', cols: 5 }
+    GOLD_DEPOSIT: { id: 'GOLD_DEPOSIT', name: 'Jazida de Ouro', cost: 1, def: 0.10, color: '#f1c40f', icon: '💰', customSprite: 'img/tiles/jazida_ouro.png', cols: 6 },
+    BLACK_MARKET: { id: 'BLACK_MARKET', name: 'Mercado Negro', cost: 1, def: 0.20, color: '#2c3e50', icon: '⛺', customSprite: 'img/tiles/mercado_negro.png', cols: 6 }
 };
 
 const TAGS = {

@@ -2300,6 +2300,30 @@ class Renderer {
             ctx.restore();
         }
 
+        // ==========================================
+        // PÓS-PROCESSAMENTO: vinheta cinematográfica
+        // Escurece as bordas do mapa (foco no miolo da ação, look indie
+        // premium). Cacheada em canvas próprio: recria apenas no resize;
+        // a UI em DOM (painéis, popups) fica ACIMA e não é afetada.
+        // ==========================================
+        if (!this._vignette || this._vignette.width !== this.canvas.width || this._vignette.height !== this.canvas.height) {
+            const v = document.createElement('canvas');
+            v.width = this.canvas.width;
+            v.height = this.canvas.height;
+            const vctx = v.getContext('2d');
+            const cx = v.width / 2;
+            const cy = v.height * 0.42;
+            const inner = Math.min(v.width, v.height) * 0.52;
+            const outer = Math.max(v.width, v.height) * 0.78;
+            const grad = vctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
+            grad.addColorStop(0, 'rgba(4, 6, 14, 0)');
+            grad.addColorStop(1, 'rgba(4, 6, 14, 0.42)');
+            vctx.fillStyle = grad;
+            vctx.fillRect(0, 0, v.width, v.height);
+            this._vignette = v;
+        }
+        ctx.drawImage(this._vignette, 0, 0);
+
     }
 }
 

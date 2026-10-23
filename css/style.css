@@ -3675,24 +3675,22 @@ button.btn-success {
     box-shadow: 0 0 10px var(--tag-col, #888);
 }
 
-/* grid de cards */
+/* lista de cards — CARROSSEL UNIVERSAL: um card focado por vez em
+   QUALQUER resolução (o grid antigo espremia as artes em telas apertadas) */
 .leader-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(205px, 1fr));
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
     gap: 14px;
     width: 100%;
-    max-height: 60vh;
-    overflow-y: auto;
-    padding: 6px 8px;
+    padding: 6px 10%;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
 }
 
 .leader-grid::-webkit-scrollbar {
-    width: 8px;
-}
-
-.leader-grid::-webkit-scrollbar-thumb {
-    background: var(--gold-dark);
-    border-radius: 4px;
+    display: none;
 }
 
 /* card de líder */
@@ -3710,6 +3708,11 @@ button.btn-success {
     background: linear-gradient(180deg, rgba(16, 14, 8, .9) 0%, rgba(5, 5, 10, .95) 100%);
     overflow: hidden;
     cursor: pointer;
+    /* carrossel universal: card grande e focado, snap no centro */
+    flex: 0 0 clamp(300px, 36%, 460px);
+    max-width: clamp(300px, 36%, 460px);
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
     transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
     box-shadow: 0 8px 22px rgba(0, 0, 0, .75), inset 0 1px 0 rgba(232, 200, 74, .1);
 }
@@ -3728,12 +3731,12 @@ button.btn-success {
     transform: translateY(-1px) scale(.99);
 }
 
-/* retrato */
+/* retrato — altura responsiva: a imagem SEMPRE aparece, de 320px a 4K */
 .leader-card-art {
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    height: 128px;
+    height: clamp(150px, 26vh, 250px);
     border-bottom: 1px solid rgba(201, 162, 39, .25);
     background:
         radial-gradient(ellipse 75% 65% at 50% 85%, rgba(201, 162, 39, .16), transparent 72%),
@@ -3742,7 +3745,7 @@ button.btn-success {
 }
 
 .leader-card-art img {
-    max-height: 118px;
+    max-height: clamp(140px, 24vh, 236px);
     max-width: 92%;
     object-fit: contain;
     filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .6));
@@ -3762,9 +3765,28 @@ button.btn-success {
     justify-content: center;
 }
 
-/* ---- carrossel (só no mobile) ---- */
+/* ---- barra do carrossel: VISÍVEL EM TODAS AS RESOLUÇÕES ---- */
 .leader-carousel-nav {
-    display: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+/* viewports BAIXOS (notebooks compactos): comprime título/filtros/card
+   para o carrossel inteiro — nav incluído — caber na primeira dobra */
+@media (max-height: 700px) {
+    #leader-selection .mode-title { font-size: 20px; margin: 6px 0 2px; }
+    #leader-selection .leader-mode-badge { font-size: 9px; padding: 3px 10px; }
+    #leader-filter-container { margin: 4px 0; gap: 4px; }
+    .leader-tag-btn { font-size: 9px; padding: 3px 8px; }
+    .leader-card-art { height: clamp(140px, 22vh, 180px); }
+    .leader-card-art img { max-height: clamp(130px, 20vh, 168px); }
+    .leader-card-name { font-size: 14px; }
+    .leader-card-desc { font-size: 9.5px; line-height: 1.35; }
+    .leader-carousel-nav { margin-top: 6px; }
+    .leader-nav-btn { padding: 5px 10px; }
 }
 
 .leader-count {
@@ -3874,6 +3896,12 @@ button.btn-success {
     line-height: 1.45;
     color: #a89c7e;
     flex: 1;
+    /* máximo 3 linhas: o card fica compacto em viewports baixos e o
+       carrossel cabe inteiro (nav incluído) na primeira dobra */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .leader-card-tags {

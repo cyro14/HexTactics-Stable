@@ -1872,6 +1872,22 @@ function openLeaderSelection(isRoguelite, isDuel = false, pickingOpponentFor = n
     container.onscroll = updateCount;
     updateCount();
 
+    // teclado: ←/→ navegam o carrossel (registrado uma única vez;
+    // só age com a tela de seleção aberta)
+    if (!window.__leaderKbInit) {
+        window.__leaderKbInit = true;
+        window.addEventListener('keydown', (e) => {
+            const ls = document.getElementById('leader-selection');
+            if (!ls || ls.classList.contains('hidden')) return;
+            const t = e.target;
+            if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+            const pb = document.getElementById('leader-prev');
+            const nb = document.getElementById('leader-next');
+            if (e.key === 'ArrowLeft' && pb) pb.click();
+            else if (e.key === 'ArrowRight' && nb) nb.click();
+        });
+    }
+
     $('btn-close-leader').onclick = () => {
         $('leader-selection').classList.add('hidden');
         $('mode-screen').classList.remove('hidden');
