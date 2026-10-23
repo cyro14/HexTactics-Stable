@@ -839,6 +839,16 @@ class Game {
 
     async moveUnit(u, tQ, tR) {
         const fr = 12; const sQ = u.q, sR = u.r;
+
+        // DIREÇÃO DA ARTE: se moveu para a direita, o sprite aponta para
+        // a direita (e vice-versa) — a arte nativa olha para a ESQUERDA,
+        // então "_faceRight" vira um flip horizontal no renderer
+        if (renderer) {
+            const p0 = renderer.getPosUnscaled(sQ, sR);
+            const p1 = renderer.getPosUnscaled(tQ, tR);
+            if (Math.abs(p1.x - p0.x) > 2) u._faceRight = (p1.x > p0.x);
+        }
+
         for (let i = 1; i <= fr; i++) { u.vq = sQ + (tQ - sQ) * (i / fr); u.vr = sR + (tR - sR) * (i / fr); if (renderer) renderer.centerOn(u.vq, u.vr); if (typeof sleep === 'function') await sleep(16); }
 
         u.q = tQ; u.r = tR; u.vq = tQ; u.vr = tR; this.checkVillageCapture(u); let k = `${tQ},${tR}`;
@@ -1036,6 +1046,13 @@ class Game {
     async executeCombat(a, d) {
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true;
         this.isAnimating = true; const aCol = a.faction === 1 ? '#4a9edd' : a.faction === 2 ? '#c0392b' : '#27ae60';
+
+        // DIREÇÃO DA ARTE: o atacante vira de frente para o alvo
+        if (renderer) {
+            const pa = renderer.getPosUnscaled(a.q, a.r);
+            const pd = renderer.getPosUnscaled(d.q, d.r);
+            if (Math.abs(pd.x - pa.x) > 2) a._faceRight = (pd.x > pa.x);
+        }
 
         try {
             let sysA = this.getSynergies(a.faction); let sysD = this.getSynergies(d.faction);
@@ -2199,7 +2216,16 @@ class Renderer {
                     ctx.imageSmoothingQuality = 'high';
 
                     // Carimba o sprite com o tamanho e posições corrigidas!
-                    ctx.drawImage(cachedAsset, finalX, finalY, finalW, finalH);
+                    // DIREÇÃO: a arte nativa olha para a ESQUERDA; unidades
+                    // voltadas para a direita (padrão do jogador/facção 1 e
+                    // feras) são espelhadas horizontalmente. moveUnit e
+                    // executeCombat atualizam u._faceRight conforme o rumo.
+                    const faceRight = u._faceRight !== undefined ? u._faceRight : (u.faction !== 2);
+                    ctx.save();
+                    ctx.translate(finalX + finalW / 2, finalY);
+                    if (faceRight) ctx.scale(-1, 1);
+                    ctx.drawImage(cachedAsset, -finalW / 2, 0, finalW, finalH);
+                    ctx.restore();
 
                     // restaura o padrão do render (pixel-art nítida)
                     ctx.imageSmoothingEnabled = false;

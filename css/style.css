@@ -2998,11 +2998,12 @@ button.btn-success {
     font-size: 26px;
     font-weight: 700;
     letter-spacing: 2px;
-    color: #f5eedd;
+    color: #f8f2e4;
+    /* contraste CRISP: sombra dura de 1px (sem glow difuso — o halo
+       anterior de 18px sem offset deixava o texto borrado) */
     text-shadow:
-        0 0 18px var(--obj-col, #e05648),
-        0 2px 4px #000;
-    animation: objPulse 1.4s ease-in-out infinite;
+        0 2px 2px #000,
+        0 0 6px rgba(0, 0, 0, .9);
 }
 
 #objective-banner .obj-corner {
@@ -3024,11 +3025,11 @@ button.btn-success {
 }
 
 @keyframes showBanner {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(.72) translateY(14px); filter: blur(6px); }
-    12% { opacity: 1; transform: translate(-50%, -50%) scale(1.06) translateY(0); filter: blur(0px); }
-    16% { transform: translate(-50%, -50%) scale(1) translateY(0); }
-    88% { opacity: 1; transform: translate(-50%, -50%) scale(1) translateY(0); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.16) translateY(-8px); filter: blur(6px); }
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(.8) translateY(12px); }
+    10% { opacity: 1; transform: translate(-50%, -50%) scale(1.04) translateY(0); }
+    13% { transform: translate(-50%, -50%) scale(1) translateY(0); }
+    90% { opacity: 1; transform: translate(-50%, -50%) scale(1) translateY(0); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.12) translateY(-6px); }
 }
 
 .banner-animate {
