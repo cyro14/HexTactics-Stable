@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v11'; // v11: mapa maior, contornos nas unidades, tileset preciso
+const CACHE_NAME = 'hextactics-v14'; // v14: tiles especiais procedurais harmonizados
 const ASSETS = [
     './',
     './index.html',

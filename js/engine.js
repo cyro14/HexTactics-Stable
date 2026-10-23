@@ -1829,7 +1829,7 @@ class Renderer {
 
             let drawCustom = false;
             let currentImg = this.tileset;
-            let tCols = 6, tRows = 12;
+            let tCols = 6, tRows = 13;  // 13 linhas: ASHES ganhou linha propria (12)
             let selectedTile = { x: 0, y: 0 };
             let hash = Math.abs((hex.q * 101) + (hex.r * 37));
 
@@ -1855,7 +1855,7 @@ class Renderer {
             else if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && hex.terrain && hex.terrain.variations) {
                 drawCustom = true;
                 tCols = 6;
-                tRows = 12;
+                tRows = 13;
                 let varIndex = hex.customVar !== undefined ? hex.customVar : (hash % hex.terrain.variations.length);
                 selectedTile = hex.terrain.variations[varIndex];
             }
@@ -2380,7 +2380,7 @@ class KingdomRenderer {
 
             let drawCustom = false;
             let currentImg = this.tileset;
-            let tCols = 6, tRows = 12;
+            let tCols = 6, tRows = 13;  // 13 linhas: ASHES ganhou linha propria (12)
             let selectedTile = { x: 0, y: 0 };
             let hash = Math.abs((hex.q * 101) + (hex.r * 37));
 
@@ -2406,7 +2406,7 @@ class KingdomRenderer {
             else if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && hex.terrain && hex.terrain.variations) {
                 drawCustom = true;
                 tCols = 6;
-                tRows = 12;
+                tRows = 13;
                 let varIndex = hex.customVar !== undefined ? hex.customVar : (hash % hex.terrain.variations.length);
                 selectedTile = hex.terrain.variations[varIndex];
             }

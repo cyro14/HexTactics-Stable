@@ -67,21 +67,21 @@ const TERRAINS = {
     BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas', cost: 2, def: -0.50, color: '#d35400', icon: '🔥', variations: [{ x: 0, y: 11 }, { x: 1, y: 11 }, { x: 2, y: 11 }, { x: 3, y: 11 }, { x: 4, y: 11 }, { x: 5, y: 11 }] },
 
     // Linha 12 (Reaproveitando a linha 11 do sprite!): Cinzas
-    ASHES: { id: 'ASHES', name: 'Cinzas', cost: 2, def: -0.50, color: '#444444', icon: '💨', variations: [{ x: 0, y: 11 }, { x: 1, y: 11 }, { x: 2, y: 11 }, { x: 3, y: 11 }, { x: 4, y: 11 }, { x: 5, y: 11 }] },
+    ASHES: { id: 'ASHES', name: 'Cinzas', cost: 2, def: -0.50, color: '#444444', icon: '💨', variations: [{ x: 0, y: 12 }, { x: 1, y: 12 }, { x: 2, y: 12 }, { x: 3, y: 12 }, { x: 4, y: 12 }, { x: 5, y: 12 }] },
 
     // Água Eletrizada (Agora com sprite individual!)
-    ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada', cost: 2, def: -0.50, color: '#1c4568', icon: '⚡', customSprite: 'img/tiles/agua_eletrificada.jpeg', cols: 6 },
+    ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada', cost: 2, def: -0.50, color: '#1c4568', icon: '⚡', customSprite: 'img/tiles/agua_eletrificada.png', cols: 6 },
 
     // ==========================================
     // NOVOS TERRENOS ESPECIAIS (Sprites Individuais)
     // ==========================================
-    QUICKSAND: { id: 'QUICKSAND', name: 'Areia Movediça', cost: 3, def: -0.20, color: '#d4a373', icon: '🌀', customSprite: 'img/tiles/areia_movediça.jpeg', cols: 6 },
-    LAVA_RIFT: { id: 'LAVA_RIFT', name: 'Fenda de Lava', cost: 3, def: -0.50, color: '#c0392b', icon: '🌋', customSprite: 'img/tiles/fenda_lava.jpeg', cols: 6 },
-    MANA_RIFT: { id: 'MANA_RIFT', name: 'Fenda de Mana', cost: 2, def: 0.10, color: '#9b59b6', icon: '🔮', customSprite: 'img/tiles/fenda_mana.jpeg', cols: 6 },
-    REEF: { id: 'REEF', name: 'Recife', cost: 2, def: 0.30, color: '#1abc9c', icon: '🪸', customSprite: 'img/tiles/recife.jpeg', cols: 6 },
-    DNA_DEPOSIT: { id: 'DNA_DEPOSIT', name: 'Jazida de DNA', cost: 1, def: 0.10, color: '#2ecc71', icon: '🧬', customSprite: 'img/tiles/jazida_dna.jpeg', cols: 6 },
-    GOLD_DEPOSIT: { id: 'GOLD_DEPOSIT', name: 'Jazida de Ouro', cost: 1, def: 0.10, color: '#f1c40f', icon: '💰', customSprite: 'img/tiles/jazida_ouro.jpeg', cols: 3 },
-    BLACK_MARKET: { id: 'BLACK_MARKET', name: 'Mercado Negro', cost: 1, def: 0.20, color: '#2c3e50', icon: '⛺', customSprite: 'img/tiles/mercado_negro.jpeg', cols: 5 }
+    QUICKSAND: { id: 'QUICKSAND', name: 'Areia Movediça', cost: 3, def: -0.20, color: '#d4a373', icon: '🌀', customSprite: 'img/tiles/areia_movedica.png', cols: 6 },
+    LAVA_RIFT: { id: 'LAVA_RIFT', name: 'Fenda de Lava', cost: 3, def: -0.50, color: '#c0392b', icon: '🌋', customSprite: 'img/tiles/fenda_lava.png', cols: 6 },
+    MANA_RIFT: { id: 'MANA_RIFT', name: 'Fenda de Mana', cost: 2, def: 0.10, color: '#9b59b6', icon: '🔮', customSprite: 'img/tiles/fenda_mana.png', cols: 6 },
+    REEF: { id: 'REEF', name: 'Recife', cost: 2, def: 0.30, color: '#1abc9c', icon: '🪸', customSprite: 'img/tiles/recife.png', cols: 6 },
+    DNA_DEPOSIT: { id: 'DNA_DEPOSIT', name: 'Jazida de DNA', cost: 1, def: 0.10, color: '#2ecc71', icon: '🧬', customSprite: 'img/tiles/jazida_dna.png', cols: 6 },
+    GOLD_DEPOSIT: { id: 'GOLD_DEPOSIT', name: 'Jazida de Ouro', cost: 1, def: 0.10, color: '#f1c40f', icon: '💰', customSprite: 'img/tiles/jazida_ouro.png', cols: 3 },
+    BLACK_MARKET: { id: 'BLACK_MARKET', name: 'Mercado Negro', cost: 1, def: 0.20, color: '#2c3e50', icon: '⛺', customSprite: 'img/tiles/mercado_negro.png', cols: 5 }
 };
 
 const TAGS = {
