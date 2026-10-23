@@ -71,8 +71,8 @@ elif kind == "chooser":
     ]
 elif kind == "leader":
     # tela de seleção de líder: badge do modo (azul = campanha), título,
-    # cards com retratos e nomes dourados, botão voltar.
-    # Em telas estreitas (<=760px) os cards viram carrossel (1 card por vez).
+    # CARROSSEL UNIVERSAL (um card focado + setas/contador em qualquer
+    # resolução — o grid antigo escondia as artes em telas apertadas)
     mobile = w <= 760
     blue_badge = count(0, w, 0, int(h * 0.22), lambda r, g, b: b > 120 and r < 100)
     gold_names = count(0, w, int(h * 0.20), int(h * 0.95), lambda r, g, b: r > 160 and g > 120 and b < 100)
@@ -83,14 +83,13 @@ elif kind == "leader":
         ("ceu_pintado_nas_margens", sky_painted()),
         ("titulo_selecione_lider", title_upper_half(max(25, w // 32))),
         ("selo_do_modo_campanha", blue_badge > 3),
-        ("nomes_dos_lideres_dourados", gold_names > (15 if mobile else 100)),
+        ("nomes_dos_lideres_dourados", gold_names > 15),
         ("retratos_presentes", portraits > max(30, w // 16)),
         ("botao_voltar", gold_band(0.85, 1.0, 10)),
     ]
-    if mobile:
-        # carrossel: setas de navegação + contador na base
-        nav_gold = count(0, w, int(h * 0.75), h, lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
-        checks += [("setas_do_carrossel", nav_gold > 20)]
+    # carrossel: setas de navegação + contador — em TODAS as resoluções
+    nav_gold = count(0, w, int(h * 0.7), h, lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
+    checks += [("setas_do_carrossel", nav_gold > 20)]
 elif kind == "route":
     # mapa de exploração: nós hexagonais alcançáveis pulsando dourado,
     # moldura, título; a integridade (nós/linhas) é validada via DOM
@@ -130,9 +129,11 @@ elif kind == "hexis":
     ]
 elif kind == "prep":
     # tela de preparação: abas sempre visíveis (Campo ativa = dourada),
-    # selo do próximo combate (Elite = vermelho), painel ativo e botão de avançar
+    # selo do próximo combate (Elite = vermelho #e05a48), painel ativo e
+    # botão de avançar. O selo fica na topline, logo abaixo do título
+    # (y ~0.35h; calibrado por screenshot — não no topo da tela).
     tab_gold = count(0, w, int(h * 0.18), int(h * 0.32), lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
-    elite_red = count(0, w, int(h * 0.08), int(h * 0.24), lambda r, g, b: r > 150 and g < 100 and b < 90, 2)
+    elite_red = count(0, w, int(h * 0.28), int(h * 0.52), lambda r, g, b: r > 180 and g < 140 and b < 120, 2)
     checks += [
         ("ceu_pintado_nas_margens", sky_painted()),
         ("titulo_preparacao", title_upper_half(max(20, w // 40))),
@@ -172,6 +173,16 @@ elif kind == "battle":
         # action bar: bottom-left (left: 12, bottom: 12)
         action_gold = count(0, int(w * 0.45), h - 90, h, lambda r, g, b: r > 150 and g > 100 and b < 90, 2)
         panel_thresh = 15
+    # lobo de mana invocado (sprite procedural): o battleSetup o SELECIONA,
+    # então o retrato no painel/card mostra a pelagem violeta
+    if mobile:
+        # mini-card: retrato 40px no topo-esquerda do card
+        wolf_violet = count(0, int(w * 0.3), int(h * 0.05), int(h * 0.17),
+                            lambda r, g, b: 50 < r < 160 and 35 < g < 130 and 90 < b < 200 and b > r, 2)
+    else:
+        # retrato 76px no topo do painel lateral direito
+        wolf_violet = count(w - 240, w, 56, int(h * 0.28),
+                            lambda r, g, b: 50 < r < 160 and 35 < g < 130 and 90 < b < 200 and b > r, 2)
     checks += [
         ("topbar_ouro_mana", top_gold > 2),
         ("hud_barras_hp_mp", hp_red > 2 and mp_blue > 2),
@@ -179,6 +190,7 @@ elif kind == "battle":
         ("action_bar_inferior", action_gold > 2),
         ("botao_pronto_dourado", ready_gold > 5),
         ("painel_lateral_detalhes", panel_gold > panel_thresh),
+        ("lobo_de_mana_invocado", wolf_violet > 8),
     ]
 elif kind == "battle-details":
     # modal "Detalhes da Unidade" aberto sobre a batalha (a "outra tela"
@@ -194,6 +206,19 @@ elif kind == "battle-details":
         ("titulo_e_dourados_do_modal", gold > 20),
         ("barra_hp_no_status_atual", hp_red > 2),
         ("barra_xp_no_status_atual", xp_green > 2),
+    ]
+elif kind == "pause":
+    # menu de pausa estilo Wesnoth sobre a batalha: backdrop escurecido,
+    # título dourado, botão Retornar (primary gold) e Abandonar vermelho
+    gold_title = count(0, w, int(h * 0.08), int(h * 0.50), lambda r, g, b: r > 190 and g > 150 and b < 120, 2)
+    primary_gold = count(int(w * 0.25), int(w * 0.75), int(h * 0.30), int(h * 0.92), lambda r, g, b: r > 180 and g > 140 and b < 100, 2)
+    red_quit = count(0, w, int(h * 0.45), h, lambda r, g, b: r > 150 and g < 110 and b < 90, 2)
+    dark_bg = count(0, int(w * 0.05), int(h * 0.02), int(h * 0.10), lambda r, g, b: r < 80 and g < 80 and b < 90, 2)
+    checks += [
+        ("backdrop_escurecido", dark_bg > 80),
+        ("titulo_pausado_dourado", gold_title > 25),
+        ("botao_retornar_dourado", primary_gold > 60),
+        ("botao_abandonar_vermelho", red_quit > 8),
     ]
 else:
     print(f"[FAIL] tipo desconhecido: {kind}")

@@ -280,6 +280,18 @@ class Game {
             }
         });
     }
+    // ==========================================
+    // TUTORIAL: o primeiro nó da run ensina o básico — derrotar o inimigo.
+    // Vale só para a PRIMEIRA região (campanha, nada conquistado) ou o
+    // PRIMEIRO andar (roguelite, floor 0). Nunca para duelos.
+    // ==========================================
+    isTutorialStage() {
+        return !this.isDuel && !this.gameOver &&
+            this.currentLevel === 1 &&
+            (this.conqueredRegions || []).length === 0 &&
+            this.currentFloor <= 0;
+    }
+
     generateCampaignMap(savedRoster = []) {
         if (!this.eventFlags) this.eventFlags = {};
         let act = this.currentLevel; let depth = Math.max(0, this.currentFloor);
@@ -641,6 +653,18 @@ class Game {
             }
         }
 
+        // ========================================================
+        // TUTORIAL: primeiro nó = aprendizado sem punição. Todos os
+        // inimigos (líder rival, lacaios e feras) com HP reduzido a 55%
+        // para o jogador dominar o fluxo básico antes do desafio real.
+        // ========================================================
+        if (this.isTutorialStage()) {
+            this.units.filter(u => u.faction !== 1).forEach(u => {
+                u.maxHp = Math.max(1, Math.floor(u.maxHp * 0.55));
+                u.hp = u.maxHp;
+            });
+        }
+
         this.eventFlags = {}; this.activeSynergies = this.getSynergies(1); this.currentTurn = 1; this.gameOver = false; this.selectPlayerLeader();
         let pL = this.units.find(u => u.isLeader && u.faction === 1);
 
@@ -713,7 +737,11 @@ class Game {
 
             let wildBoss = this.units.find(u => u.isBoss && u.faction === 0);
 
-            if (this.currentRouteType === 'BOSS' || this.isBossStage || this.currentRouteType === 'ELITE') {
+            if (this.isTutorialStage()) {
+                // TUTORIAL: o primeiro nó NUNCA sorteia missão — sempre
+                // "derrotar o inimigo" para ensinar o objetivo básico
+                this.currentObjective = 'DEFEAT_LEADER';
+            } else if (this.currentRouteType === 'BOSS' || this.isBossStage || this.currentRouteType === 'ELITE') {
                 this.currentObjective = wildBoss ? 'BOSS' : 'DEFEAT_LEADER';
             } else {
                 this.currentObjective = possibleObjectives[Math.floor(Math.random() * possibleObjectives.length)];
@@ -725,27 +753,9 @@ class Game {
             wildBoss.isObjectiveTarget = true;
         }
 
-        setTimeout(() => {
-            let text = "DERROTE O LÍDER INIMIGO!";
-            if (this.currentObjective === 'SURVIVE') text = "SOBREVIVA POR 10 TURNOS!";
-            else if (this.currentObjective === 'DOMINATE') text = "CAPTURE TODAS AS VILAS!";
-            else if (this.currentObjective === 'BOSS') text = "ELIMINE OU CAPTURE O CHEFE!";
-
-            let banner = document.getElementById('objective-banner');
-            if (!banner) {
-                banner = document.createElement('div');
-                banner.id = 'objective-banner';
-                document.body.appendChild(banner);
-            }
-
-            banner.innerHTML = `<h2 style="color:var(--gold); margin:0 0 10px 0; font-family:'Cinzel', serif;">NOVO OBJETIVO</h2><div style="font-weight:bold; font-size:1.2em; text-shadow: 0 0 10px red;">${text}</div>`;
-            banner.classList.remove('banner-animate');
-            void banner.offsetWidth;
-            banner.classList.add('banner-animate');
-
-            this.isAnimating = true;
-            setTimeout(() => { this.isAnimating = false; }, 3000);
-        }, 650);
+        // O banner do objetivo NÃO é mais disparado aqui: quem exibe é a
+        // FILA de banners (advanceCampaign), na ordem chefe → objetivo →
+        // turno, sem sobreposição (antes: 3 banners ao mesmo tempo).
     }
 
     generateDuelMap() {
@@ -1745,8 +1755,9 @@ class Game {
         }
         if (typeof showMessage === 'function') showMessage(txt, col);
 
-        // Mostra banner animado se for turno do jogador
-        if (typeof showTurnBanner === 'function' && this.currentTurn === 1) {
+        // Mostra banner animado se for turno do jogador (mas nunca durante
+        // a intro da batalha — a fila mostra na ordem certa)
+        if (typeof showTurnBanner === 'function' && this.currentTurn === 1 && !this._battleIntroPlaying) {
             showTurnBanner('Seu Turno', `Turno ${this.turnCount}`, 1);
         }
     }
@@ -1874,11 +1885,17 @@ class Renderer {
                 let drawW = this.hexSize * Math.sqrt(3);
                 let drawH = this.hexSize * 2;
 
+                // TILES pintados (artes grandes): redução com FILTRO DE ALTA
+                // QUALIDADE — o padrão nearest do render deixa os tiles
+                // serrilhados/"baixa resolução" na tela
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(
                     currentImg,
                     selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
                     p.x - (drawW / 2), p.y - (drawH / 2), drawW, drawH
                 );
+                ctx.imageSmoothingEnabled = false;
             } else {
                 ctx.fillStyle = (hex.terrain && hex.terrain.color) ? hex.terrain.color : '#000';
                 ctx.fill();
@@ -2106,7 +2123,12 @@ class Renderer {
                                 const ang = (a * Math.PI) / 4;
                                 octx.drawImage(sil, Math.cos(ang) * pad, Math.sin(ang) * pad);
                             }
+                            // ILUMINAÇÃO GLOBAL das unidades: brilho +
+                            // saturação leves assados no cache (as artes
+                            // escuras "acordam" sem custo por frame)
+                            octx.filter = 'brightness(1.09) saturate(1.06)';
                             octx.drawImage(tempCanvas, pad, pad);
+                            octx.filter = 'none';
                             // Guarda o canvas processado (contornado) no cache
                             window.imageCache[u.sprite] = outC;
                         } catch (e) {
@@ -2162,10 +2184,11 @@ class Renderer {
                     let finalX = p.x - (finalW / 2);
                     let finalY = spriteY - (finalH - drawH);
 
-                    // EFEITO DE DESTAQUE (Sombra)
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-                    ctx.shadowBlur = 12;
-                    ctx.shadowOffsetY = 6;
+                    // EFEITO DE DESTAQUE (Sombra suave — a sombra pesada
+                    // antiga escurecia as unidades em volta)
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+                    ctx.shadowBlur = 8;
+                    ctx.shadowOffsetY = 3;
 
                     // QUALIDADE: ao REDUZIR artes grandes (pintadas, 300px+),
                     // nearest-neighbor deixa serrilhado/borrado — usa filtro
@@ -2301,10 +2324,12 @@ class Renderer {
         }
 
         // ==========================================
-        // PÓS-PROCESSAMENTO: vinheta cinematográfica
-        // Escurece as bordas do mapa (foco no miolo da ação, look indie
-        // premium). Cacheada em canvas próprio: recria apenas no resize;
-        // a UI em DOM (painéis, popups) fica ACIMA e não é afetada.
+        // PÓS-PROCESSAMENTO: ILUMINAÇÃO GLOBAL DO MAPA
+        // (1) Luz ambiente quente no centro — "sol" de cima, unidades e
+        //     tiles centrais ganham vida; (2) vinheta SUAVE nas bordas
+        //     para foco cinematográfico. Tudo em UM canvas cacheado:
+        //     recriado só no resize, custo ~zero por frame. A UI em DOM
+        //     fica acima e não é afetada.
         // ==========================================
         if (!this._vignette || this._vignette.width !== this.canvas.width || this._vignette.height !== this.canvas.height) {
             const v = document.createElement('canvas');
@@ -2313,11 +2338,20 @@ class Renderer {
             const vctx = v.getContext('2d');
             const cx = v.width / 2;
             const cy = v.height * 0.42;
-            const inner = Math.min(v.width, v.height) * 0.52;
-            const outer = Math.max(v.width, v.height) * 0.78;
+            // (1) luz ambiente: halo quente translúcido no miolo do mapa
+            const lightR = Math.max(v.width, v.height) * 0.62;
+            const light = vctx.createRadialGradient(cx, cy, 0, cx, cy, lightR);
+            light.addColorStop(0, 'rgba(255, 243, 214, 0.07)');
+            light.addColorStop(0.55, 'rgba(255, 240, 200, 0.03)');
+            light.addColorStop(1, 'rgba(255, 240, 200, 0)');
+            vctx.fillStyle = light;
+            vctx.fillRect(0, 0, v.width, v.height);
+            // (2) vinheta suave: escurece apenas o que está longe da ação
+            const inner = Math.min(v.width, v.height) * 0.58;
+            const outer = Math.max(v.width, v.height) * 0.82;
             const grad = vctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
             grad.addColorStop(0, 'rgba(4, 6, 14, 0)');
-            grad.addColorStop(1, 'rgba(4, 6, 14, 0.42)');
+            grad.addColorStop(1, 'rgba(4, 6, 14, 0.24)');
             vctx.fillStyle = grad;
             vctx.fillRect(0, 0, v.width, v.height);
             this._vignette = v;
@@ -2445,11 +2479,17 @@ class KingdomRenderer {
                 let drawW = this.hexSize * Math.sqrt(3);
                 let drawH = this.hexSize * 2;
 
+                // TILES pintados (artes grandes): redução com FILTRO DE ALTA
+                // QUALIDADE — o padrão nearest do render deixa os tiles
+                // serrilhados/"baixa resolução" na tela
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(
                     currentImg,
                     selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
                     p.x - (drawW / 2), p.y - (drawH / 2), drawW, drawH
                 );
+                ctx.imageSmoothingEnabled = false;
             } else {
                 ctx.fillStyle = (hex.terrain && hex.terrain.color) ? hex.terrain.color : '#000';
                 ctx.fill();
@@ -2784,7 +2824,11 @@ Game.prototype.generateCampaignMap = function (savedRoster = []) {
 
         let wildBoss = this.units.find(u => u.isBoss && u.faction === 0);
 
-        if (this.currentRouteType === 'BOSS' || this.isBossStage || this.currentRouteType === 'ELITE') {
+        if (this.isTutorialStage()) {
+            // TUTORIAL: o primeiro nó NUNCA sorteia missão — sempre
+            // "derrotar o inimigo" para ensinar o objetivo básico
+            this.currentObjective = 'DEFEAT_LEADER';
+        } else if (this.currentRouteType === 'BOSS' || this.isBossStage || this.currentRouteType === 'ELITE') {
             this.currentObjective = wildBoss ? 'BOSS' : 'DEFEAT_LEADER';
         } else {
             this.currentObjective = possibleObjectives[Math.floor(Math.random() * possibleObjectives.length)];
@@ -2797,29 +2841,8 @@ Game.prototype.generateCampaignMap = function (savedRoster = []) {
         wildBoss.isObjectiveTarget = true;
     }
 
-    // Exibir o Banner Gigante na Tela
-    setTimeout(() => {
-        let text = "DERROTE O LÍDER INIMIGO!";
-        if (this.currentObjective === 'SURVIVE') text = "SOBREVIVA POR 10 TURNOS!";
-        else if (this.currentObjective === 'DOMINATE') text = "CAPTURE TODAS AS VILAS!";
-        else if (this.currentObjective === 'BOSS') text = "ELIMINE OU CAPTURE O CHEFE!";
-
-        let banner = document.getElementById('objective-banner');
-        if (!banner) {
-            banner = document.createElement('div');
-            banner.id = 'objective-banner';
-            document.body.appendChild(banner);
-        }
-
-        banner.innerHTML = `<h2 style="color:var(--gold); margin:0 0 10px 0; font-family:'Cinzel', serif;">NOVO OBJETIVO</h2><div style="font-weight:bold; font-size:1.2em; text-shadow: 0 0 10px red;">${text}</div>`;
-
-        banner.classList.remove('banner-animate');
-        void banner.offsetWidth; // Força a tela a reiniciar a animação
-        banner.classList.add('banner-animate');
-
-        this.isAnimating = true;
-        setTimeout(() => { this.isAnimating = false; }, 3000);
-    }, 650);
+    // (o banner do objetivo agora é exibido pela FILA de banners — o
+    //  duplicate do setTimeout antigo causava exibição dupla/glitchada)
 };
 
 // =====================================================================
@@ -2846,9 +2869,12 @@ window.autoSave = function () {
 // Recuperar o objetivo quando a página for recarregada
 const origStartGame = window.startGame;
 window.startGame = function (load, isRoguelite = false, leaderId = null, isDuel = false, opponentId = null) {
+    // INTRO DE RESUME: segura o banner de turno do updateUI — a fila
+    // abaixo mostra [objetivo → turno] na ordem, sem sobreposição
+    if (load && typeof game !== 'undefined' && game) game._battleIntroPlaying = true;
     origStartGame(load, isRoguelite, leaderId, isDuel, opponentId);
 
-    if (load && game) {
+    if (load && typeof game !== 'undefined' && game) {
         const sk = isDuel ? 'ht_save_duel' : (isRoguelite ? 'ht_save_rogue' : 'ht_save_camp');
         let savedData = JSON.parse(localStorage.getItem(sk));
 
@@ -2862,6 +2888,31 @@ window.startGame = function (load, isRoguelite = false, leaderId = null, isDuel 
             if (game.currentObjective === 'BOSS' && wildBoss) {
                 wildBoss.isObjectiveTarget = true;
             }
+
+            // RETOMADA ORDENADA: objetivo primeiro, banner de turno depois
+            if (window.battleBanners) {
+                window.battleBanners.reset();
+                let text = "DERROTE O LÍDER INIMIGO!";
+                if (game.currentObjective === 'SURVIVE') text = "SOBREVIVA POR 10 TURNOS!";
+                else if (game.currentObjective === 'DOMINATE') text = "CAPTURE TODAS AS VILAS!";
+                else if (game.currentObjective === 'BOSS') text = "ELIMINE OU CAPTURE O CHEFE!";
+                window.battleBanners.push(() => {
+                    if (typeof showObjectiveBannerText === 'function') showObjectiveBannerText(text);
+                }, 2900);
+                window.battleBanners.push(() => {
+                    if (typeof showTurnBanner === 'function') showTurnBanner('Seu Turno', `Turno ${game.turnCount || 1}`, 1);
+                }, 1400);
+                window.battleBanners.drain().then(() => {
+                    game._turnBannerShown = true;
+                    game._battleIntroPlaying = false;
+                });
+            } else {
+                game._turnBannerShown = true;
+                game._battleIntroPlaying = false;
+            }
+        } else {
+            game._turnBannerShown = true;
+            game._battleIntroPlaying = false;
         }
     }
 };

@@ -56,19 +56,31 @@ def jagged(rng, x0, y0, x1, y1, segs, amp):
 def agua_eletrificada(ctx, w, h, rng):
     mid = shade(WATER_MID, .72)
     base(ctx, w, h, mid, 1.02, .78)
-    # ondas suaves
-    for _ in range(7):
-        y0 = rng.uniform(14, h - 14)
-        pts = [(i, y0 + math.sin(i / 13 + y0) * 4) for i in range(0, w + 4, 4)]
-        ctx.line(pts, fill=shade(WATER_MID, 1.2), width=3)
-    # relâmpagos: brilho externo -> núcleo branco
+    # profundidade: mais escuro no fundo (duas camadas de água)
+    ov = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    od = ImageDraw.Draw(ov)
+    od.rectangle([0, h * .55, w, h], fill=(10, 40, 70, 55))
+    ctx._image.paste(Image.alpha_composite(ctx._image.convert('RGBA'), ov).convert('RGB'), (0, 0))
+    # ondas em duas camadas (base larga + crista clara)
+    for _ in range(10):
+        y0 = rng.uniform(10, h - 10)
+        amp = rng.uniform(3, 8)
+        pts = [(i, y0 + math.sin(i / 13 + y0) * amp) for i in range(0, w + 4, 4)]
+        ctx.line(pts, fill=shade(WATER_MID, 1.15), width=4)
+        pts2 = [(x, y - 2) for x, y in pts]
+        ctx.line(pts2, fill=shade(WATER_MID, 1.35), width=2)
+    # espuma nas cristas
+    for _ in range(14):
+        x, y = rng.uniform(6, w - 6), rng.uniform(10, h - 10)
+        ctx.ellipse([x - 3, y - 2, x + 3, y + 2], fill=(190, 235, 250, 120))
+    # relâmpagos: brilho externo -> núcleo branco (mais grossos)
     for _ in range(rng.randint(2, 3)):
         x0 = rng.uniform(w * .2, w * .8)
         pts = jagged(rng, x0, -6, x0 + rng.uniform(-50, 50), h * rng.uniform(.55, .8), 8, 22)
-        ctx.line(pts, fill=(80, 229, 255, 60), width=13)
-        ctx.line(pts, fill=(80, 229, 255, 120), width=7)
-        ctx.line(pts, fill=(180, 250, 255, 200), width=3)
-        ctx.line(pts, fill=(240, 255, 255, 255), width=1)
+        ctx.line(pts, fill=(80, 229, 255, 50), width=15)
+        ctx.line(pts, fill=(80, 229, 255, 110), width=8)
+        ctx.line(pts, fill=(180, 250, 255, 210), width=3)
+        ctx.line(pts, fill=(245, 255, 255, 255), width=1)
         # ramificações
         for _ in range(rng.randint(1, 3)):
             (bx, by) = pts[rng.randint(2, len(pts) - 3)]
@@ -76,7 +88,7 @@ def agua_eletrificada(ctx, w, h, rng):
             ctx.line(br, fill=(180, 250, 255, 180), width=2)
         # clarão na água onde cai
         ex, ey = pts[-1]
-        for r, a in ((44, 40), (26, 70), (12, 110)):
+        for r, a in ((46, 36), (28, 64), (13, 100)):
             ctx.ellipse([ex - r, ey - r * .5, ex + r, ey + r * .5], fill=(140, 240, 255, a))
     # faíscas na superfície
     for _ in range(8):
@@ -120,14 +132,14 @@ def areia_movedica(ctx, w, h, rng):
 def fenda_lava(ctx, w, h, rng):
     base(ctx, w, h, (46, 38, 36), 1.12, .72)
     blotches(ctx, w, h, rng, [(60, 50, 46), (28, 22, 22)], 40, a=40)
-    # placas de rocha basalto
-    for _ in range(6):
+    # placas de rocha basalto (mais camadas)
+    for _ in range(9):
         x, y = rng.uniform(10, w - 10), rng.uniform(10, h - 10)
-        r = rng.uniform(14, 34)
+        r = rng.uniform(14, 38)
         ctx.ellipse([x - r, y - r * .6, x + r, y + r * .6],
                     fill=(58, 50, 46) if rng.random() < .5 else (34, 28, 26))
-    # FENDAS com lava: sombra larga -> brilho -> núcleo quente
-    for _ in range(rng.randint(2, 3)):
+    # FENDAS com lava: sombra larga -> brilho -> núcleo quente (mais fissuras)
+    for _ in range(rng.randint(3, 4)):
         x0 = rng.uniform(w * .15, w * .85)
         pts = jagged(rng, x0, h * .9, x0 + rng.uniform(-70, 70), h * .1, 9, 26)
         ctx.line(pts, fill=(10, 8, 8), width=15)
@@ -140,11 +152,15 @@ def fenda_lava(ctx, w, h, rng):
             br = jagged(rng, bx, by, bx + rng.uniform(-55, 55), by + rng.uniform(-45, 45), 4, 10)
             ctx.line(br, fill=(240, 110, 20), width=3)
             ctx.line(br, fill=(255, 210, 90), width=1)
-    # brasas
-    for _ in range(10):
+    # calor subindo das fissuras (shimmer)
+    for _ in range(6):
+        x, y = rng.uniform(10, w - 10), rng.uniform(h * .2, h * .8)
+        ctx.ellipse([x - 8, y - 8, x + 8, y + 8], fill=(255, 120, 30, 18))
+    # brasas com halo de brilho
+    for _ in range(12):
         x, y = rng.uniform(6, w - 6), rng.uniform(6, h - 6)
-        ctx.ellipse([x - 2, y - 2, x + 2, y + 2], fill=(255, 130, 40, 200))
-        ctx.ellipse([x - 5, y - 5, x + 5, y + 5], outline=(180, 60, 20, 80), width=1)
+        ctx.ellipse([x - 4, y - 4, x + 4, y + 4], fill=(150, 50, 15, 60))
+        ctx.ellipse([x - 2, y - 2, x + 2, y + 2], fill=(255, 130, 40, 220))
 
 
 def fenda_mana(ctx, w, h, rng):
@@ -362,8 +378,13 @@ def validate(path, cols):
 
 def main():
     os.makedirs(TILES, exist_ok=True)
+    # SELETIVO: `python generate_special_tiles.py agua_eletrificada fenda_lava`
+    # gera apenas os nomeados (não sobrescreve artes trocadas na mão!)
+    only = [a for a in sys.argv[1:] if not a.startswith('-')]
     prev_cells = []
     for nome, fname, cols, painter in SPECS:
+        if only and fname not in only and nome not in only:
+            continue
         sheet = Image.new('RGB', (CW * cols, CH), (20, 20, 24))
         for col in range(cols):
             p = Painter(CW * SS, CH * SS)

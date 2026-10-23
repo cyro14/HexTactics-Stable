@@ -449,6 +449,130 @@ function renderSpellBar() {
 // 5. BATTLE UI HELPERS — Turn Banner, Time of Day, Log Toggle
 // ==========================================
 
+// ==========================================
+// FILA DE BANNERS DE BATALHA — ordem garantida, sem sobreposição.
+// Ao iniciar uma batalha: [CHEFE?] → OBJETIVO → TURNO, um por vez.
+// ==========================================
+window.battleBanners = {
+    q: [], playing: false, _resolve: null,
+    reset() { this.q = []; this.playing = false; this._resolve = null; },
+    push(fn, dur) { this.q.push([fn, dur]); if (!this.playing) this._run(); },
+    async _run() {
+        this.playing = true;
+        while (this.q.length) {
+            const [fn, dur] = this.q.shift();
+            await new Promise(res => { try { fn(); } catch (e) { } setTimeout(res, dur); });
+        }
+        this.playing = false;
+        if (this._resolve) { this._resolve(); this._resolve = null; }
+    },
+    drain() { return this.playing ? new Promise(r => this._resolve = r) : Promise.resolve(); }
+};
+
+// Texto do objetivo atual
+function objectiveText() {
+    let text = "DERROTE O LÍDER INIMIGO!";
+    if (game.currentObjective === 'SURVIVE') text = "SOBREVIVA POR 10 TURNOS!";
+    else if (game.currentObjective === 'DOMINATE') text = "CAPTURE TODAS AS VILAS!";
+    else if (game.currentObjective === 'BOSS') text = "ELIMINE OU CAPTURE O CHEFE!";
+    return text;
+}
+
+// Exibe o banner de objetivo (através da fila, nunca direto)
+function showObjectiveBannerText(text) {
+    let banner = document.getElementById('objective-banner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'objective-banner';
+        document.body.appendChild(banner);
+    }
+    // cor de destaque por tipo de objetivo (o texto pulsa nela)
+    const obj = (typeof game !== 'undefined' && game) ? game.currentObjective : null;
+    const ACC = {
+        DEFEAT_LEADER: '#e05648',   // vermelho sangue
+        SURVIVE: '#4aa3e8',          // azul resiliência
+        DOMINATE: '#e8c84a',         // ouro conquista
+        BOSS: '#e67e22'              // laranja caçada
+    };
+    const col = ACC[obj] || ACC.DEFEAT_LEADER;
+    const ICO = {
+        DEFEAT_LEADER: '<path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/>',
+        SURVIVE: '<circle cx="12" cy="12" r="7"/><path d="M12 7v5l3.5 2"/>',
+        DOMINATE: '<path d="M6 21V4"/><path d="M6 5h11l-2.5 3.5L17 12H6"/>',
+        BOSS: '<path d="M4 18h16 M4 18 2.5 8l5.5 4 4-6.5 4 6.5 5.5-4L20 18"/>'
+    };
+    const ico = ICO[obj] || ICO.DEFEAT_LEADER;
+    banner.style.setProperty('--obj-col', col);
+    banner.innerHTML = `
+        <span class="obj-corner tl"></span><span class="obj-corner tr"></span>
+        <span class="obj-corner bl"></span><span class="obj-corner br"></span>
+        <div class="obj-top"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">${ico}</svg>NOVO OBJETIVO<svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">${ico}</svg></div>
+        <h2>&#10022; Miss&atilde;o &#10022;</h2>
+        <div class="obj-rule"><i></i><b></b><i></i></div>
+        <div class="obj-text">${text}</div>`;
+    banner.classList.remove('banner-animate');
+    void banner.offsetWidth;
+    banner.classList.add('banner-animate');
+}
+
+// Cinemática do chefe (usada pela fila; limpa a si mesma no fim do slot)
+function playBossIntroCine(epicUnit) {
+    if (!epicUnit || !renderer) return;
+    renderer.centerOn(epicUnit.q, epicUnit.r);
+
+    if (!document.getElementById('cinematic-styles')) {
+        let style = document.createElement('style');
+        style.id = 'cinematic-styles';
+        style.innerHTML = `
+            @keyframes cineFade {
+                0% { opacity: 0; transform: scale(0.8) translateY(-20px) rotateX(20deg); filter: blur(10px); }
+                18% { opacity: 1; transform: scale(1) translateY(0) rotateX(0deg); filter: blur(0px); }
+                80% { opacity: 1; transform: scale(1.05) translateY(0); filter: blur(0px); }
+                100% { opacity: 0; transform: scale(1.1) translateY(30px); filter: blur(10px); }
+            }
+            @keyframes screenShake {
+                0%, 100% { transform: translate(0, 0); }
+                10%, 50%, 90% { transform: translate(-3px, 2px); }
+                30%, 70% { transform: translate(3px, -2px); }
+            }
+            .shake-active { animation: screenShake 0.4s ease-in-out infinite; }
+        `;
+        document.head.appendChild(style);
+    }
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:radial-gradient(circle, transparent 20%, rgba(0,0,0,0.8) 80%); z-index:9998; opacity:0; transition: opacity 0.4s; pointer-events:none;`;
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.style.opacity = '1', 30);
+
+    let titleType = epicUnit.isBoss ? "GUARDIÃO DO DOMÍNIO" : "AMEAÇA ELITE";
+    let titleColor = epicUnit.isBoss ? "var(--gold)" : "#e74c3c";
+
+    const cine = document.createElement('div');
+    cine.style.cssText = `position:fixed; top:35%; left:0; width:100%; text-align:center; z-index:9999; pointer-events:none; animation: cineFade 2.4s cubic-bezier(0.1, 0.8, 0.2, 1) forwards; perspective: 500px;`;
+    cine.innerHTML = `
+        <div style="font-family: 'Cinzel', serif; font-size: 16px; letter-spacing: 10px; color: ${titleColor}; text-shadow: 0 0 10px rgba(0,0,0,0.8); margin-bottom: -15px; opacity:0.8;">${titleType}</div>
+        <div style="font-family: 'Cinzel', serif; font-size: 70px; font-weight: bold; color: #fff; text-shadow: 0px 5px 30px ${titleColor}, 0 0 50px #000; letter-spacing: 3px; text-transform: uppercase;">${epicUnit.name}</div>
+    `;
+    document.body.appendChild(cine);
+
+    const canvas = $('gameCanvas');
+    if (canvas) {
+        canvas.classList.add('shake-active');
+        setTimeout(() => canvas.classList.remove('shake-active'), 600);
+    }
+
+    // saída suave antes do próximo banner da fila
+    setTimeout(() => { overlay.style.opacity = '0'; }, 1900);
+    setTimeout(() => { overlay.remove(); cine.remove(); }, 2400);
+
+    // volta a câmera pro herói quando o slot termina
+    setTimeout(() => {
+        const pL = game.units.find(u => u.isLeader && u.faction === 1);
+        if (pL && renderer) renderer.centerOn(pL.q, pL.r);
+    }, 2400);
+}
+
 // Exibe o banner de turno estilo Wesnoth
 function showTurnBanner(title, subText, faction = 1) {
     const banner = $('turn-banner');
@@ -490,8 +614,10 @@ function updateTurnUI() {
         badgeText.textContent = `Turno: ${facName}`;
     }
 
-    // Turn Banner (só mostra no início do turno do jogador)
-    if (isPlayerTurn && !game._turnBannerShown) {
+    // Turn Banner (só mostra no início do turno do jogador — mas NUNCA
+    // durante a intro da batalha, que enfileira na ordem certa:
+    // chefe → objetivo → turno)
+    if (isPlayerTurn && !game._turnBannerShown && !game._battleIntroPlaying) {
         showTurnBanner('Seu Turno', `Turno ${turnNum}`, 1);
         game._turnBannerShown = true;
     } else if (!isPlayerTurn) {
@@ -2513,75 +2639,23 @@ function advanceCampaign() {
         const r = deployedRoster.map(m => new Unit({ ...m, q: 0, r: 0, hasAttacked: false, status: null, isNew: false }));
         game.generateCampaignMap(r);
         renderer.initCamera(true);
+
+        // INTRO ORDENADA: segura o banner de turno do updateUI — a fila
+        // mostra tudo na sequência certa (chefe → objetivo → turno)
+        game._battleIntroPlaying = true;
         updateUI();
         autoSave();
 
-        // ========================================================
-        // CINEMÁTICA DE AURA: BOSS E ELITE
-        // ========================================================
-        let epicUnit = game.units.find(u => u.faction === 0 && (u.isBoss || u.isElite));
-
-        if (epicUnit) {
-            game.isAnimating = true;
-            // 1. Foca a câmera brutalmente no monstrão
-            renderer.centerOn(epicUnit.q, epicUnit.r);
-
-            // 2. Injeta CSS das animações (Tremor e FadeIn 3D) se não existir
-            if (!document.getElementById('cinematic-styles')) {
-                let style = document.createElement('style');
-                style.id = 'cinematic-styles';
-                style.innerHTML = `
-                    @keyframes cineFade {
-                        0% { opacity: 0; transform: scale(0.8) translateY(-20px) rotateX(20deg); filter: blur(10px); }
-                        15% { opacity: 1; transform: scale(1) translateY(0) rotateX(0deg); filter: blur(0px); }
-                        85% { opacity: 1; transform: scale(1.05) translateY(0); filter: blur(0px); }
-                        100% { opacity: 0; transform: scale(1.1) translateY(30px); filter: blur(10px); }
-                    }
-                    @keyframes screenShake {
-                        0%, 100% { transform: translate(0, 0); }
-                        10%, 50%, 90% { transform: translate(-3px, 2px); }
-                        30%, 70% { transform: translate(3px, -2px); }
-                    }
-                    .shake-active { animation: screenShake 0.4s ease-in-out infinite; }
-                `;
-                document.head.appendChild(style);
-            }
-
-            // 3. Fundo escurecendo com Vignette
-            let overlay = document.createElement('div');
-            overlay.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:radial-gradient(circle, transparent 20%, rgba(0,0,0,0.8) 80%); z-index:9998; opacity:0; transition: opacity 0.5s; pointer-events:none;`;
-            document.body.appendChild(overlay);
-            setTimeout(() => overlay.style.opacity = '1', 50);
-
-            // 4. Texto Épico flutuando na tela
-            let cine = document.createElement('div');
-            let titleType = epicUnit.isBoss ? "GUARDIÃO DO DOMÍNIO" : "AMEAÇA ELITE";
-            let titleColor = epicUnit.isBoss ? "var(--gold)" : "#e74c3c";
-
-            cine.style.cssText = `position:fixed; top:35%; left:0; width:100%; text-align:center; z-index:9999; pointer-events:none; animation: cineFade 4s cubic-bezier(0.1, 0.8, 0.2, 1) forwards; perspective: 500px;`;
-            cine.innerHTML = `
-                <div style="font-family: 'Cinzel', serif; font-size: 16px; letter-spacing: 10px; color: ${titleColor}; text-shadow: 0 0 10px rgba(0,0,0,0.8); margin-bottom: -15px; opacity:0.8;">${titleType}</div>
-                <div style="font-family: 'Cinzel', serif; font-size: 70px; font-weight: bold; color: #fff; text-shadow: 0px 5px 30px ${titleColor}, 0 0 50px #000; letter-spacing: 3px; text-transform: uppercase;">${epicUnit.name}</div>
-            `;
-            document.body.appendChild(cine);
-
-            // 5. O Impacto: Treme a tela (Canvas) levemente!
-            let canvas = $('gameCanvas');
-            canvas.classList.add('shake-active');
-            setTimeout(() => canvas.classList.remove('shake-active'), 800); // Treme só no impacto inicial da leitura do nome
-
-            // 6. Espera os 4 segundos da glória
-            await sleep(4000);
-
-            // Limpa a tela
-            overlay.style.opacity = '0';
-            setTimeout(() => overlay.remove(), 500);
-            cine.remove();
-
-            // Volta a câmera focando no Herói do jogador
-            let pL = game.units.find(u => u.isLeader && u.faction === 1);
-            if (pL) renderer.centerOn(pL.q, pL.r);
+        if (window.battleBanners) {
+            window.battleBanners.reset();
+            const epicUnit = game.units.find(u => u.faction === 0 && (u.isBoss || u.isElite));
+            if (epicUnit) window.battleBanners.push(() => playBossIntroCine(epicUnit), 2400);
+            window.battleBanners.push(() => showObjectiveBannerText(objectiveText()), 2900);
+            window.battleBanners.push(() => showTurnBanner('Seu Turno', `Turno ${game.turnCount || 1}`, 1), 1400);
+            await window.battleBanners.drain();
         }
+        game._turnBannerShown = true;
+        game._battleIntroPlaying = false;
 
         // Libera as travas pro jogador jogar
         game.isAnimating = false;

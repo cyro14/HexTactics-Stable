@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v16'; // v16: cols das jazidas corrigidas + tiles otimizados + vinheta
+const CACHE_NAME = 'hextactics-v21'; // v21: banner de objetivo refeito + 14 criaturas novas
 const ASSETS = [
     './',
     './index.html',

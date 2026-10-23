@@ -422,7 +422,23 @@ const BEASTS = {
         { e: '🦁', name: 'Leão do Céu', hp: 60, atk: 19, mp: 5, range: 1, abilities: ['flying', 'leadership'], minLevel: 5, filter: 'none', sprite: 'img/sprites/leao-do-ceu.png', tags: ['WING', 'CELESTIAL'], fav: ['MOUNTAIN', 'PLAINS'] },
         { e: '😈', name: 'Demônio da Lâmina', hp: 70, atk: 22, mp: 4, range: 1, abilities: ['corte_amplo'], minLevel: 5, filter: 'none', sprite: 'img/sprites/blade-demon.png', tags: ['UMBRAL', 'FIRE'], fav: ['ASHES'] },
         { e: '🐕', name: 'Cerberus Sanguinário', hp: 80, atk: 20, mp: 4, range: 1, abilities: ['lifesteal', 'burn'], minLevel: 5, filter: 'none', sprite: 'img/sprites/blood-cerberus.png', tags: ['UMBRAL', 'FIRE'], fav: ['ASHES', 'SWAMP'] },
-        { e: '👼', name: 'Anjo Vingador', hp: 65, atk: 21, mp: 5, range: 2, abilities: ['flying', 'electric'], minLevel: 5, filter: 'brightness(115%)', sprite: 'img/sprites/anjo.png', tags: ['CELESTIAL', 'ELECTRIC'], fav: ['PLAINS'] }
+        { e: '👼', name: 'Anjo Vingador', hp: 65, atk: 21, mp: 5, range: 2, abilities: ['flying', 'electric'], minLevel: 5, filter: 'brightness(115%)', sprite: 'img/sprites/anjo.png', tags: ['CELESTIAL', 'ELECTRIC'], fav: ['PLAINS'] },
+
+        // ---- Criaturas do plano ajustar (importadas + fundo removido) ----
+        { e: '👁️', name: 'Vigia Abissal', hp: 50, atk: 15, mp: 4, range: 2, abilities: ['bind'], minLevel: 3, filter: 'none', sprite: 'img/sprites/vigia_abissal.png', tags: ['ABYSSAL', 'MYSTIC'], fav: ['WATER'] },
+        { e: '🛡️', name: 'Guardião das Areias', hp: 55, atk: 14, mp: 3, range: 1, abilities: ['carapace'], minLevel: 3, filter: 'none', sprite: 'img/sprites/guardiao_das_areias.png', tags: ['SAND', 'CARAPACE'], fav: ['DESERT'] },
+        { e: '🐂', name: 'Bruto das Dunas', hp: 60, atk: 15, mp: 3, range: 1, abilities: ['stun'], minLevel: 3, filter: 'none', sprite: 'img/sprites/bruto_das_dunas.png', tags: ['SAND', 'PRIMAL'], fav: ['DESERT'] },
+        { e: '🏹', name: 'Caçador Ocre', hp: 45, atk: 16, mp: 5, range: 1, abilities: ['swift', 'hit_run'], minLevel: 3, filter: 'none', sprite: 'img/sprites/cacador_ocre.png', tags: ['SAND', 'STALKER'], fav: ['DESERT', 'PLAINS'] },
+        { e: '🦇', name: 'Espectro Violeta', hp: 45, atk: 17, mp: 5, range: 1, abilities: ['dodge', 'camouflage'], minLevel: 4, filter: 'none', sprite: 'img/sprites/espectro_violeta.png', tags: ['UMBRAL', 'MYSTIC'], fav: ['FOREST', 'SWAMP'] },
+        { e: '❄️', name: 'Sentinela Glacial', hp: 70, atk: 16, mp: 3, range: 1, abilities: ['freeze'], minLevel: 4, filter: 'none', sprite: 'img/sprites/sentinela_glacial.png', tags: ['ICE', 'ROCK'], fav: ['SNOW', 'MOUNTAIN'] },
+        { e: '💨', name: 'Mistério de Cinzas', hp: 65, atk: 18, mp: 4, range: 1, abilities: ['camouflage', 'burn'], minLevel: 4, filter: 'none', sprite: 'img/sprites/misterio_de_cinzas.png', tags: ['SAND', 'UMBRAL'], fav: ['ASHES'] },
+        { e: '🗿', name: 'Gárgula Cinzenta', hp: 60, atk: 17, mp: 4, range: 1, abilities: ['flying', 'counter'], minLevel: 4, filter: 'none', sprite: 'img/sprites/gargula_cinzenta.png', tags: ['ROCK', 'WING'], fav: ['MOUNTAIN'] },
+        { e: '👻', name: 'Aparição Argêntea', hp: 50, atk: 19, mp: 6, range: 1, abilities: ['dodge'], minLevel: 4, filter: 'brightness(112%)', sprite: 'img/sprites/aparicao_argentea.png', tags: ['CELESTIAL', 'UMBRAL'], fav: ['PLAINS', 'SNOW'] },
+        { e: '⚡', name: 'Ser Tempestuoso', hp: 60, atk: 18, mp: 5, range: 2, abilities: ['electric', 'flying'], minLevel: 4, filter: 'none', sprite: 'img/sprites/ser_tempestuoso.png', tags: ['ELECTRIC', 'WING'], fav: ['PLAINS', 'MOUNTAIN'] },
+        { e: '🩸', name: 'Abismo Carmesim', hp: 75, atk: 19, mp: 4, range: 1, abilities: ['lifesteal'], minLevel: 5, filter: 'none', sprite: 'img/sprites/abismo_carmesim.png', tags: ['UMBRAL', 'STALKER'], fav: ['SWAMP', 'ASHES'] },
+        { e: '🌙', name: 'Cavaleiro Lunar', hp: 80, atk: 20, mp: 4, range: 1, abilities: ['flying', 'frost_armor'], minLevel: 5, filter: 'brightness(108%)', sprite: 'img/sprites/cavaleiro_lunar.png', tags: ['ICE', 'CELESTIAL'], fav: ['SNOW'] },
+        { e: '🌩️', name: 'Devorador das Sombras', hp: 95, atk: 21, mp: 3, range: 1, abilities: ['lifesteal', 'corte_amplo'], minLevel: 5, filter: 'none', sprite: 'img/sprites/devorador_sombras.png', tags: ['UMBRAL', 'PRIMAL'], fav: ['SWAMP', 'FOREST'] },
+        { e: '👹', name: 'Colosso Umbral', hp: 110, atk: 22, mp: 2, range: 1, scale: 1.3, abilities: ['stun', 'corte_amplo'], minLevel: 5, filter: 'none', sprite: 'img/sprites/colosso_umbral.png', tags: ['UMBRAL', 'PRIMAL'], fav: ['MOUNTAIN', 'ASHES'] }
     ],
     WATER: [
         { e: '🐊', name: 'Crocodilo', hp: 55, atk: 14, mp: 3, range: 1, abilities: ['dive'], minLevel: 2, filter: 'none', tags: ['PRIMAL', 'ABYSSAL'], fav: ['WATER'] },
