@@ -1051,6 +1051,15 @@ window.openContinentMap = function() {
         e.stopPropagation();
         $('resources-dropdown-list')?.classList.toggle('hidden');
         $('mana-dropdown-list')?.classList.add('hidden'); // Fecha a mana se estiver aberta
+        $('creature-res-dropdown')?.classList.add('hidden');
+    });
+
+    // Dropdown de Recursos de Criaturas (drops de feras)
+    $('creature-res-trigger')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        $('creature-res-dropdown')?.classList.toggle('hidden');
+        $('resources-dropdown-list')?.classList.add('hidden');
+        $('mana-dropdown-list')?.classList.add('hidden');
     });
 
     // Botão da Mochila de Itens de Campo
@@ -1126,6 +1135,13 @@ window.openContinentMap = function() {
 
     $('btn-go-shop')?.addEventListener('click', openShop);
     $('btn-leave-shop')?.addEventListener('click', () => { openManagement(); });
+
+    // X no canto: mesmo comportamento dos botões de fechar, sem rolar
+    $('x-leave-shop')?.addEventListener('click', () => { openManagement(); });
+    $('x-close-bestiary')?.addEventListener('click', () => { $('btn-close-bestiary')?.click(); });
+    $('x-close-reliquary')?.addEventListener('click', () => { $('btn-close-reliquary')?.click(); });
+    $('x-close-grimoire')?.addEventListener('click', () => { $('btn-close-grimoire')?.click(); });
+    $('x-close-event')?.addEventListener('click', () => { hide('event-screen'); });
 
     // === CÓDIGO SEGURO DOS BOTÕES DO GERENCIAMENTO E PAUSA ===
     const btnStart = $('btn-start-stage');

@@ -108,6 +108,22 @@
                         <div class="res-row" role="menuitem"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12C6 8.5 9 7 12 7c4 0 7 2.2 8.5 5-1.5 2.8-4.5 5-8.5 5-3 0-6-1.5-8.5-5Z"/><path d="M17 12l4-3.5v7L17 12Z"/><path d="M14.5 10.5h.01"/></svg><span class="res-name">Escamas</span><span class="res-val" id="res-scales">0</span></div>
                         <div class="res-row" role="menuitem"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12M6 21h12"/><path d="M8 3c0 4 3 5 4 6.5C13 8 16 7 16 3M8 21c0-4 3-5 4-6.5 1 1.5 4 2.5 4 6.5"/><path d="M12 13.5v.01"/></svg><span class="res-name">Areia</span><span class="res-val" id="res-sand">0</span></div>
                     </div>
+
+                    <!-- Dropdown dos recursos de criaturas (drops de feras) -->
+                    <div id="creature-res-trigger" class="resource-chip creature-chip" role="button" tabindex="0" aria-label="Recursos de criaturas" aria-expanded="false" aria-haspopup="true">
+                        <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="1.7"/><circle cx="14" cy="7" r="1.7"/><circle cx="18" cy="11" r="1.7"/><path d="M12 21c-2.8 0-4.8-1.4-4.8-3.3C7.2 15.6 9.4 14.5 12 14.5s4.8 1.1 4.8 3.2c0 1.9-2 3.3-4.8 3.3Z"/></svg>
+                        <span id="ui-creature-res-trigger" class="chip-value">0</span>
+                        <svg class="chip-caret mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                    <div id="creature-res-dropdown" class="res-dropdown hidden" role="menu">
+                        <div class="res-row" role="menuitem"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21c0-8 4-12 12-13"/><path d="M8 18c0-5 2-7 6-8"/><path d="M12 18c0-3 1-4 3-5"/></svg><span class="res-name">Garras</span><span class="res-val" id="cres-garras">0</span></div>
+                        <div class="res-row" role="menuitem"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4c-8 0-13 5-15 14 7-1 12-6 15-14Z"/><path d="M4.5 19.5 14 10"/></svg><span class="res-name">Asas</span><span class="res-val" id="cres-asas">0</span></div>
+                        <div class="res-row" role="menuitem"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19C5 9 12 5 20 4c0 8-4 15-15 15Z"/><path d="M5 19c4-6 8-9 12-11"/></svg><span class="res-name">Ervas</span><span class="res-val" id="cres-ervas">0</span></div>
+                        <div class="res-row" role="menuitem"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19 9 7l3.5 6L15.5 8 21 19H3Z"/></svg><span class="res-name">Ferro</span><span class="res-val" id="cres-ferro">0</span></div>
+                        <div class="res-row" role="menuitem"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a7 7 0 0 0-7 7c0 2.6 1.4 4.4 3 5.4V19h2v-2h4v2h2v-3.6c1.6-1 3-2.8 3-5.4a7 7 0 0 0-7-7Z"/><circle cx="9.3" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="14.7" cy="10.5" r="1.1" fill="currentColor" stroke="none"/></svg><span class="res-name">Veneno</span><span class="res-val" id="cres-veneno">0</span></div>
+                        <div class="res-row" role="menuitem"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c.6 4 2 5.6 6 6.5-4 1-5.4 2.5-6 6.5-.6-4-2-5.5-6-6.5 4-.9 5.4-2.5 6-6.5Z"/><path d="M19 16l.7 2.1 2.1.7-2.1.7-.7 2.1-.7-2.1-1.9-.7 1.9-.7Z"/></svg><span class="res-name">Pó Mágico</span><span class="res-val" id="cres-po_magico">0</span></div>
+                        <div class="res-row" role="menuitem"><svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c2 3 6 5 6 10a6 6 0 0 1-12 0c0-3 2-4 3-7 1 2 2 3 3 3 0-3-1-4 0-6Z"/></svg><span class="res-name">Brasa</span><span class="res-val" id="cres-brasa">0</span></div>
+                    </div>
                 </div>
 
                 <!-- Lado Direito: Botões de ação rápidos -->
@@ -192,15 +208,18 @@
     <div id="messages"></div>
 
     <div id="event-screen" class="layer screen hidden" style="z-index: 350; background: rgba(5,7,12,0.98);">
+        <canvas class="mm-bg-canvas"></canvas>
+        <button id="x-close-event" class="screen-x" aria-label="Fechar" title="Fechar"><svg class="mm-ico" viewBox="0 0 24 24"><path d="M5.5 5.5 18.5 18.5M18.5 5.5 5.5 18.5"/></svg></button>
         <div class="modal-card"
-            style="max-width: 550px; width: 95%; background: linear-gradient(180deg, #10121a 0%, #060810 100%); border-color: var(--gold-dark);">
-            <div id="ev-icon" style="font-size: 70px; text-shadow: 0 0 20px var(--gold); margin-bottom: 10px;">❓</div>
+            style="max-width: 550px; width: 95%; background: linear-gradient(180deg, rgba(16,18,26,.97) 0%, rgba(6,8,16,.98) 100%); border:1px solid rgba(201,162,39,.5); outline:1px solid rgba(232,200,74,.2); outline-offset:4px; border-radius:4px; box-shadow:0 0 40px rgba(0,0,0,.9), 0 0 24px -6px rgba(201,162,39,.3);">
+            <div id="ev-icon" style="font-size:60px;text-shadow:0 0 20px var(--gold);margin-bottom:8px;">❓</div>
             <h1 id="ev-title"
-                style="font-family:'Cinzel',serif;font-size:2.2rem;color:var(--gold);margin-top:0; border-bottom: 1px solid var(--gold-dark); padding-bottom: 10px;">
+                style="font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold);margin-top:0;text-align:center;letter-spacing:2px;text-shadow:0 0 12px rgba(201,162,39,.4);">
                 Evento</h1>
-            <p id="ev-desc" style="color:#ccc;font-size:14px;line-height:1.6;margin-bottom:20px;text-align:justify;">
+            <div class="mm-rule mode-rule" style="margin:8px 0 16px;"><i></i><b></b><i></i></div>
+            <p id="ev-desc" style="color:#c4bda8;font-size:14px;line-height:1.7;margin-bottom:20px;text-align:justify;font-family:sans-serif;">
             </p>
-            <div id="ev-options" style="display:flex;flex-direction:column;gap:12px;"></div>
+            <div id="ev-options" style="display:flex;flex-direction:column;gap:10px;"></div>
         </div>
     </div>
 
@@ -225,14 +244,22 @@
         </div>
     </div>
 
-    <div id="grimoire-screen" class="layer screen hidden">
-        <h1 class="screen-title" style="font-size:2.2rem;">📖 Grimório</h1>
-        <p id="grimoire-subtitle" class="screen-subtitle"></p>
-        <div id="grimoire-mana-display"
-            style="margin-top:10px;font-family:Cinzel,serif;font-size:13px;color:var(--gold-light);display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+    <div id="grimoire-screen" class="layer screen mm-screen hidden" style="background:#06070d; overflow-y:auto;">
+        <button id="x-close-grimoire" class="screen-x" aria-label="Fechar" title="Fechar (ESC)"><svg class="mm-ico" viewBox="0 0 24 24"><path d="M5.5 5.5 18.5 18.5M18.5 5.5 5.5 18.5"/></svg></button>
+        <canvas class="mm-bg-canvas"></canvas>
+        <div class="mm-content" style="max-width:1000px; padding:20px 16px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <svg class="mm-ico" viewBox="0 0 24 24" style="width:34px;height:34px;color:var(--gold);filter:drop-shadow(0 0 8px var(--gold));"><path d="M5 4c0-.8.7-1.5 1.5-1.5H19v17H6.5c-.8 0-1.5.7-1.5 1.5Z"/><path d="M5 6v15c0-.8.7-1.5 1.5-1.5H19"/><path d="M9 7h6M9 10h6M9 13h4"/></svg>
+                <h1 class="mode-title" style="margin:0;">Grimório</h1>
+            </div>
+            <div class="mm-rule mode-rule"><i></i><b></b><i></i></div>
+            <p id="grimoire-subtitle" class="screen-subtitle" style="color:#a89c7e;"></p>
+            <div id="grimoire-mana-display"
+                style="margin-top:10px;font-family:Cinzel,serif;font-size:13px;color:var(--gold-light);display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+            </div>
+            <div id="grimoire-grid" class="grimoire-grid"></div>
+            <button id="btn-close-grimoire" class="mm-btn" style="margin-top:16px;">← Fechar</button>
         </div>
-        <div id="grimoire-grid" class="grimoire-grid"></div>
-        <button id="btn-close-grimoire">← Fechar</button>
     </div>
 
     <div id="ability-replace-modal" class="layer screen hidden" style="background:rgba(0,0,0,0.85);z-index:700;">
@@ -506,17 +533,28 @@
         </div>
     </div>
 
-    <div id="shop-screen" class="layer screen hidden">
-        <h1 class="screen-title" style="font-size:2.5rem;">O Mercador</h1>
-        <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold-light);margin-bottom:10px;">Seu Ouro: 💰
-            <span id="shop-gold-display">0</span>
+    <div id="shop-screen" class="layer screen mm-screen hidden" style="background:#06070d; overflow-y:auto;">
+        <button id="x-leave-shop" class="screen-x" aria-label="Sair da loja" title="Sair da loja"><svg class="mm-ico" viewBox="0 0 24 24"><path d="M5.5 5.5 18.5 18.5M18.5 5.5 5.5 18.5"/></svg></button>
+        <canvas class="mm-bg-canvas"></canvas>
+        <div class="mm-content" style="max-width:900px; padding:20px 16px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <svg class="mm-ico" viewBox="0 0 24 24" style="width:36px;height:36px;color:var(--gold);filter:drop-shadow(0 0 8px var(--gold));"><circle cx="12" cy="12" r="7.5"/><path d="M12 8.5v7M9.8 10c0-1.2 1-2 2.2-2s2.2.8 2.2 2-1 1.8-2.2 1.8-2.2.7-2.2 1.9 1 2 2.2 2 2.2-.8 2.2-2"/></svg>
+                <h1 class="mode-title" style="margin:0;">O Mercador</h1>
+            </div>
+            <div class="mm-rule mode-rule"><i></i><b></b><i></i></div>
+            <div style="display:flex;align-items:center;gap:8px;font-family:Cinzel,serif;font-size:15px;color:var(--gold-light);margin-bottom:16px;">
+                <svg class="mm-ico" viewBox="0 0 24 24" style="width:20px;height:20px;"><defs><radialGradient id="sg-coin" cx=".35" cy=".3" r=".95"><stop offset="0" stop-color="#ffe9a3"/><stop offset=".55" stop-color="#e8c84a"/><stop offset="1" stop-color="#8a6d12"/></radialGradient></defs><circle cx="12" cy="12" r="8.2" fill="url(#sg-coin)" stroke="#f5e6a0" stroke-width=".9"/><polygon points="12,8.8 14.9,10.4 14.9,13.6 12,15.2 9.1,13.6 9.1,10.4" fill="none" stroke="#6b5410" stroke-width=".9" opacity=".8"/></svg>
+                <span>Seu Ouro: <b id="shop-gold-display" style="color:var(--gold);text-shadow:0 0 8px var(--gold);">0</b></span>
+            </div>
+            <div id="shop-grid" class="shop-grid"></div>
+            <div style="display:flex;gap:10px;margin-top:18px;justify-content:center;flex-wrap:wrap;">
+                <button id="btn-refresh-shop" class="mm-btn" style="border-color:var(--warning);color:var(--warning);">
+                    <svg class="mm-ico" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                    Atualizar (-2 ouro)
+                </button>
+                <button id="btn-leave-shop" class="mm-btn mm-btn-primary">Gerenciar Exército</button>
+            </div>
         </div>
-        <div id="shop-grid" class="shop-grid"></div>
-        <div style="display:flex;gap:10px;margin-top:10px;justify-content:center;flex-wrap:wrap;"><button
-                id="btn-refresh-shop"
-                style="background:transparent;border-color:var(--warning);color:var(--warning);">🔄 Atualizar
-                (-2💰)</button><button id="btn-leave-shop" class="btn-success"
-                style="font-size:14px;padding:12px 30px;">Gerenciar Exército →</button></div>
     </div>
 
     <div id="kingdom-screen" class="layer screen hidden" style="background: rgba(10,12,18,0.98);">
@@ -711,20 +749,39 @@
         </div>
     </div>
 
-    <div id="bestiary-screen" class="layer screen hidden">
-        <h1 class="screen-title" style="font-size:2.2rem;">Bestiário</h1>
-        <div id="bestiary-grid" class="bestiary-grid"></div><button id="btn-close-bestiary">← Fechar</button>
+    <div id="bestiary-screen" class="layer screen mm-screen hidden" style="background:#06070d; overflow-y:auto;">
+        <button id="x-close-bestiary" class="screen-x" aria-label="Fechar" title="Fechar"><svg class="mm-ico" viewBox="0 0 24 24"><path d="M5.5 5.5 18.5 18.5M18.5 5.5 5.5 18.5"/></svg></button>
+        <canvas class="mm-bg-canvas"></canvas>
+        <div class="mm-content" style="max-width:1000px; padding:20px 16px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <svg class="mm-ico" viewBox="0 0 24 24" style="width:34px;height:34px;color:var(--gold);filter:drop-shadow(0 0 8px var(--gold));"><path d="M12 3a7 7 0 0 0-7 7c0 2.6 1.4 4.4 3 5.4V19h2v-2h4v2h2v-3.6c1.6-1 3-2.8 3-5.4a7 7 0 0 0-7-7Z"/><circle cx="9.3" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="14.7" cy="10.5" r="1.1" fill="currentColor" stroke="none"/></svg>
+                <h1 class="mode-title" style="margin:0;">Bestiário</h1>
+            </div>
+            <div class="mm-rule mode-rule"><i></i><b></b><i></i></div>
+            <p class="screen-subtitle" style="color:#a89c7e;">Feras descobertas no mundo de Hexis</p>
+            <div id="bestiary-grid" class="bestiary-grid"></div>
+            <button id="btn-close-bestiary" class="mm-btn" style="margin-top:16px;">← Fechar</button>
+        </div>
     </div>
 
-    <div id="reliquary-screen" class="layer screen hidden">
-        <h1 class="screen-title" style="font-size:2.2rem;color:#9b59b6;">Relicário</h1>
-        <p class="screen-subtitle" id="reliquary-subtitle">Artefatos Adquiridos</p>
-        <button id="btn-toggle-reliquary"
-            style="margin-top:10px;border-color:var(--gold-light);color:var(--gold-light);background:transparent;">🔄
-            Ver Roguelite</button>
-        <div id="reliquary-grid" class="bestiary-grid"
-            style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));"></div>
-        <button id="btn-close-reliquary">← Fechar</button>
+    <div id="reliquary-screen" class="layer screen mm-screen hidden" style="background:#06070d; overflow-y:auto;">
+        <button id="x-close-reliquary" class="screen-x" aria-label="Fechar" title="Fechar"><svg class="mm-ico" viewBox="0 0 24 24"><path d="M5.5 5.5 18.5 18.5M18.5 5.5 5.5 18.5"/></svg></button>
+        <canvas class="mm-bg-canvas"></canvas>
+        <div class="mm-content" style="max-width:1000px; padding:20px 16px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <svg class="mm-ico" viewBox="0 0 24 24" style="width:34px;height:34px;color:#9b59b6;filter:drop-shadow(0 0 8px #9b59b6);"><path d="M12 3l7 5-2.5 8h-9L5 8Z"/><path d="M5 8h14"/><path d="M12 3v13"/><path d="M7 21h10"/><path d="M9 16v5M15 16v5"/></svg>
+                <h1 class="mode-title" style="margin:0;color:#c49ae8;text-shadow:0 0 12px rgba(155,89,182,.5);">Relicário</h1>
+            </div>
+            <div class="mm-rule mode-rule"><i></i><b style="background:#9b59b6;box-shadow:0 0 8px #9b59b6;"></b><i></i></div>
+            <p class="screen-subtitle" id="reliquary-subtitle" style="color:#a89c7e;">Artefatos Adquiridos</p>
+            <button id="btn-toggle-reliquary" class="mm-btn" style="margin-top:10px;border-color:#9b59b6;color:#c49ae8;">
+                <svg class="mm-ico" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                Ver Roguelite
+            </button>
+            <div id="reliquary-grid" class="bestiary-grid"
+                style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));"></div>
+            <button id="btn-close-reliquary" class="mm-btn" style="margin-top:16px;">← Fechar</button>
+        </div>
     </div>
 
     <div id="unit-details-modal" class="layer screen hidden">

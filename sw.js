@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v30'; // v30: ícones SVG das 59 magias + pips de custo sem emoji
+const CACHE_NAME = 'hextactics-v33'; // v33: botão X fixo no canto de todas as telas rolando
 const ASSETS = [
     './',
     './index.html',

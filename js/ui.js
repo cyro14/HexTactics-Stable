@@ -226,7 +226,6 @@ function showPopup(txt, target, col) {
     const p = renderer.getPos(target.vq || target.q, target.vr || target.r);
 
     // CASCATA: rajadas (ex.: ganho de recursos) empilham verticalmente
-    // em vez de um em cima do outro — cada popup nasce 26px mais alto
     const live = document.querySelectorAll('#popup-layer .dmg-popup').length;
     const stack = (live % 5) * 26;
 
@@ -238,17 +237,27 @@ function showPopup(txt, target, col) {
     const randomOffsetX = (Math.random() - 0.5) * 30;
     el.style.left = (p.x + randomOffsetX) + 'px';
     el.style.top = (p.y - 25 - stack) + 'px';
+    el.style.opacity = '1';
 
-    // 6 segundos de vida: sobe devagar, o fade só começa aos 4.8s
-    el.style.transition = 'top 5.5s ease-out, opacity .8s ease-out 4.8s';
-    $('popup-layer').appendChild(el);
+    const layer = $('popup-layer');
+    if (!layer) return;
+    layer.appendChild(el);
 
-    setTimeout(() => {
-        el.style.top = (p.y - 130 - stack) + 'px';
-        el.style.opacity = '0';
-    }, 50);
+    // 1) pop-in rápido (scale) via keyframe UMA vez
+    el.animate(
+        [{ transform: 'translateX(-50%) scale(.6)', opacity: '0' },
+         { transform: 'translateX(-50%) scale(1)', opacity: '1' }],
+        { duration: 180, easing: 'cubic-bezier(.2,.8,.25,1)', fill: 'forwards' }
+    );
 
-    setTimeout(() => el.remove(), 5900);
+    // 2) começa a subida lenta
+    setTimeout(() => { el.style.top = (p.y - 130 - stack) + 'px'; }, 60);
+
+    // 3) fade SÓ aos 5 segundos — controlado por JS, sem transition-delay
+    setTimeout(() => { el.style.opacity = '0'; }, 5000);
+
+    // 4) remove aos 6 segundos
+    setTimeout(() => el.remove(), 6000);
 }
 
 function showMessage(txt, col) {
@@ -1233,7 +1242,10 @@ window.showBeastDetails = function (b, bypassUnlock = false) {
                     <div class="bds-portrait" style="--fac-col:${facCol}">${portHtml}</div>
                     <div class="bds-tit">
                         <div class="bds-name">${b.name}</div>
-                        <div class="bds-sub">${bdsBase}Nível ${b.level}</div>
+                        <div class="bds-level-line">
+                            ${bdsBase ? `<span class="bds-base">${bdsBase}</span>` : ''}
+                            <span class="bds-lvl-badge">Nível ${b.level}</span>
+                        </div>
                     </div>
                 </div>
                 <div class="side-stat-bars">${unitBarsHtml(b)}</div>
@@ -1332,6 +1344,17 @@ function updateUI() {
         if ($('res-stone')) $('res-stone').innerText = res.stone || 0;
         if ($('res-scales')) $('res-scales').innerText = res.scales || 0;
         if ($('res-sand')) $('res-sand').innerText = res.sand || 0;
+
+        // Recursos de criaturas (drops de feras)
+        const cresKeys = ['garras', 'asas', 'ervas', 'ferro', 'veneno', 'po_magico', 'brasa'];
+        let cresTotal = 0;
+        cresKeys.forEach(k => {
+            const v = (res[k] !== undefined) ? res[k] : 0;
+            cresTotal += v;
+            const el = $('cres-' + k);
+            if (el) el.innerText = v;
+        });
+        if ($('ui-creature-res-trigger')) $('ui-creature-res-trigger').innerText = cresTotal;
     }
 
     updateManaUI();
