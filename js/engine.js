@@ -1772,11 +1772,7 @@ class Game {
         }
         if (typeof showMessage === 'function') showMessage(txt, col);
 
-        // Mostra banner animado se for turno do jogador (mas nunca durante
-        // a intro da batalha — a fila mostra na ordem certa)
-        if (typeof showTurnBanner === 'function' && this.currentTurn === 1 && !this._battleIntroPlaying) {
-            showTurnBanner('Seu Turno', `Turno ${this.turnCount}`, 1);
-        }
+        // (banner de turno flutuante removido — indicador fixo #turn-badge)
     }
 
     checkWin() {
@@ -2987,9 +2983,6 @@ window.startGame = function (load, isRoguelite = false, leaderId = null, isDuel 
                 window.battleBanners.push(() => {
                     if (typeof showObjectiveBannerText === 'function') showObjectiveBannerText(text);
                 }, 2900);
-                window.battleBanners.push(() => {
-                    if (typeof showTurnBanner === 'function') showTurnBanner('Seu Turno', `Turno ${game.turnCount || 1}`, 1);
-                }, 1400);
                 window.battleBanners.drain().then(() => {
                     game._turnBannerShown = true;
                     game._battleIntroPlaying = false;

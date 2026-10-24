@@ -21,33 +21,8 @@
     <div id="game-container" class="hidden">
         <canvas id="gameCanvas" class="layer"> </canvas>
         <div id="ui-layer" class="layer">
-            <!-- Banner de Turno (animação central estilo Wesnoth) -->
-            <div id="turn-banner" class="turn-banner hidden" aria-hidden="true" role="status" aria-live="polite">
-                <div class="turn-banner-left">
-                    <svg class="turn-banner-flourish" viewBox="0 0 48 48" aria-hidden="true">
-                        <path d="M4 24c0-8 6-12 14-12s14 4 14 12-6 12-14 12S4 32 4 24Z" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <path d="M24 4v40M4 24h40" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
-                    </svg>
-                </div>
-                <div class="turn-banner-center">
-                    <svg class="mm-ico turn-banner-ico" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M18.5 3 9 12.5M18.5 3l-4.3.7M18.5 3l-.7 4.3" />
-                        <path d="M7.6 11.1l2.8 2.8M9 12.5l-2.5 2.5" />
-                        <circle cx="5.1" cy="16.4" r="1" />
-                        <path d="M5.5 3 15 12.5M5.5 3l4.3.7M5.5 3l.7 4.3" />
-                        <path d="M16.4 11.1l-2.8 2.8M15 12.5l2.5 2.5" />
-                        <circle cx="18.9" cy="16.4" r="1" />
-                    </svg>
-                    <span id="turn-banner-title">Seu Turno</span>
-                </div>
-                <div class="turn-banner-right">
-                    <span id="turn-banner-sub" class="turn-banner-sub">Turno 1</span>
-                    <svg class="turn-banner-flourish" viewBox="0 0 48 48" aria-hidden="true">
-                        <path d="M4 24c0-8 6-12 14-12s14 4 14 12-6 12-14 12S4 32 4 24Z" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <path d="M24 4v40M4 24h40" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
-                    </svg>
-                </div>
-            </div>
+            <!-- Banner de Turno: REMOVIDO — o indicador oficial é o campo
+                 fixo #turn-badge (ao lado da mana) na barra superior -->
 
             <!-- Modal do Histórico Completo (Livre no meio da tela) -->
             <div id="full-log-modal" class="battle-modal hidden">

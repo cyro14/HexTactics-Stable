@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v24'; // v24: campo de turno ao lado da mana + crônica à esquerda + popups 4s
+const CACHE_NAME = 'hextactics-v25'; // v25: banner de turno removido + popups 6s em cascata + prévia de combate refeita
 const ASSETS = [
     './',
     './index.html',

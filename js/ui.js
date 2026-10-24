@@ -224,6 +224,12 @@ function replaceEffectIcons(txt, col) {
 function showPopup(txt, target, col) {
     if (!renderer) return;
     const p = renderer.getPos(target.vq || target.q, target.vr || target.r);
+
+    // CASCATA: rajadas (ex.: ganho de recursos) empilham verticalmente
+    // em vez de um em cima do outro — cada popup nasce 26px mais alto
+    const live = document.querySelectorAll('#popup-layer .dmg-popup').length;
+    const stack = (live % 5) * 26;
+
     const el = document.createElement('div');
     el.className = 'dmg-popup';
     el.style.color = col;
@@ -231,19 +237,18 @@ function showPopup(txt, target, col) {
 
     const randomOffsetX = (Math.random() - 0.5) * 30;
     el.style.left = (p.x + randomOffsetX) + 'px';
-    el.style.top = (p.y - 25) + 'px';
+    el.style.top = (p.y - 25 - stack) + 'px';
 
-    // DADOS FLUTUANTES: sobe DEVAGINHO por 4s; o fade só começa aos 3.2s
-    // (antes sumiam rápido demais pra ler dano/crit/efeitos)
-    el.style.transition = 'top 4s ease-out, opacity .8s ease-out 3.2s';
+    // 6 segundos de vida: sobe devagar, o fade só começa aos 4.8s
+    el.style.transition = 'top 5.5s ease-out, opacity .8s ease-out 4.8s';
     $('popup-layer').appendChild(el);
 
     setTimeout(() => {
-        el.style.top = (p.y - 105) + 'px';
+        el.style.top = (p.y - 130 - stack) + 'px';
         el.style.opacity = '0';
     }, 50);
 
-    setTimeout(() => el.remove(), 4200);
+    setTimeout(() => el.remove(), 5900);
 }
 
 function showMessage(txt, col) {
@@ -575,28 +580,11 @@ function playBossIntroCine(epicUnit) {
     }, 2400);
 }
 
-// Exibe o banner de turno estilo Wesnoth
+// Banner de turno flutuante: REMOVIDO por pedido — o indicador oficial
+// agora é o campo fixo ao lado da mana (#turn-badge). Mantida como
+// no-op para não quebrar chamadas antigas.
 function showTurnBanner(title, subText, faction = 1) {
-    const banner = $('turn-banner');
-    if (!banner) return;
-
-    const titleEl = $('turn-banner-title');
-    const subEl = $('turn-banner-sub');
-
-    // Configura cores por facção
-    banner.classList.remove('enemy', 'wild');
-    if (faction === 2) banner.classList.add('enemy');
-    else if (faction === 0) banner.classList.add('wild');
-
-    // Atualiza textos
-    if (titleEl) titleEl.textContent = title;
-    if (subEl) subEl.textContent = subText;
-
-    // Mostra com animação
-    banner.classList.remove('hidden');
-    banner.style.animation = 'none';
-    banner.offsetHeight; // force reflow
-    banner.style.animation = '';
+    return;
 }
 
 // Atualiza a UI do turno (badge + banner)
@@ -617,13 +605,8 @@ function updateTurnUI() {
         if (bCount) bCount.textContent = `T${turnNum}`;
     }
 
-    // Turn Banner (só mostra no início do turno do jogador — mas NUNCA
-    // durante a intro da batalha, que enfileira na ordem certa:
-    // chefe → objetivo → turno)
-    if (isPlayerTurn && !game._turnBannerShown && !game._battleIntroPlaying) {
-        showTurnBanner('Seu Turno', `Turno ${turnNum}`, 1);
-        game._turnBannerShown = true;
-    } else if (!isPlayerTurn) {
+    // Turn Banner: removido — o campo fixo #turn-badge é o indicador oficial
+    if (!isPlayerTurn) {
         game._turnBannerShown = false;
     }
 }
@@ -2654,7 +2637,6 @@ function advanceCampaign() {
             const epicUnit = game.units.find(u => u.faction === 0 && (u.isBoss || u.isElite));
             if (epicUnit) window.battleBanners.push(() => playBossIntroCine(epicUnit), 2400);
             window.battleBanners.push(() => showObjectiveBannerText(objectiveText()), 2900);
-            window.battleBanners.push(() => showTurnBanner('Seu Turno', `Turno ${game.turnCount || 1}`, 1), 1400);
             await window.battleBanners.drain();
         }
         game._turnBannerShown = true;

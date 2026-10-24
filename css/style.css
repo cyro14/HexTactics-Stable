@@ -1659,62 +1659,159 @@ button.btn-success {
     opacity: 1;
 }
 
-/* Previsão de Combate (Combat Forecast) */
+/* Previsão de Combate (Combat Forecast) — remaster profissional */
 #combat-forecast {
     position: absolute;
-    background: rgba(15, 15, 20, 0.95);
-    border: 2px solid #c0392b;
-    border-radius: 8px;
-    padding: 10px;
-    color: white;
+    background:
+        radial-gradient(ellipse 90% 40% at 50% 0%, rgba(192, 57, 43, .14), transparent 70%),
+        linear-gradient(180deg, rgba(13, 10, 8, .97) 0%, rgba(6, 5, 7, .98) 100%);
+    border: 1px solid rgba(192, 57, 43, .75);
+    outline: 1px solid rgba(232, 200, 74, .2);
+    outline-offset: 3px;
+    border-radius: 6px;
+    padding: 12px 14px;
+    color: #f2ecdc;
     pointer-events: none;
     z-index: 2000;
     display: flex;
-    gap: 15px;
-    box-shadow: 0 0 15px rgba(192, 57, 43, 0.5);
+    gap: 12px;
+    align-items: center;
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, .85),
+        0 0 22px -4px rgba(192, 57, 43, .5);
     display: none;
     font-family: 'Cinzel', serif;
 }
 
-.forecast-side {
+.fc-side {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 90px;
-    width: 75px;
+    width: 118px;
+    gap: 3px;
 }
 
-.forecast-emoji {
-    font-size: 32px;
-    margin-bottom: 5px;
+.fc-portrait {
+    height: 56px;
+    max-width: 100px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .7));
 }
-
-.forecast-stat {
-    font-size: 10px;
-    margin: 2px 0;
-    color: #ddd;
-    text-shadow: 1px 1px 2px #000;
-    font-family: sans-serif;
-}
-
-.forecast-dmg {
-    font-size: 15px;
-    font-weight: bold;
-    color: #e74c3c;
-    margin-top: 2px;
-}
-
-.forecast-vs {
+.fc-portrait-emoji {
+    font-size: 34px;
     display: flex;
     align-items: center;
-    font-weight: bold;
-    color: var(--gold-light);
-    font-size: 20px;
+    justify-content: center;
+    width: 100%;
 }
 
-.forecast-emoji {
+.fc-name {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    text-shadow: 0 1px 2px #000;
+    max-width: 118px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fc-hp {
+    width: 100%;
+    text-align: center;
+}
+.fc-hp span {
+    font-family: sans-serif;
+    font-size: 9.5px;
+    color: #ddd;
+    text-shadow: 0 1px 2px #000;
+}
+.fc-hp em {
+    font-style: normal;
+    opacity: .55;
+}
+.fc-hpbar {
+    height: 5px;
+    width: 92%;
+    margin: 2px auto 0;
+    background: rgba(8, 8, 12, .95);
+    border: 1px solid rgba(255, 255, 255, .14);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.fc-hpbar i {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+}
+
+.fc-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 3px;
+}
+.fc-row-ico {
+    width: 13px;
+    height: 13px;
+    filter: drop-shadow(0 0 4px currentColor);
+}
+.fc-row b {
+    font-size: 15px;
+    text-shadow: 0 1px 3px #000;
+}
+.fc-row span {
+    font-family: sans-serif;
+    font-size: 8.5px;
+    color: #b9b29e;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+}
+
+.fc-vs {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--gold-light);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(232, 200, 74, .4);
+}
+.fc-vs .fc-row-ico {
+    width: 20px;
+    height: 20px;
+    color: var(--gold);
+    filter: drop-shadow(0 0 6px rgba(232, 200, 74, .7));
+}
+
+/* modo doma */
+.fc-tame .fc-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    text-shadow: 0 1px 2px #000;
+    margin-bottom: 4px;
+}
+.fc-chance {
     font-size: 26px;
-    margin-bottom: 2px;
+    font-weight: 700;
+    margin-top: 2px;
+}
+.fc-caption {
+    font-family: sans-serif;
+    font-size: 8.5px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    color: #b9b29e;
 }
 
 

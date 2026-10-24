@@ -431,6 +431,23 @@ window.openContinentMap = function() {
         });
     };
 
+    // Ícones da prévia (SVG linha, sem emoji)
+    const FC_ICO = {
+        sword: '<path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/>',
+        shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+        wind: '<path d="M4 8h8a2.5 2.5 0 1 0-2.5-2.5"/><path d="M4 12h12a2.5 2.5 0 1 1-2.5 2.5"/><path d="M4 16h6"/>',
+        gem: '<path d="M12 3l7 5-2.5 8h-9L5 8Z"/><path d="M5 8h14M12 3v13"/>'
+    };
+    const fcIco = (p, col) => `<svg class="fc-row-ico" viewBox="0 0 24 24" style="color:${col}" aria-hidden="true">${p}</svg>`;
+    const fcPortrait = (u, w = 52, h = 56) => u.sprite
+        ? `<img class="fc-portrait" src="${u.sprite}" alt="${u.name}" style="width:${w}px;height:${h}px;filter:${u.filter || 'none'};">`
+        : `<span class="fc-portrait fc-portrait-emoji">${u.emoji}</span>`;
+    const fcHpBar = (u, col) => `
+        <div class="fc-hp">
+            <span>HP ${u.hp}<em>/${u.maxHp}</em></span>
+            <div class="fc-hpbar"><i style="width:${Math.max(0, Math.min(100, 100 * u.hp / u.maxHp))}%;background:${col};box-shadow:0 0 6px ${col};"></i></div>
+        </div>`;
+
     function handleCombatForecast(clientX, clientY, isTouch = false, isPinned = false) {
         const fc = $('combat-forecast');
         if (!fc) return;
@@ -463,10 +480,12 @@ window.openContinentMap = function() {
                     let chance = game.calculateTameChance(game.selectedUnit, target) * 100;
 
                     fc.innerHTML = `
-                        <div class="forecast-side" style="width:140px">
-                            <span class="forecast-emoji">${target.emoji}</span>
-                            <span class="forecast-stat">Chance de Captura</span>
-                            <span class="forecast-dmg" style="color:#1abc9c">${Math.min(100, Math.floor(chance))}%</span>
+                        <div class="fc-side fc-tame">
+                            <div class="fc-head">${fcIco(FC_ICO.gem, '#1abc9c')}Domar</div>
+                            ${fcPortrait(target, 60, 64)}
+                            <div class="fc-name">${target.name}</div>
+                            <div class="fc-chance" style="color:#1abc9c;text-shadow:0 0 12px rgba(26,188,156,.55);">${Math.min(100, Math.floor(chance))}%</div>
+                            <div class="fc-caption">chance de captura</div>
                         </div>
                     `;
                     fc.style.display = 'flex';
@@ -474,31 +493,34 @@ window.openContinentMap = function() {
                 // --- PREVISÃO DE COMBATE ---
                 else {
                     if (target !== lastForecastTarget || game.selectedUnit !== lastForecastAttacker) {
-                        let dmgDealt = game.calcDmg(game.selectedUnit, target);
+                        const su = game.selectedUnit;
+                        let dmgDealt = game.calcDmg(su, target);
                         let dmgTaken = 0;
                         if (target.getEffectiveRange(game) >= dist) {
-                            dmgTaken = Math.floor(game.calcDmg(target, game.selectedUnit) * 0.6);
+                            dmgTaken = Math.floor(game.calcDmg(target, su) * 0.6);
                             if (target.abilities.includes('counter')) dmgTaken = Math.floor(dmgTaken * 1.2);
                         }
                         let dodgeC = target.abilities.includes('dodge') ? 30 : 0;
                         if (target.abilities.includes('flying')) dodgeC += 25;
 
                         fc.innerHTML = `
-                            <div class="forecast-side">
-                                <span class="forecast-emoji" style="filter:${game.selectedUnit.filter}">${game.selectedUnit.emoji}</span>
-                                <span class="forecast-stat">HP: ${game.selectedUnit.hp}</span>
-                                <span class="forecast-dmg">⚔️ ${dmgDealt}</span>
+                            <div class="fc-side">
+                                ${fcPortrait(su)}
+                                <div class="fc-name">${su.name}</div>
+                                ${fcHpBar(su, '#4a9edd')}
+                                <div class="fc-row">${fcIco(FC_ICO.sword, '#e8c84a')}<b style="color:#f5e6a0;">${dmgDealt}</b><span>dano</span></div>
                             </div>
-                            <div class="forecast-vs">VS</div>
-                            <div class="forecast-side">
-                                <span class="forecast-emoji" style="filter:${target.filter}">${target.emoji}</span>
-                                <span class="forecast-stat">HP: ${target.hp}</span>
-                                <span class="forecast-dmg" style="color:#f39c12">🛡️ ${dmgTaken}</span>
-                                <span class="forecast-stat" style="color:#00ffff; margin-top:3px;">Esq: ${dodgeC}%</span>
+                            <div class="fc-vs">${fcIco(FC_ICO.sword, 'var(--gold-light)')}<span>VS</span></div>
+                            <div class="fc-side">
+                                ${fcPortrait(target)}
+                                <div class="fc-name">${target.name}</div>
+                                ${fcHpBar(target, '#c0392b')}
+                                <div class="fc-row">${fcIco(FC_ICO.shield, '#f39c12')}<b style="color:#f5b041;">${dmgTaken}</b><span>contra</span></div>
+                                <div class="fc-row">${fcIco(FC_ICO.wind, '#00c8ff')}<b style="color:#7fd8ff;">${dodgeC}%</b><span>esquiva</span></div>
                             </div>
                         `;
                         lastForecastTarget = target;
-                        lastForecastAttacker = game.selectedUnit;
+                        lastForecastAttacker = su;
                     }
                 }
 
