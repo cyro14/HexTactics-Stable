@@ -354,7 +354,7 @@ function updateManaUI() {
         // Monta as linhas da lista (1 coluna com as manas existentes)
         listHtml += `
             <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; border-bottom:1px solid rgba(255,255,255,0.05); color:${mt.col}; font-size:11px; font-weight:bold; white-space:nowrap;">
-                <span style="font-size:13px;">${mt.icon}</span>
+                <span style="display:flex; color:${mt.col};">${svgIcon(TAG_ICONS[tag], 13)}</span>
                 <span style="flex:1; text-align:left; color:#ddd; font-family:sans-serif; font-weight:normal;">${mt.name}</span>
                 <span style="color:#fff; background:rgba(255,255,255,0.1); padding:1px 5px; border-radius:3px;">${available}</span>
             </div>`;
@@ -418,14 +418,14 @@ function renderSpellBar() {
         // Custo compacto no canto do slot (ícone de mana + quantidade)
         let costHtml = caster.isLeader ? Object.entries(spell.cost).map(([tag, amt]) => {
             const mt = MANA_TYPES[tag]; if (!mt) return '';
-            return `<b style="color:${mt.col}">${mt.icon}${amt}</b>`;
+            return `<b style="color:${mt.col}">${svgIcon(TAG_ICONS[tag], 9)}${amt}</b>`;
         }).join('') : `<b style="color:#2ecc71">0</b>`;
 
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = `spell-slot-lol ${isActive ? 'spell-active' : ''} ${!can ? 'spell-disabled' : ''}`;
         btn.innerHTML = `
-            <span class="sl-icon" aria-hidden="true">${spell.icon}</span>
+            <span class="sl-icon" aria-hidden="true">${spellIconHtml(spell, 21)}</span>
             <span class="sl-cost">${costHtml}</span>
             ${cd > 0 ? `<span class="sl-cd" aria-hidden="true">${cd}</span>` : ''}`;
         btn.title = `${spell.name} (Nv${spell.level}) — ${spell.desc}${caster.isLeader ? '' : ' · Custo: ação da fera'}`;
@@ -939,10 +939,10 @@ function openGrimoire() {
             const card = document.createElement('div'); card.className = `grimoire-card ${isKnown ? 'known' : ''}`; card.style.borderColor = isKnown ? borderCol : borderCol + '44'; card.style.opacity = isKnown ? '1' : '0.5';
             let costHtml = Object.entries(spell.cost).map(([tag, amt]) => {
                 const mtt = MANA_TYPES[tag]; if (!mtt) return '';
-                return `<span style="color:${mtt.col};font-size:10px;">${mtt.icon}×${amt}</span>`;
+                return `<span style="color:${mtt.col};font-size:10px;display:inline-flex;align-items:center;gap:1px;">${svgIcon(TAG_ICONS[tag], 9)}×${amt}</span>`;
             }).join(' ');
             card.innerHTML = `<span class="grimoire-level-badge" style="background:${borderCol}22;color:${borderCol};border-color:${borderCol}88;">Nível ${spell.level}</span>
-                <div style="font-size:28px;margin:6px 0;">${spell.icon}</div>
+                <div style="margin:6px 0;">${spellIconHtml(spell, 30)}</div>
                 <div style="font-family:Cinzel,serif;font-size:13px;color:${isKnown ? 'var(--gold-light)' : '#888'};margin-bottom:6px;">${spell.name}</div>
                 <div style="font-size:11px;color:#aaa;line-height:1.4;margin-bottom:8px;">${spell.desc}</div>
                 <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">${costHtml}</div>
@@ -971,12 +971,12 @@ async function showSpellLearnModal(leader, level) {
         candidates.forEach(spell => {
             let costHtml = Object.entries(spell.cost).map(([tag, amt]) => {
                 const mt = MANA_TYPES[tag]; if (!mt) return '';
-                return `<span class="mana-pip available" style="background:${mt.col}44;color:${mt.col};border-color:${mt.col}88;width:auto;padding:0 5px;">${mt.icon} ×${amt}</span>`;
+                return `<span class="mana-pip available" style="background:${mt.col}44;color:${mt.col};border-color:${mt.col}88;width:auto;padding:0 5px;display:inline-flex;align-items:center;gap:2px;">${svgIcon(TAG_ICONS[tag], 9)} ×${amt}</span>`;
             }).join('');
             const card = document.createElement('div');
             card.className = 'spell-option-card';
             card.style.borderColor = Object.keys(spell.cost).map(t => MANA_TYPES[t]?.col || '#888')[0] || '#888';
-            card.innerHTML = `<span class="spell-option-icon">${spell.icon}</span>
+            card.innerHTML = `<span class="spell-option-icon">${spellIconHtml(spell, 26)}</span>
                 <div class="spell-option-name" style="color:var(--gold-light);">${spell.name}</div>
                 <div class="spell-option-desc">${spell.desc}</div>
                 <div class="spell-option-cost">${costHtml}</div>`;
@@ -997,14 +997,158 @@ async function showSpellLearnModal(leader, level) {
 // ==========================================
 // 3. UNIDADES E INTERFACE DO JOGO
 // ==========================================
+// BIBLIOTECA DE ÍCONES — manas, habilidades e status (SVG linha 24x24).
+// Herdam a cor do chip via currentColor; pontos de detalhe usam fill.
+// ==========================================
+window.TAG_ICONS = {
+    FIRE: '<path d="M12 3c2 3 6 5 6 10a6 6 0 0 1-12 0c0-3 2-4 3-7 1 2 2 3 3 3 0-3-1-4 0-6Z"/>',
+    SILVESTRE: '<path d="M5 19C5 9 12 5 20 4c0 8-4 15-15 15Z"/><path d="M5 19c4-6 8-9 12-11"/>',
+    ABYSSAL: '<path d="M12 3c3 4 6 7 6 10a6 6 0 0 1-12 0c0-3 3-6 6-10Z"/>',
+    ROCK: '<path d="M3 19 9 7l3.5 6L15.5 8 21 19H3Z"/>',
+    SAND: '<path d="M3 8h13a3 3 0 1 0-3-3"/><path d="M3 12h16a3 3 0 1 1-3 3"/><path d="M3 16h8"/>',
+    ICE: '<path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/>',
+    UMBRAL: '<path d="M15 3a9 9 0 1 0 6 15 7.5 7.5 0 0 1-6-15Z"/>',
+    CELESTIAL: '<path d="M12 3c.6 4 2 5.6 6 6.5-4 1-5.4 2.5-6 6.5-.6-4-2-5.5-6-6.5 4-.9 5.4-2.5 6-6.5Z"/><path d="M19 16l.7 2.1 2.1.7-2.1.7-.7 2.1-.7-2.1-2.1-.7 2.1-.7Z"/>',
+    PRIMAL: '<path d="M5 20c0-8 4-12 12-13"/><path d="M8 18c0-5 2-7 6-8"/><path d="M12 18c0-3 1-4 3-5"/>',
+    WING: '<path d="M20 4c-8 0-13 5-15 14 7-1 12-6 15-14Z"/><path d="M4.5 19.5 14 10"/>',
+    VENOM: '<path d="M12 3a7 7 0 0 0-7 7c0 2.6 1.4 4.4 3 5.4V19h2v-2h4v2h2v-3.6c1.6-1 3-2.8 3-5.4a7 7 0 0 0-7-7Z"/><circle cx="9.3" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="14.7" cy="10.5" r="1.1" fill="currentColor" stroke="none"/>',
+    STALKER: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/>',
+    CARAPACE: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M12 22V8"/>',
+    MYSTIC: '<circle cx="12" cy="13" r="5.5"/><path d="M12 5v2M7.5 8.5 6 7M16.5 8.5 18 7M5 21h14"/>',
+    ELECTRIC: '<path d="M13 2 5 13h5l-2 9 9-12h-6l2-8Z"/>'
+};
+window.ABILITY_SVG = {
+    dodge: '<path d="M4 8h8a2.5 2.5 0 1 0-2.5-2.5"/><path d="M4 12h12a2.5 2.5 0 1 1-2.5 2.5"/><path d="M4 16h6"/>',
+    lifesteal: '<path d="M12 3c3 4 6 7 6 10a6 6 0 0 1-12 0c0-3 3-6 6-10Z"/><path d="M12 10v6M9 13h6"/>',
+    poison: '<path d="M9 3h6M10 3v5l-5 9a3 3 0 0 0 3 4h8a3 3 0 0 0 3-4l-5-9V3"/><path d="M7.5 15h9"/>',
+    stun: '<path d="M12 4a8 8 0 1 1-8 8"/><path d="M12 8a4 4 0 1 0 4 4"/>',
+    bind: '<path d="M9 15l6-6"/><rect x="3.5" y="10.5" width="7" height="7" rx="2"/><rect x="13.5" y="6.5" width="7" height="7" rx="2"/>',
+    burn: window.TAG_ICONS.FIRE,
+    pierce: '<path d="M2 12h15"/><path d="M13 8l4 4-4 4"/><path d="M5 9l6 6"/>',
+    counter: '<path d="M4 9h12"/><path d="M13 5l4 4-4 4"/><path d="M20 15H8"/><path d="M11 19l-4-4 4-4"/>',
+    freeze: window.TAG_ICONS.ICE,
+    leadership: '<path d="M4 18h16"/><path d="M4 18 2.5 8l5.5 4 4-6.5 4 6.5 5.5-4L20 18"/>',
+    electric: window.TAG_ICONS.ELECTRIC,
+    hit_run: '<path d="M6 3h6v8c0 1 .5 1.9 1.4 2.4l4.2 2.5c1.5.9 2.4 2.5 2.4 4.2V21H6z"/><path d="M6 18.5h14"/><path d="M15 4h6"/><path d="M18 1.5 21 4l-3 2.5"/>',
+    swift: '<path d="M5 5l7 7-7 7"/><path d="M12 5l7 7-7 7"/>',
+    crystal_skin: '<path d="M12 3l7 5-2.5 8h-9L5 8Z"/><path d="M5 8h14"/><path d="M12 3v13"/>',
+    corte_amplo: '<path d="M5 19 14 10"/><path d="M13 4c3 0 5.5 2.5 5.5 5.5C15.5 9.5 13 7 13 4Z"/><path d="M14 10l5 5"/>',
+    carapace: window.TAG_ICONS.CARAPACE,
+    flying: window.TAG_ICONS.WING,
+    frost_armor: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M12 7v6M9.4 8.6l5.2 4.8M14.6 8.6l-5.2 4.8"/>',
+    camouflage: '<path d="M5 19C5 9 12 5 20 4c0 8-4 15-15 15Z"/><circle cx="14" cy="11" r="1.2" fill="currentColor" stroke="none"/>',
+    dive: '<path d="M3 9c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M3 14c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>',
+    undying: '<path d="M12 3a7 7 0 0 0-7 7c0 2.6 1.4 4.4 3 5.4V19h2v-2h4v2h2v-3.6c1.6-1 3-2.8 3-5.4a7 7 0 0 0-7-7Z"/><path d="M19 16l.5 1.5L21 18l-1.5.5L19 20l-.5-1.5L17 18l1.5-.5Z"/>',
+    regeneration: '<path d="M12 21c-5.5-4.7-9.5-8-9.5-12A5.4 5.4 0 0 1 8 3.5c1.6 0 3.1.8 4 2.1.9-1.3 2.4-2.1 4-2.1a5.4 5.4 0 0 1 5.5 5.5c0 4-4 7.3-9.5 12Z"/><path d="M12 9v6M9 12h6"/>',
+    venomous: window.TAG_ICONS.VENOM,
+    ambush: '<circle cx="12" cy="12" r="7.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>',
+    trample: '<circle cx="8" cy="8" r="1.7"/><circle cx="14" cy="7" r="1.7"/><circle cx="18" cy="11" r="1.7"/><path d="M12 21c-2.8 0-4.8-1.4-4.8-3.3C7.2 15.6 9.4 14.5 12 14.5s4.8 1.1 4.8 3.2c0 1.9-2 3.3-4.8 3.3Z"/>',
+    aerial: window.TAG_ICONS.WING,
+    aquatic: '<path d="M3 9c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M3 14c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>',
+    burrower: '<path d="M4 13h16"/><path d="M8 13a4 4 0 0 1 8 0"/>',
+    siege: '<path d="M5 21V8h14v13"/><path d="M5 12h14"/><path d="M9 8V4h2v2h2V4h2v4"/><path d="M10 21v-5h4v5"/>',
+    alpha: '<path d="M4 18h16"/><path d="M4 18 2.5 8l5.5 4 4-6.5 4 6.5 5.5-4L20 18"/>'
+};
+window.STATUS_SVG = {
+    poison: window.ABILITY_SVG.poison,
+    stun: window.ABILITY_SVG.stun,
+    bind: window.ABILITY_SVG.bind,
+    silenced: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 20a2 2 0 0 0 4 0"/><path d="M3 3l18 18"/>',
+    chilled: window.TAG_ICONS.ICE,
+    marked: window.ABILITY_SVG.ambush,
+    alert: '<path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5"/><path d="M12 17v.5"/>',
+    fury: window.TAG_ICONS.FIRE,
+    immortal: window.ABILITY_SVG.undying
+};
+// helper: SVG de ícone com tamanho opcional
+const svgIcon = (paths, size) => paths
+    ? `<svg class="trait-ico" viewBox="0 0 24 24"${size ? ` style="width:${size}px;height:${size}px;"` : ''} aria-hidden="true">${paths}</svg>`
+    : '';
+
+// ==========================================
+// ÍCONES DAS MAGIAS — um por feitiço (SVG linha 24x24)
+// ==========================================
+window.SPELL_SVG = {
+    // --- Magias base (Nv1) ---
+    sl_ember: '<path d="M12 5c1.6 2.4 4 4 4 7a4 4 0 0 1-8 0c0-2 1-2.7 1.7-4.6.7 1.3 1.3 2 2.1 2 .2-1.8-.4-2.9.2-4.4Z"/><path d="M6 20l1.2-1.2M18 20l-1.2-1.2"/>',
+    sl_heal: '<path d="M12 20c-4.4-3.8-7.5-6.4-7.5-9.5A4.3 4.3 0 0 1 9 6c1.3 0 2.4.6 3 1.6.6-1 1.7-1.6 3-1.6a4.3 4.3 0 0 1 4.5 4.5c0 3.1-3.1 5.7-7.5 9.5Z"/><path d="M12 8.5v5M9.5 11h5"/>',
+    sl_tidal: '<path d="M3 13c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M3 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M9 7l1.5 2L12 6l1.5 3L15 7"/>',
+    sl_rock_wall: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M8 15.5 10.5 12l2 2.5 2-4 1.5 5"/>',
+    sl_venom_spit: '<path d="M12 3c3 4 6 7 6 10a6 6 0 0 1-12 0c0-3 3-6 6-10Z"/><path d="M9.5 9.5l1 3M14.5 9.5l-1 3M12 14v2"/>',
+    sl_gust: '<path d="M3 8h10a3 3 0 1 0-3-3"/><path d="M3 13h14a3 3 0 1 1-3 3"/><path d="M3 18h7"/><path d="M18 8l2.5 2.5"/>',
+    sl_sand_throw: '<path d="M4 11c3-4 13-4 16 0-3 4-13 4-16 0Z"/><path d="M8 16l1 3M12 17v3M16 16l1 2.5"/>',
+    sl_ice_shard: '<path d="M12 2 7 9l5 13 5-13Z"/><path d="M7 9h10"/><path d="M12 2v7"/>',
+    sl_dark_touch: '<path d="M15 3a9 9 0 1 0 6 15 7.5 7.5 0 0 1-6-15Z"/><path d="M7 5l2 2M5 9l2.5 1"/>',
+    sl_guiding_light: '<circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6 7.7 7.7M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+    sl_savage_cry: '<path d="M5 21c0-8 4-12 12-13"/><path d="M8 18c0-5 2-7 6-8"/><path d="M12 18c0-3 1-4 3-5"/><path d="M18 4a8 8 0 0 1 3 6"/><path d="M22 7a4 4 0 0 1 0 4"/>',
+    sl_arcane_dart: '<circle cx="13.5" cy="10.5" r="6"/><path d="M3 21l6.5-6.5"/><path d="M3 21l1.2-4.2M3 21l4.2-1.2"/>',
+    // --- Magias Nv2-5 ---
+    sl_tornado: '<path d="M4 5h16M6 9h12M8 13h8M10 17h4M11.5 21h1"/>',
+    sl_thorn_armor: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M12 3v4M7 6l2 3M17 6l-2 3M12 22v-5"/>',
+    sl_assassinate: '<path d="M12 3v9"/><path d="M9 6l3-3 3 3"/><path d="M8 12h8"/><path d="M10.5 12 7 21h10l-3.5-9"/>',
+    sl_quicksand: '<path d="M12 12m-2 0a2 2 0 1 1 4 0 4 4 0 1 1-8 0 6 6 0 1 1 12 0 8 8 0 1 1-16 0"/>',
+    sl_fireball: '<circle cx="12" cy="12" r="6"/><path d="M12 6c-1-2 0-4 2-5-.3 2 .8 3 2.5 3.5"/><path d="M5.5 5.5 4 4M18.5 5.5 20 4"/>',
+    sl_regen: '<path d="M12 21v-8"/><path d="M12 13c0-4 3-7 7-7 0 4-3 7-7 7Z"/><path d="M12 13c0-4-3-7-7-7 0 4 3 7 7 7Z"/><path d="M9.5 21h5"/>',
+    sl_freeze: '<path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/><circle cx="12" cy="12" r="2.2"/>',
+    sl_shadow_step: '<path d="M7 21V9a5 5 0 0 1 10 0v12"/><path d="M5 5l2 2M19 5l-2 2M12 2v3"/><path d="M5 21h14"/>',
+    sl_primal_rage: '<path d="M6 18a2.5 2.5 0 1 0-3.5 3.5A2.5 2.5 0 1 0 6 18Z"/><path d="M8 16 18 6"/><path d="M18 6a2.5 2.5 0 1 1 3.5-3.5A2.5 2.5 0 1 1 18 6Z"/>',
+    sl_light_beam: '<path d="M8 3l1.5 9M12 3v10M16 3l-1.5 9"/><path d="M4 20h16"/><path d="M12 13v7"/>',
+    sl_sandstorm: '<path d="M3 8h14a3 3 0 1 0-3-3"/><path d="M3 12h18a3 3 0 1 1-3 3"/><path d="M3 16h12"/><path d="M3 20h7"/><path d="M19 19l.5 1M21 16l1-.5"/>',
+    sl_inferno: '<circle cx="8.5" cy="15.5" r="5"/><path d="M12 12 21 3"/><path d="M12.5 16.5 20 14"/><path d="M9 20.5l1 2.5"/>',
+    sl_nature_shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M12 8c-3 2-4 4-4 6 2 0 4-1 4-2 0 1 2 2 4 2 0-2-1-4-4-6Z"/>',
+    sl_blizzard: '<path d="M7 15a4 4 0 1 1 1-7.9A5 5 0 0 1 18 8a4 4 0 0 1-.5 7"/><path d="M12 11v8M9 13l6 4M15 13l-6 4"/>',
+    sl_void_drain: '<path d="M12 12m-2 0a2 2 0 1 1 4 0 4 4 0 1 1-8 0 6 6 0 1 1 12 0"/><path d="M20 3l1.5 2M22 8l-2 .5"/>',
+    sl_stone_rain: '<path d="M7 3l1.5 3L7 9 5.5 6Z"/><path d="M14 5l1.5 3L14 11l-1.5-3Z"/><path d="M18 2l1.5 3L18 8l-1.5-3Z"/><path d="M6 13l1.5 3L6 19l-1.5-3Z"/><path d="M16 13l1.5 3L16 19l-1.5-3Z"/><path d="M11 16l1 2-1 2-1-2Z"/>',
+    sl_mass_venom: window.TAG_ICONS.VENOM + '<path d="M12 1.5v1.5M4 4l1 1M20 4l-1 1M2 12h1.5M20.5 12h1.5"/>',
+    sl_storm_wing: '<path d="M20 4c-8 0-13 5-15 14 7-1 12-6 15-14Z"/><path d="M13 2 9 12h4l-2 9 7-12h-5l2-7Z"/>',
+    sl_meteor: '<circle cx="17" cy="17" r="4"/><path d="M14 13.5 4 4"/><path d="M16 12c1.5-1.5 1-3.5-.5-4.5"/><path d="M12 18l-2 2"/>',
+    sl_resurrection: '<path d="M12 2a4.5 4.5 0 0 1 4.5 4.5c0 3-2 4.5-4.5 6.5s-4.5-3.5-4.5-6.5A4.5 4.5 0 0 1 12 2Z"/><path d="M12 13v9"/><path d="M8 17h8"/>',
+    sl_mind_control: '<path d="M9 4a4 4 0 0 0-4 4c-1.5 1-2 2.5-1.5 4-1.5 1-2 3-1 4.5C3 18.5 4.5 20 6 20h10c2 0 3.5-1 4-3 .5-2 0-3.5-1-4.5.5-2-.5-4-2-5 0-2-1.5-3.5-3.5-3.5-1 0-2 .5-2.5 1.5C10.5 4.5 10 4 9 4Z"/><path d="M12 6v14"/>',
+    sl_tidal_wave: '<path d="M3 19c1-6 5-11 11-12-3 2-4 5-3.5 7C15 11 18 10 21 7c1 6-2 12-8 13.5"/><path d="M3 21h18"/>',
+    sl_apocalypse: '<path d="M12 2l1.5 6L20 8l-5 4 2 6.5L12 15l-5 3.5L9 12 4 8l6.5 0Z"/><path d="M12 4V1M4 12H1M23 12h-3"/>',
+    sl_phoenix_rebirth: '<path d="M12 3c2 3 6 4 7 8-2-1-4-1-5 0 2 1 3 3 3 6-3-2-4-2-5-1 0 2-1 4-2.5 5 .3-2-.2-3.5-1.5-5-1.7.5-3 1.5-4 3 0-3 1.5-5.5 4-7-2 .5-4 2-5 4C1.5 7 6 3 12 3Z"/>',
+    sl_world_freeze: '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.5 5.5 18.5 18.5M18.5 5.5 5.5 18.5"/>',
+    sl_soul_harvest: '<path d="M20 6a10 10 0 0 0-15 3"/><path d="M8 8 4 21"/><path d="M19 10l2 3"/>',
+    // --- Magias de líder ---
+    sl_mordida_vamp: '<path d="M5 4h14M7 4c0 4 1 6.5 2.5 8.5L12 4l2.5 8.5C16 10.5 17 8 17 4"/><path d="M12 15c1.5 2 2.5 3 2.5 4.5a2.5 2.5 0 0 1-5 0C9.5 18 10.5 17 12 15Z"/>',
+    sl_bencao_paladina: '<path d="M12 4v16M7 9h10"/><path d="M12 2v1M12 21v1M2 12h1M21 12h1M4.5 4.5l1 1M19.5 19.5l-1-1"/>',
+    sl_bombardeio: '<circle cx="11" cy="14" r="7"/><path d="M14 8l3-4"/><path d="M16 3c1 1 3 1.5 4.5 1"/><path d="M6 12l2 2M8 10l2 2"/>',
+    sl_tiro_preciso: '<path d="M5 4c4 8 8 12 15 16"/><path d="M20 4 4 20"/><path d="M4 14v6h6"/>',
+    sl_bola_fogo: '<circle cx="12" cy="12" r="6.5"/><path d="M12 5.5c-1.5-2-.5-4 1.5-5-.2 2 1 3 2.8 3.3"/><path d="M4 4l1.5 1.5M20 4l-1.5 1.5"/>',
+    sl_grito_orc: '<path d="M4 16c0-7 6-12 16-12-2 9-8 13-12 12Z"/><path d="M8 16l-4 4"/><circle cx="15" cy="9" r="1.2" fill="currentColor" stroke="none"/>',
+    sl_erguer_esq: window.TAG_ICONS.VENOM + '<path d="M12 22v-3M10.5 20.5 12 22l1.5-1.5"/>',
+    sl_explosao_arcana: '<path d="M12 3c.6 4 2 5.6 6 6.5-4 1-5.4 2.5-6 6.5-.6-4-2-5.5-6-6.5 4-.9 5.4-2.5 6-6.5Z"/><path d="M19 16l.6 1.9 1.9.6-1.9.6-.6 1.9-.6-1.9-1.9-.6 1.9-.6Z"/><path d="M5 16l.5 1.5L7 18l-1.5.5L5 20l-.5-1.5L3 18l1.5-.5Z"/>',
+    sl_forma_urso: '<circle cx="8" cy="7" r="1.8"/><circle cx="14.5" cy="6" r="1.8"/><circle cx="19" cy="10.5" r="1.8"/><path d="M12.5 21c-3 0-5.2-1.5-5.2-3.5 0-2 2.4-3.2 5.2-3.2s5.2 1.2 5.2 3.2c0 2-2.2 3.5-5.2 3.5Z"/><path d="M4 5l2 2"/>',
+    sl_forma_falcao: '<path d="M5 9c4-4 10-5 14-2l-3 2 3 1c-1 5-6 9-11 8Z"/><path d="M16 7c1-1.5.8-3-.5-4"/><path d="M8 13c2-1 4-1 5.5.5"/>',
+    sl_forma_dragao: '<path d="M3 12c3-6 9-8 15-6l3 2-4 1 4 2c-2 5-8 8-13 6Z"/><path d="M8 12c2-1.5 4-1.5 6 0"/><path d="M3 20l2.5-2.5"/>',
+    sl_execucao: '<path d="M5 19 14 10"/><path d="M13 4c3 0 5.5 2.5 5.5 5.5C15.5 9.5 13 7 13 4Z"/><path d="M14 10l5 5"/><path d="M4 21l1-3 3 1Z"/>',
+    sl_evocar_dragao: '<circle cx="12" cy="14" r="7.5"/><path d="M9 11c1.5-3 5-4 8-2l-2 1.5 2 .5c-.5 2.5-3 4-5.5 3.5Z"/>',
+    sl_evocar_lobo: '<circle cx="12" cy="14" r="7.5"/><path d="M9 12.5l1.3-2.7 1.5 2.7h2.4l1.5-2.7 1.3 2.7c0 1.8-1.4 3.2-4 3.2s-4-1.4-4-3.2Z"/><path d="M10 15.5c1.5.8 2.5.8 4 0"/>',
+    sl_evocar_golem: '<circle cx="12" cy="14" r="7.5"/><rect x="9.5" y="10.5" width="6" height="5" rx="1"/><path d="M7.5 12.5h2M14.5 12.5h2"/><path d="M11 12.5h2"/>',
+    sl_cancao_sereia: '<path d="M9 18V5l10-2v12"/><circle cx="7" cy="18" r="2.5"/><circle cx="17" cy="15" r="2.5"/>',
+    sl_turno_extra: '<circle cx="12" cy="13.5" r="7"/><path d="M12 10v4l3 2"/><path d="M12 2l.7 1.8 1.8.7-1.8.7L12 7l-.7-1.8-1.8-.7 1.8-.7Z"/>',
+    sl_caldeirao: '<path d="M4 10h16c0 5-3 9-8 9s-8-4-8-9Z"/><path d="M8 10c0-3 1.5-5 4-5s4 2 4 5"/><path d="M7 5c1.5-2 3-3 5-3s3.5 1 5 3"/><path d="M10 2.5c.5-1 .8-1.5.5-2.5"/>',
+    sl_barreira_gelo: '<path d="M12 2 20 7v10l-8 5-8-5V7Z"/><path d="M12 7v10M8 9.5l8 5M16 9.5l-8 5"/>',
+    sl_vendaval: '<path d="M3 7h12a3 3 0 1 0-3-3"/><path d="M3 12h16a3 3 0 1 1-3 3"/><path d="M3 17h9"/><path d="M15 21l3-3 3 3"/>',
+    sl_furia_tempestade: '<path d="M13 2 5 13h5l-2 9 9-12h-6l2-8Z"/><path d="M2 12a10 10 0 0 1 5-8.5"/><path d="M22 12a10 10 0 0 1-4 8"/>'
+};
+// cor do ícone da magia = cor da mana primária (fallback dourado)
+function spellIconHtml(spell, size) {
+    const svg = window.SPELL_SVG ? SPELL_SVG[spell.id] : null;
+    const firstTag = Object.keys(spell.cost || {})[0];
+    const col = (MANA_TYPES && MANA_TYPES[firstTag]) ? MANA_TYPES[firstTag].col : '#e8c84a';
+    if (!svg) return `<span style="font-size:${size || 20}px;">${spell.icon}</span>`;
+    return `<span style="display:inline-flex; color:${col};">${svgIcon(svg, size || 20)}</span>`;
+}
+
 function getTagHTML(t) {
     let tDef = typeof TAGS !== 'undefined' ? TAGS[t] : null;
     let col = tDef ? tDef.col : '#888';
     let name = tDef ? tDef.name : t;
     let desc = tDef ? tDef.desc : 'Sem descrição.';
-    // Envolve a tag na classe qol-tooltip
+    // Envolve a tag na classe qol-tooltip (com o ícone da mana em SVG)
     return `<div class="qol-tooltip tag-badge" style="background:rgba(20,20,30,0.9); border:1px solid ${col}; color:${col}; font-size:9px; padding:2px 6px; border-radius:4px; box-shadow:0 0 5px ${col}40; text-shadow:0 0 2px ${col}80;">
-                ${name}
+                ${svgIcon(window.TAG_ICONS ? TAG_ICONS[t] : null)} ${name}
                 <span class="qol-tooltiptext">${desc}</span>
             </div>`;
 }
@@ -1082,12 +1226,14 @@ window.showBeastDetails = function (b, bypassUnlock = false) {
                 : `<span style="font-size:30px; line-height:1;">${b.emoji}</span>`;
             const terrainHtml = unitTerrainHtml(b);
             const traitsHtml = unitTraitsHtml(b);
+            // subtítulo SEM duplicar o nome: se baseName == name, só o nível
+            const bdsBase = (b.baseName && b.baseName !== b.name) ? `${b.baseName} · ` : '';
             statsBox.innerHTML = `
                 <div class="bds-head">
                     <div class="bds-portrait" style="--fac-col:${facCol}">${portHtml}</div>
                     <div class="bds-tit">
                         <div class="bds-name">${b.name}</div>
-                        <div class="bds-sub">${b.baseName || b.name} · Nível ${b.level}</div>
+                        <div class="bds-sub">${bdsBase}Nível ${b.level}</div>
                     </div>
                 </div>
                 <div class="side-stat-bars">${unitBarsHtml(b)}</div>
@@ -1228,7 +1374,9 @@ function updateUI() {
         // Nome e Classe
         let starIcon = u.starLevel === 2 ? '🥉' : u.starLevel === 3 ? '🥈' : u.starLevel >= 4 ? '🌟' : '';
         $('unit-name').textContent = u.name;
-        $('unit-class').textContent = `${u.baseName || u.name} · Nv${u.level}${starIcon}`;
+        // subtítulo SEM duplicar: baseName só aparece se DIFERIR do nome
+        const baseInfo = (u.baseName && u.baseName !== u.name) ? `${u.baseName} · ` : '';
+        $('unit-class').textContent = `${baseInfo}Nv${u.level}${starIcon}`;
 
         // Barras SVG (HP, MP, XP) - novo formato lateral
         renderUnitStatBars(u);
@@ -1337,40 +1485,36 @@ function unitChipsHtml(u) {
         ${defInfo}`;
 }
 
-// HTML dos trait badges (debuffs, tags, habilidades, efeitos)
+// HTML dos trait badges (debuffs, tags, habilidades, efeitos) — todos
+// com ÍCONES SVG (sem emoji), herdando a cor do chip
 function unitTraitsHtml(u) {
-    const ABILITY_ICONS = {
-        dodge: '💨', lifesteal: '🦇', poison: '☠️', stun: '⚡', bind: '🕸️', burn: '🔥', pierce: '🗡️', counter: '↩️', freeze: '🧊', leadership: '👑', electric: '🌩️', hit_run: '🐎', swift: '🐇', crystal_skin: '💎', corte_amplo: '🪓', carapace: '🐢', flying: '🪽', frost_armor: '🛡️', camouflage: '🍃', dive: '🌊', undying: '☠️', regeneration: '💚', venomous: '☠️', ambush: '🌿', trample: '🐘', aerial: '🪽', aquatic: '🌊', burrower: '🕳️', siege: '🏰', alpha: '👑'
-    };
-
     const getTraitHTML = (icon, title, desc, type) => `<div class="qol-tooltip trait-badge ${type}">${icon}<span class="qol-tooltiptext" style="font-family:sans-serif; text-align:left;"><strong>${title}</strong><br>${desc}</span></div>`;
 
     let iconsHtml = '';
 
     // Debuffs (prioridade visual)
-    if (u.status === 'poison') iconsHtml += getTraitHTML('🤢', 'Envenenado', 'Perde HP a cada turno.', 'status debuff');
-    if (u.status === 'stun') iconsHtml += getTraitHTML('💫', 'Atordoado', 'Perde o turno atual.', 'status debuff');
-    if (u.status === 'bind') iconsHtml += getTraitHTML('⛓️', 'Preso', 'Movimento 0.', 'status debuff');
-    if (u.status === 'silenced') iconsHtml += getTraitHTML('🔕', 'Silenciado', 'Não pode lançar magias.', 'status debuff');
-    if (u.status === 'chilled') iconsHtml += getTraitHTML('🧊', 'Resfriado', 'Movimento e ataque reduzidos.', 'status debuff');
-    if (u.status === 'marked') iconsHtml += getTraitHTML('🎯', 'Marcado', 'Recebe dano dobrado de Stalkers.', 'status debuff');
-    if (u.faction === 0 && u.alerted) iconsHtml += getTraitHTML('⚠️', 'Alerta', 'Em estado de agressão.', 'status');
+    if (u.status === 'poison') iconsHtml += getTraitHTML(svgIcon(STATUS_SVG.poison), 'Envenenado', 'Perde HP a cada turno.', 'status debuff');
+    if (u.status === 'stun') iconsHtml += getTraitHTML(svgIcon(STATUS_SVG.stun), 'Atordoado', 'Perde o turno atual.', 'status debuff');
+    if (u.status === 'bind') iconsHtml += getTraitHTML(svgIcon(STATUS_SVG.bind), 'Preso', 'Movimento 0.', 'status debuff');
+    if (u.status === 'silenced') iconsHtml += getTraitHTML(svgIcon(STATUS_SVG.silenced), 'Silenciado', 'Não pode lançar magias.', 'status debuff');
+    if (u.status === 'chilled') iconsHtml += getTraitHTML(svgIcon(STATUS_SVG.chilled), 'Resfriado', 'Movimento e ataque reduzidos.', 'status debuff');
+    if (u.status === 'marked') iconsHtml += getTraitHTML(svgIcon(STATUS_SVG.marked), 'Marcado', 'Recebe dano dobrado de Stalkers.', 'status debuff');
+    if (u.faction === 0 && u.alerted) iconsHtml += getTraitHTML(svgIcon(STATUS_SVG.alert), 'Alerta', 'Em estado de agressão.', 'status');
 
-    // Tags (geram mana)
+    // Tags (geram mana) — ícone SVG da mana correspondente
     (u.tags || []).forEach(t => {
         let tDef = TAGS[t];
-        let mt = MANA_TYPES[t];
-        if (tDef) iconsHtml += getTraitHTML(mt?.icon || '✨', tDef.name, tDef.desc, 'tag');
+        if (tDef) iconsHtml += getTraitHTML(svgIcon(TAG_ICONS[t]), tDef.name, tDef.desc, 'tag');
     });
 
-    // Habilidades
+    // Habilidades — ícone SVG próprio de cada uma
     u.abilities?.forEach(ab => {
-        if (ABILITY_DESCRIPTIONS[ab]) iconsHtml += getTraitHTML(ABILITY_ICONS[ab] || '📖', ab.toUpperCase(), ABILITY_DESCRIPTIONS[ab], 'ability');
+        if (ABILITY_DESCRIPTIONS[ab]) iconsHtml += getTraitHTML(svgIcon(ABILITY_SVG[ab]), ab.toUpperCase(), ABILITY_DESCRIPTIONS[ab], 'ability');
     });
 
     // Efeitos especiais
-    if (u.undyingTurns > 0) iconsHtml += getTraitHTML('☠️', 'Imortal', `Não morre por ${u.undyingTurns} turno(s).`, 'status');
-    if (u.furyAtk > 0) iconsHtml += getTraitHTML('😤', 'Fúria', `+${u.furyAtk} ATK temporário.`, 'status');
+    if (u.undyingTurns > 0) iconsHtml += getTraitHTML(svgIcon(STATUS_SVG.immortal), 'Imortal', `Não morre por ${u.undyingTurns} turno(s).`, 'status');
+    if (u.furyAtk > 0) iconsHtml += getTraitHTML(svgIcon(STATUS_SVG.fury), 'Fúria', `+${u.furyAtk} ATK temporário.`, 'status');
 
     return iconsHtml;
 }

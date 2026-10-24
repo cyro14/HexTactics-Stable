@@ -1659,6 +1659,25 @@ button.btn-success {
     opacity: 1;
 }
 
+/* Ícones de traits/manas (SVG linha — herdam a cor do chip) */
+.trait-ico {
+    flex: 0 0 auto;
+    width: 11px;
+    height: 11px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 3px currentColor);
+}
+.tag-badge .trait-ico {
+    width: 10px;
+    height: 10px;
+    vertical-align: -1px;
+    margin-right: 2px;
+}
+
 /* ==========================================
    GAME FEEL — partículas de efeito (via window.battleFX)
    ========================================== */

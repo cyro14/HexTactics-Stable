@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v28'; // v28: game feel (FX de dano/esquiva/vila/doma/item/nível) + nome do modal com quebra
+const CACHE_NAME = 'hextactics-v30'; // v30: ícones SVG das 59 magias + pips de custo sem emoji
 const ASSETS = [
     './',
     './index.html',
