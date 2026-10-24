@@ -152,6 +152,7 @@ class Unit {
     async triggerEvolve() {
         game.isAnimating = true;
         if (typeof showPopup === 'function') showPopup(`⬆ Nível ${this.level}!`, this, '#c9a227');
+        if (window.battleFX) battleFX.level(this);
         if (typeof addLog === 'function') addLog(`✨ ${this.name} evoluiu para Nível ${this.level}!`, '#c9a227');
 
         const oF = this.filter;
@@ -828,6 +829,7 @@ class Game {
         if (hex && hex.terrain.id === 'VILLAGE' && hex.owner !== u.faction) {
             hex.owner = u.faction; let col = u.faction === 1 ? '#4a9edd' : '#c0392b';
             if (typeof showPopup === 'function') showPopup("🚩", u, col);
+            if (window.battleFX) battleFX.village(u, col);
             if (typeof addLog === 'function') addLog(`🚩 ${u.name} capturou a Vila!`, col);
             if (u.faction === 1) {
                 u.mp = 0; let g = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_gold')) ? 4 : 2; this.gold += g;
@@ -950,6 +952,7 @@ class Game {
                                 this.fieldItems[mappedId] = (this.fieldItems[mappedId] || 0) + 1;
                                 this.items.delete(k);
                                 if (typeof showPopup === 'function') showPopup(`+1 ${mappedId.toUpperCase()}!`, u, '#f1c40f');
+                                if (window.battleFX) battleFX.item(u);
                             } else {
                                 // Comportamento original para itens que não são de campo
                                 let r = await iDef.f(u, this); if (r !== false) this.items.delete(k);
@@ -1069,7 +1072,7 @@ class Game {
             if (d.tags.includes('ABYSSAL') && sysD['ABYSSAL'] >= 3) dodgeC += 0.2;
             if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_wind')) dodgeC += 0.2;
             if (Math.random() < dodgeC) {
-                if (typeof showPopup === 'function') showPopup("💨 Esquivou!", d, '#aaa');
+                if (typeof showPopup === 'function') showPopup("💨 Esquivou!", d, '#aaa'); if (window.battleFX) battleFX.dodge(d);
                 if (typeof addLog === 'function') addLog(`💨 ${d.name} esquivou!`, '#aaa'); a.hasAttacked = true;
                 if (!a.abilities.includes('hit_run') && !(a.tags.includes('SAND') && sysA['SAND'] >= 3)) a.mp = 0;
                 await this.processRevide(a, d);
@@ -1152,7 +1155,7 @@ class Game {
                 if (typeof showPopup === 'function') showPopup("FÚRIA IMORTAL!", d, '#e74c3c');
             }
             if (renderer) { renderer.centerOn(d.vq, d.vr); d.hitTimer = true; renderer.draw(); if (typeof sleep === 'function') await sleep(150); d.hitTimer = false; renderer.draw(); }
-            if (typeof showPopup === 'function') showPopup(`-${dmg}`, d, '#fff'); if (typeof addLog === 'function') addLog(`⚔ ${a.name} atingiu ${d.name} (-${dmg})`, aCol);
+            if (typeof showPopup === 'function') showPopup(`-${dmg}`, d, '#fff'); if (window.battleFX) battleFX.hit(d, '#f5e6a0'); if (typeof addLog === 'function') addLog(`⚔ ${a.name} atingiu ${d.name} (-${dmg})`, aCol);
 
             if (a.tags.includes('FIRE') && sysA['FIRE'] >= 3) { let aoe = Math.max(1, Math.floor(dmg * 0.2)); Hex.getNeighbors(d.q, d.r).forEach(n => { let targ = this.getUnitAt(n.q, n.r); if (targ && targ.faction !== a.faction && targ !== d && targ.hp > 0) { targ.hp -= aoe; if (typeof showPopup === 'function') showPopup(`🔥 -${aoe}`, targ, '#e67e22'); if (targ.hp <= 0) this.handleDeath(targ, a); } }); }
 
@@ -1217,6 +1220,7 @@ class Game {
                 } else {
                     if (typeof addLog === 'function') addLog(`🧛 ${killer.name} seduziu ${victim.name}!`, '#8e44ad');
                     if (typeof showPopup === 'function') showPopup("🧛 Domado!", victim, '#8e44ad');
+                    if (window.battleFX) battleFX.tame(victim);
                 }
                 if (victim.faction === 1) {
                     if (typeof unlockInBestiary === 'function') unlockInBestiary(victim.name);
@@ -1356,6 +1360,7 @@ class Game {
                     if (typeof addLog === 'function') addLog(`🪄 ${tamer.name} domou ${wild.name} (Box)!`, tCol);
                 } else {
                     if (typeof showPopup === 'function') showPopup("🪄 Domado!", wild, tamer.faction === 1 ? '#c9a227' : '#c0392b');
+                    if (window.battleFX) battleFX.tame(wild);
                     if (typeof addLog === 'function') addLog(`🪄 ${tamer.name} domou ${wild.name}!`, tCol);
                 }
 
@@ -1510,6 +1515,7 @@ class Game {
                 } else {
                     if (typeof addLog === 'function') addLog(`🧛 ${killer.name} seduziu ${victim.name}!`, '#8e44ad');
                     if (typeof showPopup === 'function') showPopup("🧛 Domado!", victim, '#8e44ad');
+                    if (window.battleFX) battleFX.tame(victim);
                 }
 
                 if (victim.faction === 1) {

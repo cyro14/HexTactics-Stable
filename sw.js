@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v27'; // v27: cenário procedural da batalha por fase do dia
+const CACHE_NAME = 'hextactics-v28'; // v28: game feel (FX de dano/esquiva/vila/doma/item/nível) + nome do modal com quebra
 const ASSETS = [
     './',
     './index.html',

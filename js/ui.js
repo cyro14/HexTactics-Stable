@@ -457,6 +457,130 @@ function renderSpellBar() {
 // ==========================================
 
 // ==========================================
+// GAME FEEL — efeitos procedurais de combate (partículas DOM)
+// Anéis de impacto, faíscas em losango, clarões e tremor de tela.
+// Tudo em CSS animado (GPU): custo zero no canvas do jogo.
+// ==========================================
+window.battleFX = (function () {
+    function layer() {
+        let el = document.getElementById('fx-layer');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'fx-layer';
+            el.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:150;';
+            document.body.appendChild(el);
+        }
+        return el;
+    }
+    function pos(unit) {
+        if (!renderer || !unit) return null;
+        return renderer.getPos(unit.vq || unit.q, unit.vr || unit.r);
+    }
+    function div(css, life) {
+        const el = document.createElement('div');
+        el.style.cssText = css;
+        layer().appendChild(el);
+        setTimeout(() => el.remove(), life);
+        return el;
+    }
+    // anel expansivo
+    function ring(x, y, col, big) {
+        const s = big ? 90 : 54;
+        div(`position:fixed;left:${x - s / 2}px;top:${y - s / 2}px;width:${s}px;height:${s}px;`
+            + `border:3px solid ${col};border-radius:50%;box-shadow:0 0 14px ${col}, inset 0 0 8px ${col};`
+            + `animation:fxRing .55s cubic-bezier(.1,.8,.3,1) forwards;`, 600);
+    }
+    // faíscas em losango voando pra fora
+    function sparks(x, y, col, n) {
+        for (let i = 0; i < (n || 10); i++) {
+            const a = (Math.PI * 2 * i) / (n || 10) + Math.random() * .5;
+            const d = 26 + Math.random() * 46;
+            const size = 4 + Math.random() * 5;
+            div(`position:fixed;left:${x}px;top:${y}px;width:${size}px;height:${size}px;`
+                + `background:${col};box-shadow:0 0 8px ${col};`
+                + `--fx-dx:${Math.cos(a) * d}px;--fx-dy:${Math.sin(a) * d}px;`
+                + `animation:fxSpark .5s cubic-bezier(.1,.8,.3,1) forwards;`, 550);
+        }
+    }
+    // clarão radial rápido
+    function flash(x, y, col) {
+        const s = 110;
+        div(`position:fixed;left:${x - s / 2}px;top:${y - s / 2}px;width:${s}px;height:${s}px;`
+            + `background:radial-gradient(circle, ${col} 0%, transparent 70%);`
+            + `animation:fxFlash .3s ease-out forwards;`, 350);
+    }
+    // tremor curto do canvas
+    function shake(ms) {
+        const cv = document.getElementById('gameCanvas');
+        if (!cv) return;
+        cv.classList.add('shake-active');
+        setTimeout(() => cv.classList.remove('shake-active'), ms || 220);
+    }
+    // brilhos subindo (coleta)
+    function glints(x, y, col, n) {
+        for (let i = 0; i < (n || 5); i++) {
+            const ox = (Math.random() - .5) * 44;
+            const size = 3 + Math.random() * 4;
+            div(`position:fixed;left:${x + ox}px;top:${y + (Math.random() - .5) * 20}px;width:${size}px;height:${size}px;`
+                + `background:${col};box-shadow:0 0 10px ${col};transform:rotate(45deg);`
+                + `animation:fxGlint .8s ease-out ${i * 70}ms forwards;`, 900 + i * 70);
+        }
+    }
+
+    return {
+        // impacto de dano: anel + faíscas + clarão + micro-tremor
+        hit(unit, col) {
+            const p = pos(unit); if (!p) return;
+            ring(p.x, p.y, col || '#f5e6a0');
+            sparks(p.x, p.y, col || '#f5e6a0', 12);
+            flash(p.x, p.y, (col || '#fff') === '#fff' ? 'rgba(255,240,200,.85)' : col);
+            shake(180);
+        },
+        // esquiva: fantasmas em anel + faíscas de vento
+        dodge(unit) {
+            const p = pos(unit); if (!p) return;
+            ring(p.x, p.y, 'rgba(160,220,255,.9)');
+            setTimeout(() => ring(p.x, p.y - 8, 'rgba(160,220,255,.5)'), 120);
+            sparks(p.x, p.y, '#bde4ff', 8);
+        },
+        // coleta de item: ouro em glints + anel
+        item(unit) {
+            const p = pos(unit); if (!p) return;
+            ring(p.x, p.y, 'rgba(232,200,74,.95)');
+            glints(p.x, p.y, '#f5e07a', 6);
+            sparks(p.x, p.y, '#f5e07a', 8);
+        },
+        // conquista de vila: anel grande na cor da facção + faíscas
+        village(unit, col) {
+            const p = pos(unit); if (!p) return;
+            ring(p.x, p.y, col || '#4a9edd', true);
+            sparks(p.x, p.y, col || '#4a9edd', 14);
+            flash(p.x, p.y, 'rgba(255,255,255,.5)');
+        },
+        // doma bem-sucedida: violeta + anéis em cadeia
+        tame(unit) {
+            const p = pos(unit); if (!p) return;
+            ring(p.x, p.y, 'rgba(168,108,232,.95)');
+            setTimeout(() => ring(p.x, p.y - 10, 'rgba(168,108,232,.55)'), 140);
+            glints(p.x, p.y, '#c9a8ff', 5);
+        },
+        // subir de nível: explosão dourada
+        level(unit) {
+            const p = pos(unit); if (!p) return;
+            ring(p.x, p.y, 'rgba(232,200,74,.95)', true);
+            sparks(p.x, p.y, '#f5e07a', 16);
+            glints(p.x, p.y - 10, '#ffe9a3', 4);
+        },
+        // magia/efeito genérico colorido
+        burst(unit, col) {
+            const p = pos(unit); if (!p) return;
+            ring(p.x, p.y, col);
+            sparks(p.x, p.y, col, 10);
+        }
+    };
+})();
+
+// ==========================================
 // FILA DE BANNERS DE BATALHA — ordem garantida, sem sobreposição.
 // Ao iniciar uma batalha: [CHEFE?] → OBJETIVO → TURNO, um por vez.
 // ==========================================
