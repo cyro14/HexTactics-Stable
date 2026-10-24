@@ -525,10 +525,18 @@ window.openContinentMap = function() {
                 }
 
                 fc.style.display = 'flex';
-                let yOffset = isTouch ? 200 : -20;
-                let xOffset = isTouch ? 80 : -20;
-                fc.style.left = (clientX - xOffset) + 'px';
-                fc.style.top = (clientY - yOffset) + 'px';
+                // ANCORADO NO ALVO (não no cursor): o cartão flutua ACIMA
+                // do hex, sem cobrir as unidades em duelos; vira para
+                // baixo quando não há espaço, e nunca sai da tela
+                const hexP = renderer.getPos(hoveredHex.q, hoveredHex.r);
+                const fcW = fc.offsetWidth || 290;
+                const fcH = fc.offsetHeight || 200;
+                let px = rect.left + hexP.x - fcW / 2;
+                px = Math.max(8, Math.min(window.innerWidth - fcW - 8, px));
+                let py = rect.top + hexP.y - renderer.hexSize - fcH - 14;
+                if (py < 56) py = rect.top + hexP.y + renderer.hexSize + 14;
+                fc.style.left = px + 'px';
+                fc.style.top = py + 'px';
             }
         } else {
             if (!window.pendingAttackTarget) { fc.style.display = 'none'; lastForecastTarget = null; }

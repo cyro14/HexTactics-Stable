@@ -1761,18 +1761,18 @@ class Game {
     }
 
     updateTurnUI(txt, col) {
-        // Atualiza APENAS o texto interno — nunca sobrescrever o badge
-        // inteiro (ele contém o ícone SVG e o span #turn-badge-text)
+        // Campo fixo #turn-badge (ao lado da mana): cor da facção, texto
+        // curto e contador — SEM toast central (o texto no meio da tela
+        // foi removido por pedido; indicador oficial é este badge)
         const badge = document.getElementById('turn-badge');
         const badgeText = document.getElementById('turn-badge-text');
         if (badge) badge.style.setProperty('--turn-col', col);
         if (badgeText) {
-            badgeText.innerText = txt;
-            badgeText.style.color = col;
+            badgeText.innerText = this.currentTurn === 1 ? 'Seu Turno'
+                : (this.currentTurn === 2 ? 'Turno Inimigo' : 'Turno das Feras');
         }
-        if (typeof showMessage === 'function') showMessage(txt, col);
-
-        // (banner de turno flutuante removido — indicador fixo #turn-badge)
+        const bCount = document.getElementById('turn-badge-count');
+        if (bCount) bCount.textContent = `T${this.turnCount || 1}`;
     }
 
     checkWin() {

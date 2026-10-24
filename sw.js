@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v25'; // v25: banner de turno removido + popups 6s em cascata + prévia de combate refeita
+const CACHE_NAME = 'hextactics-v26'; // v26: toast de turno extinto + forecast ancorada acima do alvo + nome com quebra de linha
 const ASSETS = [
     './',
     './index.html',
