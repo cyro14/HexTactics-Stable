@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v26'; // v26: toast de turno extinto + forecast ancorada acima do alvo + nome com quebra de linha
+const CACHE_NAME = 'hextactics-v27'; // v27: cenário procedural da batalha por fase do dia
 const ASSETS = [
     './',
     './index.html',

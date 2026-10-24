@@ -1824,6 +1824,142 @@ class Renderer {
     centerOn(q, r) { const p = this.getPosUnscaled(q, r); this.offsetX = (this.canvas.width / 2) - p.x; this.offsetY = (this.canvas.height / 2) - p.y; this.draw(); }
 
     // ==========================================
+    // FASE DO DIA (mesmo ciclo do HUD): 1=alvorada, 2-4=dia, 5=crepúsculo,
+    // 6-8=noite, 9-0=noite profunda
+    // ==========================================
+    getTODPhase() {
+        const cycle = ((this.game.turnCount || 0) % 10 + 10) % 10;
+        if (cycle === 1) return 'dawn';
+        if (cycle >= 2 && cycle <= 4) return 'day';
+        if (cycle === 5) return 'sunset';
+        if (cycle >= 6 && cycle <= 8) return 'night';
+        return 'deepnight';
+    }
+
+    // ==========================================
+    // CENÁRIO PROCEDURAL DA BATALHA — pintura estilo menu-bg (céu em
+    // gradiente, astro com halo, estrelas semeadas, nuvens em risco,
+    // montanhas silhueto e faixa de água com reflexo), por fase do dia
+    // ==========================================
+    buildBattleBackdrop(phase) {
+        const W = this.canvas.width, H = this.canvas.height;
+        const bg = document.createElement('canvas');
+        bg.width = W; bg.height = H;
+        const c = bg.getContext('2d');
+
+        // RNG determinístico por fase (estrelas/montanhas estáveis)
+        let seed = 0;
+        for (let i = 0; i < phase.length; i++) seed = (seed * 31 + phase.charCodeAt(i)) | 0;
+        const rnd = () => { seed = (seed * 1664525 + 1013904223) | 0; return ((seed >>> 8) & 0xFFFF) / 0xFFFF; };
+
+        // paletas por fase: céu (topo, meio, horizonte) + tints
+        const P = {
+            dawn:      { sky: [[26, 28, 58], [122, 84, 96], [214, 150, 108]], astro: 'sun', astroPos: [0.26, 0.66], astroCol: '255, 226, 168', astroR: 0.035, glow: '214, 150, 108', stars: 26, cloud: '255, 200, 160' },
+            day:       { sky: [[72, 116, 158], [134, 162, 182], [214, 196, 166]], astro: 'sun', astroPos: [0.78, 0.22], astroCol: '255, 250, 224', astroR: 0.030, glow: '255, 244, 200', stars: 0, cloud: '240, 246, 250' },
+            sunset:    { sky: [[30, 24, 54], [156, 74, 64], [242, 146, 72]], astro: 'sun', astroPos: [0.82, 0.68], astroCol: '255, 190, 110', astroR: 0.052, glow: '242, 146, 72', stars: 18, cloud: '250, 170, 120' },
+            night:     { sky: [[7, 9, 20], [11, 15, 34], [20, 28, 54]], astro: 'moon', astroPos: [0.80, 0.20], astroCol: '235, 227, 184', astroR: 0.030, glow: '205, 200, 170', stars: 90, cloud: '60, 74, 110' },
+            deepnight: { sky: [[3, 4, 10], [6, 8, 18], [12, 16, 36]], astro: 'moon', astroPos: [0.78, 0.18], astroCol: '228, 220, 180', astroR: 0.027, glow: '180, 180, 160', stars: 150, cloud: '40, 50, 84' }
+        }[phase] || { sky: [[7, 9, 20], [11, 15, 34], [20, 28, 54]], astro: 'moon', astroPos: [0.8, 0.2], astroCol: '235,227,184', astroR: 0.03, glow: '205,200,170', stars: 90, cloud: '60,74,110' };
+
+        const horizon = H * 0.78;
+
+        // 1. CÉU em três stops
+        const g = c.createLinearGradient(0, 0, 0, horizon);
+        g.addColorStop(0, `rgb(${P.sky[0].join(',')})`);
+        g.addColorStop(0.62, `rgb(${P.sky[1].join(',')})`);
+        g.addColorStop(1, `rgb(${P.sky[2].join(',')})`);
+        c.fillStyle = g;
+        c.fillRect(0, 0, W, H);
+
+        // 2. ESTRELAS semeadas (esmaecem conforme a luz)
+        const starA = phase === 'day' ? 0 : (phase === 'dawn' ? 0.35 : (phase === 'sunset' ? 0.25 : (phase === 'night' ? 0.85 : 1)));
+        for (let i = 0; i < P.stars; i++) {
+            const x = rnd() * W, y = rnd() * horizon * 0.9;
+            const r = rnd() * 1.4 + 0.4;
+            c.fillStyle = `rgba(232, 228, 255, ${starA * (0.35 + rnd() * 0.65)})`;
+            c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+        }
+
+        // 3. ASTRO (sol ou lua) com halo largo
+        const ax = W * P.astroPos[0], ay = H * P.astroPos[1];
+        const ar = Math.min(W, H) * P.astroR;
+        let halo = c.createRadialGradient(ax, ay, ar * 0.4, ax, ay, ar * 6);
+        halo.addColorStop(0, `rgba(${P.glow}, 0.42)`);
+        halo.addColorStop(0.5, `rgba(${P.glow}, 0.14)`);
+        halo.addColorStop(1, `rgba(${P.glow}, 0)`);
+        c.fillStyle = halo;
+        c.fillRect(ax - ar * 6, ay - ar * 6, ar * 12, ar * 12);
+        c.fillStyle = `rgb(${P.astroCol})`;
+        c.beginPath(); c.arc(ax, ay, ar, 0, Math.PI * 2); c.fill();
+        if (P.astro === 'moon') {
+            // crateras da lua (como o menu)
+            c.fillStyle = 'rgba(150, 140, 110, 0.5)';
+            [[-0.3, -0.2, 0.16], [0.25, 0.3, 0.11], [0.1, -0.45, 0.08]].forEach(([dx, dy, dr]) => {
+                c.beginPath(); c.arc(ax + ar * dx, ay + ar * dy, ar * dr, 0, Math.PI * 2); c.fill();
+            });
+        }
+
+        // 4. NUVENS em riscos horizontais suaves
+        c.fillStyle = `rgba(${P.cloud}, 0.10)`;
+        for (let i = 0; i < 3; i++) {
+            const cy = H * (0.12 + i * 0.13) + rnd() * 20;
+            const cw = W * (0.25 + rnd() * 0.4);
+            const cx = rnd() * (W - cw);
+            const ch = 4 + rnd() * 7;
+            c.beginPath(); c.ellipse(cx + cw / 2, cy, cw / 2, ch, 0, 0, Math.PI * 2); c.fill();
+        }
+
+        // 5. MONTANHAS silhueto (2 camadas, cristas afiadas como o menu)
+        const mountain = (base, amp, col, off) => {
+            c.fillStyle = col;
+            c.beginPath();
+            c.moveTo(0, H);
+            const step = Math.max(6, W / 160);
+            for (let x = 0; x <= W + step; x += step) {
+                const t = (x + off) / W * 6;
+                let v = Math.sin(t) * 0.6 + Math.sin(t * 2.17 + off) * 0.4;
+                v = 1 - Math.abs(2 * v - 1);
+                c.lineTo(x, H * (base - amp * v));
+            }
+            c.lineTo(W, H);
+            c.closePath();
+            c.fill();
+        };
+        if (phase === 'day' || phase === 'sunset' || phase === 'dawn') {
+            mountain(0.80, 0.10, `rgba(30, 32, 56, ${phase === 'sunset' ? 0.75 : 0.55})`, W * 0.13);
+            mountain(0.855, 0.07, `rgba(16, 18, 36, ${phase === 'sunset' ? 0.9 : 0.75})`, W * 0.61);
+        } else {
+            mountain(0.80, 0.10, 'rgba(12, 15, 30, 0.85)', W * 0.13);
+            mountain(0.855, 0.07, 'rgba(7, 9, 20, 0.95)', W * 0.61);
+        }
+
+        // 6. ÁGUA na base (faixa refletindo o céu) + coluna de reflexo do astro
+        const wg = c.createLinearGradient(0, H * 0.87, 0, H);
+        wg.addColorStop(0, `rgba(${P.sky[2].join(',')}, 0.9)`);
+        wg.addColorStop(1, `rgba(${P.sky[0].join(',')}, 0.95)`);
+        c.fillStyle = wg;
+        c.fillRect(0, H * 0.87, W, H * 0.13);
+        c.fillStyle = `rgba(${P.glow}, 0.16)`;
+        for (let i = 0; i < 6; i++) {
+            const y = H * (0.885 + i * 0.018);
+            const lw = (ar * 2.4) * (1 - i * 0.1);
+            c.fillRect(ax - lw / 2, y, lw, 2);
+        }
+        // vagalumes na noite
+        if (phase === 'night' || phase === 'deepnight') {
+            const n = phase === 'deepnight' ? 14 : 8;
+            for (let i = 0; i < n; i++) {
+                const x = rnd() * W, y = H * (0.55 + rnd() * 0.35);
+                c.fillStyle = `rgba(232, 200, 74, ${0.25 + rnd() * 0.5})`;
+                c.beginPath(); c.arc(x, y, 1.6, 0, Math.PI * 2); c.fill();
+            }
+        }
+
+        this._bgCanvas = bg;
+        this._bgPhase = phase;
+    }
+
+    // ==========================================
     // HIGHLIGHTS DE AÇÃO (mover/atacar/domar/magia/item)
     // Pintura em camadas: anel escuro externo (contraste em fundos
     // claros — neve), fill translúcido, contorno com GLOW na cor da
@@ -1888,10 +2024,19 @@ class Renderer {
         ctx.mozImageSmoothingEnabled = false;
         ctx.msImageSmoothingEnabled = false;
 
-        const actBgColors = ['#0a0a0e', '#121208', '#050a15', '#100515', '#150505'];
-        const bgColor = actBgColors[this.game.currentLevel - 1] || '#0a0a0e';
-        ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        // ==========================================
+        // CENÁRIO PROCEDURAL (estilo menu principal) — muda com a FASE
+        // DO DIA (alvorada/dia/crepúsculo/noite/noite profunda).
+        // Pintado num canvas OFFSCREEN cacheado: recria só quando a
+        // tela muda de tamanho ou o dia vira; por frame é 1 drawImage.
+        // ==========================================
+        const phase = this.getTODPhase();
+        if (!this._bgCanvas || this._bgPhase !== phase ||
+            this._bgCanvas.width !== this.canvas.width ||
+            this._bgCanvas.height !== this.canvas.height) {
+            this.buildBattleBackdrop(phase);
+        }
+        ctx.drawImage(this._bgCanvas, 0, 0);
         ctx.globalAlpha = 1.0;
         ctx.shadowBlur = 0;
 
