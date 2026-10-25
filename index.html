@@ -20,6 +20,9 @@
 <body>
     <div id="game-container" class="hidden">
         <canvas id="gameCanvas" class="layer"> </canvas>
+        <!-- Overlay atmosférico: efeitos ambiente vivem aqui em rAF próprio,
+             SEM redescer o mapa inteiro a cada frame -->
+        <canvas id="ambientCanvas" class="layer" style="pointer-events:none; z-index:5;"></canvas>
         <div id="ui-layer" class="layer">
             <!-- Banner de Turno: REMOVIDO — o indicador oficial é o campo
                  fixo #turn-badge (ao lado da mana) na barra superior -->

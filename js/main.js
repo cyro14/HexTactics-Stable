@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
     loadMeta();
     game = new Game();
     renderer = new Renderer($('gameCanvas'), game);
+    // Inicia o loop atmosférico (canvas overlay, ~30fps, não redesenha o mapa)
+    renderer.startAmbientLoop();
     let isDragging = false, startX, startY, initOffX, initOffY;
     let initialPinchDist = null, initialHexSize = null;
     let lastForecastTarget = null;

@@ -830,6 +830,7 @@ class Game {
             hex.owner = u.faction; let col = u.faction === 1 ? '#4a9edd' : '#c0392b';
             if (typeof showPopup === 'function') showPopup("🚩", u, col);
             if (window.battleFX) battleFX.village(u, col);
+            this.updateVisibility();
             if (typeof addLog === 'function') addLog(`🚩 ${u.name} capturou a Vila!`, col);
             if (u.faction === 1) {
                 u.mp = 0; let g = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_gold')) ? 4 : 2; this.gold += g;
@@ -853,7 +854,7 @@ class Game {
 
         for (let i = 1; i <= fr; i++) { u.vq = sQ + (tQ - sQ) * (i / fr); u.vr = sR + (tR - sR) * (i / fr); if (renderer) renderer.centerOn(u.vq, u.vr); if (typeof sleep === 'function') await sleep(16); }
 
-        u.q = tQ; u.r = tR; u.vq = tQ; u.vr = tR; this.checkVillageCapture(u); let k = `${tQ},${tR}`;
+        u.q = tQ; u.r = tR; u.vq = tQ; u.vr = tR; this.checkVillageCapture(u); this.updateVisibility(); let k = `${tQ},${tR}`;
 
         // ========================================================
         // EFEITOS DE TERRENO (AO PISAR)
@@ -1534,7 +1535,9 @@ class Game {
     }
 
     async startNextTurn() {
-        if (this.gameOver) return; this.selectedUnit = null; this.reachableHexes.clear(); this.tameMode = false; this.activeSpell = null; if (typeof updateUI === 'function') updateUI(); if (renderer) renderer.draw();
+        if (this.gameOver) return; this.selectedUnit = null; this.reachableHexes.clear(); this.tameMode = false; this.activeSpell = null;
+        this.updateVisibility(); // recalcula a névoa da noite pro novo turno
+        if (typeof updateUI === 'function') updateUI(); if (renderer) renderer.draw();
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true;
 
         if (this.currentTurn === 1) {
@@ -1781,6 +1784,45 @@ class Game {
         if (bCount) bCount.textContent = `T${this.turnCount || 1}`;
     }
 
+    // ==========================================
+    // VISIBILIDADE NOTURNA — névoa de guerra
+    // Visão = movimento - 2 (mín 1); vilas conquistadas emitem luz (raio 3)
+    // ==========================================
+    updateVisibility() {
+        const phase = (typeof renderer !== 'undefined' && renderer) ? renderer.getTODPhase() : 'day';
+        // de dia e na alvorada: tudo visível
+        if (phase === 'day' || phase === 'dawn') {
+            this.visibleHexes = null;
+            return;
+        }
+        const vis = new Set();
+        // 1. visão das unidades do jogador: max(1, mp - 2)
+        this.units.filter(u => u.faction === 1 && u.hp > 0).forEach(u => {
+            const radius = Math.max(1, (u.mp || 0) - 2);
+            for (let q = u.q - radius; q <= u.q + radius; q++) {
+                for (let r = u.r - radius; r <= u.r + radius; r++) {
+                    if (Hex.distance(u, { q, r }) <= radius) {
+                        vis.add(`${q},${r}`);
+                    }
+                }
+            }
+        });
+        // 2. vilas conquistadas emitem luz própria (raio 3)
+        this.map.forEach(hex => {
+            if (hex.terrain && hex.terrain.id === 'VILLAGE' && hex.owner === 1) {
+                const radius = 3;
+                for (let q = hex.q - radius; q <= hex.q + radius; q++) {
+                    for (let r = hex.r - radius; r <= hex.r + radius; r++) {
+                        if (Hex.distance(hex, { q, r }) <= radius) {
+                            vis.add(`${q},${r}`);
+                        }
+                    }
+                }
+            }
+        });
+        this.visibleHexes = vis;
+    }
+
     checkWin() {
         if (this.gameOver) return;
         const pL = this.units.find(u => u.faction === 1 && u.isLeader); const aL = this.units.find(u => u.faction === 2 && u.isLeader);
@@ -1827,12 +1869,288 @@ class Renderer {
     }
     getPosUnscaled(q, r) { return { x: this.hexSize * Math.sqrt(3) * (q + r / 2) + this.hexSize, y: this.hexSize * 1.5 * r + this.hexSize }; }
     getPos(q, r) { const u = this.getPosUnscaled(q, r); return { x: u.x + this.offsetX, y: u.y + this.offsetY }; }
-    centerOn(q, r) { const p = this.getPosUnscaled(q, r); this.offsetX = (this.canvas.width / 2) - p.x; this.offsetY = (this.canvas.height / 2) - p.y; this.draw(); }
+    centerOn(q, r) {
+        // NÉVOA: não centra a câmera no que o jogador não vê (à noite)
+        if (this.game.visibleHexes && this.game.visibleHexes.size > 0) {
+            const key = `${q},${r}`;
+            if (!this.game.visibleHexes.has(key)) return; // fora da visão: fica onde está
+        }
+        const p = this.getPosUnscaled(q, r); this.offsetX = (this.canvas.width / 2) - p.x; this.offsetY = (this.canvas.height / 2) - p.y; this.draw();
+    }
 
     // ==========================================
     // FASE DO DIA (mesmo ciclo do HUD): 1=alvorada, 2-4=dia, 5=crepúsculo,
     // 6-8=noite, 9-0=noite profunda
     // ==========================================
+    // ==========================================
+    // EFEITOS AMBIENTES VIVOS — mundo que respira
+    // Arquitetura: canvas DOM overlay (#ambientCanvas) com rAF próprio.
+    // O mapa (gameCanvas) fica estático entre eventos; os efeitos
+    // animam continuamente por cima a ~30fps SEM redesenhar o mapa.
+    // ==========================================
+    initAmbient() {
+        if (this._ambient) return;
+        const W = this.canvas.width, H = this.canvas.height;
+        const rnd = () => Math.random();
+        const hs = this.hexSize || 40;
+
+        this._ambient = {
+            birds: Array.from({ length: 3 }, (_, i) => ({
+                x: rnd() * W, y: H * (0.12 + i * 0.15),
+                vx: (rnd() < .5 ? -1 : 1) * (1.2 + rnd() * 0.8),
+                wingPhase: rnd() * Math.PI * 2,
+                size: hs * (0.35 + rnd() * 0.15),
+            })),
+            fireflies: Array.from({ length: 14 }, () => ({
+                ox: rnd() * W, oy: H * (0.35 + rnd() * 0.55),
+                phase: rnd() * Math.PI * 2, speed: 0.3 + rnd() * 0.6,
+                amp: hs * (0.3 + rnd() * 0.5),
+                r: hs * 0.05 + rnd() * hs * 0.04,
+            })),
+            windWisps: Array.from({ length: 4 }, () => ({
+                x: rnd() * W, y: H * (0.15 + rnd() * 0.6),
+                vx: 2 + rnd() * 3,
+                len: W * (0.15 + rnd() * 0.2),
+                curve: hs * (rnd() * 1.5 - 0.75),
+                alpha: 0.10 + rnd() * 0.10,
+                w: 2 + rnd() * 2,
+            })),
+            embers: Array.from({ length: 10 }, () => ({
+                x: rnd() * W, y: H * (0.55 + rnd() * 0.35),
+                vy: -(0.5 + rnd() * 1), sway: rnd() * Math.PI * 2,
+                r: hs * 0.05 + rnd() * hs * 0.03,
+            })),
+            rays: Array.from({ length: 4 }, (_, i) => ({
+                x: (i / 4) * W + rnd() * W * 0.2,
+                width: W * (0.08 + rnd() * 0.06),
+                drift: (rnd() * 2 - 1) * 0.3, phase: rnd() * Math.PI * 2,
+            })),
+            cloudShadows: Array.from({ length: 3 }, () => ({
+                x: rnd() * W, y: rnd() * H,
+                vx: 0.3 + rnd() * 0.5,
+                w: W * (0.25 + rnd() * 0.3), h: H * (0.18 + rnd() * 0.2),
+                phase: rnd() * Math.PI * 2,
+            })),
+            mistBands: Array.from({ length: 3 }, (_, i) => ({
+                y: H * (0.5 + i * 0.18),
+                phase: rnd() * Math.PI * 2,
+                alpha: 0.06 + rnd() * 0.05,
+                speed: 0.2 + rnd() * 0.3,
+            })),
+        };
+    }
+
+    startAmbientLoop() {
+        if (this._ambientRaf) return;
+        const ambCv = document.getElementById('ambientCanvas');
+        if (!ambCv) return;
+        // sincroniza com o canvas do jogo
+        const syncSize = () => {
+            if (ambCv.width !== this.canvas.width) ambCv.width = this.canvas.width;
+            if (ambCv.height !== this.canvas.height) ambCv.height = this.canvas.height;
+        };
+        syncSize();
+        const actx = ambCv.getContext('2d');
+        const self = this;
+        let last = 0;
+        const FRAME_MS = 33; // ~30fps
+
+        const loop = (ts) => {
+            // Se a batalha está oculta (menus, testes headless), PAUSA o rAF
+            // e só agenda a retomada com setTimeout (não bloqueia o budget
+            // do Chrome headless --virtual-time-budget)
+            const gc = document.getElementById('game-container');
+            if (!gc || gc.classList.contains('hidden')) {
+                self._ambientRaf = null;
+                setTimeout(() => {
+                    if (!self._ambientRaf) self._ambientRaf = requestAnimationFrame(loop);
+                }, 500);
+                return;
+            }
+            self._ambientRaf = requestAnimationFrame(loop);
+            if (ts - last < FRAME_MS) return;
+            last = ts;
+            syncSize();
+            actx.clearRect(0, 0, ambCv.width, ambCv.height);
+            self.drawAmbientOnCtx(actx, self.getTODPhase());
+        };
+        self._ambientRaf = requestAnimationFrame(loop);
+    }
+
+    drawAmbientOnCtx(ctx, phase) {
+        this.initAmbient();
+        const A = this._ambient;
+        const W = ctx.canvas.width, H = ctx.canvas.height;
+        const t = performance.now() / 1000;
+        const hs = this.hexSize || 40;
+
+        // --- SOMBRAS DE NUVEM (dia) ---
+        if (phase === 'day') {
+            A.cloudShadows.forEach(s => {
+                s.x += s.vx;
+                if (s.x > W + s.w) s.x = -s.w;
+                const pulse = Math.sin(t * 0.4 + s.phase) * 0.02 + 0.05;
+                const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.w);
+                grad.addColorStop(0, `rgba(0, 0, 25, ${pulse})`);
+                grad.addColorStop(0.6, `rgba(0, 0, 25, ${pulse * 0.4})`);
+                grad.addColorStop(1, 'rgba(0, 0, 25, 0)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(s.x - s.w, s.y - s.h, s.w * 2, s.h * 2);
+            });
+        }
+
+        // --- NÉVOA (alvorada + noite) ---
+        if (phase === 'dawn' || phase === 'night' || phase === 'deepnight') {
+            const mistCol = phase === 'dawn' ? '255, 220, 180' : '140, 150, 220';
+            A.mistBands.forEach(m => {
+                const yOff = Math.sin(t * m.speed + m.phase) * hs * 0.4;
+                const grad = ctx.createLinearGradient(0, m.y + yOff - hs, 0, m.y + yOff + hs);
+                grad.addColorStop(0, `rgba(${mistCol}, 0)`);
+                grad.addColorStop(0.5, `rgba(${mistCol}, ${m.alpha})`);
+                grad.addColorStop(1, `rgba(${mistCol}, 0)`);
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, m.y + yOff - hs, W, hs * 2);
+            });
+        }
+
+        // --- RAIOS DE SOL (alvorada + dia) ---
+        if (phase === 'dawn' || phase === 'day') {
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            const rayCol = phase === 'dawn' ? '255, 200, 140' : '255, 250, 200';
+            A.rays.forEach(r => {
+                r.x += r.drift;
+                if (r.x > W + r.width) r.x = -r.width;
+                if (r.x < -r.width) r.x = W + r.width;
+                const breathe = Math.sin(t * 0.5 + r.phase) * 0.4 + 0.6;
+                const alpha = 0.14 * breathe;
+                ctx.save();
+                ctx.translate(r.x, 0);
+                ctx.rotate(0.3);
+                const grad = ctx.createLinearGradient(0, 0, 0, H * 1.2);
+                grad.addColorStop(0, `rgba(${rayCol}, ${alpha})`);
+                grad.addColorStop(0.5, `rgba(${rayCol}, ${alpha * 0.5})`);
+                grad.addColorStop(1, `rgba(${rayCol}, 0)`);
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.moveTo(-r.width * 0.2, 0);
+                ctx.lineTo(-r.width * 0.6, H * 1.2);
+                ctx.lineTo(r.width * 0.6, H * 1.2);
+                ctx.lineTo(r.width * 0.2, 0);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            });
+            ctx.restore();
+        }
+
+        // --- PÁSSAROS com sombra no chão ---
+        if (phase !== 'night' && phase !== 'deepnight') {
+            A.birds.forEach(b => {
+                b.x += b.vx;
+                if (b.x > W + 60) b.x = -60;
+                if (b.x < -60) b.x = W + 60;
+                b.wingPhase += 0.12;
+                const wing = Math.sin(b.wingPhase) * b.size * 0.6;
+                const birdCol = phase === 'sunset' ? 'rgba(30, 15, 25, 0.5)' : 'rgba(25, 25, 40, 0.4)';
+                // sombra projetada
+                const shadowY = b.y + H * 0.4;
+                ctx.save();
+                ctx.globalAlpha = 0.12;
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.ellipse(b.x, shadowY, b.size * 0.7, b.size * 0.18, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                // corpo
+                ctx.strokeStyle = birdCol;
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(b.x - b.size, b.y - wing);
+                ctx.quadraticCurveTo(b.x, b.y + wing * 0.3, b.x + b.size, b.y - wing);
+                ctx.stroke();
+            });
+        }
+
+        // --- BRASAS do crepúsculo ---
+        if (phase === 'sunset') {
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            A.embers.forEach(e => {
+                e.y += e.vy;
+                e.sway += 0.04;
+                if (e.y < H * 0.25) { e.y = H * 0.9; e.x = Math.random() * W; }
+                const x = e.x + Math.sin(e.sway) * hs * 0.5;
+                const flicker = 0.4 + Math.sin(t * 3 + e.sway) * 0.3;
+                const gl = ctx.createRadialGradient(x, e.y, 0, x, e.y, e.r * 6);
+                gl.addColorStop(0, `rgba(255, 120, 30, ${flicker * 0.35})`);
+                gl.addColorStop(1, 'rgba(255, 120, 30, 0)');
+                ctx.fillStyle = gl;
+                ctx.fillRect(x - e.r * 6, e.y - e.r * 6, e.r * 12, e.r * 12);
+                ctx.fillStyle = `rgba(255, ${140 + Math.sin(t * 2 + e.sway) * 50}, 40, ${flicker})`;
+                ctx.beginPath();
+                ctx.arc(x, e.y, e.r * (1 + Math.sin(t * 4 + e.sway) * 0.3), 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.restore();
+        }
+
+        // --- VILAS CONQUISTADAS: luz quente à noite ---
+        if (phase === 'night' || phase === 'deepnight' || phase === 'sunset') {
+            if (self.game && self.game.map) {
+                self.game.map.forEach(hex => {
+                    if (hex.terrain && hex.terrain.id === 'VILLAGE' && hex.owner === 1) {
+                        const p = self.getPos(hex.q, hex.r);
+                        const lr = (self.hexSize || 40) * 3;
+                        const flicker = 0.5 + Math.sin(t * 2 + hex.q * 3 + hex.r * 2) * 0.15;
+                        const gl = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, lr);
+                        gl.addColorStop(0, `rgba(255, 200, 80, ${0.25 * flicker})`);
+                        gl.addColorStop(0.3, `rgba(255, 180, 60, ${0.12 * flicker})`);
+                        gl.addColorStop(1, 'rgba(255, 160, 40, 0)');
+                        ctx.fillStyle = gl;
+                        ctx.fillRect(p.x - lr, p.y - lr, lr * 2, lr * 2);
+                    }
+                });
+            }
+        }
+
+        // --- VAGALUMES + VENTOS noturnos ---
+        if (phase === 'night' || phase === 'deepnight') {
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            A.fireflies.forEach(f => {
+                const x = f.ox + Math.sin(t * f.speed + f.phase) * f.amp * 2 + Math.sin(t * 0.15 + f.phase) * hs;
+                const y = f.oy + Math.cos(t * f.speed * 0.6 + f.phase) * f.amp;
+                const pulse = 0.25 + Math.abs(Math.sin(t * 1.2 + f.phase * 3)) * 0.65;
+                const gl = ctx.createRadialGradient(x, y, 0, x, y, f.r * 6);
+                gl.addColorStop(0, `rgba(232, 200, 74, ${pulse * 0.4})`);
+                gl.addColorStop(0.4, `rgba(232, 200, 74, ${pulse * 0.15})`);
+                gl.addColorStop(1, 'rgba(232, 200, 74, 0)');
+                ctx.fillStyle = gl;
+                ctx.fillRect(x - f.r * 6, y - f.r * 6, f.r * 12, f.r * 12);
+                ctx.fillStyle = `rgba(255, 240, 140, ${pulse})`;
+                ctx.beginPath(); ctx.arc(x, y, f.r * (0.8 + Math.sin(t * 3 + f.phase) * 0.3), 0, Math.PI * 2); ctx.fill();
+            });
+            ctx.restore();
+
+            const wispCol = phase === 'deepnight' ? '160, 175, 235' : '130, 145, 210';
+            A.windWisps.forEach(w => {
+                w.x += w.vx;
+                if (w.x > W + w.len) w.x = -w.len;
+                ctx.strokeStyle = `rgba(${wispCol}, ${w.alpha})`;
+                ctx.lineWidth = w.w;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                const y0 = w.y + Math.sin(t * 0.4 + w.x * 0.005) * w.curve;
+                ctx.moveTo(w.x, y0);
+                ctx.quadraticCurveTo(w.x + w.len * 0.4, y0 + w.curve, w.x + w.len * 0.7, y0 + w.curve * 0.3);
+                ctx.quadraticCurveTo(w.x + w.len, y0 + w.curve * 0.5, w.x + w.len, y0);
+                ctx.stroke();
+            });
+        }
+    }
+
     getTODPhase() {
         const cycle = ((this.game.turnCount || 0) % 10 + 10) % 10;
         if (cycle === 1) return 'dawn';
@@ -1862,7 +2180,7 @@ class Renderer {
         const P = {
             dawn:      { sky: [[26, 28, 58], [122, 84, 96], [214, 150, 108]], astro: 'sun', astroPos: [0.26, 0.66], astroCol: '255, 226, 168', astroR: 0.035, glow: '214, 150, 108', stars: 26, cloud: '255, 200, 160' },
             day:       { sky: [[72, 116, 158], [134, 162, 182], [214, 196, 166]], astro: 'sun', astroPos: [0.78, 0.22], astroCol: '255, 250, 224', astroR: 0.030, glow: '255, 244, 200', stars: 0, cloud: '240, 246, 250' },
-            sunset:    { sky: [[30, 24, 54], [156, 74, 64], [242, 146, 72]], astro: 'sun', astroPos: [0.82, 0.68], astroCol: '255, 190, 110', astroR: 0.052, glow: '242, 146, 72', stars: 18, cloud: '250, 170, 120' },
+            sunset:    { sky: [[30, 20, 50], [180, 70, 55], [255, 140, 50]], astro: 'sun', astroPos: [0.82, 0.68], astroCol: '255, 200, 120', astroR: 0.055, glow: '255, 120, 40', stars: 18, cloud: '255, 140, 80' },
             night:     { sky: [[7, 9, 20], [11, 15, 34], [20, 28, 54]], astro: 'moon', astroPos: [0.80, 0.20], astroCol: '235, 227, 184', astroR: 0.030, glow: '205, 200, 170', stars: 90, cloud: '60, 74, 110' },
             deepnight: { sky: [[3, 4, 10], [6, 8, 18], [12, 16, 36]], astro: 'moon', astroPos: [0.78, 0.18], astroCol: '228, 220, 180', astroR: 0.027, glow: '180, 180, 160', stars: 150, cloud: '40, 50, 84' }
         }[phase] || { sky: [[7, 9, 20], [11, 15, 34], [20, 28, 54]], astro: 'moon', astroPos: [0.8, 0.2], astroCol: '235,227,184', astroR: 0.03, glow: '205,200,170', stars: 90, cloud: '60,74,110' };
@@ -1876,6 +2194,32 @@ class Renderer {
         g.addColorStop(1, `rgb(${P.sky[2].join(',')})`);
         c.fillStyle = g;
         c.fillRect(0, 0, W, H);
+
+        // 1.5 GLOW do horizonte (crepúsculo dramático): faixa radial quente
+        if (phase === 'sunset') {
+            const hzGlow = c.createRadialGradient(W * 0.82, H * 0.78, 0, W * 0.82, H * 0.78, W * 0.55);
+            hzGlow.addColorStop(0, 'rgba(255, 100, 30, 0.35)');
+            hzGlow.addColorStop(0.4, 'rgba(255, 80, 30, 0.18)');
+            hzGlow.addColorStop(1, 'rgba(255, 60, 20, 0)');
+            c.fillStyle = hzGlow;
+            c.fillRect(0, H * 0.5, W, H * 0.5);
+            // faixa horizontal extra no horizonte
+            const hzBand = c.createLinearGradient(0, H * 0.72, 0, H * 0.82);
+            hzBand.addColorStop(0, 'rgba(255, 120, 40, 0)');
+            hzBand.addColorStop(0.5, 'rgba(255, 90, 30, 0.22)');
+            hzBand.addColorStop(1, 'rgba(255, 120, 40, 0)');
+            c.fillStyle = hzBand;
+            c.fillRect(0, H * 0.72, W, H * 0.10);
+        }
+        // alvorada também ganha uma faixa suave rosada
+        if (phase === 'dawn') {
+            const hzBand = c.createLinearGradient(0, H * 0.70, 0, H * 0.80);
+            hzBand.addColorStop(0, 'rgba(255, 180, 120, 0)');
+            hzBand.addColorStop(0.5, 'rgba(255, 170, 110, 0.15)');
+            hzBand.addColorStop(1, 'rgba(255, 180, 120, 0)');
+            c.fillStyle = hzBand;
+            c.fillRect(0, H * 0.70, W, H * 0.10);
+        }
 
         // 2. ESTRELAS semeadas (esmaecem conforme a luz)
         const starA = phase === 'day' ? 0 : (phase === 'dawn' ? 0.35 : (phase === 'sunset' ? 0.25 : (phase === 'night' ? 0.85 : 1)));
@@ -2562,6 +2906,34 @@ class Renderer {
             ctx.save();
             ctx.globalCompositeOperation = 'source-over';
             ctx.drawImage(this.lightCanvas, 0, 0);
+            ctx.restore();
+        }
+
+        // ==========================================
+        // ==========================================
+        // EFEITOS AMBIENTES VIVOS (por fase do dia) — desenhados a cada
+        // frame POR CIMA do mapa e unidades, ANTES do pós-processamento.
+        // Mantém o mundo respirando: raios de sol, pássaros, ventos,
+        // vagalumes, brasas do crepúsculo.
+        // ==========================================
+        // (Efeitos ambientes rodam em canvas OVERLAY #ambientCanvas
+        //  com rAF próprio — ver startAmbientLoop. Nada por aqui.)
+        // ==========================================
+
+        // ==========================================
+        // NÉVOA DE GUERRA NOTURNA — hexes fora da visão escurecem
+        // ==========================================
+        if (this.game.visibleHexes && this.game.visibleHexes.size > 0) {
+            ctx.save();
+            this.game.map.forEach(hex => {
+                const key = `${hex.q},${hex.r}`;
+                if (!this.game.visibleHexes.has(key)) {
+                    const p = this.getPos(hex.q, hex.r);
+                    ctx.fillStyle = 'rgba(2, 3, 8, 0.82)';
+                    this.hexPath(ctx, p.x, p.y, this.hexSize + 1);
+                    ctx.fill();
+                }
+            });
             ctx.restore();
         }
 

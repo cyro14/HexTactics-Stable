@@ -223,6 +223,11 @@ function replaceEffectIcons(txt, col) {
 
 function showPopup(txt, target, col) {
     if (!renderer) return;
+    // NÉVOA NOTURNA: não mostra popup de unidades fora da visão
+    if (game && game.visibleHexes && game.visibleHexes.size > 0) {
+        const key = `${target.vq || target.q},${target.vr || target.r}`;
+        if (!game.visibleHexes.has(key)) return;
+    }
     const p = renderer.getPos(target.vq || target.q, target.vr || target.r);
 
     // CASCATA: rajadas (ex.: ganho de recursos) empilham verticalmente

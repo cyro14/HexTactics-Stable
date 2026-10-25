@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v38'; // v38: modal mobile fix definitivo + FX em contra-ataque e magias coloridas
+const CACHE_NAME = 'hextactics-v42'; // v42: névoa noturna (visão=mp-2, vilas emitem luz, popups/câmera respeitam escuridão) + raios visíveis
 const ASSETS = [
     './',
     './index.html',
