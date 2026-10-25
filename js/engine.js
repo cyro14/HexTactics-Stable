@@ -1536,7 +1536,6 @@ class Game {
 
     async startNextTurn() {
         if (this.gameOver) return; this.selectedUnit = null; this.reachableHexes.clear(); this.tameMode = false; this.activeSpell = null;
-        this.updateVisibility(); // recalcula a névoa da noite pro novo turno
         if (typeof updateUI === 'function') updateUI(); if (renderer) renderer.draw();
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true;
 
@@ -1620,6 +1619,9 @@ class Game {
         } else {
             this.currentTurn = 1;
             this.turnCount++;
+            // NÉVOA: recalcular DEPOIS do turnCount++ para pegar a fase
+            // correta do novo turno (se virou noite, escurece AGORA)
+            this.updateVisibility();
             const tb = document.getElementById('turn-blocker');
 
             // ========================================================
@@ -1801,19 +1803,22 @@ class Game {
             const radius = Math.max(1, (u.mp || 0) - 2);
             for (let q = u.q - radius; q <= u.q + radius; q++) {
                 for (let r = u.r - radius; r <= u.r + radius; r++) {
-                    if (Hex.distance(u, { q, r }) <= radius) {
+                    // distância axial: max(|dq|, |dr|, |dq+dr|) — O(1)
+                    const dq = q - u.q, dr = r - u.r;
+                    if (Math.max(Math.abs(dq), Math.abs(dr), Math.abs(dq + dr)) <= radius) {
                         vis.add(`${q},${r}`);
                     }
                 }
             }
         });
-        // 2. vilas conquistadas emitem luz própria (raio 3)
+        // 2. vilas conquistadas emitem luz (raio 3)
         this.map.forEach(hex => {
             if (hex.terrain && hex.terrain.id === 'VILLAGE' && hex.owner === 1) {
                 const radius = 3;
                 for (let q = hex.q - radius; q <= hex.q + radius; q++) {
                     for (let r = hex.r - radius; r <= hex.r + radius; r++) {
-                        if (Hex.distance(hex, { q, r }) <= radius) {
+                        const dq = q - hex.q, dr = r - hex.r;
+                        if (Math.max(Math.abs(dq), Math.abs(dr), Math.abs(dq + dr)) <= radius) {
                             vis.add(`${q},${r}`);
                         }
                     }
@@ -1843,7 +1848,8 @@ class Renderer {
         this.offsetY = 0;
         this.tileset = new Image();
         this.tileset.onload = () => { if (this.game) this.draw(); };
-        this.tileset.src = 'img/tiles/tileset.png';
+        this.tileset.src = 'img/tiles/tileset12.png'; // 12 colunas × 13 rows
+        this.tCols = 12; // variantes de terreno por linha
         window.addEventListener('resize', () => this.initCamera(false));
     }
 
@@ -1870,11 +1876,9 @@ class Renderer {
     getPosUnscaled(q, r) { return { x: this.hexSize * Math.sqrt(3) * (q + r / 2) + this.hexSize, y: this.hexSize * 1.5 * r + this.hexSize }; }
     getPos(q, r) { const u = this.getPosUnscaled(q, r); return { x: u.x + this.offsetX, y: u.y + this.offsetY }; }
     centerOn(q, r) {
-        // NÉVOA: não centra a câmera no que o jogador não vê (à noite)
-        if (this.game.visibleHexes && this.game.visibleHexes.size > 0) {
-            const key = `${q},${r}`;
-            if (!this.game.visibleHexes.has(key)) return; // fora da visão: fica onde está
-        }
+        // A câmera SEMPRE segue o movimento (o bloqueio por visão causava
+        // o bug da unidade teleportando em vez de arrastar — durante a
+        // animação o hex destino ainda não está no visibleHexes)
         const p = this.getPosUnscaled(q, r); this.offsetX = (this.canvas.width / 2) - p.x; this.offsetY = (this.canvas.height / 2) - p.y; this.draw();
     }
 
@@ -2101,6 +2105,10 @@ class Renderer {
             if (self.game && self.game.map) {
                 self.game.map.forEach(hex => {
                     if (hex.terrain && hex.terrain.id === 'VILLAGE' && hex.owner === 1) {
+                        // a vila em si precisa estar na área visível do jogador
+                        const vkey = `${hex.q},${hex.r}`;
+                        const visible = !self.game.visibleHexes || self.game.visibleHexes.size === 0 || self.game.visibleHexes.has(vkey);
+                        if (!visible) return;
                         const p = self.getPos(hex.q, hex.r);
                         const lr = (self.hexSize || 40) * 3;
                         const flicker = 0.5 + Math.sin(t * 2 + hex.q * 3 + hex.r * 2) * 0.15;
@@ -2400,9 +2408,12 @@ class Renderer {
 
             let drawCustom = false;
             let currentImg = this.tileset;
-            let tCols = 6, tRows = 13;  // 13 linhas: ASHES ganhou linha propria (12)
+            let tCols = this.tCols || 12; // 12 variantes por linha
+            let tRows = 13;
             let selectedTile = { x: 0, y: 0 };
             let hash = Math.abs((hex.q * 101) + (hex.r * 37));
+            // FLIP HORIZONTAL aleatório determinístico + variante por hex
+            let flipH = ((hash >> 3) % 2) === 0;
 
             // CHECA SE É UM TERRENO COM SPRITE INDIVIDUAL
             if (hex.terrain && hex.terrain.customSprite) {
@@ -2417,18 +2428,20 @@ class Renderer {
                 if (currentImg && currentImg.complete && currentImg.naturalWidth > 0) {
                     drawCustom = true;
                     tCols = hex.terrain.cols || 6;
-                    tRows = 1; // Sprites individuais têm apenas 1 linha
+                    tRows = 1;
                     let varIndex = hash % tCols;
                     selectedTile = { x: varIndex, y: 0 };
                 }
             }
-            // SE NÃO FOR INDIVIDUAL, USA O TILESET PRINCIPAL
-            else if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && hex.terrain && hex.terrain.variations) {
+            // SE NÃO FOR INDIVIDUAL, USA O TILESET PRINCIPAL (12 col)
+            else if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && hex.terrain) {
                 drawCustom = true;
-                tCols = 6;
+                tCols = this.tCols || 12;
                 tRows = 13;
-                let varIndex = hex.customVar !== undefined ? hex.customVar : (hash % hex.terrain.variations.length);
-                selectedTile = hex.terrain.variations[varIndex];
+                // linha do terreno: extraída de variations[0].y (row 0-12)
+                let rowIdx = (hex.terrain.variations && hex.terrain.variations[0]) ? hex.terrain.variations[0].y : 0;
+                let varIndex = hash % tCols;
+                selectedTile = { x: varIndex, y: rowIdx };
             }
 
             if (drawCustom) {
@@ -2450,11 +2463,24 @@ class Renderer {
                 // serrilhados/"baixa resolução" na tela
                 ctx.imageSmoothingEnabled = true;
                 ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(
-                    currentImg,
-                    selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
-                    p.x - (drawW / 2), p.y - (drawH / 2), drawW, drawH
-                );
+                if (flipH) {
+                    // FLIP HORIZONTAL: variedade extra (50% dos tiles espelhados)
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(
+                        currentImg,
+                        selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
+                        -(drawW / 2), -(drawH / 2), drawW, drawH
+                    );
+                    ctx.restore();
+                } else {
+                    ctx.drawImage(
+                        currentImg,
+                        selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
+                        p.x - (drawW / 2), p.y - (drawH / 2), drawW, drawH
+                    );
+                }
                 ctx.imageSmoothingEnabled = false;
             } else {
                 ctx.fillStyle = (hex.terrain && hex.terrain.color) ? hex.terrain.color : '#000';
@@ -2568,9 +2594,8 @@ class Renderer {
         });
         sortedUnits.forEach(u => {
             // Se o jogo tem uma matriz de Hexágonos Visíveis, se o inimigo não estiver nela, oculta!
-            if (u.faction !== 1 && this.game.visibleHexes && !this.game.visibleHexes.has(`${u.q},${u.r}`)) {
-                return; // Pula a renderização desta unidade
-            }
+            // Inimigos: a NÉVOA ESCLARECE por cima (o overlay cobre).
+            // Não pular render — o overlay dark + light pool resolve.
 
             const p = this.getPos(u.vq, u.vr);
             const fColor = u.faction === 1 ? '#3498db' : u.faction === 2 ? '#e74c3c' : '#2ecc71';
@@ -2921,20 +2946,58 @@ class Renderer {
         // ==========================================
 
         // ==========================================
-        // NÉVOA DE GUERRA NOTURNA — hexes fora da visão escurecem
+        // NÉVOA NOTURNA — visual SMOOTH: um retângulo escuro cobrindo o
+        // mapa inteiro, com círculos de luz suaves (destination-out)
+        // nas posições visíveis. Zero hexágonos recortados.
         // ==========================================
         if (this.game.visibleHexes && this.game.visibleHexes.size > 0) {
-            ctx.save();
+            const fW = this.canvas.width, fH = this.canvas.height;
+            // CACHE: canvas persistente — só realoca no resize (o
+            // document.createElement por frame era a fonte do lag)
+            if (!this._fogCanvas || this._fogCanvas.width !== fW || this._fogCanvas.height !== fH) {
+                this._fogCanvas = document.createElement('canvas');
+                this._fogCanvas.width = fW; this._fogCanvas.height = fH;
+            }
+            const fog = this._fogCanvas;
+            const fctx = fog.getContext('2d');
+            // base: escuridão total
+            fctx.globalCompositeOperation = 'source-over';
+            fctx.fillStyle = 'rgba(2, 3, 8, 0.88)';
+            fctx.fillRect(0, 0, fW, fH);
+            // CORTA a luz: círculos com gradiente radial (fundo suave)
+            fctx.globalCompositeOperation = 'destination-out';
+            const lightRadius = (r) => this.hexSize * r * 1.9;
+            // 1. luz das unidades do jogador
+            this.game.units.filter(u => u.faction === 1 && u.hp > 0).forEach(u => {
+                const p = this.getPos(u.vq || u.q, u.vr || u.r);
+                const r = lightRadius(Math.max(1, (u.mp || 0) - 2));
+                const grad = fctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+                grad.addColorStop(0, 'rgba(0,0,0,1)');       // centro: totalmente iluminado
+                grad.addColorStop(0.55, 'rgba(0,0,0,0.85)'); // meio: quase claro
+                grad.addColorStop(1, 'rgba(0,0,0,0)');        // borda: escuro suave
+                fctx.fillStyle = grad;
+                fctx.beginPath();
+                fctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+                fctx.fill();
+            });
+            // 2. luz das vilas conquistadas (raio 3)
             this.game.map.forEach(hex => {
-                const key = `${hex.q},${hex.r}`;
-                if (!this.game.visibleHexes.has(key)) {
+                if (hex.terrain && hex.terrain.id === 'VILLAGE' && hex.owner === 1) {
                     const p = this.getPos(hex.q, hex.r);
-                    ctx.fillStyle = 'rgba(2, 3, 8, 0.82)';
-                    this.hexPath(ctx, p.x, p.y, this.hexSize + 1);
-                    ctx.fill();
+                    const r = lightRadius(3);
+                    const grad = fctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+                    grad.addColorStop(0, 'rgba(0,0,0,0.95)');
+                    grad.addColorStop(0.5, 'rgba(0,0,0,0.75)');
+                    grad.addColorStop(1, 'rgba(0,0,0,0)');
+                    fctx.fillStyle = grad;
+                    fctx.beginPath();
+                    fctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+                    fctx.fill();
                 }
             });
-            ctx.restore();
+            fctx.globalCompositeOperation = 'source-over';
+            // carimba a névoa por cima de tudo
+            ctx.drawImage(fog, 0, 0);
         }
 
         // ==========================================
@@ -2990,7 +3053,8 @@ class KingdomRenderer {
         this.tileset.onload = () => { if (this.game) this.draw(); };
 
         // MUITO IMPORTANTE: Coloque o mesmo nome de arquivo que você usou no outro mapa!
-        this.tileset.src = 'img/tiles/tileset.png';
+        this.tileset.src = 'img/tiles/tileset12.png'; // 12 colunas
+        this.tCols = 12;
 
         window.addEventListener('resize', () => this.initCamera());
     }
@@ -3052,9 +3116,12 @@ class KingdomRenderer {
 
             let drawCustom = false;
             let currentImg = this.tileset;
-            let tCols = 6, tRows = 13;  // 13 linhas: ASHES ganhou linha propria (12)
+            let tCols = this.tCols || 12; // 12 variantes por linha
+            let tRows = 13;
             let selectedTile = { x: 0, y: 0 };
             let hash = Math.abs((hex.q * 101) + (hex.r * 37));
+            // FLIP HORIZONTAL aleatório determinístico + variante por hex
+            let flipH = ((hash >> 3) % 2) === 0;
 
             // CHECA SE É UM TERRENO COM SPRITE INDIVIDUAL
             if (hex.terrain && hex.terrain.customSprite) {
@@ -3069,18 +3136,20 @@ class KingdomRenderer {
                 if (currentImg && currentImg.complete && currentImg.naturalWidth > 0) {
                     drawCustom = true;
                     tCols = hex.terrain.cols || 6;
-                    tRows = 1; // Sprites individuais têm apenas 1 linha
+                    tRows = 1;
                     let varIndex = hash % tCols;
                     selectedTile = { x: varIndex, y: 0 };
                 }
             }
-            // SE NÃO FOR INDIVIDUAL, USA O TILESET PRINCIPAL
-            else if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && hex.terrain && hex.terrain.variations) {
+            // SE NÃO FOR INDIVIDUAL, USA O TILESET PRINCIPAL (12 col)
+            else if (this.tileset && this.tileset.complete && this.tileset.naturalWidth > 0 && hex.terrain) {
                 drawCustom = true;
-                tCols = 6;
+                tCols = this.tCols || 12;
                 tRows = 13;
-                let varIndex = hex.customVar !== undefined ? hex.customVar : (hash % hex.terrain.variations.length);
-                selectedTile = hex.terrain.variations[varIndex];
+                // linha do terreno: extraída de variations[0].y (row 0-12)
+                let rowIdx = (hex.terrain.variations && hex.terrain.variations[0]) ? hex.terrain.variations[0].y : 0;
+                let varIndex = hash % tCols;
+                selectedTile = { x: varIndex, y: rowIdx };
             }
 
             if (drawCustom) {
@@ -3098,11 +3167,24 @@ class KingdomRenderer {
                 // serrilhados/"baixa resolução" na tela
                 ctx.imageSmoothingEnabled = true;
                 ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(
-                    currentImg,
-                    selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
-                    p.x - (drawW / 2), p.y - (drawH / 2), drawW, drawH
-                );
+                if (flipH) {
+                    // FLIP HORIZONTAL: variedade extra (50% dos tiles espelhados)
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(
+                        currentImg,
+                        selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
+                        -(drawW / 2), -(drawH / 2), drawW, drawH
+                    );
+                    ctx.restore();
+                } else {
+                    ctx.drawImage(
+                        currentImg,
+                        selectedTile.x * tileW, selectedTile.y * tileH, tileW, tileH,
+                        p.x - (drawW / 2), p.y - (drawH / 2), drawW, drawH
+                    );
+                }
                 ctx.imageSmoothingEnabled = false;
             } else {
                 ctx.fillStyle = (hex.terrain && hex.terrain.color) ? hex.terrain.color : '#000';

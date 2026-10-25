@@ -488,6 +488,11 @@ window.battleFX = (function () {
     }
     function pos(unit) {
         if (!renderer || !unit) return null;
+        // NÉVOA: FX não aparecem na escuridão
+        if (game && game.visibleHexes && game.visibleHexes.size > 0) {
+            const key = `${unit.vq || unit.q},${unit.vr || unit.r}`;
+            if (!game.visibleHexes.has(key)) return null;
+        }
         return renderer.getPos(unit.vq || unit.q, unit.vr || unit.r);
     }
     function div(css, life) {
@@ -2957,6 +2962,11 @@ function advanceCampaign() {
         }
         game._turnBannerShown = true;
         game._battleIntroPlaying = false;
+
+        // NÉVOA: calcular a visão imediatamente ao entrar na batalha
+        // (se começou à noite, já escurece antes do primeiro clique)
+        game.updateVisibility();
+        if (renderer) renderer.draw();
 
         // Libera as travas pro jogador jogar
         game.isAnimating = false;

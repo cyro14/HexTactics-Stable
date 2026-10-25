@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v42'; // v42: névoa noturna (visão=mp-2, vilas emitem luz, popups/câmera respeitam escuridão) + raios visíveis
+const CACHE_NAME = 'hextactics-v46'; // v46: tileset 12 col + flip aleatório + fog cache + fix teleport
 const ASSETS = [
     './',
     './index.html',
