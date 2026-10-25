@@ -251,13 +251,13 @@ function showPopup(txt, target, col) {
     );
 
     // 2) começa a subida lenta
-    setTimeout(() => { el.style.top = (p.y - 130 - stack) + 'px'; }, 60);
+    setTimeout(() => { el.style.top = (p.y - 100 - stack) + 'px'; }, 60);
 
-    // 3) fade SÓ aos 5 segundos — controlado por JS, sem transition-delay
-    setTimeout(() => { el.style.opacity = '0'; }, 5000);
+    // 3) fade aos 3 segundos — meio termo entre "muito rápido" (2s) e "muito lento" (6s)
+    setTimeout(() => { el.style.opacity = '0'; }, 3000);
 
-    // 4) remove aos 6 segundos
-    setTimeout(() => el.remove(), 6000);
+    // 4) remove aos 4 segundos
+    setTimeout(() => { el.remove(); }, 4000);
 }
 
 function showMessage(txt, col) {
@@ -1173,7 +1173,10 @@ window.promptSelectUnit = function (title, unitsToSelectFrom) {
             const card = document.createElement('div');
             card.className = 'beast-card unlocked';
             let xpText = (!u.isBoss) ? `<div class="beast-stats" style="color:var(--success); margin-top:2px;">XP: ${u.xp}/${u.maxXp}</div>` : '';
-            card.innerHTML = `<span class="beast-icon" style="filter:${u.filter}">${u.emoji}</span>
+            const iconHtml = u.sprite
+                ? `<img class="beast-sprite-img" src="${u.sprite}" alt="${u.name}" style="width:44px;height:44px;object-fit:contain;filter:${u.filter || 'none'};">`
+                : `<span class="beast-icon" style="filter:${u.filter}">${u.emoji}</span>`;
+            card.innerHTML = `${iconHtml}
                               <div class="beast-name">${u.name} <span style="color:var(--gold);">Lv${u.level}</span></div>
                               <div class="beast-stats">HP: ${u.hp}/${u.maxHp} | ATK: ${u.atk}</div>
                               ${xpText}`;
@@ -1881,7 +1884,10 @@ function renderShop() {
     const grid = $('shop-grid'); grid.innerHTML = '';
     shopItems.forEach((item, index) => {
         const card = document.createElement('div'); card.className = `shop-card`; card.style.borderColor = item.color; let tB = item.type === 'artifact' ? 'Artefato' : 'Consumível';
-        card.innerHTML = `<div><span class="shop-icon" style="filter:${item.filter}">${item.icon}</span><div class="shop-title" style="color:${item.color}">${item.name}</div><div style="font-size:9px;color:#888;text-transform:uppercase;margin-bottom:6px;">${tB}</div><div class="shop-desc">${item.desc}</div></div><button id="btn-buy-${index}" style="margin-top:10px;border-color:${item.color}">Comprar (-${item.cost}💰)</button>`;
+        const shopIconHtml = item.sprite
+            ? `<img class="beast-sprite-img" src="${item.sprite}" alt="${item.name}" style="width:52px;height:52px;object-fit:contain;filter:${item.filter || 'none'};">`
+            : `<span class="shop-icon" style="filter:${item.filter}">${item.icon}</span>`;
+        card.innerHTML = `<div>${shopIconHtml}<div class="shop-title" style="color:${item.color}">${item.name}</div><div style="font-size:9px;color:#888;text-transform:uppercase;margin-bottom:6px;">${tB}</div><div class="shop-desc">${item.desc}</div></div><button id="btn-buy-${index}" style="margin-top:10px;border-color:${item.color}">Comprar (-${item.cost} ouro)</button>`;
         grid.appendChild(card);
         $(`btn-buy-${index}`).onclick = async function () { if (game.gold >= item.cost) { let res = await item.action(); if (res !== false) { game.gold -= item.cost; $('shop-gold-display').innerText = game.gold; this.innerText = "Comprado"; this.disabled = true; this.style.borderColor = "var(--success)"; this.style.color = "var(--success)"; } } else { alert("Ouro insuficiente!"); } };
     });
@@ -1982,7 +1988,10 @@ function renderManagement(mode = 'prep') {
         });
 
         let starIcon = u.starLevel === 2 ? '🥉' : u.starLevel === 3 ? '🥈' : u.starLevel >= 4 ? '🌟' : '';
-        card.innerHTML = `<span class="beast-icon" style="filter:${u.filter}">${u.emoji}</span><div class="beast-name">${u.name} <span style="color:#c9a227">Lv${u.level}${starIcon}</span></div><div class="beast-stats">HP:${u.hp}/${u.maxHp} | ATK:${u.atk}</div>${tagsHtml}<div class="unit-equip-icons" style="bottom:2px; left:0; width:100%; position:absolute;">${equipsHtml}</div>`;
+        const unitIconHtml = u.sprite
+            ? `<img class="beast-sprite-img" src="${u.sprite}" alt="${u.name}" style="width:44px;height:44px;object-fit:contain;filter:${u.filter || 'none'};">`
+            : `<span class="beast-icon" style="filter:${u.filter}">${u.emoji}</span>`;
+        card.innerHTML = `${unitIconHtml}<div class="beast-name">${u.name} <span style="color:#c9a227">Lv${u.level}${starIcon}</span></div><div class="beast-stats">HP:${u.hp}/${u.maxHp} | ATK:${u.atk}</div>${tagsHtml}<div class="unit-equip-icons" style="bottom:2px; left:0; width:100%; position:absolute;">${equipsHtml}</div>`;
 
         card.onclick = (e) => {
             if (readOnly) return;
@@ -2305,7 +2314,9 @@ function openBestiary() {
     uniqueBeasts.forEach(b => {
         const isUnlocked = unlockedBeasts.includes(b.name);
         const card = document.createElement('div'); card.className = `beast-card ${isUnlocked ? 'unlocked' : 'locked'}`;
-        const icon = `<span class="beast-icon ${!isUnlocked ? 'locked-icon' : ''}" style="filter:${isUnlocked ? (b.filter || 'none') : 'none'}">${b.e}</span>`;
+        const icon = b.sprite
+            ? `<img class="beast-sprite-img ${!isUnlocked ? 'locked-icon' : ''}" src="${b.sprite}" alt="${b.name}" style="width:44px;height:44px;object-fit:contain;filter:${isUnlocked ? (b.filter || 'none') : 'grayscale(1)'};pointer-events:${isUnlocked ? 'auto' : 'none'};cursor:${isUnlocked ? 'pointer' : 'default'};" ${isUnlocked ? '' : 'onclick="return false;"'}>`
+            : `<span class="beast-icon ${!isUnlocked ? 'locked-icon' : ''}" style="filter:${isUnlocked ? (b.filter || 'none') : 'none'}">${b.e}</span>`;
         const name = `<div class="beast-name">${isUnlocked ? b.name : '???'}</div>`;
         const stats = isUnlocked ? `<div class="beast-stats">HP:${b.hp}|ATK:${b.atk}<br>Alc:${b.range}|Mov:${b.mp}</div>` : `<div class="beast-stats">Desconhecido</div>`;
         const tags = isUnlocked ? `<div style="margin-top:4px;display:flex;flex-wrap:wrap;justify-content:center;gap:2px;">${(b.tags || []).map(t => getTagHTML(t)).join('')}</div>` : '';
@@ -2322,7 +2333,7 @@ function openReliquary(fromPause = false) {
     else { $('btn-toggle-reliquary').classList.remove('hidden'); arts = reliquaryViewMode === 'camp' ? activeArtifactsCamp : activeArtifactsRogue; $('reliquary-subtitle').innerText = reliquaryViewMode === 'camp' ? "Todos os Artefatos (Campanha)" : "Todos os Artefatos (Roguelite)"; $('btn-toggle-reliquary').innerText = reliquaryViewMode === 'camp' ? "🔄 Ver Roguelite" : "🔄 Ver Campanha"; }
     if (arts.length === 0) { grid.innerHTML = '<div style="color:#aaa;grid-column:1/-1;text-align:center;padding:20px;">Nenhum artefato adquirido neste modo.</div>'; return; }
     arts = [...new Set(arts)];
-    ARTIFACTS.forEach(art => { if (arts.includes(art.id)) { const card = document.createElement('div'); card.className = `shop-card rarity-${art.rarity}`; card.style.borderColor = art.color; card.innerHTML = `<span class="shop-icon">${art.icon}</span><div class="shop-title" style="color:${art.color}">${art.name}</div><div class="shop-desc" style="margin-bottom:0;">${art.desc}</div>`; grid.appendChild(card); } });
+    ARTIFACTS.forEach(art => { if (arts.includes(art.id)) { const card = document.createElement('div'); card.className = `shop-card rarity-${art.rarity}`; card.style.borderColor = art.color; const artIconHtml = art.sprite ? `<img class="beast-sprite-img" src="${art.sprite}" alt="${art.name}" style="width:44px;height:44px;object-fit:contain;">` : `<span class="shop-icon">${art.icon}</span>`; card.innerHTML = `${artIconHtml}<div class="shop-title" style="color:${art.color}">${art.name}</div><div class="shop-desc" style="margin-bottom:0;">${art.desc}</div>`; grid.appendChild(card); } });
 }
 
 // ==========================================

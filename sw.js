@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v33'; // v33: botão X fixo no canto de todas as telas rolando
+const CACHE_NAME = 'hextactics-v36'; // v36: rebalance de líderes (magias iniciais + stats)
 const ASSETS = [
     './',
     './index.html',

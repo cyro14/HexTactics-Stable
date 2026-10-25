@@ -2215,7 +2215,14 @@ class Renderer {
             const sp = this.getPos(su.vq, su.vr); this.hexPath(ctx, sp.x, sp.y, this.hexSize - 1); ctx.strokeStyle = '#c9a227'; ctx.lineWidth = 2.5; ctx.stroke();
         } else if (!su && this.game.selectedHex) { const sh = this.getPos(this.game.selectedHex.q, this.game.selectedHex.r); this.hexPath(ctx, sh.x, sh.y, this.hexSize - 1); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2; ctx.stroke(); }
 
-        this.game.units.forEach(u => {
+        // PERSPECTIVA: desenha por Y crescente — quem está mais abaixo
+        // (maior Y = mais perto da câmera) sobrepõe quem está acima
+        const sortedUnits = [...this.game.units].sort((a, b) => {
+            const pa = this.getPos(a.vq, a.vr);
+            const pb = this.getPos(b.vq, b.vr);
+            return pa.y - pb.y;
+        });
+        sortedUnits.forEach(u => {
             // Se o jogo tem uma matriz de Hexágonos Visíveis, se o inimigo não estiver nela, oculta!
             if (u.faction !== 1 && this.game.visibleHexes && !this.game.visibleHexes.has(`${u.q},${u.r}`)) {
                 return; // Pula a renderização desta unidade

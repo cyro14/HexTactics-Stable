@@ -646,7 +646,7 @@ button.btn-success {
     /* SEM animation CSS: o timing é 100% controlado pelo showPopup()
        em JS (transition simples de top + opacity) */
     opacity: 1;
-    transition: top 5s ease-out, opacity 1s ease-in;
+    transition: top 3.2s ease-out, opacity .9s ease-in;
 }
 @keyframes fxDropIn {
     from { transform: translateX(-50%) scale(.6); opacity: 0; }
@@ -1755,6 +1755,10 @@ button.btn-success {
 .beast-icon {
     font-size: 34px;
     line-height: 1;
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .6));
+}
+.beast-sprite-img {
+    display: block;
     filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .6));
 }
 .beast-name {
