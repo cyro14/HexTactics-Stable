@@ -5795,12 +5795,18 @@ button.btn-success {
     .spell-slot-lol .sl-icon { font-size: 17px; }
     .spell-slot-lol .sl-cost { font-size: 8px; bottom: 1px; right: 3px; gap: 2px; }
     .spell-slot-lol .sl-cd { font-size: 13px; border-radius: 5px; }
-    /* ---- MODAL de detalhes: abaixo do mini-card, sem cobrir o header ---- */
+    /* ---- MODAL de detalhes: SEMPRE abaixo do mini-card, sem cobrir o header ---- */
+    #beast-details-modal {
+        /* muda o alinhamento do layer: em vez de centrar, empurra pra baixo */
+        align-items: flex-start !important;
+        padding-top: 110px !important; /* abaixo do mini-card (~100px) */
+        overflow-y: auto;
+    }
     #beast-details-modal .modal-card {
-        max-width: 100%;
-        width: calc(100% - 16px);
-        margin-top: 100px;
-        max-height: calc(100vh - 180px);
+        max-width: 100% !important;
+        width: calc(100% - 16px) !important;
+        margin: 0 !important;
+        max-height: calc(100vh - 130px) !important;
         overflow-y: auto;
     }
 

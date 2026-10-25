@@ -585,6 +585,13 @@ window.battleFX = (function () {
             const p = pos(unit); if (!p) return;
             ring(p.x, p.y, col);
             sparks(p.x, p.y, col, 10);
+        },
+        aoeBurst(unit, col) {
+            const p = pos(unit); if (!p) return;
+            ring(p.x, p.y, col, true);
+            sparks(p.x, p.y, col, 16);
+            flash(p.x, p.y, col);
+            shake(250);
         }
     };
 })();

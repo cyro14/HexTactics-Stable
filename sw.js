@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v37'; // v37: retrato compacto (modal abaixo do card, dropdowns, shop mini, NPC frame)
+const CACHE_NAME = 'hextactics-v38'; // v38: modal mobile fix definitivo + FX em contra-ataque e magias coloridas
 const ASSETS = [
     './',
     './index.html',

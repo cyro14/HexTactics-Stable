@@ -925,6 +925,13 @@ window.openContinentMap = function() {
 
                     if (canCast) {
                         game.isAnimating = true;
+                        // FX: explosão na cor da mana primária da magia
+                        if (window.battleFX) {
+                            const firstTag = Object.keys(spell.cost || {})[0];
+                            const manaCol = (typeof MANA_TYPES !== 'undefined' && MANA_TYPES[firstTag]) ? MANA_TYPES[firstTag].col : '#e8c84a';
+                            battleFX.burst(u || cH, manaCol);
+                            if (u) setTimeout(() => battleFX.burst(u, manaCol), 200);
+                        }
                         try {
                             const ok = await spell.effect(game, su, u, cH);
                             if (ok) {
