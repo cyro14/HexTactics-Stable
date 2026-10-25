@@ -212,7 +212,10 @@
         <button id="x-close-event" class="screen-x" aria-label="Fechar" title="Fechar"><svg class="mm-ico" viewBox="0 0 24 24"><path d="M5.5 5.5 18.5 18.5M18.5 5.5 5.5 18.5"/></svg></button>
         <div class="modal-card"
             style="max-width: 550px; width: 95%; background: linear-gradient(180deg, rgba(16,18,26,.97) 0%, rgba(6,8,16,.98) 100%); border:1px solid rgba(201,162,39,.5); outline:1px solid rgba(232,200,74,.2); outline-offset:4px; border-radius:4px; box-shadow:0 0 40px rgba(0,0,0,.9), 0 0 24px -6px rgba(201,162,39,.3);">
-            <div id="ev-icon" style="font-size:60px;text-shadow:0 0 20px var(--gold);margin-bottom:8px;">❓</div>
+            <div class="npc-portrait-frame" id="ev-icon" style="margin:0 auto 10px; font-size:42px;">
+                <!-- placeholder: troque por <img src="img/npc/evento.png"> quando tiver -->
+                ❓
+            </div>
             <h1 id="ev-title"
                 style="font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold);margin-top:0;text-align:center;letter-spacing:2px;text-shadow:0 0 12px rgba(201,162,39,.4);">
                 Evento</h1>
@@ -537,6 +540,10 @@
         <button id="x-leave-shop" class="screen-x" aria-label="Sair da loja" title="Sair da loja"><svg class="mm-ico" viewBox="0 0 24 24"><path d="M5.5 5.5 18.5 18.5M18.5 5.5 5.5 18.5"/></svg></button>
         <canvas class="mm-bg-canvas"></canvas>
         <div class="mm-content" style="max-width:900px; padding:20px 16px;">
+            <div class="npc-portrait-frame" id="merchant-portrait">
+                <!-- placeholder: troque por <img src="img/npc/mercador.png"> quando tiver -->
+                <svg class="mm-ico" viewBox="0 0 24 24" style="width:36px;height:36px;color:var(--gold);opacity:.5;"><circle cx="12" cy="12" r="7.5"/><path d="M12 8.5v7M9.8 10c0-1.2 1-2 2.2-2s2.2.8 2.2 2-1 1.8-2.2 1.8-2.2.7-2.2 1.9 1 2 2.2 2 2.2-.8 2.2-2"/></svg>
+            </div>
             <div style="display:flex;align-items:center;gap:12px;">
                 <svg class="mm-ico" viewBox="0 0 24 24" style="width:36px;height:36px;color:var(--gold);filter:drop-shadow(0 0 8px var(--gold));"><circle cx="12" cy="12" r="7.5"/><path d="M12 8.5v7M9.8 10c0-1.2 1-2 2.2-2s2.2.8 2.2 2-1 1.8-2.2 1.8-2.2.7-2.2 1.9 1 2 2.2 2 2.2-.8 2.2-2"/></svg>
                 <h1 class="mode-title" style="margin:0;">O Mercador</h1>

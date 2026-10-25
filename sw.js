@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v36'; // v36: rebalance de líderes (magias iniciais + stats)
+const CACHE_NAME = 'hextactics-v37'; // v37: retrato compacto (modal abaixo do card, dropdowns, shop mini, NPC frame)
 const ASSETS = [
     './',
     './index.html',

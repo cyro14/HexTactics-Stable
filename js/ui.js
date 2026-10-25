@@ -2342,7 +2342,8 @@ function openReliquary(fromPause = false) {
 
 // NOVO: Função do Laboratório Quimérico
 async function openLaboratory() {
-    $('ev-icon').innerText = '🧬';
+    // retrato do NPC: placeholder até ter a arte — depois basta trocar por <img>
+    $('ev-icon').innerHTML = `<svg class="mm-ico" viewBox="0 0 24 24" style="width:36px;height:36px;color:var(--gold);opacity:.6;"><path d="M8 3c0 6 8 6 8 12M16 3c0 6-8 6-8 12"/><path d="M9 7.5h6M9 13.5h6"/></svg>`;
     $('ev-title').innerText = 'Laboratório Quimérico';
     $('ev-desc').innerText = `Crie abominações perfeitas fundindo ou evoluindo suas feras.\nVocê possui: ${game.dna || 0} 🧬 DNA.`;
 
@@ -2460,7 +2461,8 @@ async function openLaboratory() {
 
 function showRandomEvent() {
     let ev = EVENTS[Math.floor(Math.random() * EVENTS.length)];
-    $('ev-icon').innerText = ev.icon || '❓';
+    $('ev-icon').innerText = ''; // limpa
+    $('ev-icon').innerHTML = `<span style="font-size:48px;filter:drop-shadow(0 0 12px var(--gold));">${ev.icon || '❓'}</span>`;
     $('ev-title').innerText = ev.title;
     $('ev-desc').innerText = ev.desc;
     const opts = $('ev-options');

@@ -1714,6 +1714,36 @@ button.btn-success {
     height: 18px;
 }
 
+/* Moldura de retrato do NPC (mercador, cientista do lab, etc.)
+   Substitua o conteúdo por <img src="img/npc/nome.png"> quando tiver */
+.npc-portrait-frame {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    border: 2px solid rgba(201, 162, 39, .5);
+    outline: 1px solid rgba(232, 200, 74, .2);
+    outline-offset: 4px;
+    border-radius: 10px;
+    background:
+        radial-gradient(circle at 35% 20%, rgba(40, 35, 20, .95), rgba(8, 8, 12, .98));
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, .9),
+        0 0 0 4px rgba(138, 109, 18, .3),
+        0 8px 24px rgba(0, 0, 0, .75);
+    overflow: hidden;
+    font-size: 48px;
+    flex-shrink: 0;
+}
+.npc-portrait-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6));
+}
+
 /* ==========================================
    TELAS SECUNDÁRIAS — Bestiário, Relicário,
    Grimório, Mercador, Evento/Laboratório
@@ -5765,6 +5795,72 @@ button.btn-success {
     .spell-slot-lol .sl-icon { font-size: 17px; }
     .spell-slot-lol .sl-cost { font-size: 8px; bottom: 1px; right: 3px; gap: 2px; }
     .spell-slot-lol .sl-cd { font-size: 13px; border-radius: 5px; }
+    /* ---- MODAL de detalhes: abaixo do mini-card, sem cobrir o header ---- */
+    #beast-details-modal .modal-card {
+        max-width: 100%;
+        width: calc(100% - 16px);
+        margin-top: 100px;
+        max-height: calc(100vh - 180px);
+        overflow-y: auto;
+    }
+
+    /* ---- DROPDOWNs: z-index correto, um sobre o outro, não lado a lado ---- */
+    .res-dropdown {
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-height: 40vh;
+        overflow-y: auto;
+    }
+    #resources-dropdown-container { position: static; }
+    #creature-res-trigger + #creature-res-dropdown,
+    .res-dropdown {
+        position: fixed;
+        top: 48px !important;
+    }
+    /* coloca o dropdown como filho do top-bar (vira fixed abaixo dele) */
+    .battle-top-bar { position: relative; }
+    .res-dropdown {
+        z-index: 3000;
+    }
+
+    /* ---- SHOP: grid compacto no retrato (vários itens na mesma visão) ---- */
+    .shop-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+        gap: 6px !important;
+    }
+    .shop-card {
+        padding: 8px 6px !important;
+        gap: 3px !important;
+    }
+    .shop-card .shop-title { font-size: 10px !important; }
+    .shop-card .shop-desc { font-size: 8.5px !important; line-height: 1.3 !important; }
+    .shop-card .shop-icon { font-size: 24px !important; }
+    .shop-card .beast-sprite-img { width: 32px !important; height: 32px !important; }
+    .shop-card button { font-size: 10px !important; padding: 6px 8px !important; margin-top: 4px !important; }
+
+    /* ---- EVENTO/LAB: espaço para o retrato do personagem ---- */
+    #ev-icon {
+        width: 80px;
+        height: 80px;
+        border: 2px solid rgba(201, 162, 39, .5);
+        border-radius: 8px;
+        background: radial-gradient(circle at 35% 20%, rgba(40, 35, 20, .95), rgba(8, 8, 12, .98));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 8px;
+        font-size: 42px !important;
+        overflow: hidden;
+        box-shadow: 0 0 0 1px rgba(0,0,0,.9), 0 0 0 3px rgba(138,109,18,.35), 0 6px 18px rgba(0,0,0,.7);
+    }
+    #ev-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,.5));
+    }
 } /* fim do modo retrato — NÃO remover: sem este fechamento todo o
      CSS seguinte (modal do histórico incluído) cai dentro da @media
      e some no desktop (bug do botão Fechar não-clicável) */
