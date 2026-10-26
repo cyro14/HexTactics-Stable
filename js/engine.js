@@ -1994,8 +1994,74 @@ class Renderer {
         const W = ctx.canvas.width, H = ctx.canvas.height;
         const t = performance.now() / 1000;
         const hs = this.hexSize || 40;
+        const self = this;
         // helper: fração → px do canvas ATUAL (nunca fica preso no canto)
         const FX = (f) => f * W, FY = (f) => f * H;
+
+        // --- EFEITOS DE TERRENO VETORIAIS ANIMADOS ---
+        // Floresta em Chamas: fogo procedural que sobe e pisca
+        // Cinzas: fumaça que serpenteia e desvanece
+        if (self.game && self.game.map) {
+            ctx.save();
+            // FOGO: florestas em chamas
+            ctx.globalCompositeOperation = 'lighter';
+            self.game.map.forEach(hex => {
+                if (hex.terrain && hex.terrain.id === 'BURNING_FOREST') {
+                    const p = self.getPos(hex.q, hex.r);
+                    // 3 chamas com seeds diferentes (variação por hex)
+                    for (let fi = 0; fi < 3; fi++) {
+                        const seed = (hex.q * 31 + hex.r * 17 + fi * 7);
+                        const phase = t * 2.5 + seed * 0.13;
+                        const fx = p.x + Math.sin(seed * 2.1) * hs * 0.25;
+                        const rise = (phase % 1.2) / 1.2; // ciclo 0→1
+                        const fy = p.y + hs * 0.1 - rise * hs * 0.8;
+                        const flicker = 0.4 + Math.abs(Math.sin(phase * 3)) * 0.6;
+                        const size = hs * 0.12 * (1 - rise * 0.5) * (0.8 + Math.sin(phase * 5 + fi) * 0.3);
+                        // gradiente: amarelo no centro → laranja → vermelho transparente
+                        const gl = ctx.createRadialGradient(fx, fy, 0, fx, fy, size * 3);
+                        gl.addColorStop(0, `rgba(255, 220, 80, ${0.6 * flicker * (1 - rise)})`);
+                        gl.addColorStop(0.4, `rgba(255, 120, 20, ${0.4 * flicker * (1 - rise)})`);
+                        gl.addColorStop(1, 'rgba(200, 40, 0, 0)');
+                        ctx.fillStyle = gl;
+                        ctx.fillRect(fx - size * 3, fy - size * 3, size * 6, size * 6);
+                        // núcleo da chama (triângulo invertido)
+                        const coreA = (1 - rise) * 0.7 * flicker;
+                        ctx.fillStyle = `rgba(255, 200, 60, ${coreA})`;
+                        ctx.beginPath();
+                        ctx.moveTo(fx, fy - size * 1.5);
+                        ctx.quadraticCurveTo(fx + size * 0.6, fy, fx, fy + size);
+                        ctx.quadraticCurveTo(fx - size * 0.6, fy, fx, fy - size * 1.5);
+                        ctx.fill();
+                    }
+                }
+            });
+            // FUMAÇA: cinzas
+            ctx.globalCompositeOperation = 'source-over';
+            self.game.map.forEach(hex => {
+                if (hex.terrain && hex.terrain.id === 'ASHES') {
+                    const p = self.getPos(hex.q, hex.r);
+                    // 2 wisp de fumaça serpenteando
+                    for (let si = 0; si < 2; si++) {
+                        const seed = (hex.q * 23 + hex.r * 13 + si * 11);
+                        const phase = t * 0.8 + seed * 0.07;
+                        const cycle = (phase % 3) / 3; // ciclo 3s 0→1
+                        const smokeX = p.x + Math.sin(phase * 2 + seed) * hs * 0.3;
+                        const smokeY = p.y - cycle * hs * 1.2;
+                        const alpha = 0.12 * (1 - cycle);
+                        const w = hs * 0.15 * (0.5 + cycle * 1.2); // expande
+                        // círculos suaves (fumaça)
+                        const gl = ctx.createRadialGradient(smokeX, smokeY, 0, smokeX, smokeY, w);
+                        gl.addColorStop(0, `rgba(120, 115, 110, ${alpha})`);
+                        gl.addColorStop(1, 'rgba(100, 95, 90, 0)');
+                        ctx.fillStyle = gl;
+                        ctx.beginPath();
+                        ctx.arc(smokeX, smokeY, w, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            });
+            ctx.restore();
+        }
 
         // --- SOMBRAS DE NUVEM (dia) ---
         if (phase === 'day') {
@@ -2552,20 +2618,120 @@ class Renderer {
                 ctx.stroke();
 
             }
-            if (hex.hasPremiumLure) {
-                ctx.font = `${this.hexSize * 0.7}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText("🥩", p.x, p.y + (this.hexSize * 0.2));
-            } else if (hex.hasLure) {
-                ctx.font = `${this.hexSize * 0.7}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText("🍖", p.x, p.y + (this.hexSize * 0.2));
+            // ISCA: desenho vetorial (carne com brilho) em vez de emoji
+            if (hex.hasPremiumLure || hex.hasLure) {
+                const lureSize = this.hexSize * 0.22;
+                const lx = p.x, ly = p.y + (this.hexSize * 0.2);
+                // sombra
+                ctx.save();
+                ctx.globalAlpha = 0.3;
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.ellipse(lx, ly + lureSize * 0.5, lureSize, lureSize * 0.3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                // corpo da carne (forma de bife)
+                ctx.fillStyle = hex.hasPremiumLure ? '#e74c3c' : '#c0392b';
+                ctx.strokeStyle = '#f5e6a0';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.ellipse(lx, ly, lureSize, lureSize * 0.7, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                // osso (círculo + haste)
+                ctx.strokeStyle = '#f5e6a0';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(lx - lureSize * 0.3, ly - lureSize * 0.3);
+                ctx.lineTo(lx - lureSize * 0.8, ly - lureSize * 0.8);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(lx - lureSize * 0.9, ly - lureSize * 0.9, lureSize * 0.2, 0, Math.PI * 2);
+                ctx.fillStyle = '#f5e6a0';
+                ctx.fill();
+                // brilho premium
+                if (hex.hasPremiumLure) {
+                    const gl = ctx.createRadialGradient(lx, ly, 0, lx, ly, lureSize * 2);
+                    gl.addColorStop(0, 'rgba(255, 100, 60, 0.3)');
+                    gl.addColorStop(1, 'rgba(255, 100, 60, 0)');
+                    ctx.fillStyle = gl;
+                    ctx.fillRect(lx - lureSize * 2, ly - lureSize * 2, lureSize * 4, lureSize * 4);
+                }
             }
-            if (hex.hasStunTrap) { ctx.font = `${this.hexSize * 0.5}px sans-serif`; ctx.fillText("⚡", p.x, p.y + (this.hexSize * 0.2)); }
-            if (hex.hasTeleportTrap) { ctx.font = `${this.hexSize * 0.5}px sans-serif`; ctx.fillText("🌀", p.x, p.y + (this.hexSize * 0.2)); }
+            // ARMADILHA DE STUN: raio vetorial
+            if (hex.hasStunTrap) {
+                const ts = this.hexSize * 0.3;
+                const tx = p.x, ty = p.y + (this.hexSize * 0.15);
+                ctx.strokeStyle = '#f1c40f';
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(tx + ts * 0.3, ty - ts);
+                ctx.lineTo(tx - ts * 0.2, ty + ts * 0.1);
+                ctx.lineTo(tx + ts * 0.15, ty + ts * 0.1);
+                ctx.lineTo(tx - ts * 0.3, ty + ts);
+                ctx.stroke();
+                // glow
+                const gl = ctx.createRadialGradient(tx, ty, 0, tx, ty, ts * 2);
+                gl.addColorStop(0, 'rgba(241, 196, 15, 0.25)');
+                gl.addColorStop(1, 'rgba(241, 196, 15, 0)');
+                ctx.fillStyle = gl;
+                ctx.fillRect(tx - ts * 2, ty - ts * 2, ts * 4, ts * 4);
+            }
+            // ARMADILHA DE TELEPORTE: espiral vetorial
+            if (hex.hasTeleportTrap) {
+                const ts = this.hexSize * 0.35;
+                const tx = p.x, ty = p.y + (this.hexSize * 0.15);
+                ctx.strokeStyle = '#9b59b6';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                for (let a = 0; a < Math.PI * 4; a += 0.15) {
+                    const r = ts * (a / (Math.PI * 4));
+                    const px = tx + r * Math.cos(a);
+                    const py = ty + r * Math.sin(a);
+                    if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+                // glow
+                const gl = ctx.createRadialGradient(tx, ty, 0, tx, ty, ts * 1.5);
+                gl.addColorStop(0, 'rgba(155, 89, 182, 0.3)');
+                gl.addColorStop(1, 'rgba(155, 89, 182, 0)');
+                ctx.fillStyle = gl;
+                ctx.fillRect(tx - ts * 1.5, ty - ts * 1.5, ts * 3, ts * 3);
+            }
             if (hex.terrain.id === 'VILLAGE' && hex.owner !== null) { ctx.fillStyle = hex.owner === 1 ? '#4a9edd' : '#c0392b'; ctx.beginPath(); ctx.arc(p.x + this.hexSize * 0.4, p.y - this.hexSize * 0.3, 6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
 
         });
 
-        this.game.items.forEach((iType, key) => { let [q, r] = key.split(',').map(Number); const p = this.getPos(q, r); ctx.save(); ctx.globalAlpha = 1.0; ctx.beginPath(); ctx.ellipse(p.x, p.y + this.hexSize * 0.35, this.hexSize * 0.4, this.hexSize * 0.2, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(20,20,30,0.9)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#f1c40f'; ctx.stroke(); ctx.font = `${this.hexSize * 0.6}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (typeof ITEMS !== 'undefined' && ITEMS[iType]) { ctx.fillText(ITEMS[iType].icon, p.x, p.y + this.hexSize * 0.25); } ctx.restore(); });
+        this.game.items.forEach((iType, key) => {
+            let [q, r] = key.split(',').map(Number); const p = this.getPos(q, r);
+            ctx.save(); ctx.globalAlpha = 1.0;
+            // sombra
+            ctx.beginPath(); ctx.ellipse(p.x, p.y + this.hexSize * 0.35, this.hexSize * 0.4, this.hexSize * 0.2, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(20,20,30,0.9)'; ctx.fill();
+            ctx.lineWidth = 1.5; ctx.strokeStyle = '#f1c40f'; ctx.stroke();
+            // desenho vetorial do item (baú/cofre dourado)
+            const is = this.hexSize * 0.25;
+            // corpo
+            ctx.fillStyle = '#c9a227';
+            ctx.strokeStyle = '#f5e6a0';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect(p.x - is, p.y + this.hexSize * 0.05, is * 2, is * 1.2, 3);
+            ctx.fill(); ctx.stroke();
+            // tampa
+            ctx.fillStyle = '#e8c84a';
+            ctx.beginPath();
+            ctx.roundRect(p.x - is, p.y - is * 0.3, is * 2, is * 0.5, 3);
+            ctx.fill(); ctx.stroke();
+            // fechadura
+            ctx.fillStyle = '#8a6d12';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y + this.hexSize * 0.12, is * 0.18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
 
         const su = this.game.selectedUnit;
         if (this.game.activeSpell && su && this.game.currentTurn === 1) {

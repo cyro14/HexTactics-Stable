@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v49'; // v49: hub Editor no menu principal + Editor de Magias com SP() editável
+const CACHE_NAME = 'hextactics-v50'; // v50: efeitos vetoriais animados (fogo, fumaça, iscas, armadilhas, itens — zero emoji no mapa)
 const ASSETS = [
     './',
     './index.html',
