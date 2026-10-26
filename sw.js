@@ -1,14 +1,16 @@
-const CACHE_NAME = 'hextactics-v51'; // v51: popups sem emoji (só número+cor) + editor de unidades com fallback de sprite
+const CACHE_NAME = 'hextactics-v57'; // v57: tiles procedurais para BURNING_FOREST e ASHES (sem emoji AI)
 const ASSETS = [
     './',
     './index.html',
     './css/style.css',
-    './js/data.js',    // Nossos novos arquivos separados!
+    './js/data.js',
     './js/engine.js',
     './js/ui.js',
     './js/main.js',
+    './js/menu-bg.js',
+    './js/macro-bg.js',
     './manifest.json',
-    './icons/icon-192x192.png', // Verifique se esses nomes batem com os seus ícones reais
+    './icons/icon-192x192.png',
     './icons/icon-512x512.png'
 ];
 
@@ -26,12 +28,32 @@ self.addEventListener('activate', event => {
             return Promise.all(keys.map(key => {
                 if (key !== CACHE_NAME) return caches.delete(key);
             }));
-        })
+        }).then(() => self.clients.claim())
     );
-    return self.clients.claim();
 });
 
+// ESTRATÉGIA: network-first para navegação (HTML sempre fresco),
+// cache-first para o resto (assets estáticos). Isso garante que
+// o usuário SEMPRE pegue o index.html novo quando disponível.
 self.addEventListener('fetch', event => {
+    const url = new URL(event.request.url);
+
+    // HTML: rede primeiro, cache como fallback (offline)
+    if (event.request.mode === 'navigate' || url.pathname.endsWith('.html')) {
+        event.respondWith(
+            fetch(event.request)
+                .then(response => {
+                    // clona pro cache (atualiza o cache com o novo HTML)
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                    return response;
+                })
+                .catch(() => caches.match(event.request))
+        );
+        return;
+    }
+
+    // Assets: cache primeiro, rede como fallback
     event.respondWith(
         caches.match(event.request)
             .then(response => response || fetch(event.request))

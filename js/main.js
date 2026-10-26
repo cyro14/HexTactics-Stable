@@ -24,20 +24,181 @@ document.addEventListener("DOMContentLoaded", () => {
         updateBtn.style.cssText = "font-size:11px;letter-spacing:1.5px;padding:10px 12px;margin-top:8px;";
 
         updateBtn.onclick = async () => {
-            updateBtn.innerText = "Limpando...";
-            // Limpa o Cache Storage (Service Workers/PWA)
-            if ('caches' in window) {
-                try {
+            updateBtn.innerText = "Atualizando...";
+            updateBtn.disabled = true;
+
+            try {
+                // 1. UNREGISTER todos os Service Workers (o SW velho não pode
+                //    continuar controlando a página — é ele que serve o cache velho)
+                if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    for (const reg of regs) {
+                        await reg.unregister();
+                    }
+                }
+
+                // 2. LIMPA todos os Cache Storage
+                if ('caches' in window) {
                     const cacheNames = await caches.keys();
                     await Promise.all(cacheNames.map(name => caches.delete(name)));
-                } catch (e) { console.error("Erro ao limpar cache:", e); }
-            }
-            // Limpa o LocalStorage de saves se quiser garantir (opcional, comente se não quiser)
-            // localStorage.removeItem('ht_save_camp'); localStorage.removeItem('ht_save_rogue'); localStorage.removeItem('ht_save_duel');
+                }
 
-            // Força o recarregamento com uma querystring nova para quebrar o cache de memória do navegador
-            window.location.href = window.location.pathname + '?v=' + new Date().getTime();
+                // 3. RELOAD com querystring anti-cache
+                window.location.href = window.location.pathname + '?v=' + Date.now();
+            } catch (e) {
+                console.error("Erro na atualização:", e);
+                // fallback: reload simples
+                window.location.reload(true);
+            }
         };
+
+        // INDICADOR DE VERSÃO no rodapé (pra saber se pegou a atualização)
+        const versionTag = document.createElement('span');
+        versionTag.style.cssText = 'position:fixed;bottom:2px;right:6px;font-size:9px;color:rgba(200,180,120,.45);pointer-events:none;z-index:9999;font-family:monospace;';
+        versionTag.textContent = 'v53';
+        document.body.appendChild(versionTag);
+
+        // ==========================================
+        // MODO DESENVOLVEDOR — toggle no canto do menu
+        // ==========================================
+        const devBtn = document.createElement('button');
+        devBtn.id = 'btn-dev-mode';
+        devBtn.style.cssText = 'position:fixed;bottom:8px;left:8px;z-index:9999;width:36px;height:36px;border-radius:8px;border:2px solid rgba(201,162,39,.3);background:rgba(5,5,10,.85);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .2s,box-shadow .2s;';
+        devBtn.innerHTML = '<svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:rgba(201,162,39,.4);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/></svg>';
+        devBtn.title = 'Modo Desenvolvedor';
+        document.body.appendChild(devBtn);
+
+        function updateDevBtn() {
+            const on = localStorage.getItem('ht_dev_mode') === 'true';
+            if (on) {
+                devBtn.style.borderColor = '#e74c3c';
+                devBtn.style.boxShadow = '0 0 12px rgba(231,76,60,.5)';
+                devBtn.innerHTML = '<span style="color:#e74c3c;font:900 10px Cinzel,serif;">DEV</span>';
+            } else {
+                devBtn.style.borderColor = 'rgba(201,162,39,.3)';
+                devBtn.style.boxShadow = 'none';
+                devBtn.innerHTML = '<svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:rgba(201,162,39,.4);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/></svg>';
+            }
+            window.DEV_MODE = on;
+        }
+
+        devBtn.onclick = () => {
+            const cur = localStorage.getItem('ht_dev_mode') === 'true';
+            localStorage.setItem('ht_dev_mode', cur ? 'false' : 'true');
+            updateDevBtn();
+            if (!cur && game) {
+                // ativou: dá recursos infinitos
+                game.gold = 999999;
+                game.dna = 999;
+                if (!game.resources) game.resources = {};
+                game.resources.wood = 9999; game.resources.stone = 9999;
+                game.resources.scales = 9999; game.resources.sand = 9999;
+                game.resources.garras = 9999; game.resources.asas = 9999;
+                game.resources.ervas = 9999; game.resources.ferro = 9999;
+                game.resources.veneno = 9999; game.resources.po_magico = 9999;
+                game.resources.brasa = 9999;
+                if (typeof updateUI === 'function') updateUI();
+                if (typeof showMessage === 'function') showMessage('DEV MODE ATIVADO', '#e74c3c');
+            }
+        };
+        updateDevBtn();
+
+        // ==========================================
+        // DEV: botão direito no mapa de batalha = criar/deletar feras
+        // ==========================================
+        document.addEventListener('contextmenu', (e) => {
+            if (!window.DEV_MODE) return;
+            if (!game || !renderer || game.gameOver) return;
+            if (document.getElementById('game-container').classList.contains('hidden')) return;
+            e.preventDefault();
+
+            // localiza o hex clicado
+            const rect = $('gameCanvas').getBoundingClientRect();
+            const cx = e.clientX - rect.left - renderer.offsetX;
+            const cy = e.clientY - rect.top - renderer.offsetY;
+
+            // converte px → q,r (inverso do getPos)
+            const size = renderer.hexSize;
+            const q = Math.round((cx * Math.sqrt(3) / 3 - cy / 3) / size);
+            const r = Math.round(2 * cy / (3 * size) - cx / (Math.sqrt(3) * size));
+
+            const hex = game.map.get(`${q},${r}`);
+            if (!hex) return;
+
+            const existingUnit = game.getUnitAt(q, r);
+
+            // cria menu de contexto
+            const menu = document.createElement('div');
+            menu.id = 'dev-context-menu';
+            menu.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;z-index:10000;background:rgba(8,8,15,.97);border:1px solid rgba(201,162,39,.5);border-radius:8px;padding:8px;max-height:300px;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,.9);min-width:200px;`;
+
+            if (existingUnit) {
+                // DELETAR unidade existente
+                menu.innerHTML = `<div style="font-family:Cinzel,serif;font-size:11px;color:#e8c84a;margin-bottom:6px;">${existingUnit.name} (HP: ${existingUnit.hp})</div>`;
+                const delBtn = document.createElement('button');
+                delBtn.textContent = 'Remover unidade';
+                delBtn.style.cssText = 'width:100%;padding:6px;margin-bottom:4px;background:rgba(231,76,60,.15);border:1px solid #e74c3c;color:#ff8f8f;border-radius:4px;cursor:pointer;font-size:11px;';
+                delBtn.onclick = () => {
+                    game.units = game.units.filter(u => u !== existingUnit);
+                    menu.remove();
+                    renderer.draw();
+                    if (typeof updateUI === 'function') updateUI();
+                };
+                menu.appendChild(delBtn);
+                const healBtn = document.createElement('button');
+                healBtn.textContent = 'Curar HP total';
+                healBtn.style.cssText = 'width:100%;padding:6px;margin-bottom:4px;background:rgba(46,204,113,.15);border:1px solid #2ecc71;color:#7dffb0;border-radius:4px;cursor:pointer;font-size:11px;';
+                healBtn.onclick = () => {
+                    existingUnit.hp = existingUnit.maxHp;
+                    existingUnit.mp = existingUnit.maxMp;
+                    existingUnit.status = null;
+                    menu.remove();
+                    renderer.draw();
+                };
+                menu.appendChild(healBtn);
+            } else {
+                // CRIAR nova fera
+                menu.innerHTML = '<div style="font-family:Cinzel,serif;font-size:11px;color:#e8c84a;margin-bottom:6px;">Spawnar fera:</div>';
+                // lista todas as feras do BEASTS
+                const factionSel = document.createElement('select');
+                factionSel.style.cssText = 'width:100%;margin-bottom:6px;background:rgba(0,0,0,.5);border:1px solid rgba(201,162,39,.3);color:#e8dcc0;font-size:10px;padding:4px;border-radius:4px;';
+                factionSel.innerHTML = '<option value="1">Aliada (Jogador)</option><option value="2">Inimiga</option><option value="0">Selvagem</option>';
+                menu.appendChild(factionSel);
+
+                const beastList = document.createElement('div');
+                Object.keys(BEASTS).forEach(cat => {
+                    BEASTS[cat].forEach(b => {
+                        const btn = document.createElement('button');
+                        btn.style.cssText = 'width:100%;padding:4px 6px;margin:1px 0;background:rgba(10,10,20,.8);border:1px solid rgba(201,162,39,.15);border-radius:3px;cursor:pointer;font-size:10px;color:#c4bda8;text-align:left;display:flex;gap:4px;align-items:center;';
+                        btn.innerHTML = (b.sprite ? `<img src="${b.sprite}" style="width:18px;height:18px;object-fit:contain;">` : `<span style="width:18px;text-align:center;">${b.e}</span>`) + `<span>${b.name}</span><span style="margin-left:auto;color:#666;">HP:${b.hp} ATK:${b.atk}</span>`;
+                        btn.onclick = () => {
+                            const faction = parseInt(factionSel.value);
+                            const nu = new Unit({ ...b, q, r, vq: q, vr: r, faction, isNew: false, level: 1, xp: 0 });
+                            game.units.push(nu);
+                            menu.remove();
+                            renderer.centerOn(q, r);
+                            if (typeof updateUI === 'function') updateUI();
+                        };
+                        beastList.appendChild(btn);
+                    });
+                });
+                menu.appendChild(beastList);
+            }
+
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = 'Fechar';
+            closeBtn.style.cssText = 'width:100%;padding:4px;margin-top:6px;background:rgba(201,162,39,.1);border:1px solid rgba(201,162,39,.3);color:#a89c7e;border-radius:4px;cursor:pointer;font-size:10px;';
+            closeBtn.onclick = () => menu.remove();
+            menu.appendChild(closeBtn);
+
+            document.body.appendChild(menu);
+
+            // fecha ao clicar fora
+            const closeHandler = (ev) => {
+                if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('mousedown', closeHandler); }
+            };
+            setTimeout(() => document.addEventListener('mousedown', closeHandler), 50);
+        });
         menuContainer.appendChild(updateBtn);
     }
 
@@ -94,17 +255,20 @@ window.openContinentMap = function() {
     let startNode = typeof LORE_FACTIONS !== 'undefined' && LORE_FACTIONS[facId] ? LORE_FACTIONS[facId].startNode : 'WEST';
 
     // 1) Estados por região (mesma regra de sempre)
+    const _devOn = localStorage.getItem('ht_dev_mode') === 'true';
     const states = {};
     Object.values(CONTINENT_REGIONS).forEach(reg => {
         let isConquered = game.conqueredRegions.includes(reg.id);
         let isReachable = false;
-        if (game.conqueredRegions.length === 0) {
+        if (_devOn) {
+            isReachable = true;
+        } else if (game.conqueredRegions.length === 0) {
             if (reg.id === startNode) isReachable = true;
         } else {
             isReachable = reg.adj.some(adjId => game.conqueredRegions.includes(adjId));
         }
         let isLocked = false;
-        if (reg.id === 'CENTER') {
+        if (reg.id === 'CENTER' && !_devOn) {
             isLocked = game.conqueredRegions.length < 5;
         }
         states[reg.id] = {
@@ -112,6 +276,8 @@ window.openContinentMap = function() {
             attack: isReachable && !isConquered && !isLocked,
             locked: isLocked
         };
+        // DEV: todas as regiões não-conquistadas são atacáveis
+        if (_devOn && !isConquered) states[reg.id].attack = true;
     });
 
     // 2) Rotas de adjacência (cores por estado)

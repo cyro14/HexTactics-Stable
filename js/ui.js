@@ -4919,20 +4919,25 @@ window.openContinentMap = function () {
         let isConquered = game.conqueredRegions.includes(reg.id);
 
         // A MÁGICA DOS NÓS: Você só ataca se estiver ao lado de onde você já conquistou!
+        // DEV MODE: lê direto do localStorage (não depende de window.DEV_MODE)
+        const _devOn = localStorage.getItem('ht_dev_mode') === 'true';
         let isReachable = false;
-        if (game.conqueredRegions.length === 0) {
-            // Se for o início do jogo, APENAS a base principal do líder está clicável
+        if (_devOn) {
+            isReachable = true;
+        } else if (game.conqueredRegions.length === 0) {
             if (reg.id === startNode) isReachable = true;
         } else {
             isReachable = reg.adj.some(adjId => game.conqueredRegions.includes(adjId));
         }
 
         let isLocked = false;
-        if (reg.id === 'CENTER') {
-            isLocked = game.conqueredRegions.length < 4; // Exige 4 domínios para liberar o Ômega
+        if (reg.id === 'CENTER' && !_devOn) {
+            isLocked = game.conqueredRegions.length < 4;
         }
 
         let canAttack = isReachable && !isConquered && !isLocked;
+        // DEV: em modo dev, TODAS as regiões não-conquistadas são atacáveis
+        if (_devOn && !isConquered) canAttack = true;
 
         let pin = document.createElement('div');
         let pinColor = isConquered ? 'var(--player-color)' : (canAttack ? 'var(--enemy-color)' : '#555');

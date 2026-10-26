@@ -828,7 +828,7 @@ class Game {
         if (u.faction === 0) return; let hex = this.map.get(`${u.q},${u.r}`);
         if (hex && hex.terrain.id === 'VILLAGE' && hex.owner !== u.faction) {
             hex.owner = u.faction; let col = u.faction === 1 ? '#4a9edd' : '#c0392b';
-            if (typeof showPopup === 'function') showPopup("", u, col);
+            if (typeof showPopup === 'function') showPopup("Vila conquistada!", u, col);
             if (window.battleFX) battleFX.village(u, col);
             this.updateVisibility();
             if (typeof addLog === 'function') addLog(`🚩 ${u.name} capturou a Vila!`, col);
@@ -1622,6 +1622,20 @@ class Game {
             // NÉVOA: recalcular DEPOIS do turnCount++ para pegar a fase
             // correta do novo turno (se virou noite, escurece AGORA)
             this.updateVisibility();
+
+            // DEV MODE: repõe recursos infinitos a cada turno
+            if (window.DEV_MODE) {
+                this.gold = 999999;
+                this.dna = 999;
+                if (!this.resources) this.resources = {};
+                this.resources.wood = 9999; this.resources.stone = 9999;
+                this.resources.scales = 9999; this.resources.sand = 9999;
+                this.resources.garras = 9999; this.resources.asas = 9999;
+                this.resources.ervas = 9999; this.resources.ferro = 9999;
+                this.resources.veneno = 9999; this.resources.po_magico = 9999;
+                this.resources.brasa = 9999;
+            }
+
             const tb = document.getElementById('turn-blocker');
 
             // ========================================================
@@ -2700,7 +2714,36 @@ class Renderer {
                 ctx.fillStyle = gl;
                 ctx.fillRect(tx - ts * 1.5, ty - ts * 1.5, ts * 3, ts * 3);
             }
-            if (hex.terrain.id === 'VILLAGE' && hex.owner !== null) { ctx.fillStyle = hex.owner === 1 ? '#4a9edd' : '#c0392b'; ctx.beginPath(); ctx.arc(p.x + this.hexSize * 0.4, p.y - this.hexSize * 0.3, 6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
+            // BANDEIRA VETORIAL de vila conquistada (haste + flâmula na cor da facção)
+            if (hex.terrain.id === 'VILLAGE' && hex.owner !== null) {
+                const flagCol = hex.owner === 1 ? '#4a9edd' : '#c0392b';
+                const fx = p.x + this.hexSize * 0.35;
+                const fy = p.y - this.hexSize * 0.15;
+                const fs = this.hexSize * 0.32;
+                // haste (linha vertical)
+                ctx.strokeStyle = '#c4bda8';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(fx, fy);
+                ctx.lineTo(fx, fy - fs * 1.6);
+                ctx.stroke();
+                // flâmula (triângulo ondulado)
+                ctx.fillStyle = flagCol;
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 0.8;
+                ctx.beginPath();
+                ctx.moveTo(fx, fy - fs * 1.6);
+                ctx.quadraticCurveTo(fx + fs * 0.6, fy - fs * 1.4, fx + fs, fy - fs * 1.1);
+                ctx.quadraticCurveTo(fx + fs * 0.5, fy - fs * 0.9, fx, fy - fs * 0.7);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                // base da haste (pequeno círculo)
+                ctx.fillStyle = '#c4bda8';
+                ctx.beginPath();
+                ctx.arc(fx, fy, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
 
         });
 
@@ -3004,10 +3047,33 @@ class Renderer {
                     ctx.shadowOffsetY = 0;
                     uiTopY = spriteY - 5;
                 } else if (cachedAsset !== "LOADING") {
-                    ctx.fillText(u.emoji, p.x, p.y + 1);
+                    // FALLBACK VETORIAL: sem sprite, desenha um círculo com
+                    // a inicial da fera (nada de emoji no canvas)
+                    const es = this.hexSize * 0.45;
+                    ctx.fillStyle = 'rgba(30, 25, 15, 0.9)';
+                    ctx.strokeStyle = u.faction === 1 ? '#4a9edd' : (u.faction === 2 ? '#c0392b' : '#aaa');
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, es, 0, Math.PI * 2);
+                    ctx.fill(); ctx.stroke();
+                    ctx.font = `bold ${Math.floor(es * 0.8)}px Cinzel,serif`;
+                    ctx.fillStyle = '#e8dcc0';
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText((u.name || '?')[0], p.x, p.y + 1);
                 }
             } else {
-                ctx.fillText(u.emoji, p.x, p.y + 1);
+                // SEM SPRITE DEFINIDO: placeholder vetorial com inicial
+                const es = this.hexSize * 0.45;
+                ctx.fillStyle = 'rgba(30, 25, 15, 0.9)';
+                ctx.strokeStyle = u.faction === 1 ? '#4a9edd' : (u.faction === 2 ? '#c0392b' : '#aaa');
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, es, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+                ctx.font = `bold ${Math.floor(es * 0.8)}px Cinzel,serif`;
+                ctx.fillStyle = '#e8dcc0';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText((u.name || '?')[0], p.x, p.y + 1);
             }
             ctx.restore();
 
@@ -3015,11 +3081,62 @@ class Renderer {
             // INTERFACE 
             // ==========================================
             // Coroa do Líder (Livre no topo!)
-            if (u.isLeader) { ctx.font = `${this.hexSize * 0.5}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'center'; ctx.fillText('👑', p.x, uiTopY); }
+            // Coroa de líder: vetor dourado (sem emoji)
+            if (u.isLeader) {
+                const cs = this.hexSize * 0.28;
+                const cx = p.x, cy = uiTopY - cs * 0.3;
+                ctx.strokeStyle = '#e8c84a';
+                ctx.fillStyle = 'rgba(232,200,74,.85)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(cx - cs, cy + cs * 0.5);
+                ctx.lineTo(cx - cs * 0.85, cy - cs * 0.5);
+                ctx.lineTo(cx - cs * 0.35, cy);
+                ctx.lineTo(cx, cy - cs * 0.7);
+                ctx.lineTo(cx + cs * 0.35, cy);
+                ctx.lineTo(cx + cs * 0.85, cy - cs * 0.5);
+                ctx.lineTo(cx + cs, cy + cs * 0.5);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+            }
 
-            // Alertas e Magias
-            if (u.faction === 0 && u.alerted) { ctx.font = `bold ${this.hexSize * 0.45}px Arial`; ctx.fillStyle = '#e74c3c'; ctx.textAlign = 'center'; ctx.fillText('⚠️', p.x + r - 5, uiTopY + 5); }
-            if (u.faction === 1 && (u.knownSpells || []).length > 0) { ctx.font = `${this.hexSize * 0.35}px Arial`; ctx.textBaseline = 'bottom'; ctx.textAlign = 'right'; ctx.fillText('✨', p.x + r - 2, uiTopY + 8); }
+            // Alerta de fera agressiva: triângulo vermelho com exclamação (vetor)
+            if (u.faction === 0 && u.alerted) {
+                const ws = this.hexSize * 0.22;
+                const wx = p.x + r - 5, wy = uiTopY + 5;
+                ctx.fillStyle = '#e74c3c';
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(wx, wy - ws);
+                ctx.lineTo(wx + ws * 0.9, wy + ws * 0.6);
+                ctx.lineTo(wx - ws * 0.9, wy + ws * 0.6);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                // exclamação
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1.8;
+                ctx.beginPath();
+                ctx.moveTo(wx, wy - ws * 0.3); ctx.lineTo(wx, wy + ws * 0.15);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(wx, wy + ws * 0.4, 1, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff'; ctx.fill();
+            }
+
+            // Faísca de conjurador: estrela 4 pontas (vetor)
+            if (u.faction === 1 && (u.knownSpells || []).length > 0) {
+                const ss = this.hexSize * 0.18;
+                const sx = p.x + r - 2, sy = uiTopY + 2;
+                ctx.fillStyle = '#f5e6a0';
+                ctx.beginPath();
+                ctx.moveTo(sx, sy - ss);
+                ctx.quadraticCurveTo(sx + ss * 0.2, sy - ss * 0.2, sx + ss, sy);
+                ctx.quadraticCurveTo(sx + ss * 0.2, sy + ss * 0.2, sx, sy + ss);
+                ctx.quadraticCurveTo(sx - ss * 0.2, sy + ss * 0.2, sx - ss, sy);
+                ctx.quadraticCurveTo(sx - ss * 0.2, sy - ss * 0.2, sx, sy - ss);
+                ctx.fill();
+            }
 
             // --- BARRA DE HP VERTICAL (DIREITA DO HEXÁGONO) ---
             // Calcula a altura da barra baseada no HP Máximo (Cresce com a vida do personagem!)
@@ -3040,13 +3157,38 @@ class Renderer {
             ctx.beginPath(); ctx.roundRect(barX, barY + barHeight - fillHeight, barWidth, fillHeight, 2); ctx.fill();
 
             // --- NÍVEL E ESTRELAS (ESQUERDA DO HEXÁGONO) ---
-            let starIcon = u.starLevel === 2 ? '🥉' : u.starLevel === 3 ? '🥈' : u.starLevel >= 4 ? '🌟' : '';
-            if (u.level > 1 || starIcon) {
+            // Estrelas VETORIAIS: bronze (2★), prata (3★), ouro com glow (4★+)
+            const drawRankStar = (sx, sy, col, glow) => {
+                const ss = 5;
+                ctx.save();
+                if (glow) { ctx.shadowColor = col; ctx.shadowBlur = 6; }
+                ctx.fillStyle = col;
+                ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+                ctx.lineWidth = 0.5;
+                ctx.beginPath();
+                for (let si = 0; si < 5; si++) {
+                    const ang = -Math.PI / 2 + si * Math.PI * 2 / 5;
+                    const ang2 = ang + Math.PI / 5;
+                    ctx.lineTo(sx + Math.cos(ang) * ss, sy + Math.sin(ang) * ss);
+                    ctx.lineTo(sx + Math.cos(ang2) * ss * 0.45, sy + Math.sin(ang2) * ss * 0.45);
+                }
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                ctx.restore();
+            };
+            let starCount = u.starLevel === 2 ? 1 : u.starLevel === 3 ? 1 : u.starLevel >= 4 ? 1 : 0;
+            let starCol = u.starLevel === 2 ? '#cd7f32' : u.starLevel === 3 ? '#c0c0c0' : u.starLevel >= 4 ? '#f1c40f' : null;
+            if (u.level > 1 || starCount > 0) {
                 ctx.font = 'bold 11px Cinzel,serif';
                 ctx.fillStyle = '#c9a227';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(`Lv${u.level}${starIcon}`, p.x - (this.hexSize * 0.65), p.y + (this.hexSize * 0.25));
+                const lvX = p.x - (this.hexSize * 0.65);
+                const lvY = p.y + (this.hexSize * 0.25);
+                ctx.fillText(`Lv${u.level}`, lvX, lvY);
+                if (starCount > 0 && starCol) {
+                    drawRankStar(lvX + 18, lvY, starCol, u.starLevel >= 4);
+                }
             }
         });
 
@@ -3381,19 +3523,39 @@ class KingdomRenderer {
             ctx.lineWidth = 0.5;
             ctx.stroke();
 
-            if (terrainData.icon) {
-                ctx.font = `${this.hexSize * 0.5}px Arial`;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillStyle = 'rgba(255,255,255,0.3)';
-                ctx.fillText(terrainData.icon, p.x, p.y);
-            }
+            // (terreno: o tile já é o visual — sem emoji de overlay)
 
             if (hex.building) {
                 const b = BUILDINGS[hex.building];
                 if (b) {
-                    ctx.font = `${this.hexSize * 0.8}px Arial`;
-                    ctx.fillStyle = '#fff';
-                    ctx.fillText(b.icon, p.x, p.y + 2);
+                    // PRÉDIO: vetor genérico (casa) — o nível diz o resto
+                    const bs = this.hexSize * 0.35;
+                    const bx = p.x, by = p.y + 2;
+                    // sombra
+                    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    ctx.beginPath();
+                    ctx.ellipse(bx, by + bs * 0.6, bs * 0.9, bs * 0.25, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // corpo
+                    ctx.fillStyle = '#c9a227';
+                    ctx.strokeStyle = '#f5e6a0';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.rect(bx - bs * 0.7, by - bs * 0.3, bs * 1.4, bs * 0.8);
+                    ctx.fill(); ctx.stroke();
+                    // telhado
+                    ctx.fillStyle = '#e8c84a';
+                    ctx.beginPath();
+                    ctx.moveTo(bx - bs * 0.85, by - bs * 0.3);
+                    ctx.lineTo(bx, by - bs * 0.9);
+                    ctx.lineTo(bx + bs * 0.85, by - bs * 0.3);
+                    ctx.closePath();
+                    ctx.fill(); ctx.stroke();
+                    // porta
+                    ctx.fillStyle = '#5a4010';
+                    ctx.beginPath();
+                    ctx.rect(bx - bs * 0.15, by + bs * 0.1, bs * 0.3, bs * 0.4);
+                    ctx.fill();
 
                     // Desenha o badge de Nível se for maior que 1
                     if (hex.bLevel > 1) {
