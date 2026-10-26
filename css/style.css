@@ -1745,6 +1745,31 @@ button.btn-success {
 }
 
 /* ==========================================
+   EDITOR DE UNIDADES
+   ========================================== */
+.ue-list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 8px;
+    margin-bottom: 3px;
+    background: rgba(10, 10, 18, .8);
+    border: 1px solid rgba(201, 162, 39, .2);
+    border-radius: 4px;
+    cursor: pointer;
+    color: #e8dcc0;
+    font-size: 11px;
+    font-family: sans-serif;
+    transition: border-color .12s ease, background .12s ease;
+    text-align: left;
+}
+.ue-list-item:hover { border-color: rgba(201, 162, 39, .5); background: rgba(20, 18, 10, .9); }
+.ue-list-item.ue-active { border-color: var(--gold); background: rgba(35, 28, 10, .95); box-shadow: 0 0 8px rgba(201, 162, 39, .25); }
+.ue-list-name { flex: 1; font-family: Cinzel, serif; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ue-list-type { font-size: 8px; color: #a89c7e; text-transform: uppercase; letter-spacing: .5px; }
+
+/* ==========================================
    TELAS SECUNDÁRIAS — Bestiário, Relicário,
    Grimório, Mercador, Evento/Laboratório
    (remaster estilo Wesnoth)

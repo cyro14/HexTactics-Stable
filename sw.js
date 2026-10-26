@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v46'; // v46: tileset 12 col + flip aleatório + fog cache + fix teleport
+const CACHE_NAME = 'hextactics-v49'; // v49: hub Editor no menu principal + Editor de Magias com SP() editável
 const ASSETS = [
     './',
     './index.html',

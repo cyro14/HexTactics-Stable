@@ -1021,6 +1021,394 @@ async function showSpellLearnModal(leader, level) {
 }
 
 // ==========================================
+// EDITOR DE UNIDADES — edita stats/sprite de feras e líderes
+// Mudanças salvas em localStorage (ht_unit_overrides) e aplicadas no load
+// ==========================================
+window.UnitEditor = (function () {
+    const LS_KEY = 'ht_unit_overrides';
+
+    function getOverrides() {
+        try { return JSON.parse(localStorage.getItem(LS_KEY)) || { beasts: {}, leaders: {} }; }
+        catch (e) { return { beasts: {}, leaders: {} }; }
+    }
+    function saveOverrides(o) {
+        localStorage.setItem(LS_KEY, JSON.stringify(o));
+    }
+
+    // aplica overrides nos objetos vivos (BEASTS/LEADERS) — chamado no boot
+    function applyOverrides() {
+        const o = getOverrides();
+        Object.keys(o.beasts || {}).forEach(key => {
+            const parts = key.split(':');
+            const cat = parts[0], idx = +parts[1];
+            if (typeof BEASTS !== 'undefined' && BEASTS[cat] && BEASTS[cat][idx]) {
+                Object.assign(BEASTS[cat][idx], o.beasts[key]);
+            }
+        });
+        Object.keys(o.leaders || {}).forEach(idx => {
+            if (typeof LEADERS !== 'undefined' && LEADERS[+idx]) {
+                Object.assign(LEADERS[+idx], o.leaders[idx]);
+            }
+        });
+    }
+
+    // coleta todas as unidades (beasts + leaders) numa lista flat
+    function collectAll() {
+        const list = [];
+        if (typeof BEASTS !== 'undefined') {
+            Object.keys(BEASTS).forEach(cat => {
+                BEASTS[cat].forEach((b, i) => {
+                    list.push({ type: 'beast', cat, idx: i, data: b, key: cat + ':' + i });
+                });
+            });
+        }
+        if (typeof LEADERS !== 'undefined') {
+            LEADERS.forEach((l, i) => {
+                list.push({ type: 'leader', cat: null, idx: i, data: l, key: String(i) });
+            });
+        }
+        return list;
+    }
+
+    let selected = null;
+
+    function open() {
+        hide('pause-menu');
+        show('unit-editor-screen');
+        buildList();
+    }
+
+    function buildList(filter) {
+        const listEl = document.getElementById('ue-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        const all = collectAll();
+        const f = (filter || '').toLowerCase();
+        all.forEach(u => {
+            if (f && !u.data.name.toLowerCase().includes(f)) return;
+            const btn = document.createElement('button');
+            btn.className = 'ue-list-item' + (selected === u.key ? ' ue-active' : '');
+            const icon = u.data.sprite
+                ? '<img src="' + u.data.sprite + '" style="width:28px;height:28px;object-fit:contain;filter:' + (u.data.filter || 'none') + ';" onerror="this.style.display=\'none\'">'
+                : '<span style="font-size:22px;">' + (u.data.e || '?') + '</span>';
+            btn.innerHTML = icon + '<span class="ue-list-name">' + u.data.name + '</span><span class="ue-list-type">' + (u.type === 'leader' ? 'Líder' : 'Fera') + '</span>';
+            btn.onclick = () => { selected = u.key; buildList(); buildForm(u); };
+            listEl.appendChild(btn);
+        });
+    }
+
+    function ueField(label, type, value, id) {
+        return '<div><label style="font-size:9px;color:#a89c7e;display:block;margin-bottom:2px;">' + label + '</label>' +
+            '<input type="' + type + '" data-ue-field="' + id + '" value="' + String(value ?? '').replace(/"/g, '"') + '" ' +
+            'style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.5);border:1px solid rgba(201,162,39,.3);border-radius:4px;color:#e8dcc0;font-size:12px;padding:5px;"></div>';
+    }
+
+    function buildForm(u) {
+        const form = document.getElementById('ue-form');
+        if (!form || !u) return;
+        const d = u.data;
+        const ov = getOverrides();
+        const isModified = u.type === 'beast' ? !!((ov.beasts || {})[u.key]) : !!((ov.leaders || {})[u.idx]);
+
+        const tagCheckboxes = Object.keys(typeof TAGS !== 'undefined' ? TAGS : {}).map(t =>
+            '<label style="display:inline-flex;align-items:center;gap:3px;margin:2px;font-size:10px;color:' + (TAGS[t].col || '#888') + ';">' +
+            '<input type="checkbox" data-ue-tags="' + t + '" ' + ((d.tags || []).includes(t) ? 'checked' : '') + '>' + (TAGS[t].name || t) + '</label>'
+        ).join('');
+
+        const abilityCheckboxes = Object.keys(typeof ABILITY_DESCRIPTIONS !== 'undefined' ? ABILITY_DESCRIPTIONS : {}).map(a =>
+            '<label style="display:inline-flex;align-items:center;gap:3px;margin:2px;font-size:10px;color:#c4bda8;">' +
+            '<input type="checkbox" data-ue-ab="' + a + '" ' + ((d.abilities || []).includes(a) ? 'checked' : '') + '>' + a + '</label>'
+        ).join('');
+
+        form.innerHTML =
+            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
+            (d.sprite ? '<img src="' + d.sprite + '" style="width:56px;height:56px;object-fit:contain;filter:' + (d.filter || 'none') + ';border:1px solid rgba(201,162,39,.4);border-radius:6px;padding:4px;">' : '<span style="font-size:42px;">' + (d.e || '?') + '</span>') +
+            '<div><div style="font-family:Cinzel,serif;font-size:16px;color:var(--gold-light);">' + d.name + '</div>' +
+            '<div style="font-size:10px;color:' + (isModified ? '#e74c3c' : '#a89c7e') + ';">' + (isModified ? 'MODIFICADO' : 'Original') + ' · ' + (u.type === 'leader' ? 'Líder' : 'Fera (' + u.cat + ')') + '</div></div></div>' +
+            '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">' +
+            ueField('Nome', 'text', d.name, 'ue-f-name') +
+            ueField('Emoji (ícone)', 'text', d.e || '', 'ue-f-e') +
+            ueField('Sprite (caminho)', 'text', d.sprite || '', 'ue-f-sprite') +
+            ueField('HP', 'number', d.hp || d.maxHp || 0, 'ue-f-hp') +
+            ueField('ATK', 'number', d.atk || 0, 'ue-f-atk') +
+            ueField('MP', 'number', d.mp || d.maxMp || 0, 'ue-f-mp') +
+            ueField('Alcance', 'number', d.range || 1, 'ue-f-range') +
+            ueField('Filtro CSS', 'text', d.filter || 'none', 'ue-f-filter') +
+            ueField('Nível mínimo', 'number', d.minLevel || 1, 'ue-f-minlevel') +
+            '</div>' +
+            '<div style="margin-top:10px;"><div style="font-size:10px;color:#a89c7e;margin-bottom:4px;">Tags (geram mana):</div>' +
+            '<div style="max-height:60px;overflow-y:auto;border:1px solid rgba(201,162,39,.2);border-radius:4px;padding:4px;">' + tagCheckboxes + '</div></div>' +
+            '<div style="margin-top:8px;"><div style="font-size:10px;color:#a89c7e;margin-bottom:4px;">Habilidades:</div>' +
+            '<div style="max-height:60px;overflow-y:auto;border:1px solid rgba(201,162,39,.2);border-radius:4px;padding:4px;">' + abilityCheckboxes + '</div></div>' +
+            '<div style="margin-top:10px;"><div style="font-size:10px;color:#a89c7e;margin-bottom:4px;">Descrição:</div>' +
+            '<textarea data-ue-field="desc" rows="2" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.5);border:1px solid rgba(201,162,39,.3);border-radius:4px;color:#e8dcc0;font-size:11px;padding:6px;font-family:sans-serif;">' + (d.desc || '') + '</textarea></div>' +
+            '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">' +
+            '<button id="btn-ue-save" class="mm-btn mm-btn-primary" style="flex:1;">Salvar Alterações</button>' +
+            '<button id="btn-ue-revert" class="mm-btn" style="border-color:#e74c3c;color:#ff8f8f;flex:0 0 auto;">Reverter</button></div>';
+
+        document.getElementById('btn-ue-save')?.addEventListener('click', () => save(u));
+        document.getElementById('btn-ue-revert')?.addEventListener('click', () => revert(u));
+    }
+
+    function save(u) {
+        const form = document.getElementById('ue-form');
+        const get = function (id) { const el = form.querySelector('[data-ue-field="' + id + '"]'); return el ? el.value : ''; };
+        const getNum = function (id) { return parseInt(get(id)) || 0; };
+        const tags = Array.from(form.querySelectorAll('[data-ue-tags]:checked')).map(function (el) { return el.dataset.ueTags; });
+        const abilities = Array.from(form.querySelectorAll('[data-ue-ab]:checked')).map(function (el) { return el.dataset.ueAb; });
+
+        const patch = {
+            name: get('ue-f-name') || u.data.name,
+            e: get('ue-f-e') || u.data.e,
+            sprite: get('ue-f-sprite') || undefined,
+            hp: getNum('ue-f-hp'),
+            atk: getNum('ue-f-atk'),
+            mp: getNum('ue-f-mp'),
+            range: getNum('ue-f-range') || 1,
+            filter: get('ue-f-filter') || 'none',
+            minLevel: getNum('ue-f-minlevel') || 1,
+            tags: tags, abilities: abilities,
+            desc: (form.querySelector('[data-ue-field="desc"]') || {}).value || u.data.desc
+        };
+        if (u.data.maxHp) patch.maxHp = patch.hp;
+        if (u.data.maxMp) patch.maxMp = patch.mp;
+        if (!patch.sprite) delete patch.sprite;
+
+        const ov = getOverrides();
+        if (u.type === 'beast') {
+            if (!ov.beasts) ov.beasts = {};
+            ov.beasts[u.key] = patch;
+            Object.assign(u.data, patch);
+        } else {
+            if (!ov.leaders) ov.leaders = {};
+            ov.leaders[u.idx] = patch;
+            Object.assign(u.data, patch);
+        }
+        saveOverrides(ov);
+        const st = document.getElementById('ue-status');
+        if (st) { st.textContent = '"' + patch.name + '" salvo!'; st.style.color = '#2ecc71'; setTimeout(function () { st.textContent = ''; }, 2000); }
+        buildList();
+        buildForm(u);
+    }
+
+    function revert(u) {
+        if (!confirm('Reverter esta unidade ao original?')) return;
+        const ov = getOverrides();
+        if (u.type === 'beast') delete (ov.beasts || {})[u.key];
+        else delete (ov.leaders || {})[u.idx];
+        saveOverrides(ov);
+        location.reload();
+    }
+
+    function exportJSON() {
+        const ov = getOverrides();
+        const blob = new Blob([JSON.stringify(ov, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'hextactics_unit_overrides.json';
+        a.click();
+    }
+
+    function importJSON() {
+        const inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = '.json';
+        inp.onchange = function () {
+            const file = inp.files[0];
+            if (!file) return;
+            const rd = new FileReader();
+            rd.onload = function () {
+                try {
+                    const data = JSON.parse(rd.result);
+                    if (data.beasts || data.leaders) {
+                        saveOverrides(data);
+                        location.reload();
+                    } else alert('Arquivo invalido');
+                } catch (e) { alert('JSON invalido'); }
+            };
+            rd.readAsText(file);
+        };
+        inp.click();
+    }
+
+    function resetAll() {
+        if (!confirm('Resetar TODAS as modificacoes de unidades?')) return;
+        localStorage.removeItem(LS_KEY);
+        location.reload();
+    }
+
+    return { open: open, applyOverrides: applyOverrides, exportJSON: exportJSON, importJSON: importJSON, resetAll: resetAll };
+})();
+
+// aplica overrides no boot (antes de qualquer batalha)
+if (typeof BEASTS !== 'undefined' && typeof LEADERS !== 'undefined') {
+    UnitEditor.applyOverrides();
+}
+
+// ==========================================
+// HELPER: SP (Spell Power) — valores de cura/dano editáveis.
+// Cada magia com dano/cura numérico usa SP(id, default) em vez de
+// hardcode. O editor de magias sobrescreve via localStorage.
+// ==========================================
+window._spellPowers = null;
+function _loadSpellPowers() {
+    if (window._spellPowers) return window._spellPowers;
+    try { window._spellPowers = JSON.parse(localStorage.getItem('ht_spell_powers')) || {}; }
+    catch (e) { window._spellPowers = {}; }
+    return window._spellPowers;
+}
+window.SP = function (spellId, defaultVal) {
+    const p = _loadSpellPowers();
+    if (p[spellId] !== undefined && p[spellId] !== null) return p[spellId];
+    return defaultVal;
+};
+window.saveSpellPower = function (spellId, val) {
+    const p = _loadSpellPowers();
+    if (val === null || val === undefined) delete p[spellId];
+    else p[spellId] = val;
+    localStorage.setItem('ht_spell_powers', JSON.stringify(p));
+};
+
+// ==========================================
+// EDITOR DE MAGIAS — edita dano/cura, alcance, custo, nome
+// ==========================================
+window.SpellEditor = (function () {
+    let selected = null;
+
+    function open() {
+        hide('editor-hub');
+        show('spell-editor-screen');
+        buildList();
+    }
+
+    // potência padrão de cada magia (para exibir no editor)
+    function defaultPower(spell) {
+        const DP = {
+            sl_ember: 10, sl_heal: 20, sl_tidal: 3, sl_venom_spit: 0, sl_gust: 2,
+            sl_sand_throw: 3, sl_ice_shard: 6, sl_dark_touch: 6, sl_guiding_light: 10,
+            sl_savage_cry: 5, sl_arcane_dart: 12, sl_tornado: 15, sl_thorn_armor: 30,
+            sl_assassinate: 25, sl_quicksand: 10, sl_fireball: 25, sl_regen: 15,
+            sl_freeze: 5, sl_shadow_step: 0, sl_primal_rage: 10, sl_light_beam: 15,
+            sl_sandstorm: 12, sl_inferno: 20, sl_nature_shield: 30, sl_blizzard: 18,
+            sl_void_drain: 12, sl_stone_rain: 15, sl_mass_venom: 10, sl_storm_wing: 20,
+            sl_meteor: 25, sl_resurrection: 30, sl_mind_control: 20, sl_tidal_wave: 30,
+            sl_apocalypse: 35, sl_phoenix_rebirth: 40, sl_world_freeze: 50, sl_soul_harvest: 25,
+            sl_mordida_vamp: 20, sl_bencao_paladina: 15, sl_bombardeio: 25, sl_tiro_preciso: 30,
+            sl_bola_fogo: 25, sl_grito_orc: 10, sl_erguer_esq: 20, sl_explosao_arcana: 35,
+            sl_execucao: 30, sl_evocar_dragao: 20, sl_evocar_lobo: 15, sl_evocar_golem: 25,
+            sl_cancao_sereia: 20, sl_turno_extra: 0, sl_caldeirao: 30, sl_barreira_gelo: 25,
+            sl_vendaval: 20, sl_furia_tempestade: 25
+        };
+        return DP[spell.id] !== undefined ? DP[spell.id] : null;
+    }
+
+    function buildList() {
+        const listEl = document.getElementById('se-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        SPELLS.forEach(sp => {
+            const btn = document.createElement('button');
+            btn.className = 'ue-list-item' + (selected === sp.id ? ' ue-active' : '');
+            const pw = window.SP(sp.id, defaultPower(sp));
+            const pwLabel = pw !== null ? ` [${pw}]` : '';
+            btn.innerHTML = `${spellIconHtml(sp, 24)}<span class="ue-list-name">${sp.name}${pwLabel}</span><span class="ue-list-type">Nv${sp.level}</span>`;
+            btn.onclick = () => { selected = sp.id; buildList(); buildForm(sp); };
+            listEl.appendChild(btn);
+        });
+    }
+
+    function buildForm(sp) {
+        const form = document.getElementById('se-form');
+        if (!form || !sp) return;
+        const pw = window.SP(sp.id, defaultPower(sp));
+        const hasPower = pw !== null;
+        const cost = Object.entries(sp.cost || {}).map(([tag, amt]) => `${tag}:${amt}`).join(', ');
+
+        const costFields = Object.keys(MANA_TYPES || {}).map(tag => {
+            const current = (sp.cost || {})[tag] || 0;
+            return `<div><label style="font-size:9px;color:${MANA_TYPES[tag].col};display:block;margin-bottom:2px;">${MANA_TYPES[tag].name}</label>` +
+                `<input type="number" data-se-cost="${tag}" value="${current}" min="0" max="10" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.5);border:1px solid rgba(155,89,182,.3);border-radius:4px;color:#e8dcc0;font-size:12px;padding:5px;"></div>`;
+        }).join('');
+
+        form.innerHTML = `
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                ${spellIconHtml(sp, 48)}
+                <div>
+                    <div style="font-family:Cinzel,serif;font-size:16px;color:#c49ae8;">${sp.name}</div>
+                    <div style="font-size:10px;color:#a89c7e;">Nível ${sp.level} · ${sp.type === 'atk' ? 'Ataque' : 'Suporte'}${hasPower ? ' · Power: ' + pw : ''}</div>
+                </div>
+            </div>
+            <p style="font-size:11px;color:#c4bda8;margin:0 0 12px;font-family:sans-serif;">${sp.desc}</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;">
+                <div><label style="font-size:9px;color:#a89c7e;display:block;margin-bottom:2px;">Nome</label>
+                    <input type="text" data-se-field="name" value="${sp.name}" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.5);border:1px solid rgba(155,89,182,.3);border-radius:4px;color:#e8dcc0;font-size:12px;padding:5px;"></div>
+                ${hasPower ? `<div><label style="font-size:9px;color:#e8c84a;display:block;margin-bottom:2px;">Power (dano/cura)</label>
+                    <input type="number" data-se-field="power" value="${pw}" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.5);border:1px solid rgba(232,200,74,.4);border-radius:4px;color:#f5e6a0;font-size:14px;padding:5px;font-weight:bold;"></div>` : ''}
+                <div><label style="font-size:9px;color:#a89c7e;display:block;margin-bottom:2px;">Alcance</label>
+                    <input type="number" data-se-field="range" value="${sp.range || 1}" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.5);border:1px solid rgba(155,89,182,.3);border-radius:4px;color:#e8dcc0;font-size:12px;padding:5px;"></div>
+                <div><label style="font-size:9px;color:#a89c7e;display:block;margin-bottom:2px;">Nível da magia</label>
+                    <input type="number" data-se-field="level" value="${sp.level || 1}" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.5);border:1px solid rgba(155,89,182,.3);border-radius:4px;color:#e8dcc0;font-size:12px;padding:5px;"></div>
+            </div>
+            <div style="margin-top:10px;">
+                <div style="font-size:10px;color:#a89c7e;margin-bottom:4px;">Custo de mana:</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:6px;">${costFields}</div>
+            </div>
+            <div style="margin-top:10px;">
+                <div style="font-size:10px;color:#a89c7e;margin-bottom:4px;">Descrição:</div>
+                <textarea data-se-field="desc" rows="2" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.5);border:1px solid rgba(155,89,182,.3);border-radius:4px;color:#e8dcc0;font-size:11px;padding:6px;font-family:sans-serif;">${sp.desc}</textarea>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:14px;">
+                <button id="btn-se-save" class="mm-btn mm-btn-primary" style="flex:1;">Salvar</button>
+                <button id="btn-se-revert" class="mm-btn" style="border-color:#e74c3c;color:#ff8f8f;flex:0 0 auto;">Reverter</button>
+            </div>
+        `;
+
+        document.getElementById('btn-se-save')?.addEventListener('click', () => save(sp));
+        document.getElementById('btn-se-revert')?.addEventListener('click', () => revert(sp));
+    }
+
+    function save(sp) {
+        const form = document.getElementById('se-form');
+        const get = (id) => { const el = form.querySelector(`[data-se-field="${id}"]`); return el ? el.value : ''; };
+        const getNum = (id) => parseInt(get(id)) || 0;
+
+        // power
+        const pwEl = form.querySelector('[data-se-field="power"]');
+        if (pwEl) window.saveSpellPower(sp.id, parseInt(pwEl.value) || 0);
+
+        // custo de mana
+        const costs = {};
+        form.querySelectorAll('[data-se-cost]').forEach(el => {
+            const v = parseInt(el.value) || 0;
+            if (v > 0) costs[el.dataset.seCost] = v;
+        });
+        sp.cost = costs;
+
+        // outros campos (aplicados ao vivo)
+        sp.name = get('name') || sp.name;
+        sp.range = getNum('range') || 1;
+        sp.level = getNum('level') || 1;
+        sp.desc = form.querySelector('[data-se-field="desc"]')?.value || sp.desc;
+
+        // salva metadados no override de unidades? Não — magias têm seu próprio store
+        // power já foi salvo. Custos são runtime-only (não persistem entre reloads
+        // ainda — TODO: persistir no ht_spell_powers também)
+        const st = document.getElementById('se-status');
+        if (st) { st.textContent = `"${sp.name}" salva!`; st.style.color = '#2ecc71'; setTimeout(() => st.textContent = '', 2000); }
+        buildList();
+        buildForm(sp);
+    }
+
+    function revert(sp) {
+        if (!confirm('Reverter o Power desta magia ao padrão?')) return;
+        window.saveSpellPower(sp.id, null);
+        location.reload();
+    }
+
+    return { open };
+})();
+
+// ==========================================
 // 3. UNIDADES E INTERFACE DO JOGO
 // ==========================================
 // BIBLIOTECA DE ÍCONES — manas, habilidades e status (SVG linha 24x24).

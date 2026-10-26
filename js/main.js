@@ -1152,6 +1152,43 @@ window.openContinentMap = function() {
     $('x-close-grimoire')?.addEventListener('click', () => { $('btn-close-grimoire')?.click(); });
     $('x-close-event')?.addEventListener('click', () => { hide('event-screen'); });
 
+    // === EDITOR DE UNIDADES ===
+    $('btn-open-unit-editor')?.addEventListener('click', () => {
+        if (window.UnitEditor) UnitEditor.open();
+    });
+    $('x-close-unit-editor')?.addEventListener('click', () => {
+        $('unit-editor-screen')?.classList.add('hidden');
+        if (!$('game-container').classList.contains('hidden')) $('pause-menu')?.classList.remove('hidden');
+    });
+    $('btn-ue-export')?.addEventListener('click', () => { if (window.UnitEditor) UnitEditor.exportJSON(); });
+    $('btn-ue-import')?.addEventListener('click', () => { if (window.UnitEditor) UnitEditor.importJSON(); });
+    $('btn-ue-reset')?.addEventListener('click', () => { if (window.UnitEditor) UnitEditor.resetAll(); });
+
+    // === HUB DO EDITOR (menu principal: botão "Editor") ===
+    $('btn-map-editor')?.addEventListener('click', () => {
+        show('editor-hub');
+    });
+    $('hub-btn-close')?.addEventListener('click', () => { hide('editor-hub'); });
+    $('hub-btn-map')?.addEventListener('click', () => { hide('editor-hub'); if (typeof initMapEditorUI === 'function') initMapEditorUI(); });
+    $('hub-btn-units')?.addEventListener('click', () => {
+        hide('editor-hub');
+        if (window.UnitEditor) UnitEditor.open();
+    });
+    $('hub-btn-spells')?.addEventListener('click', () => {
+        hide('editor-hub');
+        if (window.SpellEditor) SpellEditor.open();
+    });
+    $('x-close-spell-editor')?.addEventListener('click', () => {
+        $('spell-editor-screen')?.classList.add('hidden');
+        show('editor-hub');
+    });
+    // quando fechar o editor de unidades, volta pro hub (se veio de lá)
+    $('x-close-unit-editor')?.addEventListener('click', () => {
+        $('unit-editor-screen')?.classList.add('hidden');
+        if (!$('game-container').classList.contains('hidden')) $('pause-menu')?.classList.remove('hidden');
+        else show('editor-hub');
+    });
+
     // === CÓDIGO SEGURO DOS BOTÕES DO GERENCIAMENTO E PAUSA ===
     const btnStart = $('btn-start-stage');
     if (btnStart) {
@@ -1201,7 +1238,7 @@ window.openContinentMap = function() {
     $('btn-menu-from-lose').addEventListener('click', () => { location.reload(); });
     $('btn-play').addEventListener('click', () => { $('main-menu').classList.add('hidden'); $('mode-screen').classList.remove('hidden'); });
     $('btn-close-mode').addEventListener('click', () => { $('mode-screen').classList.add('hidden'); $('main-menu').classList.remove('hidden'); });
-    $('btn-map-editor')?.addEventListener('click', startMapEditor);
+    // btn-map-editor agora abre o HUB do editor (mapa/unidades/magias) — handler no bloco acima
     // ==========================================
     // FLUXO DOS MODOS: card -> (se houver save) seletor de save -> líder
     // ==========================================

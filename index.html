@@ -351,7 +351,7 @@
                         <path d="M12 3.5 19.2 7.75v8.5L12 20.5 4.8 16.25v-8.5Z" />
                         <path d="M12 7.5l3.9 2.25v4.5L12 16.5l-3.9-2.25v-4.5Z" />
                     </svg>
-                    <span>Editor de Mapa</span>
+                    <span>Editor</span>
                 </button>
                 <button id="btn-hall-fame" class="mm-btn mm-btn-hall">
                     <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
@@ -364,6 +364,49 @@
 
         <div class="mm-footer">
             <span>⬡ Lendas Vivas · Um conto tático de hexágonos ⬡</span>
+        </div>
+    </div>
+
+    <!-- HUB DO EDITOR: escolha entre Mapa, Unidades e Magias -->
+    <div id="editor-hub" class="layer screen hidden" style="background:rgba(3,4,10,.92);z-index:500;">
+        <div class="modal-card" style="max-width:420px;width:92%;border-color:var(--gold-dark);">
+            <h2 style="font-family:'Cinzel',serif;color:var(--gold);margin-top:0;text-align:center;letter-spacing:2px;">Editor</h2>
+            <div class="mm-rule mode-rule" style="margin:8px 0 16px;"><i></i><b></b><i></i></div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                <button id="hub-btn-map" class="mm-btn" style="width:100%;">
+                    <svg class="mm-ico" viewBox="0 0 24 24"><path d="M12 3.5 19.2 7.75v8.5L12 20.5 4.8 16.25v-8.5Z"/><path d="M12 7.5l3.9 2.25v4.5L12 16.5l-3.9-2.25v-4.5Z"/></svg>
+                    <span>Editor de Mapa</span>
+                </button>
+                <button id="hub-btn-units" class="mm-btn" style="width:100%;border-color:#e8c84a;color:#f5e6a0;">
+                    <svg class="mm-ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/></svg>
+                    <span>Editor de Unidades</span>
+                </button>
+                <button id="hub-btn-spells" class="mm-btn" style="width:100%;border-color:#9b59b6;color:#c49ae8;">
+                    <svg class="mm-ico" viewBox="0 0 24 24"><path d="M5 4c0-.8.7-1.5 1.5-1.5H19v17H6.5c-.8 0-1.5.7-1.5 1.5Z"/><path d="M5 6v15c0-.8.7-1.5 1.5-1.5H19"/><path d="M9 7h6M9 10h6M9 13h4"/></svg>
+                    <span>Editor de Magias</span>
+                </button>
+            </div>
+            <button id="hub-btn-close" class="mm-btn" style="width:100%;margin-top:14px;border-color:#e74c3c;color:#ff8f8f;">Voltar</button>
+        </div>
+    </div>
+
+    <!-- TELA DO EDITOR DE MAGIAS -->
+    <div id="spell-editor-screen" class="layer screen mm-screen hidden" style="background:#06070d;overflow-y:auto;z-index:450;">
+        <button id="x-close-spell-editor" class="screen-x" aria-label="Fechar" title="Fechar"><svg class="mm-ico" viewBox="0 0 24 24"><path d="M5.5 5.5 18.5 18.5M18.5 5.5 5.5 18.5"/></svg></button>
+        <canvas class="mm-bg-canvas"></canvas>
+        <div class="mm-content" style="max-width:1100px;padding:16px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <svg class="mm-ico" viewBox="0 0 24 24" style="width:34px;height:34px;color:#9b59b6;filter:drop-shadow(0 0 8px #9b59b6);"><path d="M5 4c0-.8.7-1.5 1.5-1.5H19v17H6.5c-.8 0-1.5.7-1.5 1.5Z"/><path d="M5 6v15c0-.8.7-1.5 1.5-1.5H19"/><path d="M9 7h6M9 10h6M9 13h4"/></svg>
+                <h1 class="mode-title" style="margin:0;color:#c49ae8;text-shadow:0 0 12px rgba(155,89,182,.5);">Editor de Magias</h1>
+            </div>
+            <div class="mm-rule mode-rule"><i></i><b style="background:#9b59b6;box-shadow:0 0 8px #9b59b6;"></b><i></i></div>
+            <span id="se-status" style="color:#a89c7e;font-size:11px;"></span>
+            <div style="display:flex;gap:14px;margin-top:12px;align-items:flex-start;flex-wrap:wrap;">
+                <div id="se-list" style="flex:0 0 260px;max-height:70vh;overflow-y:auto;border:1px solid rgba(155,89,182,.3);border-radius:6px;padding:6px;background:rgba(5,5,10,.6);"></div>
+                <div id="se-form" style="flex:1;min-width:300px;border:1px solid rgba(155,89,182,.3);border-radius:6px;padding:14px;background:rgba(5,5,10,.6;">
+                    <p style="color:#a89c7e;font-size:12px;">Selecione uma magia na lista.</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -802,6 +845,36 @@
         </div>
     </div>
 
+    <!-- ========================================== EDITOR DE UNIDADES ========================================== -->
+    <div id="unit-editor-screen" class="layer screen mm-screen hidden" style="background:#06070d;overflow-y:auto;z-index:400;">
+        <button id="x-close-unit-editor" class="screen-x" aria-label="Fechar" title="Fechar"><svg class="mm-ico" viewBox="0 0 24 24"><path d="M5.5 5.5 18.5 18.5M18.5 5.5 5.5 18.5"/></svg></button>
+        <canvas class="mm-bg-canvas"></canvas>
+        <div class="mm-content" style="max-width:1100px;padding:16px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <svg class="mm-ico" viewBox="0 0 24 24" style="width:34px;height:34px;color:var(--gold);filter:drop-shadow(0 0 8px var(--gold));"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.35.4.64.74.83.28.15.6.23.92.23H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+                <h1 class="mode-title" style="margin:0;">Editor de Unidades</h1>
+            </div>
+            <div class="mm-rule mode-rule"><i></i><b></b><i></i></div>
+
+            <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;">
+                <button id="btn-ue-export" class="mm-btn" style="border-color:#4a9edd;color:#7fd8ff;">Exportar JSON</button>
+                <button id="btn-ue-import" class="mm-btn" style="border-color:#2ecc71;color:#7dffb0;">Importar JSON</button>
+                <button id="btn-ue-reset" class="mm-btn" style="border-color:#e74c3c;color:#ff8f8f;">Resetar Tudo</button>
+                <span id="ue-status" style="color:#a89c7e;font-size:11px;align-self:center;"></span>
+            </div>
+
+            <div style="display:flex;gap:14px;margin-top:14px;align-items:flex-start;flex-wrap:wrap;">
+                <!-- LISTA DE UNIDADES -->
+                <div id="ue-list" style="flex:0 0 260px;max-height:70vh;overflow-y:auto;border:1px solid rgba(201,162,39,.3);border-radius:6px;padding:6px;background:rgba(5,5,10,.6);">
+                </div>
+                <!-- FORMULÁRIO DE EDIÇÃO -->
+                <div id="ue-form" style="flex:1;min-width:300px;border:1px solid rgba(201,162,39,.3);border-radius:6px;padding:14px;background:rgba(5,5,10,.6);">
+                    <p style="color:#a89c7e;font-size:12px;">Selecione uma unidade na lista para editar.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="beast-details-modal" class="layer screen hidden" style="background:rgba(0,0,0,0.85);z-index:800;">
         <div class="modal-card" style="max-width:480px;width:95%;">
             <h2 style="font-family:'Cinzel',serif;color:var(--gold);margin-top:0;">Detalhes da Unidade</h2>
@@ -920,6 +993,13 @@
                         <path d="M9.5 5.8C6.8 6.3 6.6 10 9.8 10.4M14.5 5.8c2.7.5 2.9 4.2-.3 4.6" />
                     </svg>
                     <span>Relicário</span>
+                </button>
+                <button id="btn-open-unit-editor" class="mm-btn" style="border-color:#e8c84a;color:#f5e6a0;">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.35.4.64.74.83.28.15.6.23.92.23H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+                    </svg>
+                    <span>Editor de Unidades</span>
                 </button>
                 <button id="btn-help-pause" class="mm-btn mm-btn-help">
                     <svg class="mm-ico" viewBox="0 0 24 24" transform="translate(0 1.5)" aria-hidden="true">

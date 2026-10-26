@@ -1894,49 +1894,56 @@ class Renderer {
     // ==========================================
     initAmbient() {
         if (this._ambient) return;
-        const W = this.canvas.width, H = this.canvas.height;
         const rnd = () => Math.random();
-        const hs = this.hexSize || 40;
 
+        // POSIÇÕES EM FRAÇÕES (0-1): multiplicadas pelo tamanho do canvas
+        // a cada frame — nunca ficam presas num canto se o canvas muda
         this._ambient = {
+            // PÁSSAROS: frações fy, x em px (se move horizontalmente)
             birds: Array.from({ length: 3 }, (_, i) => ({
-                x: rnd() * W, y: H * (0.12 + i * 0.15),
-                vx: (rnd() < .5 ? -1 : 1) * (1.2 + rnd() * 0.8),
+                x: rnd(), fy: 0.10 + i * 0.12 + rnd() * 0.04,
+                vx: (rnd() < .5 ? -1 : 1) * (0.0012 + rnd() * 0.0008),
                 wingPhase: rnd() * Math.PI * 2,
-                size: hs * (0.35 + rnd() * 0.15),
+                fsize: 0.30 + rnd() * 0.12,
             })),
+            // VAGALUMES: frações, flutuam
             fireflies: Array.from({ length: 14 }, () => ({
-                ox: rnd() * W, oy: H * (0.35 + rnd() * 0.55),
+                fx: rnd(), fy: 0.30 + rnd() * 0.60,
                 phase: rnd() * Math.PI * 2, speed: 0.3 + rnd() * 0.6,
-                amp: hs * (0.3 + rnd() * 0.5),
-                r: hs * 0.05 + rnd() * hs * 0.04,
+                famp: 0.02 + rnd() * 0.04,
+                fr: 0.04 + rnd() * 0.03,
             })),
+            // VENTOS: frações, varrem horizontalmente
             windWisps: Array.from({ length: 4 }, () => ({
-                x: rnd() * W, y: H * (0.15 + rnd() * 0.6),
-                vx: 2 + rnd() * 3,
-                len: W * (0.15 + rnd() * 0.2),
-                curve: hs * (rnd() * 1.5 - 0.75),
+                fx: rnd(), fy: 0.15 + rnd() * 0.60,
+                vfx: 0.002 + rnd() * 0.003,
+                flen: 0.15 + rnd() * 0.20,
+                fcurve: (rnd() * 2 - 1) * 0.5,
                 alpha: 0.10 + rnd() * 0.10,
                 w: 2 + rnd() * 2,
             })),
+            // BRASAS: frações, sobem
             embers: Array.from({ length: 10 }, () => ({
-                x: rnd() * W, y: H * (0.55 + rnd() * 0.35),
-                vy: -(0.5 + rnd() * 1), sway: rnd() * Math.PI * 2,
-                r: hs * 0.05 + rnd() * hs * 0.03,
+                fx: rnd(), fy: 0.50 + rnd() * 0.40,
+                vfy: -(0.0005 + rnd() * 0.001), sway: rnd() * Math.PI * 2,
+                fr: 0.04 + rnd() * 0.03,
             })),
+            // RAIOS DE SOL: frações
             rays: Array.from({ length: 4 }, (_, i) => ({
-                x: (i / 4) * W + rnd() * W * 0.2,
-                width: W * (0.08 + rnd() * 0.06),
-                drift: (rnd() * 2 - 1) * 0.3, phase: rnd() * Math.PI * 2,
+                fx: i / 4 + rnd() * 0.15,
+                fw: 0.08 + rnd() * 0.06,
+                drift: (rnd() * 2 - 1) * 0.0003, phase: rnd() * Math.PI * 2,
             })),
+            // SOMBRAS DE NUVEM: frações
             cloudShadows: Array.from({ length: 3 }, () => ({
-                x: rnd() * W, y: rnd() * H,
-                vx: 0.3 + rnd() * 0.5,
-                w: W * (0.25 + rnd() * 0.3), h: H * (0.18 + rnd() * 0.2),
+                fx: rnd(), fy: rnd(),
+                vfx: 0.0003 + rnd() * 0.0005,
+                fw: 0.25 + rnd() * 0.30, fh: 0.18 + rnd() * 0.20,
                 phase: rnd() * Math.PI * 2,
             })),
+            // NÉVOA: frações
             mistBands: Array.from({ length: 3 }, (_, i) => ({
-                y: H * (0.5 + i * 0.18),
+                fy: 0.45 + i * 0.18,
                 phase: rnd() * Math.PI * 2,
                 alpha: 0.06 + rnd() * 0.05,
                 speed: 0.2 + rnd() * 0.3,
@@ -1987,19 +1994,22 @@ class Renderer {
         const W = ctx.canvas.width, H = ctx.canvas.height;
         const t = performance.now() / 1000;
         const hs = this.hexSize || 40;
+        // helper: fração → px do canvas ATUAL (nunca fica preso no canto)
+        const FX = (f) => f * W, FY = (f) => f * H;
 
         // --- SOMBRAS DE NUVEM (dia) ---
         if (phase === 'day') {
             A.cloudShadows.forEach(s => {
-                s.x += s.vx;
-                if (s.x > W + s.w) s.x = -s.w;
+                s.fx += s.vfx;
+                if (s.fx > 1 + s.fw) s.fx = -s.fw;
                 const pulse = Math.sin(t * 0.4 + s.phase) * 0.02 + 0.05;
-                const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.w);
+                const cx = FX(s.fx), cy = FY(s.fy), rw = FX(s.fw), rh = FY(s.fh);
+                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rw);
                 grad.addColorStop(0, `rgba(0, 0, 25, ${pulse})`);
                 grad.addColorStop(0.6, `rgba(0, 0, 25, ${pulse * 0.4})`);
                 grad.addColorStop(1, 'rgba(0, 0, 25, 0)');
                 ctx.fillStyle = grad;
-                ctx.fillRect(s.x - s.w, s.y - s.h, s.w * 2, s.h * 2);
+                ctx.fillRect(cx - rw, cy - rh, rw * 2, rh * 2);
             });
         }
 
@@ -2008,12 +2018,13 @@ class Renderer {
             const mistCol = phase === 'dawn' ? '255, 220, 180' : '140, 150, 220';
             A.mistBands.forEach(m => {
                 const yOff = Math.sin(t * m.speed + m.phase) * hs * 0.4;
-                const grad = ctx.createLinearGradient(0, m.y + yOff - hs, 0, m.y + yOff + hs);
+                const y = FY(m.fy) + yOff;
+                const grad = ctx.createLinearGradient(0, y - hs, 0, y + hs);
                 grad.addColorStop(0, `rgba(${mistCol}, 0)`);
                 grad.addColorStop(0.5, `rgba(${mistCol}, ${m.alpha})`);
                 grad.addColorStop(1, `rgba(${mistCol}, 0)`);
                 ctx.fillStyle = grad;
-                ctx.fillRect(0, m.y + yOff - hs, W, hs * 2);
+                ctx.fillRect(0, y - hs, W, hs * 2);
             });
         }
 
@@ -2023,13 +2034,14 @@ class Renderer {
             ctx.globalCompositeOperation = 'lighter';
             const rayCol = phase === 'dawn' ? '255, 200, 140' : '255, 250, 200';
             A.rays.forEach(r => {
-                r.x += r.drift;
-                if (r.x > W + r.width) r.x = -r.width;
-                if (r.x < -r.width) r.x = W + r.width;
+                r.fx += r.drift;
+                if (r.fx > 1 + r.fw) r.fx = -r.fw;
+                if (r.fx < -r.fw) r.fx = 1 + r.fw;
                 const breathe = Math.sin(t * 0.5 + r.phase) * 0.4 + 0.6;
                 const alpha = 0.14 * breathe;
+                const rw = FX(r.fw);
                 ctx.save();
-                ctx.translate(r.x, 0);
+                ctx.translate(FX(r.fx), 0);
                 ctx.rotate(0.3);
                 const grad = ctx.createLinearGradient(0, 0, 0, H * 1.2);
                 grad.addColorStop(0, `rgba(${rayCol}, ${alpha})`);
@@ -2037,10 +2049,10 @@ class Renderer {
                 grad.addColorStop(1, `rgba(${rayCol}, 0)`);
                 ctx.fillStyle = grad;
                 ctx.beginPath();
-                ctx.moveTo(-r.width * 0.2, 0);
-                ctx.lineTo(-r.width * 0.6, H * 1.2);
-                ctx.lineTo(r.width * 0.6, H * 1.2);
-                ctx.lineTo(r.width * 0.2, 0);
+                ctx.moveTo(-rw * 0.2, 0);
+                ctx.lineTo(-rw * 0.6, H * 1.2);
+                ctx.lineTo(rw * 0.6, H * 1.2);
+                ctx.lineTo(rw * 0.2, 0);
                 ctx.closePath();
                 ctx.fill();
                 ctx.restore();
@@ -2051,28 +2063,28 @@ class Renderer {
         // --- PÁSSAROS com sombra no chão ---
         if (phase !== 'night' && phase !== 'deepnight') {
             A.birds.forEach(b => {
-                b.x += b.vx;
-                if (b.x > W + 60) b.x = -60;
-                if (b.x < -60) b.x = W + 60;
+                b.fx += b.vx;
+                if (b.fx > 1.05) b.fx = -0.05;
+                if (b.fx < -0.05) b.fx = 1.05;
                 b.wingPhase += 0.12;
-                const wing = Math.sin(b.wingPhase) * b.size * 0.6;
+                const size = b.fsize * hs;
+                const x = FX(b.fx), y = FY(b.fy);
+                const wing = Math.sin(b.wingPhase) * size * 0.6;
                 const birdCol = phase === 'sunset' ? 'rgba(30, 15, 25, 0.5)' : 'rgba(25, 25, 40, 0.4)';
-                // sombra projetada
-                const shadowY = b.y + H * 0.4;
+                const shadowY = y + H * 0.35;
                 ctx.save();
                 ctx.globalAlpha = 0.12;
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
-                ctx.ellipse(b.x, shadowY, b.size * 0.7, b.size * 0.18, 0, 0, Math.PI * 2);
+                ctx.ellipse(x, shadowY, size * 0.7, size * 0.18, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
-                // corpo
                 ctx.strokeStyle = birdCol;
                 ctx.lineWidth = 2.5;
                 ctx.lineCap = 'round';
                 ctx.beginPath();
-                ctx.moveTo(b.x - b.size, b.y - wing);
-                ctx.quadraticCurveTo(b.x, b.y + wing * 0.3, b.x + b.size, b.y - wing);
+                ctx.moveTo(x - size, y - wing);
+                ctx.quadraticCurveTo(x, y + wing * 0.3, x + size, y - wing);
                 ctx.stroke();
             });
         }
@@ -2082,19 +2094,21 @@ class Renderer {
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
             A.embers.forEach(e => {
-                e.y += e.vy;
+                e.fy += e.vfy;
                 e.sway += 0.04;
-                if (e.y < H * 0.25) { e.y = H * 0.9; e.x = Math.random() * W; }
-                const x = e.x + Math.sin(e.sway) * hs * 0.5;
+                if (e.fy < 0.20) { e.fy = 0.90; e.fx = Math.random(); }
+                const r = e.fr * hs;
+                const x = FX(e.fx) + Math.sin(e.sway) * hs * 0.5;
+                const y = FY(e.fy);
                 const flicker = 0.4 + Math.sin(t * 3 + e.sway) * 0.3;
-                const gl = ctx.createRadialGradient(x, e.y, 0, x, e.y, e.r * 6);
+                const gl = ctx.createRadialGradient(x, y, 0, x, y, r * 6);
                 gl.addColorStop(0, `rgba(255, 120, 30, ${flicker * 0.35})`);
                 gl.addColorStop(1, 'rgba(255, 120, 30, 0)');
                 ctx.fillStyle = gl;
-                ctx.fillRect(x - e.r * 6, e.y - e.r * 6, e.r * 12, e.r * 12);
+                ctx.fillRect(x - r * 6, y - r * 6, r * 12, r * 12);
                 ctx.fillStyle = `rgba(255, ${140 + Math.sin(t * 2 + e.sway) * 50}, 40, ${flicker})`;
                 ctx.beginPath();
-                ctx.arc(x, e.y, e.r * (1 + Math.sin(t * 4 + e.sway) * 0.3), 0, Math.PI * 2);
+                ctx.arc(x, y, r * (1 + Math.sin(t * 4 + e.sway) * 0.3), 0, Math.PI * 2);
                 ctx.fill();
             });
             ctx.restore();
@@ -2105,12 +2119,11 @@ class Renderer {
             if (self.game && self.game.map) {
                 self.game.map.forEach(hex => {
                     if (hex.terrain && hex.terrain.id === 'VILLAGE' && hex.owner === 1) {
-                        // a vila em si precisa estar na área visível do jogador
                         const vkey = `${hex.q},${hex.r}`;
                         const visible = !self.game.visibleHexes || self.game.visibleHexes.size === 0 || self.game.visibleHexes.has(vkey);
                         if (!visible) return;
                         const p = self.getPos(hex.q, hex.r);
-                        const lr = (self.hexSize || 40) * 3;
+                        const lr = hs * 3;
                         const flicker = 0.5 + Math.sin(t * 2 + hex.q * 3 + hex.r * 2) * 0.15;
                         const gl = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, lr);
                         gl.addColorStop(0, `rgba(255, 200, 80, ${0.25 * flicker})`);
@@ -2128,32 +2141,36 @@ class Renderer {
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
             A.fireflies.forEach(f => {
-                const x = f.ox + Math.sin(t * f.speed + f.phase) * f.amp * 2 + Math.sin(t * 0.15 + f.phase) * hs;
-                const y = f.oy + Math.cos(t * f.speed * 0.6 + f.phase) * f.amp;
+                const r = f.fr * hs;
+                const x = FX(f.fx) + Math.sin(t * f.speed + f.phase) * f.famp * W;
+                const y = FY(f.fy) + Math.cos(t * f.speed * 0.6 + f.phase) * f.famp * H * 0.5;
                 const pulse = 0.25 + Math.abs(Math.sin(t * 1.2 + f.phase * 3)) * 0.65;
-                const gl = ctx.createRadialGradient(x, y, 0, x, y, f.r * 6);
+                const gl = ctx.createRadialGradient(x, y, 0, x, y, r * 6);
                 gl.addColorStop(0, `rgba(232, 200, 74, ${pulse * 0.4})`);
                 gl.addColorStop(0.4, `rgba(232, 200, 74, ${pulse * 0.15})`);
                 gl.addColorStop(1, 'rgba(232, 200, 74, 0)');
                 ctx.fillStyle = gl;
-                ctx.fillRect(x - f.r * 6, y - f.r * 6, f.r * 12, f.r * 12);
+                ctx.fillRect(x - r * 6, y - r * 6, r * 12, r * 12);
                 ctx.fillStyle = `rgba(255, 240, 140, ${pulse})`;
-                ctx.beginPath(); ctx.arc(x, y, f.r * (0.8 + Math.sin(t * 3 + f.phase) * 0.3), 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x, y, r * (0.8 + Math.sin(t * 3 + f.phase) * 0.3), 0, Math.PI * 2); ctx.fill();
             });
             ctx.restore();
 
             const wispCol = phase === 'deepnight' ? '160, 175, 235' : '130, 145, 210';
             A.windWisps.forEach(w => {
-                w.x += w.vx;
-                if (w.x > W + w.len) w.x = -w.len;
+                w.fx += w.vfx;
+                if (w.fx > 1 + w.flen) w.fx = -w.flen;
+                const x0 = FX(w.fx), y0 = FY(w.fy);
+                const len = FX(w.flen);
+                const curve = w.fcurve * hs * 2;
                 ctx.strokeStyle = `rgba(${wispCol}, ${w.alpha})`;
                 ctx.lineWidth = w.w;
                 ctx.lineCap = 'round';
                 ctx.beginPath();
-                const y0 = w.y + Math.sin(t * 0.4 + w.x * 0.005) * w.curve;
-                ctx.moveTo(w.x, y0);
-                ctx.quadraticCurveTo(w.x + w.len * 0.4, y0 + w.curve, w.x + w.len * 0.7, y0 + w.curve * 0.3);
-                ctx.quadraticCurveTo(w.x + w.len, y0 + w.curve * 0.5, w.x + w.len, y0);
+                const yy = y0 + Math.sin(t * 0.4 + w.fx * 5) * curve * 0.3;
+                ctx.moveTo(x0, yy);
+                ctx.quadraticCurveTo(x0 + len * 0.4, yy + curve, x0 + len * 0.7, yy + curve * 0.3);
+                ctx.quadraticCurveTo(x0 + len, yy + curve * 0.5, x0 + len, yy);
                 ctx.stroke();
             });
         }
