@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v50'; // v50: efeitos vetoriais animados (fogo, fumaça, iscas, armadilhas, itens — zero emoji no mapa)
+const CACHE_NAME = 'hextactics-v51'; // v51: popups sem emoji (só número+cor) + editor de unidades com fallback de sprite
 const ASSETS = [
     './',
     './index.html',

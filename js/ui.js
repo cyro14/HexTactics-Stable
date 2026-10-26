@@ -1088,9 +1088,14 @@ window.UnitEditor = (function () {
             if (f && !u.data.name.toLowerCase().includes(f)) return;
             const btn = document.createElement('button');
             btn.className = 'ue-list-item' + (selected === u.key ? ' ue-active' : '');
+            // se tem sprite, mostra <img> com FALLBACK: se a img falhar,
+            // esconde ela e mostra o emoji (span .ue-fb) em vez de nada
             const icon = u.data.sprite
-                ? '<img src="' + u.data.sprite + '" style="width:28px;height:28px;object-fit:contain;filter:' + (u.data.filter || 'none') + ';" onerror="this.style.display=\'none\'">'
-                : '<span style="font-size:22px;">' + (u.data.e || '?') + '</span>';
+                ? '<span style="width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">'
+                    + '<img src="' + u.data.sprite + '" style="width:28px;height:28px;object-fit:contain;filter:' + (u.data.filter || 'none') + ';" onerror="this.style.display=\'none\';this.parentNode.querySelector(\'.ue-fb\').style.display=\'block\'">'
+                    + '<span class="ue-fb" style="font-size:22px;display:none;">' + (u.data.e || '?') + '</span>'
+                + '</span>'
+                : '<span style="font-size:22px;width:28px;text-align:center;flex-shrink:0;">' + (u.data.e || '?') + '</span>';
             btn.innerHTML = icon + '<span class="ue-list-name">' + u.data.name + '</span><span class="ue-list-type">' + (u.type === 'leader' ? 'Líder' : 'Fera') + '</span>';
             btn.onclick = () => { selected = u.key; buildList(); buildForm(u); };
             listEl.appendChild(btn);
@@ -1122,7 +1127,12 @@ window.UnitEditor = (function () {
 
         form.innerHTML =
             '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
-            (d.sprite ? '<img src="' + d.sprite + '" style="width:56px;height:56px;object-fit:contain;filter:' + (d.filter || 'none') + ';border:1px solid rgba(201,162,39,.4);border-radius:6px;padding:4px;">' : '<span style="font-size:42px;">' + (d.e || '?') + '</span>') +
+            (d.sprite
+                ? '<span style="width:56px;height:56px;display:inline-flex;align-items:center;justify-content:center;">'
+                    + '<img src="' + d.sprite + '" style="width:56px;height:56px;object-fit:contain;filter:' + (d.filter || 'none') + ';border:1px solid rgba(201,162,39,.4);border-radius:6px;padding:4px;" onerror="this.style.display=\'none\';this.parentNode.querySelector(\'.ue-fb\').style.display=\'block\'">'
+                    + '<span class="ue-fb" style="font-size:42px;display:none;">' + (d.e || '?') + '</span>'
+                + '</span>'
+                : '<span style="font-size:42px;">' + (d.e || '?') + '</span>') +
             '<div><div style="font-family:Cinzel,serif;font-size:16px;color:var(--gold-light);">' + d.name + '</div>' +
             '<div style="font-size:10px;color:' + (isModified ? '#e74c3c' : '#a89c7e') + ';">' + (isModified ? 'MODIFICADO' : 'Original') + ' · ' + (u.type === 'leader' ? 'Líder' : 'Fera (' + u.cat + ')') + '</div></div></div>' +
             '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">' +
