@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v64'; // v64: novos itens (cálices, relíquias, espelhos, etc) + hourglass no botão de turno
+const CACHE_NAME = 'hextactics-v65'; // v65: fix visão noturna (fog usa maxMp) + shop centralizado + scroll fallback
 const ASSETS = [
     './',
     './index.html',

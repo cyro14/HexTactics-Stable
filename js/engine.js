@@ -1812,11 +1812,11 @@ class Game {
             return;
         }
         const vis = new Set();
-        // 1. visão das unidades do jogador: max(1, MAXMP - 2)
-        // IMPORTANTE: usar maxMp, NÃO mp — mp é consumido ao andar, e
-        // a visão não pode encolher por você ter se movido
+        // 1. visão das unidades do jogador: SEM MÍNIMO de 2 hexes
+        // (maxMp || mp || 5) garante fallback decente mesmo se ambos forem 0
         this.units.filter(u => u.faction === 1 && u.hp > 0).forEach(u => {
-            const radius = Math.max(1, (u.maxMp || u.mp || 0) - 2);
+            const effectiveMp = u.maxMp || u.mp || 5;
+            const radius = Math.max(2, effectiveMp - 2);
             for (let q = u.q - radius; q <= u.q + radius; q++) {
                 for (let r = u.r - radius; r <= u.r + radius; r++) {
                     // distância axial: max(|dq|, |dr|, |dq+dr|) — O(1)
@@ -3383,11 +3383,13 @@ class Renderer {
             fctx.fillRect(0, 0, fW, fH);
             // CORTA a luz: círculos com gradiente radial (fundo suave)
             fctx.globalCompositeOperation = 'destination-out';
-            const lightRadius = (r) => this.hexSize * r * 1.9;
-            // 1. luz das unidades do jogador
+            const lightRadius = (r) => this.hexSize * r * 2.2;
+            // 1. luz das unidades do jogador — usa maxMp (NÃO mp, que
+            // é consumido ao andar; a luz não pode encolher por mover)
             this.game.units.filter(u => u.faction === 1 && u.hp > 0).forEach(u => {
                 const p = this.getPos(u.vq || u.q, u.vr || u.r);
-                const r = lightRadius(Math.max(1, (u.mp || 0) - 2));
+                const effectiveMp = u.maxMp || u.mp || 5;
+                const r = lightRadius(Math.max(2, effectiveMp - 2));
                 const grad = fctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
                 grad.addColorStop(0, 'rgba(0,0,0,1)');       // centro: totalmente iluminado
                 grad.addColorStop(0.55, 'rgba(0,0,0,0.85)'); // meio: quase claro

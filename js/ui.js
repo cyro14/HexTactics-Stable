@@ -1419,7 +1419,7 @@ window.SpellEditor = (function () {
 })();
 
 // ==========================================
-// helper: HTML do ícone de um item (usa sprite PNG, fallback para icon)
+// helper: HTML do ícone de um item (usa sprite PNG, fallback para scroll)
 function itemIconHtml(itemId, size) {
     const def = typeof ITEMS !== 'undefined' ? ITEMS[itemId] : null;
     if (!def) return `<span style="font-size:${size || 20}px;">?</span>`;
@@ -1428,8 +1428,8 @@ function itemIconHtml(itemId, size) {
         return `<img src="${def.sprite}" alt="${def.name}" style="width:${s}px;height:${s}px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));">`;
     }
     if (def.icon) return `<span style="font-size:${s}px;">${def.icon}</span>`;
-    // fallback: baú genérico em SVG
-    return `<svg viewBox="0 0 24 24" style="width:${s}px;height:${s}px;stroke:#c9a227;fill:none;stroke-width:1.5;"><rect x="5" y="8" width="14" height="10" rx="1"/><path d="M5 8l2-3h10l2 3"/><path d="M12 8v10"/></svg>`;
+    // fallback: usa o scroll.png (ícone antigo do pergaminho)
+    return `<img src="img/sprites/itens/scroll.png" alt="${def.name}" style="width:${s}px;height:${s}px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));">`;
 }
 
 // 3. UNIDADES E INTERFACE DO JOGO
@@ -2324,9 +2324,9 @@ function renderShop() {
     shopItems.forEach((item, index) => {
         const card = document.createElement('div'); card.className = `shop-card`; card.style.borderColor = item.color; let tB = item.type === 'artifact' ? 'Artefato' : 'Consumível';
         const shopIconHtml = item.sprite
-            ? `<img class="beast-sprite-img" src="${item.sprite}" alt="${item.name}" style="width:52px;height:52px;object-fit:contain;filter:${item.filter || 'none'};">`
-            : `<span class="shop-icon" style="filter:${item.filter}">${item.icon}</span>`;
-        card.innerHTML = `<div>${shopIconHtml}<div class="shop-title" style="color:${item.color}">${item.name}</div><div style="font-size:9px;color:#888;text-transform:uppercase;margin-bottom:6px;">${tB}</div><div class="shop-desc">${item.desc}</div></div><button id="btn-buy-${index}" style="margin-top:10px;border-color:${item.color}">Comprar (-${item.cost} ouro)</button>`;
+            ? `<div style="display:flex;justify-content:center;align-items:center;width:100%;margin-bottom:6px;"><img src="${item.sprite}" alt="${item.name}" style="width:52px;height:52px;object-fit:contain;filter:${item.filter || 'none'};display:block;"></div>`
+            : `<div style="display:flex;justify-content:center;width:100%;margin-bottom:6px;"><span class="shop-icon" style="filter:${item.filter}">${item.icon}</span></div>`;
+        card.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;text-align:center;">${shopIconHtml}<div class="shop-title" style="color:${item.color}">${item.name}</div><div style="font-size:9px;color:#888;text-transform:uppercase;margin-bottom:6px;">${tB}</div><div class="shop-desc">${item.desc}</div></div><button id="btn-buy-${index}" style="margin-top:10px;border-color:${item.color}">Comprar (-${item.cost} ouro)</button>`;
         grid.appendChild(card);
         $(`btn-buy-${index}`).onclick = async function () { if (game.gold >= item.cost) { let res = await item.action(); if (res !== false) { game.gold -= item.cost; $('shop-gold-display').innerText = game.gold; this.innerText = "Comprado"; this.disabled = true; this.style.borderColor = "var(--success)"; this.style.color = "var(--success)"; } } else { alert("Ouro insuficiente!"); } };
     });
