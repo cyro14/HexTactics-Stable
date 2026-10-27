@@ -487,9 +487,9 @@ window.openContinentMap = function() {
         this.ctx.textAlign = 'center'; this.ctx.textBaseline = 'middle';
         game.map.forEach(h => {
             const pos = this.getPos(h.q, h.r);
-            if (h.terrain.id === 'ELECTRIC_WATER') { this.ctx.font = `${this.hexSize * 0.9}px Arial`; this.ctx.fillText('⚡', pos.x, pos.y + 4); }
-            else if (h.terrain.id === 'BURNING_FOREST') { this.ctx.font = `${this.hexSize * 0.9}px Arial`; this.ctx.fillText('🔥', pos.x, pos.y + 4); }
-            else if (h.terrain.id === 'ASHES') { this.ctx.font = `${this.hexSize * 0.7}px Arial`; this.ctx.fillText('💨', pos.x, pos.y + 4); }
+            if (h.terrain.id === 'ELECTRIC_WATER') { this.ctx.font = `${this.hexSize * 0.9}px Arial`;  }
+            else if (h.terrain.id === 'BURNING_FOREST') { this.ctx.font = `${this.hexSize * 0.9}px Arial`; }
+            else if (h.terrain.id === 'ASHES') { this.ctx.font = `${this.hexSize * 0.7}px Arial`; }
         });
     };
 
@@ -530,11 +530,11 @@ window.openContinentMap = function() {
                     }
 
                     ambusher.isHidden = false; ambusher.filter = 'none';
-                    if (typeof showPopup === 'function') showPopup("Emboscada! ⚠️", ambusher, '#e74c3c');
+                    if (typeof showPopup === 'function') showPopup("Emboscada!", ambusher, '#e74c3c');
 
                     let dmg = Math.floor(this.calcDmg(ambusher, unit) * 1.5);
                     unit.hp -= dmg; unit.status = 'stun'; unit.mp = 0;
-                    if (typeof showPopup === 'function') showPopup(`-${dmg} ⚔️`, unit, '#e74c3c');
+                    if (typeof showPopup === 'function') showPopup(`-${dmg}`, unit, '#e74c3c');
 
                     // --- REGISTRO DE COMBATE NO LOG ---
                     let log = document.getElementById('combat-log');
@@ -572,8 +572,8 @@ window.openContinentMap = function() {
         }
 
         if (destHex && unit.hp > 0) {
-            if (destHex.terrain.id === 'ELECTRIC_WATER' && !isFlying) { unit.status = 'stun'; unit.mp = 0; if (typeof showPopup === 'function') showPopup("Zzz ⚡", unit, '#f1c40f'); }
-            else if (destHex.terrain.id === 'BURNING_FOREST') { unit.hp -= 15; if (typeof showPopup === 'function') showPopup("-15 🔥", unit, '#e74c3c'); if (unit.hp <= 0) this.handleDeath(unit, { name: 'As Chamas', faction: -1 }); }
+            if (destHex.terrain.id === 'ELECTRIC_WATER' && !isFlying) { unit.status = 'stun'; unit.mp = 0; if (typeof showPopup === 'function') showPopup("Zzz", unit, '#f1c40f'); }
+            else if (destHex.terrain.id === 'BURNING_FOREST') { unit.hp -= 15; if (typeof showPopup === 'function') showPopup("-15", unit, '#e74c3c'); if (unit.hp <= 0) this.handleDeath(unit, { name: 'As Chamas', faction: -1 }); }
         }
     };
 
@@ -937,7 +937,7 @@ window.openContinentMap = function() {
                     if (dist > 4) { showMessage("Fora de alcance!", "#e74c3c"); return; }
                     u.hp -= 25; // Dano fixo puro mágico de 25
                     game.fieldItems.scroll--;
-                    if (typeof showPopup === 'function') showPopup("-25 HP 📜", u, '#9b59b6');
+                    if (typeof showPopup === 'function') showPopup("-25 HP", u, '#9b59b6');
                     if (u.hp <= 0) game.handleDeath(u, su);
                     itemUsed = true;
 
@@ -948,7 +948,7 @@ window.openContinentMap = function() {
                     const statusPool = ['stun', 'bind', 'chilled', 'poison'];
                     u.status = statusPool[Math.floor(Math.random() * statusPool.length)];
                     game.fieldItems.sphere--;
-                    if (typeof showPopup === 'function') showPopup("🔮 Caos Elemental!", u, '#00ffff');
+                    if (typeof showPopup === 'function') showPopup("Caos Elemental!", u, '#00ffff');
                     itemUsed = true;
                 } else if (game.activeItem === 'picanha') {
                     if (u) { showMessage("Selecione um chão vazio!", "#e74c3c"); return; }
@@ -971,7 +971,7 @@ window.openContinentMap = function() {
                     if (dist > 2) { showMessage("Fora do alcance!", "#e74c3c"); return; }
                     u.hasAttacked = false; u.mp = u.maxMp;
                     game.fieldItems.adrenalina--;
-                    if (typeof showPopup === 'function') showPopup("Turno Extra! 💉", u, '#f1c40f');
+                    if (typeof showPopup === 'function') showPopup("Turno Extra!", u, '#f1c40f');
                     itemUsed = true;
 
                 } else if (game.activeItem === 'apito') {
@@ -1014,7 +1014,7 @@ window.openContinentMap = function() {
                     if (!u) { showMessage("Selecione uma unidade!", "#e74c3c"); return; }
                     if (dist > 3) { showMessage("Muito longe!", "#e74c3c"); return; }
                     u.status = 'silenced'; game.fieldItems.silence--;
-                    if (typeof showPopup === 'function') showPopup("Silenciado! 🔕", u, '#7f8c8d');
+                    if (typeof showPopup === 'function') showPopup("Silenciado!", u, '#7f8c8d');
                     itemUsed = true;
                 }
 
@@ -1151,7 +1151,7 @@ window.openContinentMap = function() {
                         su.q = cH.q; su.r = cH.r;
                         su.vq = cH.q; su.vr = cH.r;
 
-                        if (typeof showPopup === 'function') showPopup("Emergiu! 💥", su, '#e67e22');
+                        if (typeof showPopup === 'function') showPopup("Emergiu!", su, '#e67e22');
 
                         if (targetU && targetU !== su) {
                             let pushNeighbors = Hex.getNeighbors(cH.q, cH.r);
