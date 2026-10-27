@@ -2301,6 +2301,133 @@ class Renderer {
                 ctx.fill();
             });
 
+            // STATUS EFFECTS: efeitos visuais persistentes sobre unidades
+            // (stun, congelado, preso, envenenado, queimando, silenciado)
+            ctx.globalCompositeOperation = 'source-over';
+            self.game.units.forEach(u => {
+                if (!u.status || u.hp <= 0) return;
+                const p = self.getPos(u.vq || u.q, u.vr || u.r);
+                const uTop = p.y - hs * 0.6;
+
+                if (u.status === 'stun') {
+                    // ESTRELAS AMARELAS girando acima da cabeça
+                    ctx.fillStyle = 'rgba(255, 220, 60, 0.9)';
+                    for (let si = 0; si < 3; si++) {
+                        const sa = t * 2.5 + (si / 3) * Math.PI * 2;
+                        const sx = p.x + Math.cos(sa) * hs * 0.2;
+                        const sy = uTop - hs * 0.15 + Math.sin(sa) * hs * 0.08;
+                        // estrela pequena (círculo com glow)
+                        ctx.beginPath();
+                        ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+
+                if (u.status === 'chilled') {
+                    // CRISTAIS DE GELO: pontos ciano com brilho no corpo
+                    ctx.fillStyle = 'rgba(120, 220, 255, 0.7)';
+                    for (let si = 0; si < 4; si++) {
+                        const seed = (u.q * 31 + u.r * 17 + si * 7);
+                        const sx = p.x + Math.sin(seed * 2.1) * hs * 0.2;
+                        const sy = p.y + Math.cos(seed * 1.3) * hs * 0.15;
+                        ctx.beginPath();
+                        ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    // tint azul sobre a unidade
+                    const iceGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, hs * 0.4);
+                    iceGrad.addColorStop(0, 'rgba(100, 200, 255, 0.15)');
+                    iceGrad.addColorStop(1, 'rgba(50, 150, 220, 0)');
+                    ctx.fillStyle = iceGrad;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, hs * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                if (u.status === 'bind') {
+                    // CORRENTE: círculo escuro com elos ao redor dos pés
+                    ctx.strokeStyle = 'rgba(180, 170, 150, 0.8)';
+                    ctx.lineWidth = 2;
+                    for (let li = 0; li < 5; li++) {
+                        const la = (li / 5) * Math.PI * 2 + t * 0.3;
+                        const lx = p.x + Math.cos(la) * hs * 0.25;
+                        const ly = p.y + hs * 0.25 + Math.sin(la) * hs * 0.1;
+                        ctx.beginPath();
+                        ctx.arc(lx, ly, 4, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+
+                if (u.status === 'poison') {
+                    // BOLHAS VERDES: bolhas subindo do corpo
+                    for (let si = 0; si < 3; si++) {
+                        const seed = (u.q * 23 + u.r * 13 + si * 11);
+                        const pcyc = ((t * 0.8 + seed * 0.07) % 2.5) / 2.5;
+                        const px = p.x + Math.sin(seed * 2.3 + t * 1.5) * hs * 0.15;
+                        const py = p.y - pcyc * hs * 0.4 + hs * 0.1;
+                        const pr = 2 + (1 - pcyc) * 2;
+                        ctx.fillStyle = 'rgba(100, 200, 50, ' + ((1 - pcyc) * 0.6) + ')';
+                        ctx.beginPath();
+                        ctx.arc(px, py, pr, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    // tint verde
+                    const poisonGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, hs * 0.35);
+                    poisonGrad.addColorStop(0, 'rgba(100, 200, 50, 0.12)');
+                    poisonGrad.addColorStop(1, 'rgba(50, 150, 20, 0)');
+                    ctx.fillStyle = poisonGrad;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, hs * 0.35, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                if (u.status === 'burn') {
+                    // CHAMAS no corpo: 2 chamas pequenas laranja
+                    ctx.globalCompositeOperation = 'lighter';
+                    for (let fi = 0; fi < 2; fi++) {
+                        const seed = (u.q * 31 + u.r * 17 + fi * 7);
+                        const phase = t * 2 + seed * 0.13;
+                        const fx = p.x + Math.sin(seed * 2.1) * hs * 0.12;
+                        const fy = p.y + hs * 0.1;
+                        const flick = 0.3 + Math.abs(Math.sin(phase * 3.5)) * 0.7;
+                        const fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, hs * 0.15);
+                        fg.addColorStop(0, 'rgba(255, 150, 40, ' + (flick * 0.35) + ')');
+                        fg.addColorStop(1, 'rgba(200, 50, 0, 0)');
+                        ctx.fillStyle = fg;
+                        ctx.beginPath();
+                        ctx.arc(fx, fy, hs * 0.15, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.globalCompositeOperation = 'source-over';
+                }
+
+                if (u.status === 'silenced') {
+                    // X ROXO sobre a cabeça
+                    ctx.strokeStyle = 'rgba(155, 89, 182, 0.8)';
+                    ctx.lineWidth = 2.5;
+                    const xSize = 5;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x - xSize, uTop - xSize);
+                    ctx.lineTo(p.x + xSize, uTop + xSize);
+                    ctx.moveTo(p.x + xSize, uTop - xSize);
+                    ctx.lineTo(p.x - xSize, uTop + xSize);
+                    ctx.stroke();
+                }
+
+                if (u.status === 'marked') {
+                    // MIRA vermelha: círculo com cruz
+                    ctx.strokeStyle = 'rgba(231, 76, 60, 0.6)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, hs * 0.3, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(p.x - hs * 0.3, p.y); ctx.lineTo(p.x + hs * 0.3, p.y);
+                    ctx.moveTo(p.x, p.y - hs * 0.3); ctx.lineTo(p.x, p.y + hs * 0.3);
+                    ctx.stroke();
+                }
+            });
+
             ctx.restore();
         }
 
