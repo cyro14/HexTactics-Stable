@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v57'; // v57: tiles procedurais para BURNING_FOREST e ASHES (sem emoji AI)
+const CACHE_NAME = 'hextactics-v60'; // v60: fix visão usa maxMp (não encolhe ao andar) + fogo disforme (blob irregular)
 const ASSETS = [
     './',
     './index.html',

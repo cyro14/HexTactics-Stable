@@ -1812,9 +1812,11 @@ class Game {
             return;
         }
         const vis = new Set();
-        // 1. visão das unidades do jogador: max(1, mp - 2)
+        // 1. visão das unidades do jogador: max(1, MAXMP - 2)
+        // IMPORTANTE: usar maxMp, NÃO mp — mp é consumido ao andar, e
+        // a visão não pode encolher por você ter se movido
         this.units.filter(u => u.faction === 1 && u.hp > 0).forEach(u => {
-            const radius = Math.max(1, (u.mp || 0) - 2);
+            const radius = Math.max(1, (u.maxMp || u.mp || 0) - 2);
             for (let q = u.q - radius; q <= u.q + radius; q++) {
                 for (let r = u.r - radius; r <= u.r + radius; r++) {
                     // distância axial: max(|dq|, |dr|, |dq+dr|) — O(1)
@@ -2012,64 +2014,103 @@ class Renderer {
         // helper: fração → px do canvas ATUAL (nunca fica preso no canto)
         const FX = (f) => f * W, FY = (f) => f * H;
 
-        // --- EFEITOS DE TERRENO VETORIAIS ANIMADOS ---
-        // Floresta em Chamas: fogo procedural que sobe e pisca
-        // Cinzas: fumaça que serpenteia e desvanece
+                // --- EFEITOS DE TERRENO: FOGO REALISTA + FUMAÇA ---
         if (self.game && self.game.map) {
             ctx.save();
-            // FOGO: florestas em chamas
             ctx.globalCompositeOperation = 'lighter';
             self.game.map.forEach(hex => {
                 if (hex.terrain && hex.terrain.id === 'BURNING_FOREST') {
                     const p = self.getPos(hex.q, hex.r);
-                    // 3 chamas com seeds diferentes (variação por hex)
-                    for (let fi = 0; fi < 3; fi++) {
-                        const seed = (hex.q * 31 + hex.r * 17 + fi * 7);
-                        const phase = t * 2.5 + seed * 0.13;
-                        const fx = p.x + Math.sin(seed * 2.1) * hs * 0.25;
-                        const rise = (phase % 1.2) / 1.2; // ciclo 0→1
-                        const fy = p.y + hs * 0.1 - rise * hs * 0.8;
-                        const flicker = 0.4 + Math.abs(Math.sin(phase * 3)) * 0.6;
-                        const size = hs * 0.12 * (1 - rise * 0.5) * (0.8 + Math.sin(phase * 5 + fi) * 0.3);
-                        // gradiente: amarelo no centro → laranja → vermelho transparente
-                        const gl = ctx.createRadialGradient(fx, fy, 0, fx, fy, size * 3);
-                        gl.addColorStop(0, `rgba(255, 220, 80, ${0.6 * flicker * (1 - rise)})`);
-                        gl.addColorStop(0.4, `rgba(255, 120, 20, ${0.4 * flicker * (1 - rise)})`);
-                        gl.addColorStop(1, 'rgba(200, 40, 0, 0)');
-                        ctx.fillStyle = gl;
-                        ctx.fillRect(fx - size * 3, fy - size * 3, size * 6, size * 6);
-                        // núcleo da chama (triângulo invertido)
-                        const coreA = (1 - rise) * 0.7 * flicker;
-                        ctx.fillStyle = `rgba(255, 200, 60, ${coreA})`;
+                    // LEITO DE BRASAS: glow quente que cobre a base
+                    const bedPulse = 0.5 + Math.sin(t * 2.3 + hex.q * 3 + hex.r * 2) * 0.2;
+                    const bedGrad = ctx.createRadialGradient(p.x, p.y + hs * 0.15, 0, p.x, p.y + hs * 0.15, hs * 0.8);
+                    bedGrad.addColorStop(0, 'rgba(200, 50, 10, ' + (0.30 * bedPulse) + ')');
+                    bedGrad.addColorStop(0.4, 'rgba(160, 30, 5, ' + (0.15 * bedPulse) + ')');
+                    bedGrad.addColorStop(1, 'rgba(120, 15, 0, 0)');
+                    ctx.fillStyle = bedGrad;
+                    ctx.fillRect(p.x - hs, p.y - hs * 0.3, hs * 2, hs * 1.3);
+                    // CHAMAS DIFUSAS: 6 blobs IRREGULARES sobrepostos
+                    for (let fi = 0; fi < 6; fi++) {
+                        const seed = hex.q * 31 + hex.r * 17 + fi * 7;
+                        const freq = 1.2 + (seed % 4) * 0.3;
+                        const phase = t * freq + seed * 0.11;
+                        const fx = p.x + Math.sin(seed * 2.7 + fi * 1.4) * hs * 0.32;
+                        const fy = p.y + hs * 0.05 + Math.cos(seed * 1.3 + fi * 0.8) * hs * 0.15;
+                        const grow = 0.3 + Math.abs(Math.sin(phase * 1.7)) * 0.7;
+                        const fh = hs * 0.45 * grow;
+                        const fw = hs * 0.16;
+                        const flick = 0.25 + Math.abs(Math.sin(phase * 3.1 + fi * 2.3)) * 0.75;
+                        const sway = Math.sin(phase * 2.2 + fi * 1.7) * hs * 0.03;
+                        const fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, fw * 2.8);
+                        fg.addColorStop(0, 'rgba(255, ' + (90 + Math.floor(flick * 70)) + ', ' + (15 + Math.floor(flick * 25)) + ', ' + (flick * 0.28) + ')');
+                        fg.addColorStop(0.35, 'rgba(220, ' + (60 + Math.floor(flick * 40)) + ', 8, ' + (flick * 0.18) + ')');
+                        fg.addColorStop(1, 'rgba(170, 25, 0, 0)');
+                        ctx.fillStyle = fg;
+                        // BLOB IRREGULAR: 6 pontos com raios diferentes (não elipse)
                         ctx.beginPath();
-                        ctx.moveTo(fx, fy - size * 1.5);
-                        ctx.quadraticCurveTo(fx + size * 0.6, fy, fx, fy + size);
-                        ctx.quadraticCurveTo(fx - size * 0.6, fy, fx, fy - size * 1.5);
+                        const cx = fx + sway, cy = fy - fh * 0.3;
+                        const baseR = fw * 1.8;
+                        for (let vi = 0; vi < 7; vi++) {
+                            const va = (vi / 7) * Math.PI * 2;
+                            // raio varia por vértice — forma disforme
+                            const vr = baseR * (0.6 + Math.sin(phase * 2 + vi * 2.7 + fi) * 0.25
+                                              + Math.sin(phase * 4.3 + vi * 1.3) * 0.15);
+                            const vxp = cx + Math.cos(va) * vr;
+                            const vyp = cy + Math.sin(va) * vr * (1 + fh / (fw * 3)); // alongado verticalmente
+                            if (vi === 0) ctx.moveTo(vxp, vyp); else ctx.lineTo(vxp, vyp);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        // ponta quente (pequena, irregular)
+                        ctx.fillStyle = 'rgba(255, 190, 70, ' + (flick * 0.30) + ')';
+                        ctx.beginPath();
+                        const tipR = fw * 0.4;
+                        const tx = cx + sway, ty2 = cy - fh * 0.3;
+                        for (let vi = 0; vi < 5; vi++) {
+                            const va = (vi / 5) * Math.PI * 2;
+                            const vr = tipR * (0.5 + Math.sin(phase * 5 + vi * 3.1) * 0.3);
+                            const vxp = tx + Math.cos(va) * vr;
+                            const vyp = ty2 - fh * 0.25 + Math.sin(va) * vr * 0.6;
+                            if (vi === 0) ctx.moveTo(vxp, vyp); else ctx.lineTo(vxp, vyp);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                    // BRASAS flutuando
+                    for (let pi = 0; pi < 5; pi++) {
+                        const seed = hex.q * 47 + hex.r * 29 + pi * 13;
+                        const pcyc = ((t * 0.7 + seed * 0.06) % 3) / 3;
+                        const px = p.x + Math.sin(seed * 3.1 + t * 1.2 + pi) * hs * 0.3;
+                        const py = p.y + hs * 0.15 - pcyc * hs * 0.8;
+                        const pa = (1 - pcyc) * 0.55;
+                        const ps = 1.2 + Math.sin(seed + pi) * 0.8;
+                        ctx.fillStyle = 'rgba(255, ' + (70 + Math.floor(Math.sin(t * 5 + seed) * 50 + 50)) + ', 15, ' + pa + ')';
+                        ctx.beginPath();
+                        ctx.arc(px, py, ps, 0, Math.PI * 2);
                         ctx.fill();
                     }
                 }
             });
-            // FUMAÇA: cinzas
+            // FUMAÇA: cinzas — visível, escura, subindo devagar
             ctx.globalCompositeOperation = 'source-over';
             self.game.map.forEach(hex => {
                 if (hex.terrain && hex.terrain.id === 'ASHES') {
                     const p = self.getPos(hex.q, hex.r);
-                    // 2 wisp de fumaça serpenteando
-                    for (let si = 0; si < 2; si++) {
-                        const seed = (hex.q * 23 + hex.r * 13 + si * 11);
-                        const phase = t * 0.8 + seed * 0.07;
-                        const cycle = (phase % 3) / 3; // ciclo 3s 0→1
-                        const smokeX = p.x + Math.sin(phase * 2 + seed) * hs * 0.3;
-                        const smokeY = p.y - cycle * hs * 1.2;
-                        const alpha = 0.12 * (1 - cycle);
-                        const w = hs * 0.15 * (0.5 + cycle * 1.2); // expande
-                        // círculos suaves (fumaça)
-                        const gl = ctx.createRadialGradient(smokeX, smokeY, 0, smokeX, smokeY, w);
-                        gl.addColorStop(0, `rgba(120, 115, 110, ${alpha})`);
-                        gl.addColorStop(1, 'rgba(100, 95, 90, 0)');
+                    for (let si = 0; si < 3; si++) {
+                        const seed = hex.q * 23 + hex.r * 13 + si * 11;
+                        const phase = t * 0.4 + seed * 0.09;
+                        const cycle = (phase % 5) / 5;
+                        const sx = p.x + Math.sin(phase * 1.1 + seed) * hs * 0.28 + (si - 1) * hs * 0.20;
+                        const sy = p.y + hs * 0.05 - cycle * hs * 1.6;
+                        const sa = 0.30 * (1 - cycle);
+                        const sw = hs * 0.15 * (0.5 + cycle * 2.8);
+                        const gl = ctx.createRadialGradient(sx, sy, 0, sx, sy, sw);
+                        gl.addColorStop(0, 'rgba(75, 70, 65, ' + sa + ')');
+                        gl.addColorStop(0.4, 'rgba(55, 52, 48, ' + (sa * 0.55) + ')');
+                        gl.addColorStop(1, 'rgba(35, 32, 30, 0)');
                         ctx.fillStyle = gl;
                         ctx.beginPath();
-                        ctx.arc(smokeX, smokeY, w, 0, Math.PI * 2);
+                        ctx.arc(sx, sy, sw, 0, Math.PI * 2);
                         ctx.fill();
                     }
                 }
