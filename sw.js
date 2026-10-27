@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v66'; // v66: artifact sprites + grimório com spellbook + shop fallback scroll + bestiário onerror
+const CACHE_NAME = 'hextactics-v69'; // v69: ground shadow mais visível + prédios detalhados + FX escalando com dano + shake CSS
 const ASSETS = [
     './',
     './index.html',

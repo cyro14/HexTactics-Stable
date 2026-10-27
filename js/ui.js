@@ -547,13 +547,50 @@ window.battleFX = (function () {
     }
 
     return {
-        // impacto de dano: anel + faíscas + clarão + micro-tremor
-        hit(unit, col) {
+        // impacto de dano: ESCALA com o dano — quase nada se baixo,
+        // explosão + tremor se alto
+        hit(unit, col, dmg) {
             const p = pos(unit); if (!p) return;
-            ring(p.x, p.y, col || '#f5e6a0');
-            sparks(p.x, p.y, col || '#f5e6a0', 12);
-            flash(p.x, p.y, (col || '#fff') === '#fff' ? 'rgba(255,240,200,.85)' : col);
-            shake(180);
+            const d = dmg || 10; // default se não passado
+            const intensity = Math.min(1, d / 35); // 0=a fraco, 1=35+ dano
+
+            // anel: tamanho e brilho escalam
+            const ringSize = 40 + intensity * 80;
+            div(`position:fixed;left:${p.x - ringSize / 2}px;top:${p.y - ringSize / 2}px;width:${ringSize}px;height:${ringSize}px;`
+                + `border:${1.5 + intensity * 2.5}px solid ${col || '#f5e6a0'};border-radius:50%;`
+                + `box-shadow:0 0 ${intensity * 15}px ${col || '#f5e6a0'}, inset 0 0 ${intensity * 8}px ${col || '#f5e6a0'};`
+                + `animation:fxRing ${0.4 + intensity * 0.3}s cubic-bezier(.1,.8,.3,1) forwards;`, 800);
+
+            // faíscas: quantidade escalam (4 no mínimo, 20 no máximo)
+            const sparkCount = Math.floor(4 + intensity * 16);
+            for (let i = 0; i < sparkCount; i++) {
+                const a = (Math.PI * 2 * i) / sparkCount + Math.random() * .5;
+                const dist = 15 + intensity * 50 + Math.random() * 25;
+                const size = 2 + intensity * 4 + Math.random() * 2;
+                div(`position:fixed;left:${p.x}px;top:${p.y}px;width:${size}px;height:${size}px;`
+                    + `background:${col || '#f5e6a0'};box-shadow:0 0 ${3 + intensity * 5}px ${col || '#f5e6a0'};`
+                    + `--fx-dx:${Math.cos(a) * dist}px;--fx-dy:${Math.sin(a) * dist}px;`
+                    + `animation:fxSpark ${0.35 + intensity * 0.25}s cubic-bezier(.1,.8,.3,1) forwards;`, 700);
+            }
+
+            // clarão: só em dano alto (intensity > 0.3)
+            if (intensity > 0.3) {
+                const fs = 60 + intensity * 100;
+                div(`position:fixed;left:${p.x - fs / 2}px;top:${p.y - fs / 2}px;width:${fs}px;height:${fs}px;`
+                    + `background:radial-gradient(circle, ${col || 'rgba(255,240,200,.85)'} 0%, transparent 70%);`
+                    + `animation:fxFlash ${0.2 + intensity * 0.2}s ease-out forwards;`, 500);
+            }
+
+            // tremor: quase nada se fraco, forte se alto
+            const shakeMs = Math.floor(50 + intensity * 300);
+            const shakeMag = Math.max(1, Math.floor(intensity * 8));
+            const cv = document.getElementById('gameCanvas');
+            if (cv) {
+                // aplica tremor via CSS custom property
+                cv.style.setProperty('--shake-mag', shakeMag + 'px');
+                cv.classList.add('shake-active');
+                setTimeout(() => cv.classList.remove('shake-active'), shakeMs);
+            }
         },
         // esquiva: fantasmas em anel + faíscas de vento
         dodge(unit) {

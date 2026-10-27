@@ -843,6 +843,11 @@ class Game {
     async moveUnit(u, tQ, tR) {
         const fr = 12; const sQ = u.q, sR = u.r;
 
+        // PAINEL: mostra automaticamente quem está se movendo
+        // (inclusive inimigos durante o turno deles)
+        game.selectedUnit = u;
+        if (typeof updateUI === 'function') updateUI();
+
         // DIREÇÃO DA ARTE: se moveu para a direita, o sprite aponta para
         // a direita (e vice-versa) — a arte nativa olha para a ESQUERDA,
         // então "_faceRight" vira um flip horizontal no renderer
@@ -1051,6 +1056,10 @@ class Game {
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true;
         this.isAnimating = true; const aCol = a.faction === 1 ? '#4a9edd' : a.faction === 2 ? '#c0392b' : '#27ae60';
 
+        // PAINEL: mostra o DEFENSOR (quem está sendo atacado)
+        game.selectedUnit = d;
+        if (typeof updateUI === 'function') updateUI();
+
         // DIREÇÃO DA ARTE: o atacante vira de frente para o alvo
         if (renderer) {
             const pa = renderer.getPosUnscaled(a.q, a.r);
@@ -1156,7 +1165,7 @@ class Game {
                 if (typeof showPopup === 'function') showPopup("FÚRIA IMORTAL!", d, '#e74c3c');
             }
             if (renderer) { renderer.centerOn(d.vq, d.vr); d.hitTimer = true; renderer.draw(); if (typeof sleep === 'function') await sleep(150); d.hitTimer = false; renderer.draw(); }
-            if (typeof showPopup === 'function') showPopup(`-${dmg}`, d, '#fff'); if (window.battleFX) battleFX.hit(d, '#f5e6a0'); if (typeof addLog === 'function') addLog(`⚔ ${a.name} atingiu ${d.name} (-${dmg})`, aCol);
+            if (typeof showPopup === 'function') showPopup(`-${dmg}`, d, '#fff'); if (window.battleFX) battleFX.hit(d, '#f5e6a0', dmg); if (typeof addLog === 'function') addLog(`⚔ ${a.name} atingiu ${d.name} (-${dmg})`, aCol);
 
             if (a.tags.includes('FIRE') && sysA['FIRE'] >= 3) { let aoe = Math.max(1, Math.floor(dmg * 0.2)); Hex.getNeighbors(d.q, d.r).forEach(n => { let targ = this.getUnitAt(n.q, n.r); if (targ && targ.faction !== a.faction && targ !== d && targ.hp > 0) { targ.hp -= aoe; if (typeof showPopup === 'function') showPopup(`-${aoe}`, targ, '#e67e22'); if (targ.hp <= 0) this.handleDeath(targ, a); } }); }
 
@@ -1259,7 +1268,7 @@ class Game {
             if (d.faction === 1) d.addXp(8); a.hp -= rDmg;
 
             if (renderer) { renderer.centerOn(a.vq, a.vr); a.hitTimer = true; renderer.draw(); if (typeof sleep === 'function') await sleep(150); a.hitTimer = false; renderer.draw(); }
-            if (typeof showPopup === 'function') showPopup(`↩ -${rDmg}`, a, '#f39c12'); if (window.battleFX) battleFX.hit(a, '#f39c12'); if (typeof addLog === 'function') addLog(`↩ ${d.name} revidou (-${rDmg})`, dCol);
+            if (typeof showPopup === 'function') showPopup(`↩ -${rDmg}`, a, '#f39c12'); if (window.battleFX) battleFX.hit(a, '#f39c12', rDmg); if (typeof addLog === 'function') addLog(`↩ ${d.name} revidou (-${rDmg})`, dCol);
             if (d.tags.includes('CARAPACE') && sysD['CARAPACE'] >= 2) { let refl = Math.max(1, Math.floor(rDmg * 0.1)); a.hp -= refl; if (typeof showPopup === 'function') showPopup(`-${refl}`, a, '#aaa'); }
             let lsPerc = d.abilities.includes('lifesteal') ? 0.8 : (d.isLeader && d.name === 'Necromante' ? 0.25 : 0); if (d.tags.includes('UMBRAL') && sysD['UMBRAL'] >= 3) lsPerc += 0.25; if (d.faction === 1 && typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_blood')) lsPerc += 0.15;
             if (lsPerc > 0) { const heal = Math.floor(rDmg * lsPerc); d.hp = Math.min(d.maxHp, d.hp + heal); if (typeof showPopup === 'function') showPopup(`+${heal}`, d, '#2ecc71'); }
@@ -2716,14 +2725,26 @@ class Renderer {
             if (hex.hasPremiumLure || hex.hasLure) {
                 const lureSize = this.hexSize * 0.22;
                 const lx = p.x, ly = p.y + (this.hexSize * 0.2);
-                // sombra
-                ctx.save();
-                ctx.globalAlpha = 0.3;
-                ctx.fillStyle = '#000';
+                // círculo mágico menor (gradiente + anel + faísca central)
+                const lr = lureSize * 1.4;
+                const lg = ctx.createRadialGradient(lx, ly + lureSize * 0.5, 0, lx, ly + lureSize * 0.5, lr);
+                lg.addColorStop(0, 'rgba(12, 10, 20, 0.8)');
+                lg.addColorStop(0.6, 'rgba(8, 6, 15, 0.6)');
+                lg.addColorStop(1, 'rgba(4, 3, 8, 0)');
+                ctx.fillStyle = lg;
                 ctx.beginPath();
-                ctx.ellipse(lx, ly + lureSize * 0.5, lureSize, lureSize * 0.3, 0, 0, Math.PI * 2);
+                ctx.ellipse(lx, ly + lureSize * 0.5, lr, lr * 0.4, 0, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.restore();
+                // anel da cor da isca (premium = vermelho, normal = âmbar)
+                const lureCol = hex.hasPremiumLure ? 'rgba(231, 76, 60, 0.7)' : 'rgba(241, 196, 15, 0.6)';
+                ctx.strokeStyle = lureCol;
+                ctx.lineWidth = 1.5;
+                ctx.shadowColor = lureCol;
+                ctx.shadowBlur = 4;
+                ctx.beginPath();
+                ctx.ellipse(lx, ly + lureSize * 0.5, lr * 0.75, lr * 0.28, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
                 // corpo da carne (forma de bife)
                 ctx.fillStyle = hex.hasPremiumLure ? '#e74c3c' : '#c0392b';
                 ctx.strokeStyle = '#f5e6a0';
@@ -2830,10 +2851,43 @@ class Renderer {
         this.game.items.forEach((iType, key) => {
             let [q, r] = key.split(',').map(Number); const p = this.getPos(q, r);
             ctx.save(); ctx.globalAlpha = 1.0;
-            // sombra
-            ctx.beginPath(); ctx.ellipse(p.x, p.y + this.hexSize * 0.35, this.hexSize * 0.4, this.hexSize * 0.2, 0, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(20,20,30,0.9)'; ctx.fill();
-            ctx.lineWidth = 1.5; ctx.strokeStyle = '#f1c40f'; ctx.stroke();
+            // CÍRCULO MÁGICO no chão: gradiente escuro + anel dourado com
+            // glow + 4 faíscas decorativas (estilo summoning circle)
+            const cr = this.hexSize * 0.42;
+            // base: gradiente radial escuro (borda suave, não oval chapado)
+            const cg = ctx.createRadialGradient(p.x, p.y + this.hexSize * 0.28, 0, p.x, p.y + this.hexSize * 0.28, cr);
+            cg.addColorStop(0, 'rgba(15, 12, 25, 0.85)');
+            cg.addColorStop(0.6, 'rgba(10, 8, 18, 0.7)');
+            cg.addColorStop(1, 'rgba(5, 4, 10, 0)');
+            ctx.fillStyle = cg;
+            ctx.beginPath();
+            ctx.ellipse(p.x, p.y + this.hexSize * 0.28, cr, cr * 0.45, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // anel dourado externo (com glow)
+            ctx.strokeStyle = 'rgba(241, 196, 15, 0.7)';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = 'rgba(241, 196, 15, 0.6)';
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.ellipse(p.x, p.y + this.hexSize * 0.28, cr * 0.85, cr * 0.38, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            // anel interno mais fino (dupla borda)
+            ctx.strokeStyle = 'rgba(241, 196, 15, 0.35)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.ellipse(p.x, p.y + this.hexSize * 0.28, cr * 0.65, cr * 0.28, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            // 4 faíscas nos pontos cardeais do círculo
+            for (let si = 0; si < 4; si++) {
+                const sa = (si / 4) * Math.PI * 2;
+                const sx = p.x + Math.cos(sa) * cr * 0.85;
+                const sy = p.y + this.hexSize * 0.28 + Math.sin(sa) * cr * 0.38;
+                ctx.fillStyle = 'rgba(245, 230, 160, 0.8)';
+                ctx.beginPath();
+                ctx.arc(sx, sy, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
             // SPRITE do item (da pasta img/sprites/itens/)
             const iDef = typeof ITEMS !== 'undefined' ? ITEMS[iType] : null;
             const itemImg = iDef && iDef.sprite ? this._getItemImage(iDef.sprite) : null;
@@ -3104,8 +3158,21 @@ class Renderer {
                     let finalX = p.x - (finalW / 2);
                     let finalY = spriteY - (finalH - drawH);
 
-                    // EFEITO DE DESTAQUE (Sombra suave — a sombra pesada
-                    // antiga escurecia as unidades em volta)
+                    // GROUND SHADOW: elipse suave no chão (gradiente radial)
+                    // — dá profundidade sem escurecer as unidades vizinhas
+                    const gshW = finalW * 0.38;
+                    const gshH = gshW * 0.32;
+                    const gshY = p.y + drawH * 0.38;
+                    const gshGrad = ctx.createRadialGradient(p.x, gshY, 0, p.x, gshY, gshW);
+                    gshGrad.addColorStop(0, 'rgba(0, 0, 0, 0.45)');
+                    gshGrad.addColorStop(0.4, 'rgba(0, 0, 0, 0.25)');
+                    gshGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                    ctx.fillStyle = gshGrad;
+                    ctx.beginPath();
+                    ctx.ellipse(p.x, gshY, gshW, gshH, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // EFEITO DE DESTAQUE (Sombra suave no sprite — drop shadow)
                     ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
                     ctx.shadowBlur = 8;
                     ctx.shadowOffsetY = 3;
@@ -3625,30 +3692,105 @@ class KingdomRenderer {
                     // PRÉDIO: vetor genérico (casa) — o nível diz o resto
                     const bs = this.hexSize * 0.35;
                     const bx = p.x, by = p.y + 2;
-                    // sombra
-                    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    // sombra (gradiente suave)
+                    const bshGrad = ctx.createRadialGradient(bx, by + bs * 0.6, 0, bx, by + bs * 0.6, bs * 0.9);
+                    bshGrad.addColorStop(0, 'rgba(0, 0, 0, 0.3)');
+                    bshGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                    ctx.fillStyle = bshGrad;
                     ctx.beginPath();
                     ctx.ellipse(bx, by + bs * 0.6, bs * 0.9, bs * 0.25, 0, 0, Math.PI * 2);
                     ctx.fill();
-                    // corpo
-                    ctx.fillStyle = '#c9a227';
+                    // PRÉDIO detalhado: muro com pedras, telhado com telhas,
+                    // janelas com brilho, porta com arco, bandeira
+                    // corpo (muro com gradiente)
+                    const bodyGrad = ctx.createLinearGradient(bx, by - bs * 0.3, bx, by + bs * 0.5);
+                    bodyGrad.addColorStop(0, '#d4b04a');
+                    bodyGrad.addColorStop(0.6, '#b8942e');
+                    bodyGrad.addColorStop(1, '#967a20');
+                    ctx.fillStyle = bodyGrad;
                     ctx.strokeStyle = '#f5e6a0';
                     ctx.lineWidth = 1.5;
                     ctx.beginPath();
                     ctx.rect(bx - bs * 0.7, by - bs * 0.3, bs * 1.4, bs * 0.8);
                     ctx.fill(); ctx.stroke();
-                    // telhado
-                    ctx.fillStyle = '#e8c84a';
+                    // pedras do muro (textura)
+                    ctx.strokeStyle = 'rgba(70, 50, 10, 0.3)';
+                    ctx.lineWidth = 0.5;
+                    for (let sy = 0; sy < 3; sy++) {
+                        const rowY = by - bs * 0.2 + sy * bs * 0.22;
+                        ctx.beginPath();
+                        ctx.moveTo(bx - bs * 0.6, rowY);
+                        ctx.lineTo(bx + bs * 0.6, rowY);
+                        ctx.stroke();
+                    }
+                    for (let sx = 0; sx < 4; sx++) {
+                        const colX = bx - bs * 0.5 + sx * bs * 0.33;
+                        ctx.beginPath();
+                        ctx.moveTo(colX, by - bs * 0.2);
+                        ctx.lineTo(colX, by + bs * 0.4);
+                        ctx.stroke();
+                    }
+                    // telhado (com gradiente e telhas)
+                    const roofGrad = ctx.createLinearGradient(bx, by - bs * 0.9, bx, by - bs * 0.3);
+                    roofGrad.addColorStop(0, '#f0d060');
+                    roofGrad.addColorStop(1, '#c9a227');
+                    ctx.fillStyle = roofGrad;
+                    ctx.strokeStyle = '#f5e6a0';
+                    ctx.lineWidth = 1.5;
                     ctx.beginPath();
                     ctx.moveTo(bx - bs * 0.85, by - bs * 0.3);
                     ctx.lineTo(bx, by - bs * 0.9);
                     ctx.lineTo(bx + bs * 0.85, by - bs * 0.3);
                     ctx.closePath();
                     ctx.fill(); ctx.stroke();
-                    // porta
-                    ctx.fillStyle = '#5a4010';
+                    // telhas do telhado
+                    ctx.strokeStyle = 'rgba(100, 70, 10, 0.25)';
+                    ctx.lineWidth = 0.5;
+                    for (let ti = 1; ti < 4; ti++) {
+                        const ty = by - bs * 0.3 - ti * bs * 0.15;
+                        const tw = bs * (0.85 - ti * 0.2);
+                        if (tw > 2) {
+                            ctx.beginPath();
+                            ctx.moveTo(bx - tw, ty);
+                            ctx.lineTo(bx + tw, ty);
+                            ctx.stroke();
+                        }
+                    }
+                    // janelas (com brilho)
+                    ctx.fillStyle = 'rgba(255, 220, 100, 0.6)';
+                    ctx.shadowColor = 'rgba(255, 220, 100, 0.4)';
+                    ctx.shadowBlur = 3;
                     ctx.beginPath();
-                    ctx.rect(bx - bs * 0.15, by + bs * 0.1, bs * 0.3, bs * 0.4);
+                    ctx.rect(bx - bs * 0.5, by - bs * 0.05, bs * 0.18, bs * 0.18);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.rect(bx + bs * 0.32, by - bs * 0.05, bs * 0.18, bs * 0.18);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    // porta (com arco)
+                    ctx.fillStyle = '#5a4010';
+                    ctx.strokeStyle = '#3d2a08';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(bx - bs * 0.15, by + bs * 0.5);
+                    ctx.lineTo(bx - bs * 0.15, by + bs * 0.15);
+                    ctx.arc(bx, by + bs * 0.15, bs * 0.15, Math.PI, 0);
+                    ctx.lineTo(bx + bs * 0.15, by + bs * 0.5);
+                    ctx.closePath();
+                    ctx.fill(); ctx.stroke();
+                    // bandeira no topo
+                    ctx.strokeStyle = '#c4bda8';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(bx, by - bs * 0.9);
+                    ctx.lineTo(bx, by - bs * 1.1);
+                    ctx.stroke();
+                    ctx.fillStyle = '#4a9edd';
+                    ctx.beginPath();
+                    ctx.moveTo(bx, by - bs * 1.1);
+                    ctx.lineTo(bx + bs * 0.3, by - bs * 1.0);
+                    ctx.lineTo(bx, by - bs * 0.9);
+                    ctx.closePath();
                     ctx.fill();
 
                     // Desenha o badge de Nível se for maior que 1
