@@ -206,8 +206,8 @@ foreach ($key in $pages.Keys) {
         $actionOk = ($dom -match 'id="action-bar"')
         $slotOk = ($dom -match 'spell-slot-lol')
         # ícones de atributos: espada (ATK), alvo (ALC), bota (MOV) + preenchidos
-        # harmonizados: coração (HP), ampulheta (Pronto), moeda (recursos)
-        $iconsOk = ($dom -match 'M14\.5 17\.5 3 6') -and ($dom -match 'r="4\.5"') -and ($dom -match 'V21H6z') -and ($dom -match 'g-hp') -and ($dom -match 'M7 3h10v4') -and ($dom -match 'g-coin')
+        # harmonizados: coração (HP), ampulheta PNG (Pronto), moeda (recursos)
+        $iconsOk = ($dom -match 'M14\.5 17\.5 3 6') -and ($dom -match 'r="4\.5"') -and ($dom -match 'V21H6z') -and ($dom -match 'g-hp') -and ($dom -match 'hourglass\.png') -and ($dom -match 'g-coin')
         if ($panelVisible -and $barsOk -and $chipsOk -and $terrainOk -and $actionOk -and $slotOk -and $iconsOk) { Write-Output "[PASS] painel lateral + action bar com detalhes da unidade (icones: espada/alvo/bota)" }
         else { $failures += "batalha sem detalhes (painel=$panelVisible barras=$barsOk chips=$chipsOk terreno=$terrainOk action=$actionOk slot=$slotOk icones=$iconsOk)"; Write-Output "[FAIL] batalha sem detalhes (painel=$panelVisible barras=$barsOk chips=$chipsOk terreno=$terrainOk action=$actionOk slot=$slotOk icones=$iconsOk)" }
     }

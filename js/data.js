@@ -692,6 +692,20 @@ const ITEMS = {
             unit.tags = unit.tags.filter(t => t !== 'VENOM');
         }
     },
+
+    // ==========================================
+    // NOVOS ITENS (spritesheet 2)
+    // ==========================================
+    'CALICE_CARMESIM': { sprite: 'img/sprites/itens/calice_carmesim.png', name: 'Cálice Carmesim', desc: '+20 HP Máx. Cura 10 HP por turno.', equipSlot: 'accessory', type: 'equip', onEquip: (u, lvl) => { u.maxHp += 20 * lvl; u.hp += 20 * lvl; u._chaliceHeal = 10; }, onUnequip: (u, lvl) => { u.maxHp -= 20 * lvl; u.hp = Math.min(u.hp, u.maxHp); u._chaliceHeal = 0; } },
+    'CAJADO_CARMESIM': { sprite: 'img/sprites/itens/cajado_carmesim.png', name: 'Cajado Carmesim', desc: '+8 ATK. +1 Alcance de magia.', equipSlot: 'weapon', type: 'equip', onEquip: (u, lvl) => { u.atk += 8 * lvl; u.range += 1; }, onUnequip: (u, lvl) => { u.atk -= 8 * lvl; u.range -= 1; } },
+    'CALICE_ESMERALDA': { sprite: 'img/sprites/itens/calice_esmeralda.png', name: 'Cálice Esmeralda', desc: '+15 HP Máx. +15% Defesa base.', equipSlot: 'accessory', type: 'equip', onEquip: (u, lvl) => { u.maxHp += 15 * lvl; u.hp += 15 * lvl; }, onUnequip: (u, lvl) => { u.maxHp -= 15 * lvl; u.hp = Math.min(u.hp, u.maxHp); } },
+    'AMULETO_OLHO': { sprite: 'img/sprites/itens/amuleto_olho.png', name: 'Amuleto do Olho', desc: '+2 Alcance de visão. Revela unidades ocultas próximas.', equipSlot: 'accessory', type: 'equip', onEquip: (u, lvl) => { u._eyeAmulet = true; }, onUnequip: (u, lvl) => { u._eyeAmulet = false; } },
+    'ESPELHO': { sprite: 'img/sprites/itens/espelho.png', name: 'Espelho Arcano', desc: 'Reflete 20% do dano recebido de volta ao atacante.', equipSlot: 'accessory', type: 'equip', onEquip: (u, lvl) => { u._mirrorReflect = 0.20; }, onUnequip: (u, lvl) => { u._mirrorReflect = 0; } },
+    'ESPELHO_QUEBRADO': { sprite: 'img/sprites/itens/espelho_quebrado.png', name: 'Espelho Quebrado', desc: 'Amaldiçoado: -10 HP Máx, mas +15 ATK.', equipSlot: 'accessory', type: 'equip', onEquip: (u, lvl) => { u.maxHp -= 10; u.hp = Math.min(u.hp, u.maxHp); u.atk += 15 * lvl; }, onUnequip: (u, lvl) => { u.maxHp += 10; u.atk -= 15 * lvl; } },
+    'RELIQUIA_QUEBRADA': { sprite: 'img/sprites/itens/reliquia_quebrada.png', name: 'Relíquia Quebrada', desc: 'Fragmento de poder antigo. +5 ATK, +5 HP.', equipSlot: 'accessory', type: 'equip', onEquip: (u, lvl) => { u.atk += 5 * lvl; u.maxHp += 5 * lvl; u.hp += 5 * lvl; }, onUnequip: (u, lvl) => { u.atk -= 5 * lvl; u.maxHp -= 5 * lvl; u.hp = Math.min(u.hp, u.maxHp); } },
+    'RELIQUIA_ANTIGA': { sprite: 'img/sprites/itens/reliquia_antiga.png', name: 'Relíquia Antiga', desc: 'Artefato lendário. +10 ATK, +20 HP, +1 Mov.', equipSlot: 'accessory', type: 'equip', onEquip: (u, lvl) => { u.atk += 10 * lvl; u.maxHp += 20 * lvl; u.hp += 20 * lvl; u.maxMp += 1; u.mp += 1; }, onUnequip: (u, lvl) => { u.atk -= 10 * lvl; u.maxHp -= 20 * lvl; u.hp = Math.min(u.hp, u.maxHp); u.maxMp -= 1; u.mp = Math.min(u.mp, u.maxMp); } },
+    'RODA_COBRE': { sprite: 'img/sprites/itens/roda_cobre.png', name: 'Roda de Cobre', desc: 'Mecanismo antigo. +2 Movimento, -5 HP Máx.', equipSlot: 'boots', type: 'equip', onEquip: (u, lvl) => { u.maxMp += 2; u.mp += 2; u.maxHp -= 5; u.hp = Math.min(u.hp, u.maxHp); }, onUnequip: (u, lvl) => { u.maxMp -= 2; u.mp = Math.min(u.mp, u.maxMp); u.maxHp += 5; } },
+    'MOEDA_PRATA': { sprite: 'img/sprites/itens/moeda_prata.png', name: 'Moeda de Prata', desc: 'Moeda valiosa. Vendável por 5 de Ouro.', type: 'instant', f: async (u, g) => { if (u.faction === 1) { g.gold += 5; return true; } return false; } },
 };
 
 const NODE_TYPES = {

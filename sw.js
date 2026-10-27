@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v63'; // v63: sprites dos 32 itens do jogo (spritesheet do usuário recortado)
+const CACHE_NAME = 'hextactics-v64'; // v64: novos itens (cálices, relíquias, espelhos, etc) + hourglass no botão de turno
 const ASSETS = [
     './',
     './index.html',
