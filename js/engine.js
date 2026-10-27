@@ -2163,6 +2163,144 @@ class Renderer {
                     }
                 }
             });
+
+            // LAVA_RIFT: chamas iguais às de floresta em chamas
+            ctx.globalCompositeOperation = 'lighter';
+            self.game.map.forEach(hex => {
+                if (hex.terrain && hex.terrain.id === 'LAVA_RIFT') {
+                    const p = self.getPos(hex.q, hex.r);
+                    for (let fi = 0; fi < 4; fi++) {
+                        const seed = hex.q * 31 + hex.r * 17 + fi * 7;
+                        const freq = 1.2 + (seed % 4) * 0.3;
+                        const phase = t * freq + seed * 0.11;
+                        const fx = p.x + Math.sin(seed * 2.7 + fi * 1.4) * hs * 0.28;
+                        const fy = p.y + hs * 0.05 + Math.cos(seed * 1.3 + fi * 0.8) * hs * 0.15;
+                        const grow = 0.3 + Math.abs(Math.sin(phase * 1.7)) * 0.7;
+                        const fh = hs * 0.4 * grow;
+                        const fw = hs * 0.14;
+                        const flick = 0.25 + Math.abs(Math.sin(phase * 3.1 + fi * 2.3)) * 0.75;
+                        const fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, fw * 2.5);
+                        fg.addColorStop(0, 'rgba(255, ' + (80 + Math.floor(flick * 60)) + ', 10, ' + (flick * 0.3) + ')');
+                        fg.addColorStop(0.35, 'rgba(220, ' + (50 + Math.floor(flick * 30)) + ', 5, ' + (flick * 0.2) + ')');
+                        fg.addColorStop(1, 'rgba(170, 20, 0, 0)');
+                        ctx.fillStyle = fg;
+                        ctx.beginPath();
+                        ctx.ellipse(fx, fy - fh * 0.2, fw * 2.2, fh * 0.8, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    // lava borbulhando (pontos quentes)
+                    for (let pi = 0; pi < 4; pi++) {
+                        const seed = hex.q * 47 + hex.r * 29 + pi * 13;
+                        const pcyc = ((t * 0.8 + seed * 0.06) % 2) / 2;
+                        const px = p.x + Math.sin(seed * 3.1 + t * 1.2) * hs * 0.25;
+                        const py = p.y + hs * 0.1 - pcyc * hs * 0.4;
+                        const pa = (1 - pcyc) * 0.6;
+                        ctx.fillStyle = 'rgba(255, 100, 20, ' + pa + ')';
+                        ctx.beginPath();
+                        ctx.arc(px, py, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            });
+
+            // MANA_RIFT: energia roxa que pulsa e sobe
+            ctx.globalCompositeOperation = 'lighter';
+            self.game.map.forEach(hex => {
+                if (hex.terrain && hex.terrain.id === 'MANA_RIFT') {
+                    const p = self.getPos(hex.q, hex.r);
+                    // aura roxa pulsante no centro
+                    const manaPulse = 0.3 + Math.sin(t * 1.5 + hex.q * 2 + hex.r) * 0.15;
+                    const mr = hs * 0.5;
+                    const mg = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, mr);
+                    mg.addColorStop(0, 'rgba(150, 80, 220, ' + manaPulse + ')');
+                    mg.addColorStop(0.5, 'rgba(120, 50, 180, ' + (manaPulse * 0.5) + ')');
+                    mg.addColorStop(1, 'rgba(80, 20, 140, 0)');
+                    ctx.fillStyle = mg;
+                    ctx.beginPath();
+                    ctx.ellipse(p.x, p.y, mr, mr * 0.6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // partículas roxas subindo
+                    for (let pi = 0; pi < 5; pi++) {
+                        const seed = hex.q * 37 + hex.r * 19 + pi * 7;
+                        const pcyc = ((t * 0.6 + seed * 0.08) % 3) / 3;
+                        const px = p.x + Math.sin(seed * 2.3 + t * 0.8) * hs * 0.3;
+                        const py = p.y - pcyc * hs * 0.9 + hs * 0.1;
+                        const pa = (1 - pcyc) * 0.5;
+                        const ps = 1.5 + Math.sin(seed + pi) * 1;
+                        ctx.fillStyle = 'rgba(180, 100, 255, ' + pa + ')';
+                        ctx.beginPath();
+                        ctx.arc(px, py, ps, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            });
+
+            // ELECTRIC_WATER: faíscas elétricas na água
+            ctx.globalCompositeOperation = 'lighter';
+            self.game.map.forEach(hex => {
+                if (hex.terrain && hex.terrain.id === 'ELECTRIC_WATER') {
+                    const p = self.getPos(hex.q, hex.r);
+                    // arcos elétricos (linhas zigzag aleatórias)
+                    for (let ei = 0; ei < 3; ei++) {
+                        const seed = hex.q * 41 + hex.r * 23 + ei * 11;
+                        const ephase = t * 2 + seed * 0.3;
+                        const eFlick = Math.abs(Math.sin(ephase * 3.7));
+                        if (eFlick > 0.4) { // só quando "liga"
+                            const ex = p.x + Math.sin(seed * 2.1) * hs * 0.25;
+                            const ey = p.y + Math.cos(seed * 1.3) * hs * 0.15;
+                            const eH = hs * 0.3;
+                            ctx.strokeStyle = 'rgba(255, 220, 80, ' + (eFlick * 0.6) + ')';
+                            ctx.lineWidth = 1.5;
+                            ctx.beginPath();
+                            let cx2 = ex, cy2 = ey;
+                            ctx.moveTo(cx2, cy2);
+                            for (let seg = 0; seg < 3; seg++) {
+                                cx2 += (Math.sin(seed + seg * 2.5) * 6 - 3);
+                                cy2 -= eH / 3;
+                                ctx.lineTo(cx2, cy2);
+                            }
+                            ctx.stroke();
+                            // ponto de impacto no chão
+                            ctx.fillStyle = 'rgba(255, 220, 80, ' + (eFlick * 0.4) + ')';
+                            ctx.beginPath();
+                            ctx.arc(ex, ey, 2, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                    // brilho azul elétrico na água
+                    const eg = ctx.createRadialGradient(p.x, p.y + hs * 0.1, 0, p.x, p.y + hs * 0.1, hs * 0.4);
+                    eg.addColorStop(0, 'rgba(100, 180, 255, 0.12)');
+                    eg.addColorStop(1, 'rgba(50, 100, 200, 0)');
+                    ctx.fillStyle = eg;
+                    ctx.beginPath();
+                    ctx.ellipse(p.x, p.y + hs * 0.1, hs * 0.4, hs * 0.2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            // BRILHO nos itens do mapa (facilita encontrar)
+            ctx.globalCompositeOperation = 'lighter';
+            self.game.items.forEach((iType, key) => {
+                let [q, r] = key.split(',').map(Number);
+                const p = self.getPos(q, r);
+                const pulse = 0.25 + Math.sin(t * 2.5 + q * 3 + r * 2) * 0.12;
+                const gr = hs * 0.45;
+                const gl = ctx.createRadialGradient(p.x, p.y + hs * 0.1, 0, p.x, p.y + hs * 0.1, gr);
+                gl.addColorStop(0, 'rgba(255, 220, 80, ' + pulse + ')');
+                gl.addColorStop(0.4, 'rgba(240, 190, 50, ' + (pulse * 0.5) + ')');
+                gl.addColorStop(1, 'rgba(200, 150, 30, 0)');
+                ctx.fillStyle = gl;
+                ctx.beginPath();
+                ctx.ellipse(p.x, p.y + hs * 0.1, gr, gr * 0.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // faísca no topo (tipo "ping" de loot)
+                const sparkY = p.y - hs * 0.35 - Math.sin(t * 3 + q) * 4;
+                ctx.fillStyle = 'rgba(255, 230, 120, ' + (pulse * 0.8) + ')';
+                ctx.beginPath();
+                ctx.arc(p.x, sparkY, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
             ctx.restore();
         }
 
@@ -3158,14 +3296,14 @@ class Renderer {
                     let finalX = p.x - (finalW / 2);
                     let finalY = spriteY - (finalH - drawH);
 
-                    // GROUND SHADOW: elipse suave no chão (gradiente radial)
-                    // — dá profundidade sem escurecer as unidades vizinhas
-                    const gshW = finalW * 0.38;
-                    const gshH = gshW * 0.32;
-                    const gshY = p.y + drawH * 0.38;
+                    // GROUND SHADOW: sombra visível no chão (gradiente)
+                    const gshW = finalW * 0.45;
+                    const gshH = gshW * 0.35;
+                    const gshY = p.y + drawH * 0.35;
                     const gshGrad = ctx.createRadialGradient(p.x, gshY, 0, p.x, gshY, gshW);
-                    gshGrad.addColorStop(0, 'rgba(0, 0, 0, 0.45)');
-                    gshGrad.addColorStop(0.4, 'rgba(0, 0, 0, 0.25)');
+                    gshGrad.addColorStop(0, 'rgba(0, 0, 0, 0.55)');
+                    gshGrad.addColorStop(0.35, 'rgba(0, 0, 0, 0.35)');
+                    gshGrad.addColorStop(0.7, 'rgba(0, 0, 0, 0.15)');
                     gshGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
                     ctx.fillStyle = gshGrad;
                     ctx.beginPath();

@@ -533,7 +533,10 @@ window.openContinentMap = function() {
                     if (typeof showPopup === 'function') showPopup("Emboscada!", ambusher, '#e74c3c');
 
                     let dmg = Math.floor(this.calcDmg(ambusher, unit) * 1.5);
-                    unit.hp -= dmg; unit.status = 'stun'; unit.mp = 0;
+                    unit.hp -= dmg;
+                    // Para o movimento (consome o MP restante deste turno)
+                    // mas NÃO aplica stun — no próximo turno a unidade está livre
+                    unit.mp = 0;
                     if (typeof showPopup === 'function') showPopup(`-${dmg}`, unit, '#e74c3c');
 
                     // --- REGISTRO DE COMBATE NO LOG ---

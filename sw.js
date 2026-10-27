@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v69'; // v69: ground shadow mais visível + prédios detalhados + FX escalando com dano + shake CSS
+const CACHE_NAME = 'hextactics-v70'; // v70: efeitos em LAVA_RIFT (fogo) + MANA_RIFT (roxo) + ELECTRIC_WATER (raios) + brilho nos itens + ground shadow mais forte
 const ASSETS = [
     './',
     './index.html',
