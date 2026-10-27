@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v60'; // v60: fix visão usa maxMp (não encolhe ao andar) + fogo disforme (blob irregular)
+const CACHE_NAME = 'hextactics-v63'; // v63: sprites dos 32 itens do jogo (spritesheet do usuário recortado)
 const ASSETS = [
     './',
     './index.html',

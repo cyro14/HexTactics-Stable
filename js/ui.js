@@ -1419,6 +1419,19 @@ window.SpellEditor = (function () {
 })();
 
 // ==========================================
+// helper: HTML do ícone de um item (usa sprite PNG, fallback para icon)
+function itemIconHtml(itemId, size) {
+    const def = typeof ITEMS !== 'undefined' ? ITEMS[itemId] : null;
+    if (!def) return `<span style="font-size:${size || 20}px;">?</span>`;
+    const s = size || 24;
+    if (def.sprite) {
+        return `<img src="${def.sprite}" alt="${def.name}" style="width:${s}px;height:${s}px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));">`;
+    }
+    if (def.icon) return `<span style="font-size:${s}px;">${def.icon}</span>`;
+    // fallback: baú genérico em SVG
+    return `<svg viewBox="0 0 24 24" style="width:${s}px;height:${s}px;stroke:#c9a227;fill:none;stroke-width:1.5;"><rect x="5" y="8" width="14" height="10" rx="1"/><path d="M5 8l2-3h10l2 3"/><path d="M12 8v10"/></svg>`;
+}
+
 // 3. UNIDADES E INTERFACE DO JOGO
 // ==========================================
 // BIBLIOTECA DE ÍCONES — manas, habilidades e status (SVG linha 24x24).
@@ -1554,14 +1567,25 @@ window.SPELL_SVG = {
     sl_caldeirao: '<path d="M4 10h16c0 5-3 9-8 9s-8-4-8-9Z"/><path d="M8 10c0-3 1.5-5 4-5s4 2 4 5"/><path d="M7 5c1.5-2 3-3 5-3s3.5 1 5 3"/><path d="M10 2.5c.5-1 .8-1.5.5-2.5"/>',
     sl_barreira_gelo: '<path d="M12 2 20 7v10l-8 5-8-5V7Z"/><path d="M12 7v10M8 9.5l8 5M16 9.5l-8 5"/>',
     sl_vendaval: '<path d="M3 7h12a3 3 0 1 0-3-3"/><path d="M3 12h16a3 3 0 1 1-3 3"/><path d="M3 17h9"/><path d="M15 21l3-3 3 3"/>',
-    sl_furia_tempestade: '<path d="M13 2 5 13h5l-2 9 9-12h-6l2-8Z"/><path d="M2 12a10 10 0 0 1 5-8.5"/><path d="M22 12a10 10 0 0 1-4 8"/>'
+    sl_furia_tempestade: '<path d="M13 2 5 13h5l-2 9 9-12h-6l2-8Z"/><path d="M2 12a10 10 0 0 1 5-8.5"/><path d="M22 12a10 10 0 0 1-4 8"/>',
+    // --- Spells especiais de líder (faltavam) ---
+    sl_combustao: '<path d="M12 4c1.8 2.6 4.5 4.5 4.5 8a4.5 4.5 0 0 1-9 0c0-2.3 1.2-3 2-5.2.8 1.5 1.5 2.3 2.4 2.3.2-2.1-.5-3.3.1-5.1Z"/><path d="M8 5l1-2M17 4l-.5-2"/>',
+    sl_curto_circuito: '<path d="M13 2 5 13h5l-2 9 9-12h-6l2-8Z"/><path d="M4 4l3 3M17 17l3 3"/><path d="M20 4l-3 3"/>',
+    sl_escavar: '<path d="M12 3v9"/><path d="M9 6l3-3 3 3"/><path d="M7 12h10"/><path d="M12 12v8"/><path d="M9 20h6"/><path d="M8 16l4 2 4-2"/>',
+    sl_marca_cacador: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/>',
+    sl_miasma_curativo: '<path d="M9 3h6M10 3v5l-5 9a3 3 0 0 0 3 4h8a3 3 0 0 0 3-4l-5-9V3"/><path d="M7.5 15h9"/><path d="M12 10v3M10.5 11.5h3"/>',
+    sl_zero_absoluto: '<path d="M12 2v20M4 6l16 12M20 6L4 18"/><circle cx="12" cy="12" r="3"/><path d="M6 2l1.5 2M18 2l-1.5 2M6 22l1.5-2M18 22l-1.5-2"/>'
 };
 // cor do ícone da magia = cor da mana primária (fallback dourado)
 function spellIconHtml(spell, size) {
     const svg = window.SPELL_SVG ? SPELL_SVG[spell.id] : null;
     const firstTag = Object.keys(spell.cost || {})[0];
     const col = (MANA_TYPES && MANA_TYPES[firstTag]) ? MANA_TYPES[firstTag].col : '#e8c84a';
-    if (!svg) return `<span style="font-size:${size || 20}px;">${spell.icon}</span>`;
+    if (!svg) {
+        // fallback: spark genérico (sem emoji — spell.icon pode ser null)
+        const fallbackSpark = '<path d="M12 3c.5 3.5 1.9 5 6 6.5-4.1 1.5-5.5 3-6 6.5-.5-3.5-1.9-5-6-6.5 4.1-1.5 5.5-3 6-6.5Z"/>';
+        return `<span style="display:inline-flex; color:${col};"><svg class="trait-ico" viewBox="0 0 24 24" style="width:${size || 20}px;height:${size || 20}px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" aria-hidden="true">${fallbackSpark}</svg></span>`;
+    }
     return `<span style="display:inline-flex; color:${col};">${svgIcon(svg, size || 20)}</span>`;
 }
 
@@ -2076,7 +2100,7 @@ function generateShopItems() {
         let randomGear = gearPool.sort(() => Math.random() - 0.5).slice(0, 2);
         randomGear.forEach(gId => {
             let iDef = typeof ITEMS !== 'undefined' ? ITEMS[gId] : null;
-            if (iDef) shopItems.push({ name: iDef.name, icon: iDef.icon, desc: iDef.desc, cost: 12, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'equip', filter: 'none', action: async () => { game.inventory.push({ id: gId, level: 1 }); return true; } });
+            if (iDef) shopItems.push({ name: iDef.name, icon: iDef.icon, sprite: iDef.sprite, desc: iDef.desc, cost: 12, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'equip', filter: 'none', action: async () => { game.inventory.push({ id: gId, level: 1 }); return true; } });
         });
 
         return; // ENCERRA A FUNÇÃO AQUI SE FOR DUELO
@@ -2228,7 +2252,7 @@ function generateShopItems() {
         let iDef = typeof ITEMS !== 'undefined' ? ITEMS[gId] : null;
         if (iDef) {
             shopItems.push({
-                name: iDef.name, icon: iDef.icon, desc: iDef.desc, cost: 12, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'equip', filter: 'none',
+                name: iDef.name, icon: iDef.icon, sprite: iDef.sprite, desc: iDef.desc, cost: 12, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'equip', filter: 'none',
                 action: async () => {
                     game.inventory.push({ id: gId, level: 1 });
                     return true;
@@ -2333,7 +2357,7 @@ function renderManagement(mode = 'prep') {
             el.style.padding = '8px';
 
             let lvlStr = item.isScroll ? `<span style="color:#aaa;">Consumível</span>` : `Lv${item.level}`;
-            el.innerHTML = `<span style="font-size:24px;">${iDef.icon}</span><div style="font-size:9px; color:var(--gold);">${lvlStr}</div>`;
+            el.innerHTML = `${itemIconHtml(gId, 24)}<div style="font-size:9px; color:var(--gold);">${lvlStr}</div>`;
 
             // === O TRECHO DO CLIQUE QUE VOCÊ ESTAVA PROCURANDO EXATAMENTE AQUI ===
             el.onclick = async () => {
@@ -4548,7 +4572,7 @@ window.openHallOfFame = function () {
                 let starIcon = u.starLevel === 2 ? '🥉' : u.starLevel === 3 ? '🥈' : u.starLevel >= 4 ? '🌟' : '';
                 let equips = (u.equipment || []).map(eq => {
                     let itemDef = typeof ITEMS !== 'undefined' ? ITEMS[eq.id] : { icon: '🗡️' };
-                    return `<span class="qol-tooltip" style="position:relative; background:rgba(0,0,0,0.6); padding:2px 4px; border-radius:3px; border:1px solid var(--gold-dark); font-size:10px; margin:0 2px;">${itemDef.icon}<span style="color:var(--gold); font-size:7px; font-weight:bold;">L${eq.level}</span></span>`;
+                    return `<span class="qol-tooltip" style="position:relative; background:rgba(0,0,0,0.6); padding:2px 4px; border-radius:3px; border:1px solid var(--gold-dark); font-size:10px; margin:0 2px; display:inline-flex;align-items:center;gap:2px;">${itemIconHtml(eq.id, 14)}<span style="color:var(--gold); font-size:7px; font-weight:bold;">L${eq.level}</span></span>`;
                 }).join('');
 
                 return `
@@ -5307,7 +5331,7 @@ window.openArcaneForge = function () {
                 btn.style.cssText = `background:rgba(20,20,30,0.8); border:1px solid #444; padding:10px; border-radius:6px; cursor:pointer; display:flex; justify-content:space-between;`;
 
                 let eqLabel = item.isEquipped ? `<span style="color:#e74c3c; font-size:9px;">[E: ${item.ownerUnit.name}]</span>` : '';
-                btn.innerHTML = `<span>${iDef.icon} ${iDef.name} ${eqLabel}</span> <span style="color:var(--gold);">Lv${item.level}</span>`;
+                btn.innerHTML = `<span style="display:inline-flex;align-items:center;gap:4px;">${itemIconHtml(item.id, 20)} ${iDef.name} ${eqLabel}</span> <span style="color:var(--gold);">Lv${item.level}</span>`;
 
                 btn.onclick = () => {
                     let obj = {
@@ -5512,7 +5536,7 @@ window.openCharacterScreen = function (u, isBox, mode) {
             if (!iDef) return;
             invHtml += `
                 <div onclick="equipToChar(${invIdx})" style="border: 1px solid #444; padding: 8px; margin: 4px 0; cursor:pointer; background: rgba(20,20,30,0.8); border-radius: 6px; display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; text-align: left; transition: 0.2s;">
-                    <div style="font-size: 24px; flex-shrink: 0;">${iDef.icon}</div>
+                    <div style="flex-shrink: 0;">${itemIconHtml(invItem.id, 24)}</div>
                     <div style="flex-grow: 1; line-height: 1.2;">
                         <div style="font-size: 12px; color: #ddd; font-weight: bold;">${iDef.name} <span style="font-size: 10px; color: #fff;">Lv${item.level}</span></div>
                         <div style="font-size: 9px; color: #aaa; margin-top: 2px;">${iDef.desc}</div>

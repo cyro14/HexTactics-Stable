@@ -1866,6 +1866,8 @@ class Renderer {
         this.tileset.onload = () => { if (this.game) this.draw(); };
         this.tileset.src = 'img/tiles/tileset12.png'; // 12 colunas × 13 rows
         this.tCols = 12; // variantes de terreno por linha
+        // cache de sprites de itens
+        this._itemImgCache = {};
         window.addEventListener('resize', () => this.initCamera(false));
     }
 
@@ -1891,6 +1893,18 @@ class Renderer {
     }
     getPosUnscaled(q, r) { return { x: this.hexSize * Math.sqrt(3) * (q + r / 2) + this.hexSize, y: this.hexSize * 1.5 * r + this.hexSize }; }
     getPos(q, r) { const u = this.getPosUnscaled(q, r); return { x: u.x + this.offsetX, y: u.y + this.offsetY }; }
+    // carrega e cacheia sprite de item
+    _getItemImage(spritePath) {
+        if (!this._itemImgCache) this._itemImgCache = {};
+        if (!this._itemImgCache[spritePath]) {
+            const img = new Image();
+            img.onload = () => this.draw();
+            img.src = spritePath;
+            this._itemImgCache[spritePath] = img;
+        }
+        return this._itemImgCache[spritePath];
+    }
+
     centerOn(q, r) {
         // A câmera SEMPRE segue o movimento (o bloqueio por visão causava
         // o bug da unidade teleportando em vez de arrastar — durante a
@@ -2091,26 +2105,51 @@ class Renderer {
                     }
                 }
             });
-            // FUMAÇA: cinzas — visível, escura, subindo devagar
+            // NÉVOA: cinzas — névoa rasteira que DESLIZA horizontalmente
             ctx.globalCompositeOperation = 'source-over';
             self.game.map.forEach(hex => {
                 if (hex.terrain && hex.terrain.id === 'ASHES') {
                     const p = self.getPos(hex.q, hex.r);
-                    for (let si = 0; si < 3; si++) {
+                    // 2 faixas de névoa que deslizam pelo hex (não sobem)
+                    for (let si = 0; si < 2; si++) {
                         const seed = hex.q * 23 + hex.r * 13 + si * 11;
-                        const phase = t * 0.4 + seed * 0.09;
-                        const cycle = (phase % 5) / 5;
-                        const sx = p.x + Math.sin(phase * 1.1 + seed) * hs * 0.28 + (si - 1) * hs * 0.20;
-                        const sy = p.y + hs * 0.05 - cycle * hs * 1.6;
-                        const sa = 0.30 * (1 - cycle);
-                        const sw = hs * 0.15 * (0.5 + cycle * 2.8);
-                        const gl = ctx.createRadialGradient(sx, sy, 0, sx, sy, sw);
-                        gl.addColorStop(0, 'rgba(75, 70, 65, ' + sa + ')');
-                        gl.addColorStop(0.4, 'rgba(55, 52, 48, ' + (sa * 0.55) + ')');
-                        gl.addColorStop(1, 'rgba(35, 32, 30, 0)');
+                        const driftPhase = t * 0.3 + seed * 0.05;
+                        // desliza horizontalmente (vai e volta suave)
+                        const driftX = Math.sin(driftPhase) * hs * 0.5;
+                        const baseY = p.y + (si === 0 ? -hs * 0.1 : hs * 0.2);
+                        const fogW = hs * 0.8;
+                        const fogH = hs * 0.22;
+                        const fogA = 0.15 + Math.sin(t * 0.8 + seed) * 0.05;
+                        // névoa: gradiente ELÍPTICO largo e baixo (rasteira)
+                        const gl = ctx.createRadialGradient(
+                            p.x + driftX, baseY, 0,
+                            p.x + driftX, baseY, fogW
+                        );
+                        gl.addColorStop(0, 'rgba(90, 85, 80, ' + fogA + ')');
+                        gl.addColorStop(0.5, 'rgba(70, 66, 62, ' + (fogA * 0.6) + ')');
+                        gl.addColorStop(1, 'rgba(50, 48, 45, 0)');
                         ctx.fillStyle = gl;
+                        ctx.save();
+                        // achata o gradiente pra ficar rasteiro
+                        ctx.translate(p.x + driftX, baseY);
+                        ctx.scale(1, fogH / fogW);
                         ctx.beginPath();
-                        ctx.arc(sx, sy, sw, 0, Math.PI * 2);
+                        ctx.arc(0, 0, fogW, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                    // 3 pontinhos de vapor subindo devagar (sutil)
+                    for (let vi = 0; vi < 3; vi++) {
+                        const seed = hex.q * 37 + hex.r * 19 + vi * 7;
+                        const vphase = t * 0.35 + seed * 0.08;
+                        const vcyc = (vphase % 4) / 4;
+                        const vx = p.x + Math.sin(seed * 2.3 + t * 0.5) * hs * 0.3;
+                        const vy = p.y - vcyc * hs * 0.7 + hs * 0.1;
+                        const va = 0.12 * (1 - vcyc);
+                        const vw = hs * 0.06 * (0.5 + vcyc);
+                        ctx.fillStyle = 'rgba(85, 80, 76, ' + va + ')';
+                        ctx.beginPath();
+                        ctx.arc(vx, vy, vw, 0, Math.PI * 2);
                         ctx.fill();
                     }
                 }
@@ -2795,25 +2834,37 @@ class Renderer {
             ctx.beginPath(); ctx.ellipse(p.x, p.y + this.hexSize * 0.35, this.hexSize * 0.4, this.hexSize * 0.2, 0, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(20,20,30,0.9)'; ctx.fill();
             ctx.lineWidth = 1.5; ctx.strokeStyle = '#f1c40f'; ctx.stroke();
-            // desenho vetorial do item (baú/cofre dourado)
-            const is = this.hexSize * 0.25;
-            // corpo
-            ctx.fillStyle = '#c9a227';
-            ctx.strokeStyle = '#f5e6a0';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.roundRect(p.x - is, p.y + this.hexSize * 0.05, is * 2, is * 1.2, 3);
-            ctx.fill(); ctx.stroke();
-            // tampa
-            ctx.fillStyle = '#e8c84a';
-            ctx.beginPath();
-            ctx.roundRect(p.x - is, p.y - is * 0.3, is * 2, is * 0.5, 3);
-            ctx.fill(); ctx.stroke();
-            // fechadura
-            ctx.fillStyle = '#8a6d12';
-            ctx.beginPath();
-            ctx.arc(p.x, p.y + this.hexSize * 0.12, is * 0.18, 0, Math.PI * 2);
-            ctx.fill();
+            // SPRITE do item (da pasta img/sprites/itens/)
+            const iDef = typeof ITEMS !== 'undefined' ? ITEMS[iType] : null;
+            const itemImg = iDef && iDef.sprite ? this._getItemImage(iDef.sprite) : null;
+            if (itemImg && itemImg.complete && itemImg.naturalWidth > 0) {
+                // desenha o sprite do item centrado
+                const iw = this.hexSize * 0.55;
+                const ih = iw * (itemImg.naturalHeight / itemImg.naturalWidth);
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(itemImg,
+                    p.x - iw / 2, p.y + this.hexSize * 0.05 - ih / 2,
+                    iw, ih);
+                ctx.imageSmoothingEnabled = false;
+            } else {
+                // fallback: baú vetorial dourado
+                const is = this.hexSize * 0.25;
+                ctx.fillStyle = '#c9a227';
+                ctx.strokeStyle = '#f5e6a0';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.roundRect(p.x - is, p.y + this.hexSize * 0.05, is * 2, is * 1.2, 3);
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#e8c84a';
+                ctx.beginPath();
+                ctx.roundRect(p.x - is, p.y - is * 0.3, is * 2, is * 0.5, 3);
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#8a6d12';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y + this.hexSize * 0.12, is * 0.18, 0, Math.PI * 2);
+                ctx.fill();
+            }
             ctx.restore();
         });
 
