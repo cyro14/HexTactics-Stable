@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v65'; // v65: fix visão noturna (fog usa maxMp) + shop centralizado + scroll fallback
+const CACHE_NAME = 'hextactics-v66'; // v66: artifact sprites + grimório com spellbook + shop fallback scroll + bestiário onerror
 const ASSETS = [
     './',
     './index.html',

@@ -518,42 +518,42 @@ const BEASTS = {
 const ALL_BEASTS = [...BEASTS.LAND, ...BEASTS.WATER, ...BEASTS.SNOW, ...BEASTS.BOSSES];
 
 const ARTIFACTS = [
-    { id: 'art_hp', name: 'Cálice Vital', icon: null, desc: '+15 HP Máx (Tropas).', cost: 15, rarity: 'rare', color: 'var(--rarity-rare)' },
-    { id: 'art_atk', name: 'Lâmina de Sangue', icon: null, desc: '+8 Ataque (Tropas).', cost: 20, rarity: 'epic', color: 'var(--rarity-epic)' },
-    { id: 'art_move', name: 'Botas de Hermes', icon: null, desc: '+1 Movimento pro Herói.', cost: 15, rarity: 'rare', color: 'var(--rarity-rare)' },
-    { id: 'art_tame', name: 'Anel do Domador', icon: null, desc: '+20% chance de Domar.', cost: 18, rarity: 'epic', color: 'var(--rarity-epic)' },
-    { id: 'art_gold', name: 'Moeda Real', icon: null, desc: 'Saquear Vilas = ouro em dobro.', cost: 18, rarity: 'epic', color: 'var(--rarity-epic)' },
-    { id: 'art_shield', name: 'Escudo de Aegis', icon: null, desc: 'Reduz dano recebido em 15%.', cost: 18, rarity: 'epic', color: 'var(--rarity-epic)' },
-    { id: 'art_crown', name: 'Coroa da Liderança', icon: null, desc: 'Limite do exército +1.', cost: 22, rarity: 'legendary', color: 'var(--rarity-legendary)' },
-    { id: 'art_hourglass', name: 'Ampulheta', icon: null, desc: 'Herói cura 5 HP/turno.', cost: 20, rarity: 'epic', color: 'var(--rarity-epic)' },
-    { id: 'art_wind', name: 'Capa do Vento', icon: null, desc: '+25% Esquiva (Tropas).', cost: 20, rarity: 'epic', color: 'var(--rarity-epic)' },
-    { id: 'art_armor', name: 'Manopla de Aço', icon: null, desc: '+15% Defesa Base (Tropas).', cost: 18, rarity: 'rare', color: 'var(--rarity-rare)' },
-    { id: 'art_crystal', name: 'Cristal de Mana', icon: null, desc: 'Herói ganha +1 Alcance e +5 ATK.', cost: 25, rarity: 'legendary', color: 'var(--rarity-legendary)' },
-    { id: 'art_blood', name: 'Colar Vampírico', icon: null, desc: 'Tropas ganham +20% Roubo de Vida.', cost: 22, rarity: 'epic', color: 'var(--rarity-epic)' },
-    { id: 'art_umbral_seal', name: 'Selo do Umbral', icon: null, desc: 'Todas as suas feras ganham a tag Umbral.', cost: 22, rarity: 'epic', color: 'var(--rarity-epic)' },
-    { id: 'art_celestial_seal', name: 'Selo Celestial', icon: null, desc: 'Todas as suas feras ganham a tag Celestial.', cost: 22, rarity: 'epic', color: 'var(--rarity-epic)' },
-    { id: 'art_omega', name: 'Coração do Infinito', icon: null, desc: '+20 HP, +5 ATK e +1 Limite de Exército.', cost: 999, rarity: 'legendary', color: '#ff00ff' },
-    { id: 'art_predator_lasso', name: 'O Laço do Predador', icon: null, desc: '+30% chance de Domar. Falha: O alvo revida com DANO DUPLO e fica imune à doma no turno.', cost: 30, rarity: 'epic', color: 'var(--rarity-epic)' },
-    { id: 'art_bandit_badge', name: 'Insígnia do Bandido', icon: null, desc: 'Recebe +2 de Ouro ao abater unidades inimigas.', cost: 20, rarity: 'rare', color: 'var(--rarity-rare)' },
+    { id: 'art_hp', sprite: 'img/sprites/itens/calice_esmeralda.png', name: 'Cálice Vital', icon: null, desc: '+15 HP Máx (Tropas).', cost: 15, rarity: 'rare', color: 'var(--rarity-rare)' },
+    { id: 'art_atk', sprite: 'img/sprites/itens/sword.png', name: 'Lâmina de Sangue', icon: null, desc: '+8 Ataque (Tropas).', cost: 20, rarity: 'epic', color: 'var(--rarity-epic)' },
+    { id: 'art_move', sprite: 'img/sprites/itens/boots.png', name: 'Botas de Hermes', icon: null, desc: '+1 Movimento pro Herói.', cost: 15, rarity: 'rare', color: 'var(--rarity-rare)' },
+    { id: 'art_tame', sprite: 'img/sprites/itens/amuleto_olho.png', name: 'Anel do Domador', icon: null, desc: '+20% chance de Domar.', cost: 18, rarity: 'epic', color: 'var(--rarity-epic)' },
+    { id: 'art_gold', sprite: 'img/sprites/itens/coin.png', name: 'Moeda Real', icon: null, desc: 'Saquear Vilas = ouro em dobro.', cost: 18, rarity: 'epic', color: 'var(--rarity-epic)' },
+    { id: 'art_shield', sprite: 'img/sprites/itens/shield.png', name: 'Escudo de Aegis', icon: null, desc: 'Reduz dano recebido em 15%.', cost: 18, rarity: 'epic', color: 'var(--rarity-epic)' },
+    { id: 'art_crown', sprite: 'img/sprites/itens/crown_lion.png', name: 'Coroa da Liderança', icon: null, desc: 'Limite do exército +1.', cost: 22, rarity: 'legendary', color: 'var(--rarity-legendary)' },
+    { id: 'art_hourglass', sprite: 'img/sprites/hourglass.png', name: 'Ampulheta', icon: null, desc: 'Herói cura 5 HP/turno.', cost: 20, rarity: 'epic', color: 'var(--rarity-epic)' },
+    { id: 'art_wind', sprite: 'img/sprites/itens/wings_icarus.png', name: 'Capa do Vento', icon: null, desc: '+25% Esquiva (Tropas).', cost: 20, rarity: 'epic', color: 'var(--rarity-epic)' },
+    { id: 'art_armor', sprite: 'img/sprites/itens/carapace_shield.png', name: 'Manopla de Aço', icon: null, desc: '+15% Defesa Base (Tropas).', cost: 18, rarity: 'rare', color: 'var(--rarity-rare)' },
+    { id: 'art_crystal', sprite: 'img/sprites/itens/magic.png', name: 'Cristal de Mana', icon: null, desc: 'Herói ganha +1 Alcance e +5 ATK.', cost: 25, rarity: 'legendary', color: 'var(--rarity-legendary)' },
+    { id: 'art_blood', sprite: 'img/sprites/itens/vampiric_fangs.png', name: 'Colar Vampírico', icon: null, desc: 'Tropas ganham +20% Roubo de Vida.', cost: 22, rarity: 'epic', color: 'var(--rarity-epic)' },
+    { id: 'art_umbral_seal', sprite: 'img/sprites/itens/espelho.png', name: 'Selo do Umbral', icon: null, desc: 'Todas as suas feras ganham a tag Umbral.', cost: 22, rarity: 'epic', color: 'var(--rarity-epic)' },
+    { id: 'art_celestial_seal', sprite: 'img/sprites/itens/espelho_quebrado.png', name: 'Selo Celestial', icon: null, desc: 'Todas as suas feras ganham a tag Celestial.', cost: 22, rarity: 'epic', color: 'var(--rarity-epic)' },
+    { id: 'art_omega', sprite: 'img/sprites/itens/reliquia_antiga.png', name: 'Coração do Infinito', icon: null, desc: '+20 HP, +5 ATK e +1 Limite de Exército.', cost: 999, rarity: 'legendary', color: '#ff00ff' },
+    { id: 'art_predator_lasso', sprite: 'img/sprites/itens/hunter_bow.png', name: 'O Laço do Predador', icon: null, desc: '+30% chance de Domar. Falha: O alvo revida com DANO DUPLO e fica imune à doma no turno.', cost: 30, rarity: 'epic', color: 'var(--rarity-epic)' },
+    { id: 'art_bandit_badge', sprite: 'img/sprites/itens/coin.png', name: 'Insígnia do Bandido', icon: null, desc: 'Recebe +2 de Ouro ao abater unidades inimigas.', cost: 20, rarity: 'rare', color: 'var(--rarity-rare)' },
 
     // ==========================================
     // ARTEFATOS ÔMEGA (Drop Exclusivo de Chefes de Região)
     // ==========================================
-    { id: 'art_omega_east', name: 'Coroa do Sol Escaldante', icon: null, desc: 'Relíquia do Rei Leão. Suas feras ganham Bater e Correr e +2 de Movimento. Se o terreno for Areia, atacam duas vezes.', tier: 'omega', region: 'EAST' },
+    { id: 'art_omega_east', sprite: 'img/sprites/itens/reliquia_antiga.png', name: 'Coroa do Sol Escaldante', icon: null, desc: 'Relíquia do Rei Leão. Suas feras ganham Bater e Correr e +2 de Movimento. Se o terreno for Areia, atacam duas vezes.', tier: 'omega', region: 'EAST' },
 
-    { id: 'art_omega_se', name: 'Núcleo Derretido', icon: null, desc: 'Relíquia da Fornalha. Aliados ficam imunes a Fogo. O chão sob os inimigos sempre conta como Floresta em Chamas (dano por turno).', tier: 'omega', region: 'SE' },
+    { id: 'art_omega_se', sprite: 'img/sprites/itens/flame_sword.png', name: 'Núcleo Derretido', icon: null, desc: 'Relíquia da Fornalha. Aliados ficam imunes a Fogo. O chão sob os inimigos sempre conta como Floresta em Chamas (dano por turno).', tier: 'omega', region: 'SE' },
 
-    { id: 'art_omega_south', name: 'Mandíbula Ferrugínea', icon: null, desc: 'Relíquia da Centopeia. Seus ataques ignoram a defesa do terreno inimigo e aplicam Veneno e Choque simultaneamente.', tier: 'omega', region: 'SOUTH' },
+    { id: 'art_omega_south', sprite: 'img/sprites/itens/venom_dagger.png', name: 'Mandíbula Ferrugínea', icon: null, desc: 'Relíquia da Centopeia. Seus ataques ignoram a defesa do terreno inimigo e aplicam Veneno e Choque simultaneamente.', tier: 'omega', region: 'SOUTH' },
 
-    { id: 'art_omega_sw', name: 'Pérola das Profundezas', icon: null, desc: 'Relíquia da Hidra Venenosa. Suas unidades ganham Mergulho. Atacar a partir da água cura o atacante em 50% do dano causado.', tier: 'omega', region: 'SW' },
+    { id: 'art_omega_sw', sprite: 'img/sprites/itens/potion.png', name: 'Pérola das Profundezas', icon: null, desc: 'Relíquia da Hidra Venenosa. Suas unidades ganham Mergulho. Atacar a partir da água cura o atacante em 50% do dano causado.', tier: 'omega', region: 'SW' },
 
-    { id: 'art_omega_west', name: 'Raiz do Mundo Sombrio', icon: null, desc: 'Relíquia da Árvore Umbralina. No final do turno, seu exército cura 25% do HP Máximo (50% se estiverem em Floresta/Pântano).', tier: 'omega', region: 'WEST' },
+    { id: 'art_omega_west', sprite: 'img/sprites/itens/calice_carmesim.png', name: 'Raiz do Mundo Sombrio', icon: null, desc: 'Relíquia da Árvore Umbralina. No final do turno, seu exército cura 25% do HP Máximo (50% se estiverem em Floresta/Pântano).', tier: 'omega', region: 'WEST' },
 
-    { id: 'art_omega_nw', name: 'Placa Tectônica', icon: null, desc: 'Relíquia do Wyvern Ancião. Suas unidades terrestres ganham +40% de Defesa Permanente e imunidade a empurrões.', tier: 'omega', region: 'NW' },
+    { id: 'art_omega_nw', sprite: 'img/sprites/itens/carapace_shield.png', name: 'Placa Tectônica', icon: null, desc: 'Relíquia do Wyvern Ancião. Suas unidades terrestres ganham +40% de Defesa Permanente e imunidade a empurrões.', tier: 'omega', region: 'NW' },
 
-    { id: 'art_omega_north', name: 'Presa do Zero Absoluto', icon: null, desc: 'Relíquia do Wendigo. Qualquer inimigo que causar dano às suas unidades sofrerá Congelamento instantâneo.', tier: 'omega', region: 'NORTH' },
+    { id: 'art_omega_north', sprite: 'img/sprites/itens/frost_armor.png', name: 'Presa do Zero Absoluto', icon: null, desc: 'Relíquia do Wendigo. Qualquer inimigo que causar dano às suas unidades sofrerá Congelamento instantâneo.', tier: 'omega', region: 'NORTH' },
 
-    { id: 'art_omega_ne', name: 'Auréola da Tormenta', icon: null, desc: 'Relíquia do Arcanjo Caído. Todo seu exército ganha Voo. Seus ataques à distância disparam raios em inimigos adjacentes.', tier: 'omega', region: 'NE' }
+    { id: 'art_omega_ne', sprite: 'img/sprites/itens/thunder_amulet.png', name: 'Auréola da Tormenta', icon: null, desc: 'Relíquia do Arcanjo Caído. Todo seu exército ganha Voo. Seus ataques à distância disparam raios em inimigos adjacentes.', tier: 'omega', region: 'NE' }
 ];
 
 // ==========================================
