@@ -268,11 +268,18 @@ function showPopup(txt, target, col) {
 function showMessage(txt, col) {
     const msgEl = $('messages');
     if (msgEl) {
+        // Limpa timeout anterior (evita mensagens piscando)
+        if (msgEl._hideTimeout) clearTimeout(msgEl._hideTimeout);
         msgEl.innerHTML = replaceEffectIcons(txt, col);
-        msgEl.style.color = col;
-        msgEl.style.opacity = '1';
-        msgEl.style.transition = 'opacity 0.5s';
-        setTimeout(() => { msgEl.style.opacity = '0'; }, 2500);
+        msgEl.style.color = col || '#f5e6a0';
+        msgEl.style.borderColor = col ? col + '99' : 'rgba(201, 162, 39, .6)';
+        msgEl.classList.remove('hidden-msg');
+        msgEl.classList.add('visible');
+        // Esconde após 2.5s com fade suave
+        msgEl._hideTimeout = setTimeout(() => {
+            msgEl.classList.remove('visible');
+            msgEl.classList.add('hidden-msg');
+        }, 2500);
     }
 }
 
@@ -2110,7 +2117,7 @@ function generateShopItems() {
         for (let i = 0; i < 6; i++) {
             let rB = pool[Math.floor(Math.random() * pool.length)];
             shopItems.push({
-                name: `Contrato: ${rB.name}`, icon: rB.e, desc: `Adiciona ${rB.name} à Box.`, cost: 10, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none',
+                name: `Contrato: ${rB.name}`, icon: rB.e, sprite: rB.sprite, desc: `Adiciona ${rB.name} ao exército.`, cost: 10, rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none',
                 action: async () => {
                     // Mágica das Passivas no Duelo!
                     let newAbilities = [...(rB.abilities || [])];
@@ -2125,7 +2132,29 @@ function generateShopItems() {
                         }
                     }
 
-                    rosterMemory.push(new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: rB.name, baseName: rB.name, emoji: rB.e, hp: rB.hp, maxHp: rB.hp, mp: rB.mp, maxMp: rB.mp, atk: rB.atk, range: rB.range, level: 1, abilities: newAbilities, isNew: true, filter: newFilter, tags: newTags, fav: rB.fav || [] }));
+                    let newUnit = new Unit({ q: 0, r: 0, faction: 1, isLeader: false, name: rB.name, baseName: rB.name, emoji: rB.e, sprite: rB.sprite, hp: rB.hp, maxHp: rB.hp, mp: rB.mp, maxMp: rB.mp, atk: rB.atk, range: rB.range, level: 1, abilities: newAbilities, isNew: true, filter: newFilter, tags: newTags, fav: rB.fav || [] });
+
+                    // AUTO-DEPLOY: tenta colocar no time; se cheio, pede pra remover
+                    let maxL = typeof window.getMaxBoxLimit === 'function' ? window.getMaxBoxLimit() : 6;
+                    let currentTeam = deployedRoster.filter(u => !u.isLeader).length;
+                    if (currentTeam < maxL) {
+                        deployedRoster.push(newUnit);
+                        if (typeof showZeldaPopup === 'function') await showZeldaPopup(rB.e, 'Tropa Recrutada!', `${rB.name} juntou-se ao seu exército!`);
+                    } else {
+                        // Time cheio: pergunta quem remover
+                        let teamUnits = deployedRoster.filter(u => !u.isLeader);
+                        let toRemove = await window.promptSelectUnit(`Time cheio! Remova alguém para ${rB.name} entrar:`, teamUnits);
+                        if (toRemove) {
+                            deployedRoster = deployedRoster.filter(u => u !== toRemove);
+                            rosterMemory.push(toRemove);
+                            deployedRoster.push(newUnit);
+                            if (typeof showZeldaPopup === 'function') await showZeldaPopup(rB.e, 'Tropa Recrutada!', `${rB.name} entrou! ${toRemove.name} foi para a Box.`);
+                        } else {
+                            // Cancelou — vai pra Box
+                            rosterMemory.push(newUnit);
+                            if (typeof showZeldaPopup === 'function') await showZeldaPopup(rB.e, 'Na Box!', `${rB.name} foi para a Box (time cheio).`);
+                        }
+                    }
                     return true;
                 }
             });
@@ -2158,7 +2187,7 @@ function generateShopItems() {
 
     // A AÇÃO DE COMPRA DA FERA CORRIGIDA! Tudo acontece aqui dentro:
     shopItems.push({
-        name: `Contrato: ${bName}`, icon: rB.e, desc: `Adiciona fera Lv${bLvl} à Box.`, cost: 10 + (bLvl * 2), rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none',
+        name: `Contrato: ${bName}`, icon: rB.e, sprite: rB.sprite, desc: `Adiciona fera Lv${bLvl} ao exército.`, cost: 10 + (bLvl * 2), rarity: 'uncommon', color: 'var(--rarity-uncommon)', type: 'consumable', filter: rB.filter || 'none',
         action: async () => {
             let newAbilities = [...(rB.abilities || [])];
             let newTags = [...(rB.tags || [])];
@@ -2181,10 +2210,10 @@ function generateShopItems() {
                 }
             }
 
-            // Cria a unidade e envia para a Box SOMENTE quando o jogador pagar e clicar!
-            rosterMemory.push(new Unit({
+            // AUTO-DEPLOY: cria e coloca no TIME; se cheio, pergunta pra remover
+            let newUnit = new Unit({
                 q: 0, r: 0, faction: 1, isLeader: false,
-                name: bName, baseName: rB.name, emoji: rB.e,
+                name: bName, baseName: rB.name, emoji: rB.e, sprite: rB.sprite,
                 hp: bHp, maxHp: bHp, mp: rB.mp, maxMp: rB.mp,
                 atk: bAtk, range: rB.range, level: bLvl,
                 abilities: newAbilities,
@@ -2192,7 +2221,25 @@ function generateShopItems() {
                 filter: newFilter,
                 tags: newTags,
                 fav: rB.fav || []
-            }));
+            });
+            let maxL2 = typeof window.getMaxBoxLimit === 'function' ? window.getMaxBoxLimit() : 6;
+            let currentTeam2 = deployedRoster.filter(u => !u.isLeader).length;
+            if (currentTeam2 < maxL2) {
+                deployedRoster.push(newUnit);
+                if (typeof showZeldaPopup === 'function') await showZeldaPopup(rB.e, 'Tropa Recrutada!', `${bName} juntou-se ao seu exército!`);
+            } else {
+                let teamUnits2 = deployedRoster.filter(u => !u.isLeader);
+                let toRemove2 = await window.promptSelectUnit(`Time cheio! Remova alguém para ${bName} entrar:`, teamUnits2);
+                if (toRemove2) {
+                    deployedRoster = deployedRoster.filter(u => u !== toRemove2);
+                    rosterMemory.push(toRemove2);
+                    deployedRoster.push(newUnit);
+                    if (typeof showZeldaPopup === 'function') await showZeldaPopup(rB.e, 'Tropa Recrutada!', `${bName} entrou! ${toRemove2.name} foi para a Box.`);
+                } else {
+                    rosterMemory.push(newUnit);
+                    if (typeof showZeldaPopup === 'function') await showZeldaPopup(rB.e, 'Na Box!', `${bName} foi para a Box (time cheio).`);
+                }
+            }
 
             return true;
         }
@@ -3418,6 +3465,10 @@ function advanceCampaign() {
             const epicUnit = game.units.find(u => u.faction === 0 && (u.isBoss || u.isElite));
             if (epicUnit) window.battleBanners.push(() => playBossIntroCine(epicUnit), 2400);
             window.battleBanners.push(() => showObjectiveBannerText(objectiveText()), 2900);
+            // "Seu Turno" entra DEPOIS do objetivo na sequência da intro
+            window.battleBanners.push(() => {
+                if (typeof showMessage === 'function') showMessage('Seu Turno', 'var(--player-color)');
+            }, 2000);
             await window.battleBanners.drain();
         }
         game._turnBannerShown = true;
@@ -4245,11 +4296,21 @@ function renderBuildingMenu() {
                     if (pool.length === 0) pool = BEASTS.LAND;
                     let b = pool[Math.floor(Math.random() * pool.length)];
                     let maxL = typeof window.getMaxBoxLimit === 'function' ? window.getMaxBoxLimit() : 6;
-                    let newUnit = new Unit({ q: 0, r: 0, faction: 1, name: b.name, baseName: b.name, emoji: b.e, hp: b.hp, maxHp: b.hp, mp: b.mp, maxMp: b.mp, atk: b.atk, range: b.range, level: 1, abilities: [...b.abilities], isNew: true, filter: b.filter, tags: b.tags || [], fav: b.fav || [] });
+                    let newUnit = new Unit({ q: 0, r: 0, faction: 1, name: b.name, baseName: b.name, emoji: b.e, sprite: b.sprite, hp: b.hp, maxHp: b.hp, mp: b.mp, maxMp: b.mp, atk: b.atk, range: b.range, level: 1, abilities: [...b.abilities], isNew: true, filter: b.filter, tags: b.tags || [], fav: b.fav || [] });
 
                     if (deployedRoster.filter(u => !u.isLeader).length >= maxL) {
-                        rosterMemory.push(newUnit);
-                        if (typeof showZeldaPopup === 'function') await showZeldaPopup(b.e, 'Tropa na Box!', `O ${b.name} foi enviado para a sua Box porque o exército está cheio!`);
+                        // Time cheio: pergunta quem remover
+                        let teamUnits = deployedRoster.filter(u => !u.isLeader);
+                        let toRemove = await window.promptSelectUnit(`Time cheio! Remova alguém para ${b.name} entrar:`, teamUnits);
+                        if (toRemove) {
+                            deployedRoster = deployedRoster.filter(u => u !== toRemove);
+                            rosterMemory.push(toRemove);
+                            deployedRoster.push(newUnit);
+                            if (typeof showZeldaPopup === 'function') await showZeldaPopup(b.e, 'Tropa Recrutada!', `${b.name} entrou! ${toRemove.name} foi para a Box.`);
+                        } else {
+                            rosterMemory.push(newUnit);
+                            if (typeof showZeldaPopup === 'function') await showZeldaPopup(b.e, 'Tropa na Box!', `${b.name} foi para a Box (time cheio).`);
+                        }
                     } else {
                         deployedRoster.push(newUnit);
                         if (typeof showZeldaPopup === 'function') await showZeldaPopup(b.e, 'Tropa Recrutada!', `O ${b.name} juntou-se ao seu exército em campo!`);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hextactics-v71'; // v71: emboscada sem stun + efeitos visuais persistentes de status em unidades
+const CACHE_NAME = 'hextactics-v73'; // v73: contratos com sprite da fera + auto-deploy no time com prompt de remoção
 const ASSETS = [
     './',
     './index.html',

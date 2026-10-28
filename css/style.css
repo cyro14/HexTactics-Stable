@@ -605,21 +605,40 @@ button.btn-success {
 }
 
 #messages {
-    position: absolute;
-    top: 30%;
+    position: fixed;
+    top: 18%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
     font-family: Cinzel, serif;
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 900;
     text-align: center;
-    text-shadow: 0 0 20px rgba(0, 0, 0, .9);
+    letter-spacing: 3px;
+    color: #f5e6a0;
+    text-shadow: 0 2px 4px #000;
     pointer-events: none;
     opacity: 0;
-    transition: opacity .4s;
+    transition: opacity .35s ease, transform .35s ease;
     z-index: 400;
-    width: 100%;
-    letter-spacing: 3px;
+    padding: 14px 32px;
+    background: linear-gradient(180deg, rgba(12, 10, 20, .94) 0%, rgba(6, 5, 12, .96) 100%);
+    border: 2px solid rgba(201, 162, 39, .6);
+    border-radius: 4px;
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, .9),
+        0 0 0 4px rgba(138, 109, 18, .25),
+        0 8px 30px rgba(0, 0, 0, .85),
+        inset 0 1px 0 rgba(232, 200, 74, .15);
+    max-width: 90%;
+    white-space: normal;
+}
+#messages.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+#messages.hidden-msg {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-12px);
 }
 
 .dmg-popup {

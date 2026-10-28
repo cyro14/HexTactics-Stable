@@ -1795,9 +1795,7 @@ class Game {
     }
 
     updateTurnUI(txt, col) {
-        // Campo fixo #turn-badge (ao lado da mana): cor da facção, texto
-        // curto e contador — SEM toast central (o texto no meio da tela
-        // foi removido por pedido; indicador oficial é este badge)
+        // Campo fixo #turn-badge (ao lado da mana)
         const badge = document.getElementById('turn-badge');
         const badgeText = document.getElementById('turn-badge-text');
         if (badge) badge.style.setProperty('--turn-col', col);
@@ -1807,6 +1805,11 @@ class Game {
         }
         const bCount = document.getElementById('turn-badge-count');
         if (bCount) bCount.textContent = `T${this.turnCount || 1}`;
+        // NOTIFICAÇÃO de turno: só quando NÃO estiver na intro (a intro
+        // tem sua própria fila: chefe → objetivo → turno)
+        if (this.currentTurn === 1 && !this._battleIntroPlaying && typeof showMessage === 'function') {
+            showMessage('Seu Turno', col);
+        }
     }
 
     // ==========================================
