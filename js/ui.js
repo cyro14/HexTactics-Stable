@@ -76,6 +76,205 @@ function showZeldaPopup(icon, title, desc, showCancel = false) {
     });
 }
 
+// Tela especial de desbloqueio de desafiante (estilo Smash Bros)
+function showChallengerUnlock(challenger) {
+    return new Promise(r => {
+        // Cria overlay dramático
+        const overlay = document.createElement('div');
+        overlay.id = 'challenger-unlock-overlay';
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(ellipse at center, rgba(30,20,40,0.95) 0%, rgba(0,0,0,0.98) 70%);
+            z-index: 16000; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.5s ease-out;
+        `;
+
+        // Busca o sprite do líder
+        const leaderData = typeof LEADERS !== 'undefined' ? LEADERS.find(l => l.id === challenger._challengerLeaderId) : null;
+        const spriteSrc = leaderData?.sprite || challenger.sprite;
+        const emoji = leaderData?.emoji || challenger.emoji;
+        const tags = leaderData?.tags || challenger.tags || [];
+        const fav = leaderData?.fav || challenger.fav || [];
+        const knownSpells = challenger.knownSpells || [];
+
+        overlay.innerHTML = `
+            <div style="
+                max-width: 90vw; max-height: 90vh; text-align: center;
+                animation: unlockReveal 0.8s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+                perspective: 800px;
+            ">
+                <!-- Partículas de fundo -->
+                <canvas id="unlock-particles" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1;"></canvas>
+
+                <!-- Sprite/Retrato grande -->
+                <div style="margin-bottom: 20px; position: relative;">
+                    ${spriteSrc ? `
+                        <img src="${spriteSrc}" alt="${challenger.name}" style="
+                            max-width: 280px; max-height: 280px; filter: drop-shadow(0 0 30px rgba(77,166,255,0.8)) drop-shadow(0 0 60px rgba(77,166,255,0.4));
+                            image-rendering: pixelated; image-rendering: crisp-edges;
+                            animation: spriteFloat 3s ease-in-out infinite;
+                        ">
+                    ` : `
+                        <div style="
+                            width: 200px; height: 200px; margin: 0 auto; border-radius: 50%;
+                            background: radial-gradient(circle, rgba(77,166,255,0.3) 0%, rgba(0,0,0,0.8) 70%);
+                            border: 4px solid #4da6ff; display: flex; align-items: center; justify-content: center;
+                            font-size: 80px; text-shadow: 0 0 20px #4da6ff;
+                            animation: spriteFloat 3s ease-in-out infinite;
+                        ">${emoji}</div>
+                    `}
+                    <!-- Coroa de desafiante animada -->
+                    <div style="
+                        position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
+                        width: 120px; height: 60px; pointer-events: none;
+                    ">
+                        <svg viewBox="0 0 120 60" style="width:100%; height:100%; filter: drop-shadow(0 0 10px #4da6ff);">
+                            <path d="M10 45 L25 10 L40 35 L60 5 L80 35 L95 10 L110 45 Z" fill="rgba(77,166,255,0.9)" stroke="#fff" stroke-width="2"/>
+                            <circle cx="60" cy="5" r="5" fill="#fff" style="animation: crownStar 1s ease-in-out infinite;"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Título -->
+                <h1 style="
+                    font-family: 'Cinzel', serif; font-size: 2.5rem; font-weight: bold;
+                    color: #fff; text-shadow: 0 0 20px #4da6ff, 0 0 40px #4da6ff;
+                    margin: 0 0 8px 0; letter-spacing: 4px; text-transform: uppercase;
+                    animation: titleGlow 2s ease-in-out infinite;
+                ">⚔ NOVO HERÓI RECRUTADO! ⚔</h1>
+
+                <!-- Nome do herói -->
+                <h2 style="
+                    font-family: 'Cinzel', serif; font-size: 2rem; color: #4da6ff;
+                    text-shadow: 0 0 15px #4da6ff; margin: 0 0 16px 0; letter-spacing: 2px;
+                ">${challenger.name}</h2>
+
+                <!-- Tags/Info -->
+                <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
+                    ${tags.map(t => `<span style="
+                        background: rgba(77,166,255,0.2); border: 1px solid #4da6ff;
+                        color: #4da6ff; padding: 6px 14px; border-radius: 20px;
+                        font-family: 'Cinzel', serif; font-size: 0.85rem; letter-spacing: 1px;
+                    ">${t}</span>`).join('')}
+                    ${fav.length > 0 ? fav.map(f => `<span style="
+                        background: rgba(232,200,74,0.2); border: 1px solid #e8c84a;
+                        color: #e8c84a; padding: 6px 14px; border-radius: 20px;
+                        font-family: 'Cinzel', serif; font-size: 0.85rem; letter-spacing: 1px;
+                    ">Fav: ${f}</span>`).join('') : ''}
+                </div>
+
+                <!-- Magias conhecidas -->
+                ${knownSpells.length > 0 ? `
+                <div style="margin-bottom: 24px; padding: 16px; background: rgba(77,166,255,0.1); border: 1px solid rgba(77,166,255,0.3); border-radius: 12px;">
+                    <div style="font-family: 'Cinzel', serif; font-size: 0.9rem; color: #4da6ff; margin-bottom: 8px; letter-spacing: 1px;">MAGIAS INICIAIS</div>
+                    <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                        ${knownSpells.map(spellId => {
+                            const spell = typeof SPELLS !== 'undefined' ? SPELLS.find(s => s.id === spellId) : null;
+                            return spell ? `<span style="
+                                background: rgba(232,200,74,0.15); border: 1px solid rgba(232,200,74,0.4);
+                                color: #e8c84a; padding: 4px 10px; border-radius: 8px;
+                                font-size: 0.8rem; font-family: 'Cinzel', serif;
+                            ">${spell.name}</span>` : '';
+                        }).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Botão continuar -->
+                <button id="btn-unlock-continue" class="btn-success" style="
+                    font-family: 'Cinzel', serif; font-size: 1.1rem; letter-spacing: 2px;
+                    padding: 14px 48px; background: linear-gradient(135deg, #4da6ff, #2d8aff);
+                    border: 2px solid #fff; box-shadow: 0 0 20px rgba(77,166,255,0.5);
+                    transition: all 0.2s;
+                ">CONTINUAR</button>
+
+                <style>
+                    @keyframes unlockReveal {
+                        0% { opacity: 0; transform: scale(0.8) translateY(30px) rotateX(15deg); filter: blur(10px); }
+                        20% { opacity: 1; transform: scale(1.02) translateY(-5px) rotateX(0deg); filter: blur(0); }
+                        100% { opacity: 1; transform: scale(1) translateY(0) rotateX(0deg); filter: blur(0); }
+                    }
+                    @keyframes spriteFloat {
+                        0%, 100% { transform: translateY(0); }
+                        50% { transform: translateY(-8px); }
+                    }
+                    @keyframes titleGlow {
+                        0%, 100% { text-shadow: 0 0 20px #4da6ff, 0 0 40px #4da6ff; }
+                        50% { text-shadow: 0 0 30px #4da6ff, 0 0 60px #4da6ff, 0 0 80px #4da6ff; }
+                    }
+                    @keyframes crownStar {
+                        0%, 100% { opacity: 1; transform: scale(1); }
+                        50% { opacity: 0.6; transform: scale(1.3); }
+                    }
+                    #btn-unlock-continue:hover {
+                        background: linear-gradient(135deg, #2d8aff, #4da6ff) !important;
+                        transform: scale(1.05);
+                        box-shadow: 0 0 30px rgba(77,166,255,0.8) !important;
+                    }
+                </style>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        // Anima entrada
+        requestAnimationFrame(() => {
+            overlay.style.opacity = '1';
+        });
+
+        // Partículas no canvas
+        const particleCanvas = overlay.querySelector('#unlock-particles');
+        if (particleCanvas) {
+            particleCanvas.width = overlay.clientWidth;
+            particleCanvas.height = overlay.clientHeight;
+            const pctx = particleCanvas.getContext('2d');
+            const particles = Array.from({ length: 30 }, () => ({
+                x: Math.random() * particleCanvas.width,
+                y: Math.random() * particleCanvas.height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: -0.3 - Math.random() * 0.5,
+                size: 2 + Math.random() * 3,
+                alpha: 0.3 + Math.random() * 0.5,
+                hue: 200 + Math.random() * 40,
+                life: 1
+            }));
+            let pAnim = null;
+            const drawParticles = () => {
+                pctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= 0.003;
+                    if (p.life <= 0) {
+                        p.x = Math.random() * particleCanvas.width;
+                        p.y = particleCanvas.height + 20;
+                        p.life = 1;
+                    }
+                    pctx.fillStyle = `hsla(${p.hue}, 80%, 70%, ${p.alpha * p.life})`;
+                    pctx.beginPath();
+                    pctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                    pctx.fill();
+                });
+                pAnim = requestAnimationFrame(drawParticles);
+            };
+            drawParticles();
+
+            // Cleanup
+            overlay._particleAnim = pAnim;
+        }
+
+        // Botão fechar
+        overlay.querySelector('#btn-unlock-continue').onclick = () => {
+            overlay.style.opacity = '0';
+            if (overlay._particleAnim) cancelAnimationFrame(overlay._particleAnim);
+            setTimeout(() => {
+                overlay.remove();
+                r(true);
+            }, 500);
+        };
+    });
+}
+
 function autoSave() {
     if (game && !game.gameOver) {
         // CORREÇÃO: Chave única e isolada para cada modo de jogo
@@ -746,14 +945,30 @@ function playBossIntroCine(epicUnit) {
     document.body.appendChild(overlay);
     setTimeout(() => overlay.style.opacity = '1', 30);
 
-    let titleType = epicUnit.isBoss ? "GUARDIÃO DO DOMÍNIO" : "AMEAÇA ELITE";
-    let titleColor = epicUnit.isBoss ? "var(--gold)" : "#e74c3c";
+    let titleType, titleColor, nameColor, glowColor;
+    if (epicUnit.isChallenger) {
+        titleType = "⚔ DESAFIANTE ⚔";
+        titleColor = "#4da6ff";
+        nameColor = "#4da6ff";
+        glowColor = "rgba(77,166,255,0.8)";
+    } else if (epicUnit.isBoss) {
+        titleType = "GUARDIÃO DO DOMÍNIO";
+        titleColor = "var(--gold)";
+        nameColor = "var(--gold)";
+        glowColor = "rgba(232,200,74,0.8)";
+    } else {
+        titleType = "AMEAÇA ELITE";
+        titleColor = "#e74c3c";
+        nameColor = "#e74c3c";
+        glowColor = "rgba(231,76,60,0.8)";
+    }
 
     const cine = document.createElement('div');
     cine.style.cssText = `position:fixed; top:35%; left:0; width:100%; text-align:center; z-index:9999; pointer-events:none; animation: cineFade 2.4s cubic-bezier(0.1, 0.8, 0.2, 1) forwards; perspective: 500px;`;
     cine.innerHTML = `
-        <div style="font-family: 'Cinzel', serif; font-size: 16px; letter-spacing: 10px; color: ${titleColor}; text-shadow: 0 0 10px rgba(0,0,0,0.8); margin-bottom: -15px; opacity:0.8;">${titleType}</div>
-        <div style="font-family: 'Cinzel', serif; font-size: 70px; font-weight: bold; color: #fff; text-shadow: 0px 5px 30px ${titleColor}, 0 0 50px #000; letter-spacing: 3px; text-transform: uppercase;">${epicUnit.name}</div>
+        <div style="font-family: 'Cinzel', serif; font-size: 16px; letter-spacing: 10px; color: ${titleColor}; text-shadow: 0 0 15px ${glowColor}, 0 0 30px ${glowColor}; margin-bottom: -10px; opacity:0.9;">${titleType}</div>
+        <div style="font-family: 'Cinzel', serif; font-size: 70px; font-weight: bold; color: #fff; text-shadow: 0px 5px 30px ${nameColor}, 0 0 50px #000; letter-spacing: 3px; text-transform: uppercase;">${epicUnit.name}</div>
+        ${epicUnit.isChallenger ? `<div style="font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 6px; color: ${titleColor}; text-shadow: 0 0 10px ${glowColor}; margin-top: 8px; opacity:0.8;">Derrote-o para recrutar!</div>` : ''}
     `;
     document.body.appendChild(cine);
 
@@ -1190,6 +1405,17 @@ window.UnitEditor = (function () {
             ueField('Filtro CSS', 'text', d.filter || 'none', 'ue-f-filter') +
             ueField('Nível mínimo', 'number', d.minLevel || 1, 'ue-f-minlevel') +
             '</div>' +
+            // COMPORTAMENTO: dropdown com os 5 perfis
+            '<div style="margin-top:10px;"><div style="font-size:10px;color:#a89c7e;margin-bottom:4px;">Comportamento Selvagem:</div>' +
+            '<select data-ue-field="behavior" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.5);border:1px solid rgba(201,162,39,.3);border-radius:4px;color:#e8dcc0;font-size:12px;padding:5px;">' +
+            Object.keys(BEHAVIORS || {}).map(k =>
+                '<option value="' + k + '"' + ((d.behavior || 'default') === k ? ' selected' : '') + '>' +
+                BEHAVIORS[k].name + '</option>'
+            ).join('') +
+            '</select>' +
+            '<div id="ue-bhv-desc" style="font-size:9px;color:#a89c7e;margin-top:3px;">' +
+            ((BEHAVIORS && BEHAVIORS[d.behavior || 'default']) ? BEHAVIORS[d.behavior || 'default'].desc : '') +
+            '</div></div>' +
             '<div style="margin-top:10px;"><div style="font-size:10px;color:#a89c7e;margin-bottom:4px;">Tags (geram mana):</div>' +
             '<div style="max-height:60px;overflow-y:auto;border:1px solid rgba(201,162,39,.2);border-radius:4px;padding:4px;">' + tagCheckboxes + '</div></div>' +
             '<div style="margin-top:8px;"><div style="font-size:10px;color:#a89c7e;margin-bottom:4px;">Habilidades:</div>' +
@@ -1221,6 +1447,7 @@ window.UnitEditor = (function () {
             range: getNum('ue-f-range') || 1,
             filter: get('ue-f-filter') || 'none',
             minLevel: getNum('ue-f-minlevel') || 1,
+            behavior: (form.querySelector('[data-ue-field="behavior"]') || {}).value || 'default',
             tags: tags, abilities: abilities,
             desc: (form.querySelector('[data-ue-field="desc"]') || {}).value || u.data.desc
         };
@@ -2713,11 +2940,15 @@ function openLeaderSelection(isRoguelite, isDuel = false, pickingOpponentFor = n
     const renderList = () => {
         container.innerHTML = '';
         container.scrollLeft = 0; // volta ao início do carrossel ao filtrar
-        let filteredLeaders = LEADERS;
+        const unlocked = typeof getUnlockedLeaders === 'function' ? getUnlockedLeaders() : LEADERS.map(l => l.id);
+        let filteredLeaders = LEADERS.filter(l => unlocked.includes(l.id));
 
         if (activeFilter !== 'ALL') {
-            filteredLeaders = LEADERS.filter(l => (l.tags || []).includes(activeFilter));
+            filteredLeaders = filteredLeaders.filter(l => (l.tags || []).includes(activeFilter));
         }
+
+        // Se nenhum líder corresponde ao filtro, mostra todos os desbloqueados
+        if (filteredLeaders.length === 0) filteredLeaders = LEADERS.filter(l => unlocked.includes(l.id));
 
         filteredLeaders.forEach(l => {
             const btn = document.createElement('button');
@@ -3464,6 +3695,9 @@ function advanceCampaign() {
             window.battleBanners.reset();
             const epicUnit = game.units.find(u => u.faction === 0 && (u.isBoss || u.isElite));
             if (epicUnit) window.battleBanners.push(() => playBossIntroCine(epicUnit), 2400);
+            // DESAFIANTE: intro cinematográfica própria (se existir na batalha)
+            const challenger = game.units.find(u => u.isChallenger && u.hp > 0);
+            if (challenger) window.battleBanners.push(() => playBossIntroCine(challenger), 2400);
             window.battleBanners.push(() => showObjectiveBannerText(objectiveText()), 2900);
             // "Seu Turno" entra DEPOIS do objetivo na sequência da intro
             window.battleBanners.push(() => {

@@ -67,8 +67,15 @@ class Unit {
             isHidden: d.isHidden || false,
             isHiddenByNight: d.isHiddenByNight || false,
             tameImmuneTurn: d.tameImmuneTurn || 0,
+            // COMPORTAMENTO: perfil da IA selvagem (configurável no editor)
+            behavior: d.behavior || 'default',
+            _spawnPoint: null,
+            _lastAttacker: null,
             undyingTurns: d.undyingTurns || 0,
-            _digTurn: d._digTurn || null
+            _digTurn: d._digTurn || null,
+            // DESAFIANTE (Smash Bros style unlock)
+            isChallenger: d.isChallenger || false,
+            _challengerLeaderId: d._challengerLeaderId || null
         });
 
         this.abilities = (d.abilities || []).concat(d.ability ? [d.ability] : []).filter(Boolean);
@@ -497,7 +504,51 @@ class Game {
             let uLvl = this.getUnitLvl(b);
             let fFac = 1 + (uLvl - 1) * 0.2;
             if (hn && this.map.has(`${hn.q},${hn.r}`)) {
-                this.units.push(new Unit({ q: hn.q, r: hn.r, faction: 2, name: b.name, baseName: b.name, emoji: b.e, hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac), mp: b.mp, maxMp: b.mp, atk: Math.floor(b.atk * fFac), range: b.range, abilities: [...(b.abilities || [])], filter: b.filter || 'none', tags: b.tags || [], fav: b.fav || [], level: uLvl }));
+                this.units.push(new Unit({ q: hn.q, r: hn.r, faction: 2, name: b.name, baseName: b.name, emoji: b.e, hp: Math.floor(b.hp * fFac), maxHp: Math.floor(b.hp * fFac), mp: b.mp, maxMp: b.mp, atk: Math.floor(b.atk * fFac), range: b.range, abilities: [...(b.abilities || [])], filter: b.filter || 'none', tags: b.tags || [], fav: b.fav || [], level: uLvl, behavior: b.behavior || 'default' }));
+            }
+        }
+
+        // ========================================================
+        // DESAFIANTE: chance de um herói rival extra aparecer
+        // (estilo Smash Bros — derrote-o para desbloquear)
+        // ========================================================
+        if (typeof pickChallenger === 'function') {
+            const challenger = pickChallenger();
+            // 100% chance no primeiro nó da campanha (tutorial), 25% nos demais
+            const isFirstNode = this.isTutorialStage();
+            const chance = isFirstNode ? 1 : 0.25;
+            if (challenger && (window.DEV_MODE ? true : Math.random() < chance)) {
+                // Encontra um hex livre perto do rival, mas afastado do player
+                const cSpots = Array.from(this.map.values()).filter(h => {
+                    if (this.getUnitAt(h.q, h.r)) return false;
+                    if (h.terrain.id === 'WATER' || h.terrain.id === 'MOUNTAIN' || h.terrain.id === 'CASTLE') return false;
+                    if (Hex.distance(h, pS) < 4) return false;
+                    if (Hex.distance(h, aS) < 2) return false;
+                    return true;
+                });
+                if (cSpots.length > 0) {
+                    const cSpot = cSpots[Math.floor(Math.random() * cSpots.length)];
+                    let cHp = Math.floor(challenger.hp * 0.7) + 10; // 70% do HP base + 10
+                    let cSpells = [];
+                    if (typeof SPELLS !== 'undefined') {
+                        SPELLS.forEach(s => {
+                            if (s.level <= act && s.tags.some(t => (challenger.tags || []).includes(t))) cSpells.push(s.id);
+                        });
+                    }
+                    this.units.push(new Unit({
+                        q: cSpot.q, r: cSpot.r, faction: 2, isLeader: true,
+                        name: challenger.name, baseName: challenger.name,
+                        emoji: challenger.emoji, sprite: challenger.sprite,
+                        hp: cHp, maxHp: cHp, mp: challenger.mp, maxMp: challenger.mp,
+                        atk: Math.floor(challenger.atk * 0.8) + 2, // 80% do ATK base
+                        range: challenger.range,
+                        isBoss: true, isChallenger: true, // flags especiais
+                        _challengerLeaderId: challenger.id,
+                        level: act, tags: challenger.tags || [],
+                        fav: challenger.fav || [], knownSpells: cSpells
+                    }));
+                    if (typeof addLog === 'function') addLog(`⚔ ${challenger.name} apareceu como DESAFIANTE! Derrote-o para recrutá-lo!`, '#e8c84a');
+                }
             }
         }
 
@@ -623,7 +674,8 @@ class Game {
                     mp: b.mp, maxMp: b.mp,
                     atk: Math.floor(b.atk * fFac), range: b.range,
                     abilities: [...(b.abilities || [])], filter: b.filter || 'none',
-                    tags: b.tags || [], fav: b.fav || [], level: uLvl
+                    tags: b.tags || [], fav: b.fav || [], level: uLvl,
+                    behavior: b.behavior || 'default'
                 }));
             }
             numW--;
@@ -1055,6 +1107,9 @@ class Game {
     async executeCombat(a, d) {
         lastState = null; const undoBtn = document.getElementById('btn-undo'); if (undoBtn) undoBtn.disabled = true;
         this.isAnimating = true; const aCol = a.faction === 1 ? '#4a9edd' : a.faction === 2 ? '#c0392b' : '#27ae60';
+
+        // COMPORTAMENTO REATIVO: grava quem atacou a fera selvagem
+        if (d.faction === 0) d._lastAttacker = a;
 
         // PAINEL: mostra o DEFENSOR (quem está sendo atacado)
         game.selectedUnit = d;
@@ -3527,6 +3582,36 @@ class Renderer {
                 ctx.fill(); ctx.stroke();
             }
 
+            // Coroa do DESAFIANTE (diferente do líder - estilo "Smash Bros")
+            if (u.isChallenger) {
+                const cs = this.hexSize * 0.3;
+                const cx = p.x, cy = uiTopY - cs * 0.3;
+                // Coroa prateada/azulada com brilho mágico
+                ctx.strokeStyle = '#4da6ff';
+                ctx.fillStyle = 'rgba(77,166,255,.9)';
+                ctx.lineWidth = 1.5;
+                ctx.shadowColor = '#4da6ff';
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                // Design mais angular/pontudo para diferenciar
+                ctx.moveTo(cx - cs, cy + cs * 0.4);
+                ctx.lineTo(cx - cs * 0.7, cy - cs * 0.6);
+                ctx.lineTo(cx - cs * 0.2, cy - cs * 0.1);
+                ctx.lineTo(cx, cy - cs * 0.8);
+                ctx.lineTo(cx + cs * 0.2, cy - cs * 0.1);
+                ctx.lineTo(cx + cs * 0.7, cy - cs * 0.6);
+                ctx.lineTo(cx + cs, cy + cs * 0.4);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                ctx.shadowBlur = 0;
+                ctx.shadowColor = 'transparent';
+                // Pequena estrela no topo central
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(cx, cy - cs * 0.85, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
             // Alerta de fera agressiva: triângulo vermelho com exclamação (vetor)
             if (u.faction === 0 && u.alerted) {
                 const ws = this.hexSize * 0.22;
@@ -4242,6 +4327,95 @@ window.runAITurn = async function () {
     game.selectedUnit = null;
 };
 
+// ==========================================
+// PERFIS DE COMPORTAMENTO para criaturas selvagens
+// Configuráveis no Editor de Unidades
+// ==========================================
+const BEHAVIORS = {
+    default: {
+        name: 'Padrão', icon: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/>',
+        desc: 'Comportamento original: forte persegue, fraco foge',
+        alertRange: 0, // usa lógica original de alerta
+        getMoveScore(w, cls, dist, targetIsLure) {
+            const isS = w.isBoss || w.maxHp >= 50 || w.atk >= 12;
+            if (targetIsLure) return null; // usa lógica de isca
+            return isS ? (-dist * 10) : (dist * 10);
+        },
+        shouldAttack(w, cls, dist) {
+            return dist <= w.range;
+        }
+    },
+    aggressive: {
+        name: 'Agressivo', icon: '<path d="M12 3v10M9 6l3-3 3 3M8 12h8M10.5 12 7 21h10l-3.5-9"/>',
+        desc: 'Persegue e ataca o inimigo mais próximo implacavelmente',
+        alertRange: 99, // sempre alerta
+        getMoveScore(w, cls, dist) {
+            return -dist * 15; // sempre avança
+        },
+        shouldAttack(w, cls, dist) {
+            return dist <= w.range;
+        }
+    },
+    defensive: {
+        name: 'Defensivo', icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M9 12l2 2 4-4"/>',
+        desc: 'Só ataca quem se aproxima; recua quando ferido',
+        alertRange: 3, // só alerta quando muito perto
+        getMoveScore(w, cls, dist) {
+            const hpRatio = w.hp / w.maxHp;
+            if (hpRatio < 0.35) return dist * 15; // ferido: recua!
+            if (dist <= 3) return -dist * 10; // inimigo perto: enfrenta
+            return dist * 5; // mantém distância
+        },
+        shouldAttack(w, cls, dist) {
+            return dist <= w.range && (w.hp / w.maxHp) > 0.25;
+        }
+    },
+    territorial: {
+        name: 'Territorial', icon: '<path d="M12 3l7 2.5V11c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V5.5Z"/><path d="M12 8v4M10 10h4"/>',
+        desc: 'Guarda seu território; ataca invasores dentro dele',
+        alertRange: 4,
+        getMoveScore(w, cls, dist, targetIsLure, moveQ, moveR) {
+            if (!w._spawnPoint) w._spawnPoint = { q: w.q, r: w.r };
+            const distFromSpawn = Hex.distance({ q: moveQ, r: moveR }, w._spawnPoint);
+            if (distFromSpawn > 3) return -distFromSpawn * 20; // volta pro território
+            return -dist * 10; // ataca invasor no território
+        },
+        shouldAttack(w, cls, dist) {
+            return dist <= w.range;
+        }
+    },
+    fugitive: {
+        name: 'Fugitivo', icon: '<path d="M5 5l7 7-7 7M12 5l7 7-7 7M12 5l7 7-7 7"/>',
+        desc: 'Foge de tudo; só ataca quando encurralado (adjacente)',
+        alertRange: 6, // vê longe e foge
+        getMoveScore(w, cls, dist) {
+            if (dist <= 1) return -dist * 5; // encurralado: luta
+            return dist * 25; // FUGE!
+        },
+        shouldAttack(w, cls, dist) {
+            return dist <= 1; // só quando está colado
+        }
+    },
+    reactive: {
+        name: 'Reativo', icon: '<path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/><circle cx="12" cy="12" r="2.5"/>',
+        desc: 'Passivo até ser atacado; depois persegue o agressor',
+        alertRange: 0, // nunca se alerta sozinho
+        getMoveScore(w, cls, dist) {
+            if (w._lastAttacker) return -dist * 12; // persegue quem bateu
+            return 0; // fica parado
+        },
+        shouldAttack(w, cls, dist) {
+            return w._lastAttacker === cls && dist <= w.range;
+        }
+    }
+};
+
+// Helper: retorna o perfil de comportamento da unidade
+window.getUnitBehavior = function (u) {
+    const key = u.behavior || 'default';
+    return BEHAVIORS[key] || BEHAVIORS.default;
+};
+
 window.runWildTurn = async function () {
     const wilds = game.units.filter(u => u.faction === 0);
     // Feras sentem o cheiro da isca e entram em estado de alerta
@@ -4267,7 +4441,38 @@ window.runWildTurn = async function () {
 
     for (const w of wilds) {
         if (game.gameOver) break; if (w.mp === 0) continue;
+        const bhv = window.getUnitBehavior ? getUnitBehavior(w) : BEHAVIORS.default;
+
+        // ALERTA: usa o range do comportamento
+        if (!w.alerted) {
+            if (bhv.alertRange >= 99) {
+                w.alerted = true; // agressivo: sempre alerta
+            } else if (bhv.alertRange > 0) {
+                game.units.forEach(u => {
+                    if (u.faction !== 0 && Hex.distance(w, u) <= bhv.alertRange) {
+                        w.alerted = true;
+                        if (typeof showPopup === 'function') showPopup("Alerta!", w, '#e74c3c');
+                    }
+                });
+            } else if (bhv.alertRange === 0) {
+                // default/reactivo: usa a lógica original (isca/boss)
+                game.map.forEach(h => {
+                    if (h.hasLure && Hex.distance(w, h) <= 5) {
+                        w.alerted = true;
+                        if (typeof showPopup === 'function') showPopup("Farejou Isca!", w, '#e67e22');
+                    }
+                });
+                if (w.isBoss && !w.alerted) {
+                    game.units.forEach(u => {
+                        if (u.faction !== 0 && Hex.distance(w, u) <= 5) {
+                            w.alerted = true;
+                        }
+                    });
+                }
+            }
+        }
         if (!w.alerted) { w.hp = Math.min(w.maxHp, w.hp + 5); continue; }
+        if (bhv === BEHAVIORS.reactive && !w._lastAttacker) continue; // reativo sem agressor: dorme
 
         if (renderer) { renderer.centerOn(w.vq, w.vr); renderer.draw(); }
         game.selectedUnit = w; if (typeof sleep === 'function') await sleep(250);
@@ -4285,18 +4490,22 @@ window.runWildTurn = async function () {
         let cls = null; let minD = 999;
         let targetIsLure = false;
 
-        // Se achar isca a até 6 hexes de distância, a carne vira o alvo absoluto!
-        if (nearestLure && minLureD <= 6) {
+        // REATIVO: prioriza quem o atacou
+        if (bhv === BEHAVIORS.reactive && w._lastAttacker && w._lastAttacker.hp > 0) {
+            cls = w._lastAttacker;
+            minD = Hex.distance(w, cls);
+        } else if (nearestLure && minLureD <= 6 && bhv !== BEHAVIORS.fugitive) {
+            // Se achar isca a até 6 hexes, a carne vira o alvo (exceto fugitivo)
             cls = nearestLure;
             targetIsLure = true;
         } else {
-            // Comportamento normal: procurar unidades inimigas
+            // Procurar unidades inimigas
             let tgts = game.units.filter(u => u.faction !== 0);
             if (tgts.length === 0) continue;
             tgts.forEach(t => { let d = Hex.distance(w, t); if (d < minD) { minD = d; cls = t; } });
         }
 
-        const isS = w.isBoss || w.maxHp >= 50 || w.atk >= 12;
+        if (!cls) continue;
 
         if (cls) {
             let moves = Array.from(game.reachableHexes.keys());
@@ -4312,13 +4521,17 @@ window.runWildTurn = async function () {
                 let score = 0;
 
                 if (targetIsLure) {
-                    // IA MODO ISCA: Quer parar EXATAMENTE em cima da carne (distância 0)
+                    // IA MODO ISCA: parar EXATAMENTE na carne
                     score = -distToTarget * 50;
-                    if (distToTarget === 0) score += 5000; // Pote de Ouro
+                    if (distToTarget === 0) score += 5000;
                 } else {
-                    // IA MODO COMBATE ORIGINAL
-                    score = isS ? (-distToTarget * 10) : (distToTarget * 10);
-                    if (isS && distToTarget > 0 && distToTarget <= w.range) { score += 1000; score += distToTarget * 5; }
+                    // USA O PERFIL DE COMPORTAMENTO
+                    score = bhv.getMoveScore(w, cls, distToTarget, targetIsLure, mq, mr);
+                    if (score === null) score = 0;
+                    // bônus: ficar em alcance de ataque
+                    if (score !== null && distToTarget > 0 && distToTarget <= w.range && bhv.shouldAttack(w, cls, distToTarget)) {
+                        score += 1000 + distToTarget * 5;
+                    }
                 }
 
                 if (score > bestScore) { bestScore = score; bM = { q: mq, r: mr }; }
@@ -4330,14 +4543,10 @@ window.runWildTurn = async function () {
                 await game.moveUnit(w, bM.q, bM.r);
             }
 
-            // Lógica pós-movimento (Atacar ou Comer)
+            // Lógica pós-movimento (Atacar ou Comer) — usa o perfil
             if (targetIsLure && w.q === cls.q && w.r === cls.r) {
-                // Fera pisou na isca! Fica distraída e não ataca neste turno.
                 if (typeof showPopup === 'function') showPopup("Comendo...", w, '#e67e22');
-                // NOTA: Não removemos o `hasLure` do chão aqui, pois o Herói precisa desse 
-                // bônus ativo no chão para dobrar a chance quando for domar no turno dele!
-            } else if (!targetIsLure && Hex.distance(w, cls) <= w.range) {
-                // Bate no inimigo normalmente
+            } else if (!targetIsLure && bhv.shouldAttack(w, cls, Hex.distance(w, cls))) {
                 await game.executeCombat(w, cls);
             }
         }
@@ -4525,6 +4734,27 @@ Game.prototype.checkVillageCapture = function (u) {
 const origHandleDeathObj = Game.prototype.handleDeath;
 Game.prototype.handleDeath = function (victim, killer) {
     origHandleDeathObj.call(this, victim, killer);
+
+    // DESAFIANTE derrotado → desbloqueia o líder!
+    if (victim.isChallenger && victim._challengerLeaderId) {
+        // Verifica se foi morto pelo jogador (faction 1) - killer pode ser a unidade que deu o golpe final
+        // ou se não houver killer direto, verifica se é turno do jogador
+        const killedByPlayer = (killer && killer.faction === 1) || this.currentTurn === 1;
+        if (killedByPlayer) {
+            if (typeof unlockLeader === 'function') {
+                const isNew = unlockLeader(victim._challengerLeaderId);
+                if (isNew) {
+                    // Tela especial de desbloqueio com foto e info
+                    if (typeof showChallengerUnlock === 'function') {
+                        showChallengerUnlock(victim);
+                    } else if (typeof showZeldaPopup === 'function') {
+                        showZeldaPopup(victim.emoji, 'HERÓI RECRUTADO!', `${victim.name} juntou-se ao seu hall de heróis! Escolha-o na próxima partida.`);
+                    }
+                    if (typeof addLog === 'function') addLog(`⭐ ${victim.name} foi recrutado! Novo herói desbloqueado!`, '#e8c84a');
+                }
+            }
+        }
+    }
 
     // Se o alvo da missão morrer
     if (this.currentObjective === 'BOSS' && victim.isObjectiveTarget) {

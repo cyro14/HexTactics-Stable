@@ -120,6 +120,46 @@ const MANA_TYPES = {
     ELECTRIC: { icon: null, col: '#f1c40f', id: 'ELECTRIC', name: 'Energia' }
 };
 
+
+// ==========================================
+// SISTEMA DE DESBLOQUEIO DE HERÓIS (estilo Smash Bros)
+// 5 heróis básicos no início; derrote DESAFIANTES para desbloquear
+// os demais. DESAFIANTES aparecem aleatoriamente no início de batalhas.
+// ==========================================
+const BASE_UNLOCKED_LEADERS = ['mage', 'orc', 'paladin', 'ranger', 'vampire'];
+
+window.getUnlockedLeaders = function () {
+    if (window.DEV_MODE || localStorage.getItem('ht_dev_mode') === 'true') return LEADERS.map(l => l.id);
+    try {
+        const saved = JSON.parse(localStorage.getItem('ht_unlocked_leaders'));
+        if (Array.isArray(saved) && saved.length > 0) return saved;
+    } catch (e) {}
+    return [...BASE_UNLOCKED_LEADERS];
+};
+
+window.isLeaderUnlocked = function (leaderId) {
+    return window.getUnlockedLeaders().includes(leaderId);
+};
+
+window.unlockLeader = function (leaderId) {
+    const current = window.getUnlockedLeaders();
+    if (!current.includes(leaderId)) {
+        current.push(leaderId);
+        localStorage.setItem('ht_unlocked_leaders', JSON.stringify(current));
+        return true; // newly unlocked
+    }
+    return false;
+};
+
+// Sorteia um líder DESAFIANTE (que ainda não foi desbloqueado)
+window.pickChallenger = function () {
+    const unlocked = window.getUnlockedLeaders();
+    // No modo DEV, garante-se que haja pelo menos um desafiante disponível
+    const candidates = window.DEV_MODE ? LEADERS : LEADERS.filter(l => !unlocked.includes(l.id));
+    if (candidates.length === 0) return null;
+    return candidates[Math.floor(Math.random() * candidates.length)];
+};
+
 const SPELLS = [
     { id: 'sl_ember', name: 'Centelha', icon: null, level: 1, tags: ['FIRE'], type: 'atk', range: 2, cost: { FIRE: 1 }, targetTerrain: true, desc: 'Causa dano de fogo.', effect: async (g, c, t) => { let dmg = SP('sl_ember', 10); t.hp -= dmg; if (window.battleFX) battleFX.burst(t, '#e67e22'); showPopup(`-${dmg}`, t, '#e67e22'); addLog(`🔥 ${c.name} lançou Centelha em ${t.name}!`, '#e67e22'); if (t.hp <= 0) g.handleDeath(t, c); g.checkWin(); return true; } },
     { id: 'sl_heal', name: 'Cura Menor', icon: null, level: 1, tags: ['SILVESTRE'], type: 'def', range: 3, cost: { SILVESTRE: 1 }, desc: 'Cura um aliado.', effect: async (g, c, t) => { let heal = SP('sl_heal', 20); let h = Math.min(t.maxHp - t.hp, heal); t.hp += h; showPopup(`+${h}`, t, '#2ecc71'); addLog(`💚 ${c.name} curou ${t.name}!`, '#27ae60'); return true; } },
