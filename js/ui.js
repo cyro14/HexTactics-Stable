@@ -275,6 +275,634 @@ function showChallengerUnlock(challenger) {
     });
 }
 
+// Tela especial de captura de CHEFE/ELITE (estilo Smash Bros)
+function showBossTameUnlock(boss) {
+    return new Promise(r => {
+        // Cria overlay dramático
+        const overlay = document.createElement('div');
+        overlay.id = 'boss-tame-unlock-overlay';
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(ellipse at center, rgba(40,20,40,0.95) 0%, rgba(0,0,0,0.98) 70%);
+            z-index: 16000; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.5s ease-out;
+        `;
+
+        const isElite = boss.isElite && !boss.isBoss;
+        const titleText = isElite ? 'ELITE DOMADA!' : 'GUARDIÃO DOMADO!';
+        const subtitleText = isElite ? 'Uma ameaça elite agora serve a você!' : 'O Senhor do Domínio curvou-se!';
+        const glowColor = isElite ? '#e74c3c' : '#e8c84a';
+        const particleHue = isElite ? 0 : 50;
+
+        // Busca info extra se for boss de região
+        let bossInfo = null;
+        if (typeof BEASTS !== 'undefined') {
+            if (BEASTS.BOSSES) bossInfo = BEASTS.BOSSES.find(b => b.name === boss.name);
+            if (!bossInfo && BEASTS.ELITES) bossInfo = BEASTS.ELITES.find(b => b.name === boss.name);
+        }
+
+        overlay.innerHTML = `
+            <div style="
+                max-width: 90vw; max-height: 90vh; text-align: center;
+                animation: unlockReveal 0.8s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+                perspective: 800px;
+            ">
+                <!-- Partículas de fundo -->
+                <canvas id="unlock-particles" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1;"></canvas>
+
+                <!-- Sprite/Retrato grande -->
+                <div style="margin-bottom: 20px; position: relative;">
+                    ${boss.sprite ? `
+                        <img src="${boss.sprite}" alt="${boss.name}" style="
+                            max-width: 320px; max-height: 320px; filter: drop-shadow(0 0 30px ${glowColor}) drop-shadow(0 0 60px ${glowColor});
+                            image-rendering: pixelated; image-rendering: crisp-edges;
+                            animation: spriteFloat 3s ease-in-out infinite;
+                        ">
+                    ` : `
+                        <div style="
+                            width: 240px; height: 240px; margin: 0 auto; border-radius: 50%;
+                            background: radial-gradient(circle, ${glowColor}33 0%, rgba(0,0,0,0.8) 70%);
+                            border: 4px solid ${glowColor}; display: flex; align-items: center; justify-content: center;
+                            font-size: 100px; text-shadow: 0 0 20px ${glowColor};
+                            animation: spriteFloat 3s ease-in-out infinite;
+                        ">${boss.emoji}</div>
+                    `}
+                    <!-- Coroa de Chefe/Elite animada -->
+                    <div style="
+                        position: absolute; top: -50px; left: 50%; transform: translateX(-50%);
+                        width: 160px; height: 80px; pointer-events: none;
+                    ">
+                        <svg viewBox="0 0 160 80" style="width:100%; height:100%; filter: drop-shadow(0 0 15px ${glowColor});">
+                            <path d="M10 60 L30 10 L55 45 L80 0 L105 45 L130 10 L150 60 Z" fill="${glowColor}CC" stroke="#fff" stroke-width="3"/>
+                            <circle cx="80" cy="0" r="6" fill="#fff" style="animation: crownStar 1s ease-in-out infinite;"/>
+                            ${!isElite ? '<circle cx="30" cy="10" r="4" fill="#fff" style="animation: crownStar 1.2s ease-in-out infinite 0.2s;"/><circle cx="130" cy="10" r="4" fill="#fff" style="animation: crownStar 1.2s ease-in-out infinite 0.4s;"/>' : ''}
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Ícone de captura pacífica -->
+                <div style="margin-bottom: 12px; animation: handshakePulse 1.5s ease-in-out infinite;">
+                    <svg width="60" height="60" viewBox="0 0 60 60" style="filter: drop-shadow(0 0 10px ${glowColor});">
+                        <circle cx="30" cy="30" r="28" fill="none" stroke="${glowColor}" stroke-width="3" stroke-dasharray="8 4" style="animation: dashRotate 2s linear infinite;"/>
+                        <path d="M18 30 L27 39 L42 21" fill="none" stroke="${glowColor}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+
+                <!-- Título -->
+                <h1 style="
+                    font-family: 'Cinzel', serif; font-size: 2.5rem; font-weight: bold;
+                    color: #fff; text-shadow: 0 0 20px ${glowColor}, 0 0 40px ${glowColor};
+                    margin: 0 0 8px 0; letter-spacing: 4px; text-transform: uppercase;
+                    animation: titleGlow 2s ease-in-out infinite;
+                ">⚔ ${titleText} ⚔</h1>
+
+                <!-- Subtítulo -->
+                <p style="
+                    font-family: 'Cinzel', serif; font-size: 1.1rem; color: ${glowColor};
+                    text-shadow: 0 0 10px ${glowColor}; margin: 0 0 16px 0; letter-spacing: 2px;
+                    opacity: 0.9;
+                ">${subtitleText}</p>
+
+                <!-- Nome do chefe -->
+                <h2 style="
+                    font-family: 'Cinzel', serif; font-size: 2.2rem; color: #fff;
+                    text-shadow: 0 0 15px ${glowColor}; margin: 0 0 20px 0; letter-spacing: 2px;
+                ">${boss.name}</h2>
+
+                <!-- Stats principais -->
+                <div style="display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 20px; font-family: 'Cinzel', serif;">
+                    <div style="background: rgba(232,200,74,0.1); border: 1px solid #e8c84a; padding: 12px 20px; border-radius: 12px; min-width: 100px;">
+                        <div style="color: #e8c84a; font-size: 0.75rem; letter-spacing: 1px;">HP</div>
+                        <div style="color: #fff; font-size: 1.5rem; font-weight: bold;">${boss.maxHp}</div>
+                    </div>
+                    <div style="background: rgba(231,76,60,0.1); border: 1px solid #e74c3c; padding: 12px 20px; border-radius: 12px; min-width: 100px;">
+                        <div style="color: #e74c3c; font-size: 0.75rem; letter-spacing: 1px;">ATK</div>
+                        <div style="color: #fff; font-size: 1.5rem; font-weight: bold;">${boss.atk}</div>
+                    </div>
+                    <div style="background: rgba(52,152,219,0.1); border: 1px solid #3498db; padding: 12px 20px; border-radius: 12px; min-width: 100px;">
+                        <div style="color: #3498db; font-size: 0.75rem; letter-spacing: 1px;">ALCANCE</div>
+                        <div style="color: #fff; font-size: 1.5rem; font-weight: bold;">${boss.range}</div>
+                    </div>
+                    ${boss.mp > 0 ? `
+                    <div style="background: rgba(155,89,182,0.1); border: 1px solid #9b59b6; padding: 12px 20px; border-radius: 12px; min-width: 100px;">
+                        <div style="color: #9b59b6; font-size: 0.75rem; letter-spacing: 1px;">MANA</div>
+                        <div style="color: #fff; font-size: 1.5rem; font-weight: bold;">${boss.maxMp}</div>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <!-- Tags/Atributos -->
+                <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
+                    ${(boss.tags || []).map(t => `<span style="
+                        background: rgba(232,200,74,0.15); border: 1px solid #e8c84a;
+                        color: #e8c84a; padding: 6px 14px; border-radius: 20px;
+                        font-family: 'Cinzel', serif; font-size: 0.8rem; letter-spacing: 1px;
+                    ">${t}</span>`).join('')}
+                    ${(boss.fav || []).length > 0 ? (boss.fav || []).map(f => `<span style="
+                        background: rgba(46,204,113,0.15); border: 1px solid #2ecc71;
+                        color: #2ecc71; padding: 6px 14px; border-radius: 20px;
+                        font-family: 'Cinzel', serif; font-size: 0.8rem; letter-spacing: 1px;
+                    ">Fav: ${f}</span>`).join('') : ''}
+                </div>
+
+                <!-- Habilidades -->
+                ${(boss.abilities || []).length > 0 ? `
+                <div style="margin-bottom: 20px; padding: 16px; background: rgba(232,200,74,0.1); border: 1px solid rgba(232,200,74,0.3); border-radius: 12px;">
+                    <div style="font-family: 'Cinzel', serif; font-size: 0.9rem; color: #e8c84a; margin-bottom: 10px; letter-spacing: 1px;">HABILIDADES INERENTES</div>
+                    <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                        ${(boss.abilities || []).map(a => `<span style="
+                            background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4);
+                            color: #e74c3c; padding: 4px 12px; border-radius: 8px;
+                            font-size: 0.8rem; font-family: 'Cinzel', serif;
+                        ">${a.replace(/_/g, ' ').toUpperCase()}</span>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Magias conhecidas (se tiver) -->
+                ${(boss.knownSpells || []).length > 0 ? `
+                <div style="margin-bottom: 24px; padding: 16px; background: rgba(155,89,182,0.1); border: 1px solid rgba(155,89,182,0.3); border-radius: 12px;">
+                    <div style="font-family: 'Cinzel', serif; font-size: 0.9rem; color: #9b59b6; margin-bottom: 10px; letter-spacing: 1px;">MAGIAS CONHECIDAS</div>
+                    <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                        ${(boss.knownSpells || []).map(spellId => {
+                            const spell = typeof SPELLS !== 'undefined' ? SPELLS.find(s => s.id === spellId) : null;
+                            return spell ? `<span style="
+                                background: rgba(155,89,182,0.15); border: 1px solid rgba(155,89,182,0.4);
+                                color: #9b59b6; padding: 4px 10px; border-radius: 8px;
+                                font-size: 0.8rem; font-family: 'Cinzel', serif;
+                            ">${spell.name}</span>` : '';
+                        }).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Info de lore se tiver -->
+                ${bossInfo && bossInfo.desc ? `
+                <div style="margin-bottom: 24px; padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; font-style: italic; color: #bbb; line-height: 1.5; font-size: 0.95rem;">
+                    "${bossInfo.desc}"
+                </div>
+                ` : ''}
+
+                <!-- Botão continuar -->
+                <button id="btn-boss-tame-continue" class="btn-success" style="
+                    font-family: 'Cinzel', serif; font-size: 1.1rem; letter-spacing: 2px;
+                    padding: 14px 48px; background: linear-gradient(135deg, ${glowColor}, ${isElite ? '#c0392b' : '#c9a227'});
+                    border: 2px solid #fff; box-shadow: 0 0 20px ${glowColor}80;
+                    transition: all 0.2s;
+                ">RECEBER NO EXÉRCITO</button>
+
+                <style>
+                    @keyframes unlockReveal {
+                        0% { opacity: 0; transform: scale(0.8) translateY(30px) rotateX(15deg); filter: blur(10px); }
+                        20% { opacity: 1; transform: scale(1.02) translateY(-5px) rotateX(0deg); filter: blur(0); }
+                        100% { opacity: 1; transform: scale(1) translateY(0) rotateX(0deg); filter: blur(0); }
+                    }
+                    @keyframes spriteFloat {
+                        0%, 100% { transform: translateY(0); }
+                        50% { transform: translateY(-10px); }
+                    }
+                    @keyframes titleGlow {
+                        0%, 100% { text-shadow: 0 0 20px ${glowColor}, 0 0 40px ${glowColor}; }
+                        50% { text-shadow: 0 0 30px ${glowColor}, 0 0 60px ${glowColor}, 0 0 80px ${glowColor}; }
+                    }
+                    @keyframes crownStar {
+                        0%, 100% { opacity: 1; transform: scale(1); }
+                        50% { opacity: 0.5; transform: scale(1.4); }
+                    }
+                    @keyframes handshakePulse {
+                        0%, 100% { transform: scale(1); }
+                        50% { transform: scale(1.1); }
+                    }
+                    @keyframes dashRotate {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                    #btn-boss-tame-continue:hover {
+                        background: linear-gradient(135deg, ${isElite ? '#c0392b' : '#c9a227'}, ${glowColor}) !important;
+                        transform: scale(1.05);
+                        box-shadow: 0 0 30px ${glowColor}CC !important;
+                    }
+                </style>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        // Anima entrada
+        requestAnimationFrame(() => {
+            overlay.style.opacity = '1';
+        });
+
+        // Partículas no canvas
+        const particleCanvas = overlay.querySelector('#unlock-particles');
+        if (particleCanvas) {
+            particleCanvas.width = overlay.clientWidth;
+            particleCanvas.height = overlay.clientHeight;
+            const pctx = particleCanvas.getContext('2d');
+            const particles = Array.from({ length: 40 }, () => ({
+                x: Math.random() * particleCanvas.width,
+                y: Math.random() * particleCanvas.height,
+                vx: (Math.random() - 0.5) * 0.8,
+                vy: -0.5 - Math.random() * 0.8,
+                size: 3 + Math.random() * 4,
+                alpha: 0.4 + Math.random() * 0.4,
+                hue: particleHue + Math.random() * 30,
+                life: 1
+            }));
+            let pAnim = null;
+            const drawParticles = () => {
+                pctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= 0.002;
+                    if (p.life <= 0) {
+                        p.x = Math.random() * particleCanvas.width;
+                        p.y = particleCanvas.height + 30;
+                        p.life = 1;
+                    }
+                    pctx.fillStyle = `hsla(${p.hue}, 80%, 65%, ${p.alpha * p.life})`;
+                    pctx.beginPath();
+                    pctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                    pctx.fill();
+                });
+                pAnim = requestAnimationFrame(drawParticles);
+            };
+            drawParticles();
+
+            // Cleanup
+            overlay._particleAnim = pAnim;
+        }
+
+        // Botão fechar
+        overlay.querySelector('#btn-boss-tame-continue').onclick = () => {
+            overlay.style.opacity = '0';
+            if (overlay._particleAnim) cancelAnimationFrame(overlay._particleAnim);
+            setTimeout(() => {
+                overlay.remove();
+                r(true);
+            }, 500);
+        };
+    });
+}
+
+// ============================================================
+// TELA ÉPICA DE VITÓRIA (Estilo Smash Bros)
+// Mostra: Recursos ganhos, Unidades perdidas, Unidades ganhas, Sobreviventes
+// ============================================================
+function showVictoryScreen() {
+    return new Promise(r => {
+        // Coleta dados da batalha
+        const survivors = game.units.filter(u => u.faction === 1 && u.hp > 0);
+        const initialRoster = deployedRoster || [];
+        
+        // Unidades que morreram (estavam no roster inicial mas não sobreviveram)
+        const lostUnits = initialRoster.filter(u => {
+            const survived = survivors.find(s => s.name === u.name && s.baseName === u.baseName && s.level === u.level);
+            return !survived;
+        });
+        
+        // Unidades ganhas (sobreviventes que não estavam no roster inicial)
+        // Inclui: domadas, chocadas de ovo, invocadas, etc.
+        const gainedUnits = survivors.filter(u => {
+            if (u.isLeader) return false;
+            const wasInitial = initialRoster.find(i => i.name === u.name && i.baseName === u.baseName && i.level === u.level);
+            return !wasInitial;
+        });
+        
+        // Recursos ganhos (comparar com estado antes da batalha se disponível)
+        // Por ora, mostra recursos atuais e bônus conhecidos
+        const resources = game.resources || {};
+        const goldGained = game.gold || 0;
+        const dnaGained = game.dna || 0;
+        
+        // Calcula bônus do reino se disponível
+        let kingdomBonus = { wood: 0, stone: 0, scales: 0, sand: 0, ferro: 0, gold: 0, dna: 0, traps: 0 };
+        if (typeof countKingdomBuildings === 'function' && game.kingdomMap) {
+            kingdomBonus.wood = window.countKingdomBuildings('LUMBERMILL') * 3;
+            game.kingdomMap.forEach(h => {
+                if (h.building === 'MINE') {
+                    let lvl = h.bLevel || 1;
+                    kingdomBonus.stone += 3;
+                    if (lvl >= 2) kingdomBonus.ferro += 2;
+                    if (lvl >= 3) kingdomBonus.gold += 5;
+                }
+            });
+            kingdomBonus.scales = window.countKingdomBuildings('FISHINGCAMP') * 3;
+            kingdomBonus.sand = window.countKingdomBuildings('SANDPIT') * 3;
+            kingdomBonus.gold += (window.countKingdomBuildings('MINE') * 10) + (window.countKingdomBuildings('PORT') * 5);
+            kingdomBonus.dna = window.countKingdomBuildings('LIBRARY') * 1;
+            kingdomBonus.traps = window.countKingdomBuildings('TRAP_MAKER') * 1;
+        }
+        
+        // Itens dropados na batalha (baús, chaves, etc)
+        const battleItems = [];
+        if (game.pendingDrop) battleItems.push({ name: 'Baú de Recompensa', icon: '📦', rarity: 'epic' });
+        
+        // Cria overlay dramático
+        const overlay = document.createElement('div');
+        overlay.id = 'victory-screen-overlay';
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(ellipse at center, rgba(20,40,20,0.97) 0%, rgba(0,20,0,0.99) 70%);
+            z-index: 16000; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.5s ease-out; overflow-y: auto;
+        `;
+
+        const isBossNode = game.isBossStage || game.currentRouteType === 'BOSS';
+        const isEliteNode = game.currentRouteType === 'ELITE';
+        const titleText = isBossNode ? 'GUARDIÃO DERROTADO!' : (isEliteNode ? 'AMEAÇA ELITE ELIMINADA!' : 'VITÓRIA TRIUNFANTE!');
+        const subtitleText = isBossNode ? 'O domínio foi purificado!' : (isEliteNode ? 'A elite caiu diante de sua estratégia!' : 'Seu exército prevaleceu!');
+        const glowColor = isBossNode ? '#e8c84a' : (isEliteNode ? '#e74c3c' : '#2ecc71');
+        const particleHue = isBossNode ? 50 : (isEliteNode ? 0 : 120);
+
+        overlay.innerHTML = `
+            <div style="
+                max-width: 95vw; max-height: 95vh; text-align: center; padding: 20px;
+                animation: victoryReveal 1s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+                perspective: 800px;
+            ">
+                <!-- Partículas de fundo -->
+                <canvas id="victory-particles" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1;"></canvas>
+
+                <!-- Bandeira de vitória animada -->
+                <div style="margin-bottom: 16px; animation: flagWave 2s ease-in-out infinite;">
+                    <svg width="100" height="60" viewBox="0 0 100 60" style="filter: drop-shadow(0 0 15px ${glowColor});">
+                        <path d="M10 50 L10 10 Q50 5 50 10 Q50 15 10 15 Z" fill="${glowColor}CC" stroke="#fff" stroke-width="2" style="animation: flagRipple 1.5s ease-in-out infinite; transform-origin: 10px 30px;"/>
+                        <circle cx="10" cy="5" r="3" fill="#fff"/>
+                    </svg>
+                </div>
+
+                <!-- Título principal -->
+                <h1 style="
+                    font-family: 'Cinzel', serif; font-size: 2.8rem; font-weight: bold;
+                    color: #fff; text-shadow: 0 0 25px ${glowColor}, 0 0 50px ${glowColor};
+                    margin: 0 0 6px 0; letter-spacing: 5px; text-transform: uppercase;
+                    animation: titlePulse 2s ease-in-out infinite;
+                ">⚔ ${titleText} ⚔</h1>
+
+                <!-- Subtítulo -->
+                <p style="
+                    font-family: 'Cinzel', serif; font-size: 1.2rem; color: ${glowColor};
+                    text-shadow: 0 0 15px ${glowColor}; margin: 0 0 20px 0; letter-spacing: 2px;
+                    opacity: 0.95;
+                ">${subtitleText}</p>
+
+                <!-- Info do nó -->
+                <div style="
+                    font-family: 'Cinzel', serif; font-size: 1rem; color: #aaa;
+                    margin-bottom: 24px; letter-spacing: 1px;
+                ">ATO ${toRoman(game.currentLevel)} • NÓ ${game.currentFloor + 1} ${game.currentRegionId ? '• ' + game.currentRegionId : ''}</div>
+
+                <!-- ===== RECURSOS GANHOS ===== -->
+                <div style="margin-bottom: 28px;">
+                    <h3 style="
+                        font-family: 'Cinzel', serif; font-size: 1.3rem; color: ${glowColor};
+                        margin: 0 0 16px 0; letter-spacing: 2px; text-transform: uppercase;
+                        display: flex; align-items: center; justify-content: center; gap: 12px;
+                    ">
+                        <span style="font-size: 1.5rem;">💰</span> RECURSOS OBTIDOS <span style="font-size: 1.5rem;">💰</span>
+                    </h3>
+                    <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+                        ${goldGained > 0 ? `<div class="resource-card" style="--clr:#f1c40f"><div class="rc-icon">💰</div><div class="rc-amt">+${goldGained}</div><div class="rc-label">OURO</div></div>` : ''}
+                        ${dnaGained > 0 ? `<div class="resource-card" style="--clr:#1abc9c"><div class="rc-icon">🧬</div><div class="rc-amt">+${dnaGained}</div><div class="rc-label">DNA</div></div>` : ''}
+                        ${kingdomBonus.wood > 0 ? `<div class="resource-card" style="--clr:#8fbc8f"><div class="rc-icon">🌲</div><div class="rc-amt">+${kingdomBonus.wood}</div><div class="rc-label">MADEIRA</div></div>` : ''}
+                        ${kingdomBonus.stone > 0 ? `<div class="resource-card" style="--clr:#95a5a6"><div class="rc-icon">⛰️</div><div class="rc-amt">+${kingdomBonus.stone}</div><div class="rc-label">PEDRA</div></div>` : ''}
+                        ${kingdomBonus.ferro > 0 ? `<div class="resource-card" style="--clr:#bdc3c7"><div class="rc-icon">🛡️</div><div class="rc-amt">+${kingdomBonus.ferro}</div><div class="rc-label">FERRO</div></div>` : ''}
+                        ${kingdomBonus.scales > 0 ? `<div class="resource-card" style="--clr:#3498db"><div class="rc-icon">🐟</div><div class="rc-amt">+${kingdomBonus.scales}</div><div class="rc-label">ESCALAS</div></div>` : ''}
+                        ${kingdomBonus.sand > 0 ? `<div class="resource-card" style="--clr:#f39c12"><div class="rc-icon">⏳</div><div class="rc-amt">+${kingdomBonus.sand}</div><div class="rc-label">AREIA</div></div>` : ''}
+                        ${kingdomBonus.dna > 0 ? `<div class="resource-card" style="--clr:#9b59b6"><div class="rc-icon">🧬</div><div class="rc-amt">+${kingdomBonus.dna}</div><div class="rc-label">DNA (Biblio)</div></div>` : ''}
+                        ${kingdomBonus.traps > 0 ? `<div class="resource-card" style="--clr:#e74c3c"><div class="rc-icon">🍖/🕸️</div><div class="rc-amt">+${kingdomBonus.traps}</div><div class="rc-label">ISCAS/REDES</div></div>` : ''}
+                    </div>
+                    <style>
+                        .resource-card {
+                            background: rgba(0,0,0,0.6); border: 2px solid var(--clr);
+                            border-radius: 14px; padding: 14px 20px; min-width: 90px;
+                            text-align: center; box-shadow: 0 0 15px var(--clr)40;
+                            transition: transform 0.2s, box-shadow 0.2s;
+                            animation: cardPopIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+                        }
+                        .resource-card:nth-child(1) { animation-delay: 0.1s; }
+                        .resource-card:nth-child(2) { animation-delay: 0.15s; }
+                        .resource-card:nth-child(3) { animation-delay: 0.2s; }
+                        .resource-card:nth-child(4) { animation-delay: 0.25s; }
+                        .resource-card:nth-child(5) { animation-delay: 0.3s; }
+                        .resource-card:nth-child(6) { animation-delay: 0.35s; }
+                        .resource-card:nth-child(7) { animation-delay: 0.4s; }
+                        .resource-card:nth-child(8) { animation-delay: 0.45s; }
+                        .resource-card:nth-child(9) { animation-delay: 0.5s; }
+                        .resource-card:hover { transform: scale(1.1) translateY(-4px); box-shadow: 0 0 25px var(--clr)80; }
+                        .rc-icon { font-size: 1.8rem; margin-bottom: 4px; filter: drop-shadow(0 0 8px var(--clr)); }
+                        .rc-amt { font-family: 'Cinzel', serif; font-size: 1.6rem; font-weight: bold; color: var(--clr); text-shadow: 0 0 10px var(--clr); }
+                        .rc-label { font-family: 'Cinzel', serif; font-size: 0.7rem; color: #ccc; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+                    </style>
+                </div>
+
+                <!-- ===== UNIDADES GANHAS ===== -->
+                ${gainedUnits.length > 0 ? `
+                <div style="margin-bottom: 28px;">
+                    <h3 style="
+                        font-family: 'Cinzel', serif; font-size: 1.3rem; color: #2ecc71;
+                        margin: 0 0 16px 0; letter-spacing: 2px; text-transform: uppercase;
+                        display: flex; align-items: center; justify-content: center; gap: 12px;
+                    ">
+                        <span>✨</span> NOVAS UNIDADES RECRUTADAS <span>✨</span>
+                    </h3>
+                    <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+                        ${gainedUnits.map((u, i) => `
+                        <div class="unit-card gained" style="--delay:${i * 0.1}s">
+                            ${u.sprite ? `<img src="${u.sprite}" alt="${u.name}" style="max-width:100px; max-height:100px; filter: drop-shadow(0 0 15px #2ecc71); image-rendering: pixelated;">` : `<div style="width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#2ecc7144 0%,#000 70%);border:3px solid #2ecc71;display:flex;align-items:center;justify-content:center;font-size:40px;text-shadow:0 0 10px #2ecc71;">${u.emoji}</div>`}
+                            <div class="unit-name" style="font-family:'Cinzel',serif;font-size:0.9rem;color:#2ecc71;margin-top:8px;text-shadow:0 0 8px #2ecc71;">${u.name}</div>
+                            <div class="unit-stats" style="font-size:0.75rem;color:#aaa;margin-top:4px;display:flex;justify-content:center;gap:10px;">
+                                <span>❤️ ${u.maxHp}</span> <span>⚔ ${u.atk}</span> <span>👟 ${u.range}</span>
+                            </div>
+                            <div class="unit-tags" style="margin-top:6px;display:flex;justify-content:center;gap:4px;flex-wrap:wrap;">
+                                ${(u.tags||[]).map(t=>`<span style="font-size:0.6rem;padding:2px 6px;background:#2ecc7122;border:1px solid #2ecc71;color:#2ecc71;border-radius:8px;">${t}</span>`).join('')}
+                            </div>
+                        </div>
+                        `).join('')}
+                    </div>
+                    <style>
+                        .unit-card.gained {
+                            background: rgba(46,204,113,0.08); border: 2px solid #2ecc71;
+                            border-radius: 16px; padding: 16px; min-width: 130px; max-width: 160px;
+                            box-shadow: 0 0 20px #2ecc7133; animation: unitSlideUp 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+                            animation-delay: var(--delay);
+                        }
+                    </style>
+                </div>
+                ` : ''}
+
+                <!-- ===== SOBREVIVENTES (EXÉRCITO) ===== -->
+                <div style="margin-bottom: 28px;">
+                    <h3 style="
+                        font-family: 'Cinzel', serif; font-size: 1.3rem; color: #4a9edd;
+                        margin: 0 0 16px 0; letter-spacing: 2px; text-transform: uppercase;
+                        display: flex; align-items: center; justify-content: center; gap: 12px;
+                    ">
+                        <span>🛡️</span> EXÉRCITO VICTORIOSO (${survivors.filter(u=>!u.isLeader).length}) <span>🛡️</span>
+                    </h3>
+                    <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+                        ${survivors.filter(u=>!u.isLeader).map((u, i) => `
+                        <div class="unit-card survived" style="--delay:${i * 0.05}s">
+                            ${u.sprite ? `<img src="${u.sprite}" alt="${u.name}" style="max-width:90px; max-height:90px; filter: drop-shadow(0 0 10px #4a9edd); image-rendering: pixelated;">` : `<div style="width:70px;height:70px;border-radius:50%;background:radial-gradient(circle,#4a9edd44 0%,#000 70%);border:2px solid #4a9edd;display:flex;align-items:center;justify-content:center;font-size:35px;text-shadow:0 0 8px #4a9edd;">${u.emoji}</div>`}
+                            <div class="unit-name" style="font-family:'Cinzel',serif;font-size:0.85rem;color:#4a9edd;margin-top:6px;text-shadow:0 0 6px #4a9edd;">${u.name}</div>
+                            <div class="unit-stats" style="font-size:0.7rem;color:#888;margin-top:3px;display:flex;justify-content:center;gap:8px;">
+                                <span>Lv${u.level} ⭐${u.starLevel||1}</span> <span>❤️ ${u.hp}/${u.maxHp}</span>
+                            </div>
+                        </div>
+                        `).join('')}
+                    </div>
+                    <style>
+                        .unit-card.survived {
+                            background: rgba(74,158,221,0.06); border: 2px solid #4a9edd;
+                            border-radius: 14px; padding: 12px; min-width: 110px; max-width: 140px;
+                            box-shadow: 0 0 15px #4a9edd22; animation: unitSlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+                            animation-delay: var(--delay);
+                        }
+                    </style>
+                </div>
+
+                <!-- ===== UNIDADES PERDIDAS ===== -->
+                ${lostUnits.length > 0 ? `
+                <div style="margin-bottom: 28px;">
+                    <h3 style="
+                        font-family: 'Cinzel', serif; font-size: 1.3rem; color: #e74c3c;
+                        margin: 0 0 16px 0; letter-spacing: 2px; text-transform: uppercase;
+                        display: flex; align-items: center; justify-content: center; gap: 12px;
+                    ">
+                        <span>💀</span> HEROIS CAÍDOS (${lostUnits.length}) <span>💀</span>
+                    </h3>
+                    <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+                        ${lostUnits.map((u, i) => `
+                        <div class="unit-card lost" style="--delay:${i * 0.1}s">
+                            ${u.sprite ? `<img src="${u.sprite}" alt="${u.name}" style="max-width:100px; max-height:100px; filter: grayscale(100%) sepia(50%) drop-shadow(0 0 10px #e74c3c); image-rendering: pixelated; opacity:0.7;">` : `<div style="width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#e74c3c33 0%,#000 70%);border:3px dashed #e74c3c;display:flex;align-items:center;justify-content:center;font-size:40px;opacity:0.6;">${u.emoji}</div>`}
+                            <div class="unit-name" style="font-family:'Cinzel',serif;font-size:0.9rem;color:#e74c3c;margin-top:8px;text-shadow:0 0 8px #e74c3c;opacity:0.8;">${u.name}</div>
+                            <div class="unit-stats" style="font-size:0.75rem;color:#888;margin-top:4px;">Lutou bravamente até o fim</div>
+                        </div>
+                        `).join('')}
+                    </div>
+                    <style>
+                        .unit-card.lost {
+                            background: rgba(231,76,60,0.08); border: 2px dashed #e74c3c;
+                            border-radius: 16px; padding: 16px; min-width: 130px; max-width: 160px;
+                            box-shadow: 0 0 20px #e74c3c33; animation: unitFadeIn 0.8s ease-out backwards;
+                            animation-delay: var(--delay);
+                        }
+                    </style>
+                </div>
+                ` : ''}
+
+                <!-- Botão continuar -->
+                <button id="btn-victory-continue" class="btn-success" style="
+                    font-family: 'Cinzel', serif; font-size: 1.2rem; letter-spacing: 3px;
+                    padding: 16px 56px; background: linear-gradient(135deg, ${glowColor}, ${isBossNode ? '#c9a227' : (isEliteNode ? '#c0392b' : '#27ae60')});
+                    border: 3px solid #fff; box-shadow: 0 0 30px ${glowColor}80;
+                    transition: all 0.2s; margin-top: 10px;
+                ">PROSSEGUIR PARA O ACAMPAMENTO</button>
+
+                <style>
+                    @keyframes victoryReveal {
+                        0% { opacity: 0; transform: scale(0.7) translateY(40px) rotateX(20deg); filter: blur(15px); }
+                        15% { opacity: 1; transform: scale(1.03) translateY(-8px) rotateX(0deg); filter: blur(0); }
+                        100% { opacity: 1; transform: scale(1) translateY(0) rotateX(0deg); filter: blur(0); }
+                    }
+                    @keyframes titlePulse {
+                        0%, 100% { text-shadow: 0 0 25px ${glowColor}, 0 0 50px ${glowColor}; }
+                        50% { text-shadow: 0 0 40px ${glowColor}, 0 0 80px ${glowColor}, 0 0 120px ${glowColor}; }
+                    }
+                    @keyframes flagWave {
+                        0%, 100% { transform: rotate(-3deg) scaleX(1); }
+                        50% { transform: rotate(3deg) scaleX(1.05); }
+                    }
+                    @keyframes flagRipple {
+                        0%, 100% { transform: scaleY(1); }
+                        50% { transform: scaleY(1.1); }
+                    }
+                    @keyframes cardPopIn {
+                        0% { opacity: 0; transform: scale(0.5) translateY(30px) rotateX(30deg); }
+                        100% { opacity: 1; transform: scale(1) translateY(0) rotateX(0deg); }
+                    }
+                    @keyframes unitSlideUp {
+                        0% { opacity: 0; transform: translateY(40px) scale(0.8); }
+                        100% { opacity: 1; transform: translateY(0) scale(1); }
+                    }
+                    @keyframes unitFadeIn {
+                        0% { opacity: 0; transform: scale(0.9); filter: blur(5px); }
+                        100% { opacity: 1; transform: scale(1); filter: blur(0); }
+                    }
+                    #btn-victory-continue:hover {
+                        transform: scale(1.08) !important;
+                        box-shadow: 0 0 40px ${glowColor}CC !important;
+                        background: linear-gradient(135deg, ${isBossNode ? '#c9a227' : (isEliteNode ? '#c0392b' : '#27ae60')}, ${glowColor}) !important;
+                    }
+                </style>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        // Anima entrada
+        requestAnimationFrame(() => {
+            overlay.style.opacity = '1';
+        });
+
+        // Partículas no canvas
+        const particleCanvas = overlay.querySelector('#victory-particles');
+        if (particleCanvas) {
+            particleCanvas.width = overlay.clientWidth;
+            particleCanvas.height = overlay.clientHeight;
+            const pctx = particleCanvas.getContext('2d');
+            const particles = Array.from({ length: 50 }, () => ({
+                x: Math.random() * particleCanvas.width,
+                y: Math.random() * particleCanvas.height,
+                vx: (Math.random() - 0.5) * 0.6,
+                vy: -0.4 - Math.random() * 0.7,
+                size: 3 + Math.random() * 5,
+                alpha: 0.5 + Math.random() * 0.4,
+                hue: particleHue + Math.random() * 40,
+                life: 1
+            }));
+            let pAnim = null;
+            const drawParticles = () => {
+                pctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= 0.0015;
+                    if (p.life <= 0) {
+                        p.x = Math.random() * particleCanvas.width;
+                        p.y = particleCanvas.height + 30;
+                        p.life = 1;
+                    }
+                    pctx.fillStyle = `hsla(${p.hue}, 80%, 70%, ${p.alpha * p.life})`;
+                    pctx.beginPath();
+                    pctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                    pctx.fill();
+                    // Brilho central
+                    pctx.fillStyle = `hsla(${p.hue}, 100%, 85%, ${p.alpha * p.life * 0.5})`;
+                    pctx.beginPath();
+                    pctx.arc(p.x, p.y, p.size * p.life * 0.4, 0, Math.PI * 2);
+                    pctx.fill();
+                });
+                pAnim = requestAnimationFrame(drawParticles);
+            };
+            drawParticles();
+            overlay._particleAnim = pAnim;
+        }
+
+        // Botão fechar
+        overlay.querySelector('#btn-victory-continue').onclick = () => {
+            overlay.style.opacity = '0';
+            if (overlay._particleAnim) cancelAnimationFrame(overlay._particleAnim);
+            setTimeout(() => {
+                overlay.remove();
+                r(true);
+            }, 500);
+        };
+    });
+}
+
 function autoSave() {
     if (game && !game.gameOver) {
         // CORREÇÃO: Chave única e isolada para cada modo de jogo
@@ -3441,7 +4069,7 @@ async function activateNode(node) {
 // ==========================================
 // 7. FLUXO DE JOGO E FINAIS DOS ATOS
 // ==========================================
-function triggerStageEnd(win) {
+async function triggerStageEnd(win) {
     let pL = game.units.find(u => u.isLeader && u.faction === 1) || { name: game.leaderData?.name || 'Líder', emoji: game.leaderData?.emoji || '👑', level: game.leaderData?.level || 1 };
 
     // --- 1. REGISTRO DE HISTÓRICO PARA TODOS OS MODOS ---
@@ -3599,6 +4227,11 @@ function triggerStageEnd(win) {
         if (game.pendingDrop) {
             if (typeof window.giveRandomArtifact === 'function') window.giveRandomArtifact(game.pendingDrop);
             game.pendingDrop = null;
+        }
+
+        // TELA ÉPICA DE VITÓRIA (Smash Bros style)
+        if (typeof showVictoryScreen === 'function') {
+            await showVictoryScreen();
         }
 
         $('rs-title').innerText = "Vitória!"; $('rs-title').style.color = '#c9a227';

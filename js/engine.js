@@ -4773,11 +4773,17 @@ const origAttemptTameObj = Game.prototype.attemptTame;
 Game.prototype.attemptTame = async function (tamer, wild) {
     let res = await origAttemptTameObj.call(this, tamer, wild);
 
-    // Se a doma funcionou e o alvo era o Chefe da missão
+    // Se a doma funcionou e o alvo era o Chefe da missão (OBJETIVO BOSS)
     if (res && this.currentObjective === 'BOSS' && wild.isObjectiveTarget && tamer.faction === 1) {
         this.gameOver = true;
         if (typeof triggerStageEnd === 'function') triggerStageEnd(true);
     }
+
+    // CAPTURA DE CHEFE/ELITE (qualquer boss/elite domado) → tela estilo Smash Bros!
+    if (res && tamer.faction === 1 && (wild.isBoss || wild.isElite) && typeof showBossTameUnlock === 'function') {
+        await showBossTameUnlock(wild);
+    }
+
     return res;
 };
 
