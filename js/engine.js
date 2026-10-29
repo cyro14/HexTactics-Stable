@@ -308,7 +308,7 @@ class Game {
         if (stageInd) stageInd.innerText = `ATO ${toRoman(act)} - NÓ ${depth + 1}`;
         const log = document.getElementById('combat-log'); if (log) log.innerHTML = '';
         this.map.clear(); this.units = []; this.items.clear(); this.hasKey = false;
-        this.manaPool = {}; this.spentMana = {}; this.spellCooldowns = {}; this.activeSpell = null; this.lastDeadAlly = null; this.turnCount = 0;
+        this.manaPool = {}; this.spentMana = {}; this.spellCooldowns = {}; this.activeSpell = null; this.lastDeadAlly = null; this.turnCount = 1; // Começa na Alvorada (turno 1)
 
         // ----------------------------------------------------
         // MÁGICA DOS MAPAS CUSTOMIZADOS POR REGIÃO E BIOMA
@@ -4475,7 +4475,12 @@ window.runAITurn = async function () {
         if (game.gameOver) return;
         if (u.mp === 0 && u.hasAttacked) continue;
 
-        if (renderer) { renderer.centerOn(u.vq, u.vr); renderer.draw(); }
+        // Noite: só centra a câmera se a unidade estiver visível (não oculta pela névoa)
+        const isNight = game.turnCount >= 6 && game.turnCount <= 8;
+        // Só centraliza se a unidade inimiga estiver REALMENTE visível para o jogador (em visibleHexes)
+        // Unidades com tags de luz (FIRE/CELESTIAL) são visíveis na névoa, mas o jogador não quer que a câmera pule pra elas no turno inimigo
+        const isVisible = game.visibleHexes?.has(`${u.q},${u.r}`) || !isNight;
+        if (renderer && isVisible) { renderer.centerOn(u.vq, u.vr); renderer.draw(); }
         game.selectedUnit = u; if (typeof sleep === 'function') await sleep(300);
         game.calculateReachable(u);
 
@@ -4772,7 +4777,9 @@ window.runWildTurn = async function () {
         if (!w.alerted) { w.hp = Math.min(w.maxHp, w.hp + 5); continue; }
         if (bhv === BEHAVIORS.reactive && !w._lastAttacker) continue; // reativo sem agressor: dorme
 
-        if (renderer) { renderer.centerOn(w.vq, w.vr); renderer.draw(); }
+        const isNight = game.turnCount >= 6 && game.turnCount <= 8;
+        const isVisible = !isNight || !w.isHiddenByNight || game.visibleHexes?.has(`${w.q},${w.r}`);
+        if (renderer && isVisible) { renderer.centerOn(w.vq, w.vr); renderer.draw(); }
         game.selectedUnit = w; if (typeof sleep === 'function') await sleep(250);
         game.calculateReachable(w);
 
