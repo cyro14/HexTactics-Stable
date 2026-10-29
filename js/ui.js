@@ -85,8 +85,9 @@ function showChallengerUnlock(challenger) {
         overlay.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(ellipse at center, rgba(30,20,40,0.95) 0%, rgba(0,0,0,0.98) 70%);
-            z-index: 16000; display: flex; align-items: center; justify-content: center;
+            z-index: 16000; display: flex; align-items: flex-start; justify-content: center;
             opacity: 0; transition: opacity 0.5s ease-out;
+            overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 10px;
         `;
 
         // Busca o sprite do líder
@@ -98,35 +99,37 @@ function showChallengerUnlock(challenger) {
         const knownSpells = challenger.knownSpells || [];
 
         overlay.innerHTML = `
-            <div style="
-                max-width: 90vw; max-height: 90vh; text-align: center;
+            <div id="challenger-unlock-content" style="
+                max-width: 95vw; width: 100%; text-align: center;
                 animation: unlockReveal 0.8s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
                 perspective: 800px;
+                padding: 20px 10px 40px;
             ">
                 <!-- Partículas de fundo -->
-                <canvas id="unlock-particles" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1;"></canvas>
+                <canvas id="unlock-particles" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1;"></canvas>
 
                 <!-- Sprite/Retrato grande -->
-                <div style="margin-bottom: 20px; position: relative;">
+                <div style="margin-bottom: 16px; position: relative;">
                     ${spriteSrc ? `
                         <img src="${spriteSrc}" alt="${challenger.name}" style="
-                            max-width: 280px; max-height: 280px; filter: drop-shadow(0 0 30px rgba(77,166,255,0.8)) drop-shadow(0 0 60px rgba(77,166,255,0.4));
+                            max-width: 280px; max-height: 280px; width: 80vw; height: auto;
+                            filter: drop-shadow(0 0 20px #4da6ff) drop-shadow(0 0 40px #4da6ff);
                             image-rendering: pixelated; image-rendering: crisp-edges;
                             animation: spriteFloat 3s ease-in-out infinite;
                         ">
                     ` : `
                         <div style="
-                            width: 200px; height: 200px; margin: 0 auto; border-radius: 50%;
-                            background: radial-gradient(circle, rgba(77,166,255,0.3) 0%, rgba(0,0,0,0.8) 70%);
-                            border: 4px solid #4da6ff; display: flex; align-items: center; justify-content: center;
+                            width: 200px; height: 200px; max-width: 70vw; margin: 0 auto; border-radius: 50%;
+                            background: radial-gradient(circle, #4da6ff33 0%, rgba(0,0,0,0.8) 70%);
+                            border: 3px solid #4da6ff; display: flex; align-items: center; justify-content: center;
                             font-size: 80px; text-shadow: 0 0 20px #4da6ff;
                             animation: spriteFloat 3s ease-in-out infinite;
                         ">${emoji}</div>
                     `}
                     <!-- Coroa de desafiante animada -->
                     <div style="
-                        position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
-                        width: 120px; height: 60px; pointer-events: none;
+                        position: absolute; top: -35px; left: 50%; transform: translateX(-50%);
+                        width: 100px; height: 50px; pointer-events: none;
                     ">
                         <svg viewBox="0 0 120 60" style="width:100%; height:100%; filter: drop-shadow(0 0 10px #4da6ff);">
                             <path d="M10 45 L25 10 L40 35 L60 5 L80 35 L95 10 L110 45 Z" fill="rgba(77,166,255,0.9)" stroke="#fff" stroke-width="2"/>
@@ -211,6 +214,19 @@ function showChallengerUnlock(challenger) {
                         transform: scale(1.05);
                         box-shadow: 0 0 30px rgba(77,166,255,0.8) !important;
                     }
+                    /* Mobile portrait - compact layout */
+                    @media (max-width: 480px) and (orientation: portrait) {
+                        #challenger-unlock-content { padding: 10px 5px 30px; }
+                        h1 { font-size: 1.6rem !important; letter-spacing: 2px !important; margin-bottom: 4px !important; }
+                        h2 { font-size: 1.3rem !important; margin-bottom: 12px !important; }
+                        p { font-size: 0.9rem !important; margin-bottom: 12px !important; }
+                        button { font-size: 0.95rem !important; padding: 12px 32px !important; }
+                        div[style*="display: flex"][style*="gap: 12px"] > span { font-size: 0.7rem !important; padding: 4px 10px !important; }
+                        div[style*="background: rgba(77,166,255,0.1)"] { padding: 10px !important; }
+                        div[style*="font-size: 0.8rem"] { font-size: 0.7rem !important; padding: 3px 8px !important; }
+                        div[style*="font-size: 0.85rem"] { font-size: 0.75rem !important; }
+                        svg[width="60"] { width: 48px !important; height: 48px !important; }
+                    }
                 </style>
             </div>
         `;
@@ -284,8 +300,9 @@ function showBossTameUnlock(boss) {
         overlay.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(ellipse at center, rgba(40,20,40,0.95) 0%, rgba(0,0,0,0.98) 70%);
-            z-index: 16000; display: flex; align-items: center; justify-content: center;
+            z-index: 16000; display: flex; align-items: flex-start; justify-content: center;
             opacity: 0; transition: opacity 0.5s ease-out;
+            overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 10px;
         `;
 
         const isElite = boss.isElite && !boss.isBoss;
@@ -302,28 +319,30 @@ function showBossTameUnlock(boss) {
         }
 
         overlay.innerHTML = `
-            <div style="
-                max-width: 90vw; max-height: 90vh; text-align: center;
+            <div id="boss-tame-content" style="
+                max-width: 95vw; width: 100%; text-align: center;
                 animation: unlockReveal 0.8s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
                 perspective: 800px;
+                padding: 20px 10px 40px;
             ">
                 <!-- Partículas de fundo -->
-                <canvas id="unlock-particles" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1;"></canvas>
+                <canvas id="unlock-particles" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1;"></canvas>
 
                 <!-- Sprite/Retrato grande -->
-                <div style="margin-bottom: 20px; position: relative;">
+                <div style="margin-bottom: 16px; position: relative;">
                     ${boss.sprite ? `
                         <img src="${boss.sprite}" alt="${boss.name}" style="
-                            max-width: 320px; max-height: 320px; filter: drop-shadow(0 0 30px ${glowColor}) drop-shadow(0 0 60px ${glowColor});
+                            max-width: 280px; max-height: 280px; width: 80vw; height: auto;
+                            filter: drop-shadow(0 0 20px ${glowColor}) drop-shadow(0 0 40px ${glowColor});
                             image-rendering: pixelated; image-rendering: crisp-edges;
                             animation: spriteFloat 3s ease-in-out infinite;
                         ">
                     ` : `
                         <div style="
-                            width: 240px; height: 240px; margin: 0 auto; border-radius: 50%;
+                            width: 200px; height: 200px; max-width: 70vw; margin: 0 auto; border-radius: 50%;
                             background: radial-gradient(circle, ${glowColor}33 0%, rgba(0,0,0,0.8) 70%);
-                            border: 4px solid ${glowColor}; display: flex; align-items: center; justify-content: center;
-                            font-size: 100px; text-shadow: 0 0 20px ${glowColor};
+                            border: 3px solid ${glowColor}; display: flex; align-items: center; justify-content: center;
+                            font-size: 80px; text-shadow: 0 0 20px ${glowColor};
                             animation: spriteFloat 3s ease-in-out infinite;
                         ">${boss.emoji}</div>
                     `}
@@ -482,6 +501,26 @@ function showBossTameUnlock(boss) {
                         transform: scale(1.05);
                         box-shadow: 0 0 30px ${glowColor}CC !important;
                     }
+                    /* Mobile portrait - compact layout */
+                    @media (max-width: 480px) and (orientation: portrait) {
+                        #boss-tame-content { padding: 10px 5px 30px; }
+                        h1 { font-size: 1.6rem !important; letter-spacing: 2px !important; margin-bottom: 4px !important; }
+                        p { font-size: 0.9rem !important; margin-bottom: 12px !important; }
+                        h2 { font-size: 1.5rem !important; margin-bottom: 12px !important; }
+                        .resource-card { padding: 8px 12px !important; min-width: 70px !important; }
+                        .rc-icon { font-size: 1.4rem !important; }
+                        .rc-amt { font-size: 1.2rem !important; }
+                        .rc-label { font-size: 0.6rem !important; }
+                        button { font-size: 0.95rem !important; padding: 12px 32px !important; }
+                        svg[width="60"] { width: 48px !important; height: 48px !important; }
+                        .unit-card { min-width: 110px !important; padding: 10px !important; }
+                        .unit-name { font-size: 0.75rem !important; }
+                        .unit-stats { font-size: 0.65rem !important; gap: 6px !important; }
+                        div[style*="font-size: 0.9rem"] { font-size: 0.75rem !important; }
+                        div[style*="padding: 16px"] { padding: 10px !important; }
+                        div[style*="font-size: 0.8rem"] { font-size: 0.7rem !important; padding: 3px 8px !important; }
+                        div[style*="font-size: 0.75rem"] { font-size: 0.65rem !important; }
+                    }
                 </style>
             </div>
         `;
@@ -554,7 +593,10 @@ function showVictoryScreen() {
     return new Promise(r => {
         // Coleta dados da batalha
         const survivors = game.units.filter(u => u.faction === 1 && u.hp > 0);
-        const initialRoster = deployedRoster || [];
+        // Usa o roster salvo no início da batalha (não o deployedRoster que é do battle anterior)
+        const initialRoster = (game.battleStartRoster || []).map(u => new Unit({ 
+            name: u.name, baseName: u.baseName, level: u.level, isLeader: u.isLeader 
+        }));
         
         // Unidades que morreram (estavam no roster inicial mas não sobreviveram)
         const lostUnits = initialRoster.filter(u => {
@@ -605,8 +647,9 @@ function showVictoryScreen() {
         overlay.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(ellipse at center, rgba(20,40,20,0.97) 0%, rgba(0,20,0,0.99) 70%);
-            z-index: 16000; display: flex; align-items: center; justify-content: center;
-            opacity: 0; transition: opacity 0.5s ease-out; overflow-y: auto;
+            z-index: 16000; display: flex; align-items: flex-start; justify-content: center;
+            opacity: 0; transition: opacity 0.5s ease-out;
+            overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 10px;
         `;
 
         const isBossNode = game.isBossStage || game.currentRouteType === 'BOSS';
@@ -617,13 +660,13 @@ function showVictoryScreen() {
         const particleHue = isBossNode ? 50 : (isEliteNode ? 0 : 120);
 
         overlay.innerHTML = `
-            <div style="
-                max-width: 95vw; max-height: 95vh; text-align: center; padding: 20px;
+            <div id="victory-content" style="
+                max-width: 95vw; width: 100%; text-align: center; padding: 20px 10px 40px;
                 animation: victoryReveal 1s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
                 perspective: 800px;
             ">
                 <!-- Partículas de fundo -->
-                <canvas id="victory-particles" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1;"></canvas>
+                <canvas id="victory-particles" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1;"></canvas>
 
                 <!-- Bandeira de vitória animada -->
                 <div style="margin-bottom: 16px; animation: flagWave 2s ease-in-out infinite;">
@@ -835,6 +878,29 @@ function showVictoryScreen() {
                         transform: scale(1.08) !important;
                         box-shadow: 0 0 40px ${glowColor}CC !important;
                         background: linear-gradient(135deg, ${isBossNode ? '#c9a227' : (isEliteNode ? '#c0392b' : '#27ae60')}, ${glowColor}) !important;
+                    }
+                    /* Mobile portrait - compact layout */
+                    @media (max-width: 480px) and (orientation: portrait) {
+                        #victory-content { padding: 10px 5px 30px; }
+                        h1 { font-size: 1.8rem !important; letter-spacing: 3px !important; margin-bottom: 4px !important; }
+                        p { font-size: 0.95rem !important; margin-bottom: 12px !important; }
+                        div[style*="font-size: 1rem"] { font-size: 0.85rem !important; }
+                        h3 { font-size: 1.1rem !important; margin-bottom: 10px !important; }
+                        .resource-card { padding: 8px 12px !important; min-width: 70px !important; }
+                        .rc-icon { font-size: 1.4rem !important; }
+                        .rc-amt { font-size: 1.2rem !important; }
+                        .rc-label { font-size: 0.6rem !important; }
+                        button { font-size: 1rem !important; padding: 12px 36px !important; }
+                        svg[width="100"] { width: 80px !important; height: 48px !important; }
+                        .unit-card { min-width: 110px !important; padding: 10px !important; }
+                        .unit-name { font-size: 0.75rem !important; }
+                        .unit-stats { font-size: 0.65rem !important; gap: 6px !important; }
+                        div[style*="font-size: 1.3rem"] { font-size: 1rem !important; }
+                        div[style*="padding: 16px"] { padding: 10px !important; }
+                        div[style*="font-size: 0.9rem"] { font-size: 0.75rem !important; }
+                        div[style*="font-size: 0.8rem"] { font-size: 0.7rem !important; padding: 3px 8px !important; }
+                        div[style*="font-size: 0.75rem"] { font-size: 0.65rem !important; }
+                        div[style*="font-size: 0.85rem"] { font-size: 0.75rem !important; }
                     }
                 </style>
             </div>
@@ -4315,6 +4381,8 @@ function advanceCampaign() {
 
     setTimeout(async () => {
         const r = deployedRoster.map(m => new Unit({ ...m, q: 0, r: 0, hasAttacked: false, status: null, isNew: false }));
+        // Salva o roster inicial desta batalha para a tela de vitória
+        game.battleStartRoster = r.map(u => ({ name: u.name, baseName: u.baseName, level: u.level, isLeader: u.isLeader }));
         game.generateCampaignMap(r);
         renderer.initCamera(true);
 

@@ -2081,6 +2081,7 @@ class Renderer {
             syncSize();
             actx.clearRect(0, 0, ambCv.width, ambCv.height);
             self.drawAmbientOnCtx(actx, self.getTODPhase());
+            self.drawRegionAmbient(actx);
         };
         self._ambientRaf = requestAnimationFrame(loop);
     }
@@ -2666,6 +2667,303 @@ class Renderer {
                 ctx.stroke();
             });
         }
+    }
+
+    // ==========================================
+    // EFEITOS ATMOSFÉRICOS POR REGIÃO (overlay sobre o ambiente base)
+    // ==========================================
+    drawRegionAmbient(ctx) {
+        if (!this.game || !this.game.currentRegionId) return;
+        const regionId = this.game.currentRegionId;
+        const W = ctx.canvas.width, H = ctx.canvas.height;
+        const t = performance.now() / 1000;
+        const hs = this.hexSize || 40;
+        const FX = (f) => f * W, FY = (f) => f * H;
+
+        // RNG determinístico por região para consistência visual
+        let seed = 0;
+        for (let i = 0; i < regionId.length; i++) seed = (seed * 31 + regionId.charCodeAt(i)) | 0;
+        const rnd = () => { seed = (seed * 1664525 + 1013904223) | 0; return ((seed >>> 8) & 0xFFFF) / 0xFFFF; };
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-over';
+
+        // --- NORTH (Picos Gélidos): NEVASCA ---
+        if (regionId === 'NORTH') {
+            ctx.globalCompositeOperation = 'lighter';
+            // Flocos de neve caindo
+            if (!this._northSnowflakes) {
+                this._northSnowflakes = Array.from({ length: 80 }, () => ({
+                    x: rnd() * W, y: rnd() * H,
+                    vx: (rnd() - 0.5) * 0.3, vy: 0.5 + rnd() * 1.5,
+                    size: 1.5 + rnd() * 2.5, alpha: 0.3 + rnd() * 0.5,
+                    sway: rnd() * Math.PI * 2, swaySpeed: 0.5 + rnd() * 1
+                }));
+            }
+            this._northSnowflakes.forEach(f => {
+                f.x += f.vx + Math.sin(t * f.swaySpeed + f.sway) * 0.3;
+                f.y += f.vy;
+                f.sway += 0.02;
+                if (f.y > H + 20) { f.y = -20; f.x = rnd() * W; }
+                if (f.x > W + 20) f.x = -20;
+                if (f.x < -20) f.x = W + 20;
+                ctx.fillStyle = `rgba(220, 240, 255, ${f.alpha})`;
+                ctx.beginPath(); ctx.arc(f.x, f.y, f.size, 0, Math.PI * 2); ctx.fill();
+            });
+            // Névoa baixa gelada
+            const fogAlpha = 0.08 + Math.sin(t * 0.3) * 0.03;
+            const fogGrad = ctx.createLinearGradient(0, H * 0.6, 0, H);
+            fogGrad.addColorStop(0, `rgba(180, 220, 255, 0)`);
+            fogGrad.addColorStop(0.5, `rgba(180, 220, 255, ${fogAlpha})`);
+            fogGrad.addColorStop(1, `rgba(150, 200, 240, ${fogAlpha * 1.5})`);
+            ctx.fillStyle = fogGrad; ctx.fillRect(0, H * 0.6, W, H * 0.4);
+        }
+
+        // --- NE (Rota da Tempestade): TEMPESTADE / RAIOS ---
+        else if (regionId === 'NE') {
+            ctx.globalCompositeOperation = 'lighter';
+            // Nuvens de tempestade escuras
+            const stormAlpha = 0.15 + Math.sin(t * 0.4) * 0.08;
+            const stormGrad = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+            stormGrad.addColorStop(0, `rgba(40, 40, 60, ${stormAlpha})`);
+            stormGrad.addColorStop(1, `rgba(20, 20, 40, 0)`);
+            ctx.fillStyle = stormGrad; ctx.fillRect(0, 0, W, H * 0.5);
+            // Raios ocasionais
+            if (!this._neLightning) this._neLightning = { nextStrike: t + 2 + rnd() * 4, active: false, progress: 0, x: 0, y: 0, branches: [] };
+            if (t >= this._neLightning.nextStrike && !this._neLightning.active) {
+                this._neLightning.active = true; this._neLightning.progress = 0;
+                this._neLightning.x = 0.1 * W + rnd() * 0.8 * W;
+                this._neLightning.y = 0;
+                this._neLightning.branches = [];
+                // Gera ramificações do raio
+                let bx = this._neLightning.x, by = this._neLightning.y;
+                for (let i = 0; i < 8; i++) {
+                    this._neLightning.branches.push({ x: bx, y: by });
+                    bx += (rnd() - 0.5) * W * 0.15;
+                    by += H * 0.12;
+                }
+                this._neLightning.nextStrike = t + 3 + rnd() * 5;
+            }
+            if (this._neLightning.active) {
+                this._neLightning.progress += 0.15;
+                if (this._neLightning.progress >= 1) { this._neLightning.active = false; }
+                const intensity = Math.sin(this._neLightning.progress * Math.PI) * 0.8;
+                // Flash de fundo
+                const flashAlpha = intensity * 0.3;
+                ctx.fillStyle = `rgba(180, 200, 255, ${flashAlpha})`; ctx.fillRect(0, 0, W, H);
+                // Desenha raio
+                ctx.strokeStyle = `rgba(180, 220, 255, ${intensity})`;
+                ctx.lineWidth = 2 + intensity * 3; ctx.lineCap = 'round'; ctx.shadowColor = '#aaddff'; ctx.shadowBlur = 20;
+                ctx.beginPath(); ctx.moveTo(this._neLightning.branches[0].x, this._neLightning.branches[0].y);
+                for (let i = 1; i < this._neLightning.branches.length; i++) {
+                    ctx.lineTo(this._neLightning.branches[i].x, this._neLightning.branches[i].y);
+                }
+                ctx.stroke(); ctx.shadowBlur = 0;
+            }
+        }
+
+        // --- EAST (Ermos Desolados): TEMPESTADE DE AREIA ---
+        else if (regionId === 'EAST') {
+            // Partículas de areia sopradas horizontalmente
+            if (!this._eastSand) {
+                this._eastSand = Array.from({ length: 120 }, () => ({
+                    x: rnd() * W, y: rnd() * H,
+                    vx: 1 + rnd() * 2, vy: (rnd() - 0.5) * 0.3,
+                    size: 0.8 + rnd() * 1.5, alpha: 0.15 + rnd() * 0.2,
+                    length: 5 + rnd() * 15
+                }));
+            }
+            ctx.globalCompositeOperation = 'source-over';
+            this._eastSand.forEach(s => {
+                s.x += s.vx; s.y += s.vy;
+                if (s.x > W + 50) { s.x = -50; s.y = rnd() * H; }
+                ctx.strokeStyle = `rgba(210, 180, 140, ${s.alpha})`;
+                ctx.lineWidth = Math.max(0.5, s.size); ctx.lineCap = 'round';
+                ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x - s.length, s.y); ctx.stroke();
+            });
+            // Névoa de areia no horizonte
+            const hazeAlpha = 0.12 + Math.sin(t * 0.2) * 0.05;
+            const hazeGrad = ctx.createLinearGradient(0, H * 0.5, 0, H);
+            hazeGrad.addColorStop(0, `rgba(200, 180, 150, 0)`);
+            hazeGrad.addColorStop(0.5, `rgba(200, 180, 150, ${hazeAlpha})`);
+            hazeGrad.addColorStop(1, `rgba(180, 160, 130, ${hazeAlpha * 1.3})`);
+            ctx.fillStyle = hazeGrad; ctx.fillRect(0, H * 0.5, W, H * 0.5);
+        }
+
+        // --- SOUTH (Pântano Tóxico): FUMAÇA VERDE ---
+        else if (regionId === 'SOUTH') {
+            ctx.globalCompositeOperation = 'lighter';
+            // Bolhas de gás tóxico subindo
+            if (!this._southBubbles) {
+                this._southBubbles = Array.from({ length: 40 }, () => ({
+                    x: rnd() * W, y: H + rnd() * H * 0.5,
+                    vx: (rnd() - 0.5) * 0.2, vy: -0.3 - rnd() * 0.5,
+                    size: 3 + rnd() * 6, alpha: 0.2 + rnd() * 0.3,
+                    wobble: rnd() * Math.PI * 2
+                }));
+            }
+            this._southBubbles.forEach(b => {
+                b.x += b.vx + Math.sin(t * 2 + b.wobble) * 0.5;
+                b.y += b.vy;
+                b.wobble += 0.05;
+                if (b.y < -20) { b.y = H + 20; b.x = rnd() * W; }
+                const pulse = 0.5 + Math.sin(t * 3 + b.wobble) * 0.3;
+                const grad = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.size);
+                grad.addColorStop(0, `rgba(80, 200, 100, ${b.alpha * pulse})`);
+                grad.addColorStop(0.5, `rgba(50, 180, 80, ${b.alpha * pulse * 0.5})`);
+                grad.addColorStop(1, 'rgba(30, 150, 60, 0)');
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2); ctx.fill();
+            });
+            // Névoa verde rasteira
+            const fogAlpha = 0.1 + Math.sin(t * 0.25) * 0.04;
+            const fogGrad = ctx.createLinearGradient(0, H * 0.6, 0, H);
+            fogGrad.addColorStop(0, `rgba(60, 180, 100, 0)`);
+            fogGrad.addColorStop(0.5, `rgba(60, 180, 100, ${fogAlpha})`);
+            fogGrad.addColorStop(1, `rgba(40, 150, 80, ${fogAlpha * 1.5})`);
+            ctx.fillStyle = fogGrad; ctx.fillRect(0, H * 0.6, W, H * 0.4);
+        }
+
+        // --- CENTER (Fenda do Ômega): FUMAÇA ROXA / VOID ---
+        else if (regionId === 'CENTER') {
+            ctx.globalCompositeOperation = 'lighter';
+            // Partículas de energia do vazio
+            if (!this._centerVoid) {
+                this._centerVoid = Array.from({ length: 60 }, () => ({
+                    x: rnd() * W, y: rnd() * H,
+                    vx: (rnd() - 0.5) * 0.4, vy: (rnd() - 0.5) * 0.4,
+                    size: 2 + rnd() * 4, alpha: 0.2 + rnd() * 0.3,
+                    hue: 270 + rnd() * 60, orbit: rnd() * Math.PI * 2, orbitSpeed: 0.2 + rnd() * 0.3
+                }));
+            }
+            this._centerVoid.forEach(p => {
+                p.orbit += p.orbitSpeed * 0.01;
+                p.x += p.vx + Math.cos(p.orbit) * 0.5;
+                p.y += p.vy + Math.sin(p.orbit) * 0.5;
+                if (p.x < -50) p.x = W + 50; if (p.x > W + 50) p.x = -50;
+                if (p.y < -50) p.y = H + 50; if (p.y > H + 50) p.y = -50;
+                const pulse = 0.4 + Math.sin(t * 2 + p.hue * 0.01) * 0.3;
+                const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+                grad.addColorStop(0, `hsla(${p.hue}, 80%, 70%, ${p.alpha * pulse})`);
+                grad.addColorStop(0.5, `hsla(${p.hue}, 70%, 50%, ${p.alpha * pulse * 0.4})`);
+                grad.addColorStop(1, `hsla(${p.hue}, 60%, 30%, 0)`);
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+            });
+            // Aura central pulsante
+            const centerPulse = 0.15 + Math.sin(t * 0.8) * 0.08;
+            const centerGrad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, Math.max(W, H) * 0.6);
+            centerGrad.addColorStop(0, `rgba(120, 60, 180, ${centerPulse})`);
+            centerGrad.addColorStop(0.4, `rgba(80, 30, 140, ${centerPulse * 0.5})`);
+            centerGrad.addColorStop(1, 'rgba(40, 10, 80, 0)');
+            ctx.fillStyle = centerGrad; ctx.fillRect(0, 0, W, H);
+        }
+
+        // --- SE (Fenda Vulcânica): CINZAS VERMELHAS / BRASAS ---
+        else if (regionId === 'SE') {
+            ctx.globalCompositeOperation = 'lighter';
+            // Cinzas e brasas subindo
+            if (!this._seEmbers) {
+                this._seEmbers = Array.from({ length: 70 }, () => ({
+                    x: rnd() * W, y: H + rnd() * H * 0.3,
+                    vx: (rnd() - 0.5) * 0.3, vy: -0.4 - rnd() * 0.8,
+                    size: 1.5 + rnd() * 3, alpha: 0.3 + rnd() * 0.4,
+                    hue: 10 + rnd() * 30, life: 1
+                }));
+            }
+            this._seEmbers.forEach(e => {
+                e.x += e.vx; e.y += e.vy; e.life -= 0.002;
+                if (e.y < -20 || e.life <= 0) { e.x = rnd() * W; e.y = H + 20; e.life = 1; e.hue = 10 + rnd() * 30; }
+                const pulse = 0.5 + Math.sin(t * 4 + e.hue * 0.1) * 0.4;
+                const grad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.size * 3);
+                grad.addColorStop(0, `hsla(${e.hue}, 100%, 60%, ${e.alpha * pulse * e.life})`);
+                grad.addColorStop(0.5, `hsla(${e.hue}, 100%, 40%, ${e.alpha * pulse * e.life * 0.5})`);
+                grad.addColorStop(1, 'rgba(255, 50, 0, 0)');
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(e.x, e.y, e.size * e.life, 0, Math.PI * 2); ctx.fill();
+                // Brilho central
+                ctx.fillStyle = `hsla(${e.hue}, 100%, 80%, ${e.alpha * pulse * e.life * 0.5})`;
+                ctx.beginPath(); ctx.arc(e.x, e.y, e.size * e.life * 0.4, 0, Math.PI * 2); ctx.fill();
+            });
+            // Calor distorcendo o ar (shimmer)
+            const shimmerAlpha = 0.05 + Math.sin(t * 0.5) * 0.02;
+            for (let i = 0; i < 3; i++) {
+                const y = H * (0.3 + i * 0.2) + Math.sin(t * 0.7 + i) * 10;
+                const grad = ctx.createLinearGradient(0, y, W, y);
+                grad.addColorStop(0, `rgba(255, 100, 20, 0)`);
+                grad.addColorStop(0.5, `rgba(255, 100, 20, ${shimmerAlpha})`);
+                grad.addColorStop(1, `rgba(255, 100, 20, 0)`);
+                ctx.fillStyle = grad; ctx.fillRect(0, y - 30, W, 60);
+            }
+        }
+
+        // --- NW (Cordilheira Primal): VENTOS DE MONTANHA ---
+        else if (regionId === 'NW') {
+            // Ventos fortes horizontais com partículas de poeira/neve
+            if (!this._nwWind) {
+                this._nwWind = Array.from({ length: 50 }, () => ({
+                    x: rnd() * W, y: rnd() * H * 0.6,
+                    vx: 1.5 + rnd() * 1.5, vy: (rnd() - 0.5) * 0.2,
+                    len: 20 + rnd() * 40, alpha: 0.1 + rnd() * 0.15
+                }));
+            }
+            ctx.globalCompositeOperation = 'source-over';
+            this._nwWind.forEach(w => {
+                w.x += w.vx;
+                if (w.x > W + 100) { w.x = -100; w.y = rnd() * H * 0.6; }
+                ctx.strokeStyle = `rgba(200, 210, 230, ${w.alpha})`;
+                ctx.lineWidth = 1; ctx.lineCap = 'round';
+                ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(w.x - w.len, w.y); ctx.stroke();
+            });
+        }
+
+        // --- SW (Costa Abissal): NEBLINA / BRUMA DO MAR ---
+        else if (regionId === 'SW') {
+            ctx.globalCompositeOperation = 'lighter';
+            // Bruma baixa do mar
+            const mistAlpha = 0.12 + Math.sin(t * 0.2) * 0.05;
+            const mistGrad = ctx.createLinearGradient(0, H * 0.4, 0, H);
+            mistGrad.addColorStop(0, `rgba(130, 180, 220, 0)`);
+            mistGrad.addColorStop(0.5, `rgba(130, 180, 220, ${mistAlpha})`);
+            mistGrad.addColorStop(1, `rgba(100, 150, 200, ${mistAlpha * 1.5})`);
+            ctx.fillStyle = mistGrad; ctx.fillRect(0, H * 0.4, W, H * 0.6);
+            // Partículas de spray do mar
+            if (!this._swSpray) {
+                this._swSpray = Array.from({ length: 30 }, () => ({
+                    x: rnd() * W, y: H * 0.4 + rnd() * H * 0.3,
+                    vx: (rnd() - 0.5) * 0.5, vy: -0.2 - rnd() * 0.5,
+                    size: 1 + rnd() * 2, alpha: 0.2 + rnd() * 0.2
+                }));
+            }
+            this._swSpray.forEach(s => {
+                s.x += s.vx; s.y += s.vy;
+                if (s.y < H * 0.3) { s.y = H * 0.7; s.x = rnd() * W; }
+                ctx.fillStyle = `rgba(180, 220, 255, ${s.alpha})`;
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
+            });
+        }
+
+        // --- WEST (Floresta Ancestral): PÓLEN / FOLHAS ---
+        else if (regionId === 'WEST') {
+            ctx.globalCompositeOperation = 'source-over';
+            // Folhas e pólen caindo suavemente
+            if (!this._westLeaves) {
+                this._westLeaves = Array.from({ length: 40 }, () => ({
+                    x: rnd() * W, y: -rnd() * H * 0.5,
+                    vx: (rnd() - 0.5) * 0.2, vy: 0.2 + rnd() * 0.5,
+                    size: 3 + rnd() * 4, angle: rnd() * Math.PI * 2, spin: (rnd() - 0.5) * 0.05,
+                    alpha: 0.3 + rnd() * 0.3, hue: 80 + rnd() * 40
+                }));
+            }
+            this._westLeaves.forEach(l => {
+                l.x += l.vx + Math.sin(t + l.angle) * 0.3;
+                l.y += l.vy; l.angle += l.spin;
+                if (l.y > H + 30) { l.y = -30; l.x = rnd() * W; }
+                ctx.save(); ctx.translate(l.x, l.y); ctx.rotate(l.angle);
+                ctx.fillStyle = `hsla(${l.hue}, 50%, 40%, ${l.alpha})`;
+                ctx.beginPath(); ctx.ellipse(0, 0, l.size, l.size * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            });
+        }
+
+        ctx.restore();
     }
 
     getTODPhase() {
