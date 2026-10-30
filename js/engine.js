@@ -75,7 +75,10 @@ class Unit {
             _digTurn: d._digTurn || null,
             // DESAFIANTE (Smash Bros style unlock)
             isChallenger: d.isChallenger || false,
-            _challengerLeaderId: d._challengerLeaderId || null
+            _challengerLeaderId: d._challengerLeaderId || null,
+            // CLASSE/FUNÇÃO DA UNIDADE (Tanque, Atacante, Suporte, Controle, Invocador, Explorador)
+            role: d.role || this.determineRole(),
+            rolePriority: 0 // Prioridade tática baseada na classe
         });
 
         this.abilities = (d.abilities || []).concat(d.ability ? [d.ability] : []).filter(Boolean);
@@ -199,8 +202,90 @@ class Unit {
         if (renderer) renderer.draw();
         game.isAnimating = false;
     }
-}
 
+    // ==========================================
+    // SISTEMA DE CLASSES/FUNÇÕES TÁTICAS
+    // ==========================================
+    determineRole() {
+        // Determina a classe tática baseada em stats, abilities e tags
+        const hpRatio = this.maxHp / Math.max(1, this.atk);
+        const hasHighHP = this.maxHp >= 80;
+        const hasHighAtk = this.atk >= 15;
+        const hasRange = this.range >= 2;
+        const abilities = this.abilities || [];
+        const knownSpells = this.knownSpells || [];
+        const tags = this.tags || [];
+        const hasHeal = abilities.includes('heal') || knownSpells.some(s => s.includes('heal') || s.includes('cure'));
+        const hasBuff = abilities.includes('buff') || knownSpells.some(s => s.includes('buff') || s.includes('shield'));
+        const hasControl = abilities.includes('stun') || abilities.includes('bind') || abilities.includes('freeze') || knownSpells.some(s => s.includes('stun') || s.includes('bind') || s.includes('freeze'));
+        const hasSummon = abilities.includes('summon') || knownSpells.some(s => s.includes('summon') || s.includes('evoke'));
+        const hasHighMP = this.maxMp >= 5;
+        const hasHighMov = this.maxMp >= 5;
+        const isFast = this.maxMp >= 6;
+        const hasStealth = abilities.includes('stealth') || abilities.includes('camouflage');
+        const isLeader = this.isLeader;
+
+        // Líderes são sempre "Commander" (versão especial de Suporte/Controle)
+        if (isLeader) return 'commander';
+
+        // Tanque: HP alto, ATK baixo/medio, habilidades defensivas
+        if (hasHighHP && !hasHighAtk && (abilities.includes('taunt') || abilities.includes('shield') || tags.includes('TANK'))) return 'tank';
+        if (hasHighHP && hpRatio > 5 && !hasHighAtk) return 'tank';
+
+        // Atacante: ATK alto, HP medio/baixo, foco em dano
+        if (hasHighAtk && !hasHighHP && !hasHeal && !hasBuff && !hasControl) return 'attacker';
+        if (hasHighAtk && hasRange && !hasHighHP) return 'attacker';
+
+        // Suporte: Cura, buffs, habilidades de sustentação
+        if (hasHeal || hasBuff || (tags.includes('SUPPORT') || tags.includes('HEALER'))) return 'support';
+
+        // Controle: CC, debuffs, zoneamento
+        if (hasControl && !hasHighAtk) return 'control';
+
+        // Invocador: Invoca unidades, minions
+        if (hasSummon || abilities.includes('summon') || knownSpells.some(s => s.includes('summon') || s.includes('evoke'))) return 'summoner';
+
+        // Explorador: Alta mobilidade, stealth, range
+        if (isFast || hasStealth || hasHighMov || hasRange) return 'scout';
+
+        // Default baseado em stats
+        if (hasHighHP) return 'tank';
+        if (hasHighAtk) return 'attacker';
+        if (hasHighMP) return 'support';
+
+        return 'attacker'; // Default
+    }
+
+    // Retorna prioridade tática baseada na classe
+    getRolePriority() {
+        const priorities = {
+            'commander': 10,
+            'tank': 8,
+            'attacker': 7,
+            'control': 6,
+            'support': 5,
+            'summoner': 4,
+            'scout': 3,
+            'attacker': 2
+        };
+        return priorities[this.role] || 1;
+    }
+
+    // Retorna ações preferidas baseadas na classe
+    getPreferredActions() {
+        const actions = {
+            'tank': { protect: 0.8, attack: 0.3, taunt: 0.7, block: 0.6 },
+            'attacker': { attack: 0.9, flank: 0.7, burst: 0.8, chase: 0.6 },
+            'support': { heal: 0.9, buff: 0.8, shield: 0.7, stayBack: 0.8 },
+            'control': { cc: 0.9, zone: 0.7, disrupt: 0.8, kite: 0.6 },
+            'summoner': { summon: 0.9, protect: 0.6, position: 0.7 },
+            'scout': { flank: 0.8, harass: 0.7, vision: 0.9, escape: 0.8 },
+            'commander': { lead: 0.9, buff: 0.7, coordinate: 0.8, attack: 0.5 },
+            'attacker': { attack: 0.7 }
+        };
+        return actions[this.role] || { attack: 0.5 };
+    }
+}
 class Game {
     constructor() {
         this.inventory = [];
@@ -4471,14 +4556,15 @@ window.runAITurn = async function () {
     const units = game.units.filter(u => u.faction === 2);
     let maxL = (typeof getActiveArtifacts === 'function' && getActiveArtifacts().includes('art_crown')) ? (game.leaderData.limit + 1) : (game.leaderData.limit || 6);
 
+    // Garante que cada unidade tenha sua role definida
+    units.forEach(u => { if (!u.role) u.role = u.determineRole(); });
+
     for (const u of units) {
         if (game.gameOver) return;
         if (u.mp === 0 && u.hasAttacked) continue;
 
         // Noite: só centra a câmera se a unidade estiver visível (não oculta pela névoa)
         const isNight = game.turnCount >= 6 && game.turnCount <= 8;
-        // Só centraliza se a unidade inimiga estiver REALMENTE visível para o jogador (em visibleHexes)
-        // Unidades com tags de luz (FIRE/CELESTIAL) são visíveis na névoa, mas o jogador não quer que a câmera pule pra elas no turno inimigo
         const isVisible = game.visibleHexes?.has(`${u.q},${u.r}`) || !isNight;
         if (renderer && isVisible) { renderer.centerOn(u.vq, u.vr); renderer.draw(); }
         game.selectedUnit = u; if (typeof sleep === 'function') await sleep(300);
@@ -4486,8 +4572,12 @@ window.runAITurn = async function () {
 
         let myM = game.units.filter(x => x.faction === u.faction && !x.isLeader).length;
         let isSafe = u.hp / u.maxHp > 0.4;
+        
+        // Pega preferências táticas baseadas na classe
+        const rolePrefs = u.getPreferredActions();
+        const rolePriority = u.getRolePriority();
 
-        // --- 1. DEFINIÇÃO DE PRIORIDADE DE ALVO ---
+        // --- 1. DEFINIÇÃO DE PRIORIDADE DE ALVO (baseada na classe) ---
         let pUnits = game.units.filter(t => t.faction === 1);
         let wUnits = game.units.filter(t => t.faction === 0);
 
@@ -4495,8 +4585,8 @@ window.runAITurn = async function () {
         let priorityTarget = pUnits.find(p => (p.hp / p.maxHp <= 0.35) || (p.hp <= u.atk));
         let intent = priorityTarget ? 'attack' : 'none';
 
-        // Segunda Prioridade: Domar criatura com 70%+ de chance de captura
-        if (!priorityTarget && u.isLeader && myM < maxL) {
+        // Segunda Prioridade: Domar criatura com 70%+ de chance de captura (exceto tanks puros)
+        if (!priorityTarget && u.isLeader && myM < maxL && rolePrefs.tame !== 0.9) {
             let bestChance = 0;
             let bestWild = null;
             wUnits.forEach(w => {
@@ -4512,23 +4602,33 @@ window.runAITurn = async function () {
             }
         }
 
-        // Alvo Padrão: O mais próximo
+        // Alvo Padrão: O mais próximo (com pesos baseados na classe)
         if (!priorityTarget) {
             let minD = 999;
             let tgts = pUnits.concat(u.isLeader && myM < maxL ? wUnits : []);
             tgts.forEach(t => {
                 let d = Hex.distance(u, t);
+                // Ajusta distância baseado na classe
                 if (t.faction === 0) {
                     if (isSafe) d -= 3;
                     else d += 10;
                 }
+                // Tanks preferem alvos que batem forte (para proteger aliados)
+                if (u.role === 'tank' && t.atk > 15) d -= 5;
+                // Attackers preferem alvos frágeis
+                if (u.role === 'attacker' && t.maxHp < 50) d -= 5;
+                // Supports preferem ficar longe de perigo
+                if (u.role === 'support') d += t.atk > 10 ? 10 : 0;
+                // Scouts preferem flanquear
+                if (u.role === 'scout' && Hex.distance(u, cls) > 3) d -= 3;
+                
                 if (d < minD) { minD = d; priorityTarget = t; intent = t.faction === 0 ? 'tame' : 'attack'; }
             });
         }
 
         let cls = priorityTarget;
 
-        // --- 2. MOVIMENTAÇÃO RUMO À PRIORIDADE ---
+        // --- 2. MOVIMENTAÇÃO RUMO À PRIORIDADE (baseada na classe) ---
         if (cls && u.mp > 0) {
             const moves = Array.from(game.reachableHexes.keys());
             let bM = { q: u.q, r: u.r }; let bestScore = -9999;
@@ -4537,6 +4637,33 @@ window.runAITurn = async function () {
                 if (game.getUnitAt(mq, mr) && (mq !== u.q || mr !== u.r)) return;
                 let distToTarget = Hex.distance({ q: mq, r: mr }, cls);
                 let score = -distToTarget * 10;
+
+                // Modificadores de movimento baseados na classe
+                if (u.role === 'tank') {
+                    // Tanks querem ficar na frente dos aliados
+                    const alliesNearby = game.units.filter(a => a.faction === 2 && a !== u && Hex.distance({q: mq, r: mr}, a) <= 2).length;
+                    score += alliesNearby * 15;
+                }
+                if (u.role === 'attacker') {
+                    // Attackers querem flanquear
+                    const flankingBonus = (game.units.some(a => a.faction === 2 && Hex.distance({q: mq, r: mr}, a) <= 2 && Hex.distance(a, cls) <= a.getEffectiveRange(game))) ? 20 : 0;
+                    score += flankingBonus;
+                }
+                if (u.role === 'support') {
+                    // Supports ficam atrás
+                    const distToFront = Math.min(...game.units.filter(a => a.faction === 2 && !a.isLeader).map(a => Hex.distance({q: mq, r: mr}, a)));
+                    score -= distToTarget * 2;
+                    score += distToFront * 5;
+                }
+                if (u.role === 'scout') {
+                    // Scouts flanqueiam
+                    score += (3 - distToTarget) * 5;
+                }
+                if (u.role === 'control') {
+                    // Control quer posicionar para afetar múltiplos
+                    const enemiesInRange = game.units.filter(e => e.faction === 1 && Hex.distance({q: mq, r: mr}, e) <= 2).length;
+                    score += enemiesInRange * 10;
+                }
 
                 // Se o alvo for alcançável de onde parou, a posição ganha pontuação extrema!
                 if (distToTarget > 0 && distToTarget <= u.getEffectiveRange(game)) {

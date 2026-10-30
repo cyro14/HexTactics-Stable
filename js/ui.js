@@ -2637,9 +2637,11 @@ window.showBeastDetails = function (b, bypassUnlock = false) {
     if (statsBox) {
         if (typeof b.getEffectiveAtk === 'function' && typeof game !== 'undefined' && game) {
             const facCol = b.faction === 1 ? '#4a9edd' : b.faction === 2 ? '#c0392b' : '#27ae60';
-            const portHtml = b.sprite
-                ? `<img src="${b.sprite}" alt="${b.name}">`
-                : `<span style="font-size:30px; line-height:1;">${b.emoji}</span>`;
+            // USA MAPA HARDCODED DE SPRITES
+        const spritePath = window.BEAST_SPRITE_MAP?.[b.name] || b.sprite;
+        const portHtml = spritePath
+            ? `<img src="${spritePath}" alt="${b.name}">`
+            : `<span style="font-size:30px; line-height:1;">${b.emoji}</span>`;
             const terrainHtml = unitTerrainHtml(b);
             const traitsHtml = unitTraitsHtml(b);
             // subtítulo SEM duplicar o nome: se baseName == name, só o nível
@@ -3762,8 +3764,10 @@ function openBestiary() {
     uniqueBeasts.forEach(b => {
         const isUnlocked = unlockedBeasts.includes(b.name);
         const card = document.createElement('div'); card.className = `beast-card ${isUnlocked ? 'unlocked' : 'locked'}`;
-        const icon = b.sprite
-            ? `<img class="beast-sprite-img ${!isUnlocked ? 'locked-icon' : ''}" src="${b.sprite}" alt="${b.name}" style="width:44px;height:44px;object-fit:contain;filter:${isUnlocked ? (b.filter || 'none') : 'grayscale(1)'};pointer-events:${isUnlocked ? 'auto' : 'none'};cursor:${isUnlocked ? 'pointer' : 'default'};" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">`
+        // USA MAPA HARDCODED DE SPRITES
+        const spritePath = window.BEAST_SPRITE_MAP?.[b.name] || b.sprite;
+        const icon = spritePath
+            ? `<img class="beast-sprite-img ${!isUnlocked ? 'locked-icon' : ''}" src="${spritePath}" alt="${b.name}" style="width:44px;height:44px;object-fit:contain;filter:${isUnlocked ? (b.filter || 'none') : 'grayscale(1)'};pointer-events:${isUnlocked ? 'auto' : 'none'};cursor:${isUnlocked ? 'pointer' : 'default'};" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">`
               + `<span class="beast-icon ${!isUnlocked ? 'locked-icon' : ''}" style="filter:${isUnlocked ? (b.filter || 'none') : 'none'};display:none;font-size:34px;">${b.e}</span>`
             : `<span class="beast-icon ${!isUnlocked ? 'locked-icon' : ''}" style="filter:${isUnlocked ? (b.filter || 'none') : 'none'}">${b.e}</span>`;
         const name = `<div class="beast-name">${isUnlocked ? b.name : '???'}</div>`;
@@ -4984,7 +4988,7 @@ function renderBuildingMenu() {
         let maxLvl = bData.id === 'CASTLE' ? 1 : 3;
 
         // URL das Imagens com Fallback HTML
-        let imgSrc = `img/buildings/${bData.id.toLowerCase()}_${bLvl}.jpeg `;
+        let imgSrc = `img/buildings/${bData.id.toLowerCase()}_${bLvl}.jpeg`;
         let fallbackSrc = `img/buildings/${bData.id.toLowerCase()}_1.jpeg`;
 
         let html = `<div style="display:flex; flex-direction:column; min-width:170px; background:rgba(15,15,20,0.95); border:1px solid var(--gold-dark); padding:8px 12px; border-radius:8px; box-shadow: 0 5px 15px rgba(0,0,0,0.9); backdrop-filter:blur(5px);">
