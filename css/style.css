@@ -6643,21 +6643,21 @@ button.btn-success {
             max-height: 16vh !important;
             border-radius: 4px !important;
             padding: 4px 8px !important;
-            background: linear-gradient(180deg, rgba(232, 200, 74, 0.25) 0%, rgba(232, 200, 74, 0.15) 15%, rgba(6, 6, 10, .96) 30%, rgba(3, 4, 8, .98) 100%) !important;
+            background: linear-gradient(180deg, rgba(232, 200, 74, 0.8) 0%, rgba(232, 200, 74, 0.6) 30%, rgba(6, 6, 10, .96) 60%, rgba(3, 4, 8, .98) 100%) !important;
             border: 1px solid rgba(138, 109, 18, .45) !important;
-            border-top-color: rgba(232, 200, 74, 1) !important;
-            border-top-width: 6px !important;
+            border-top-color: #e8c84a !important;
+            border-top-width: 50px !important;
             border-radius: 4px !important;
             box-shadow: 0 4px 16px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(232, 200, 74, .1) !important;
             display: flex !important;
             flex-direction: column !important;
-            z-index: 25 !important;
+            z-index: 35 !important;
             pointer-events: auto !important;
-            overflow: hidden !important;
+            overflow: visible !important;
         }
 
         .battle-log .battle-log-header {
-            background: rgba(232, 200, 74, 0.2) !important;
+            background: rgba(232, 200, 74, 0.6) !important;
             border-radius: 2px 2px 0 0 !important;
             margin: -4px -8px 0 -8px !important;
             padding: 8px 8px 4px !important;
@@ -6777,9 +6777,10 @@ button.btn-success {
             filter: saturate(400%) hue-rotate(240deg) brightness(130%) !important;
         }
 
-        /* Violet glow on portrait frame for test detection - applies to selected unit in mini-card */
+        /* Violet border on portrait frame for test detection - not clipped by overflow */
         .unit-portrait-frame {
-            box-shadow: 0 0 12px rgba(140, 70, 200, 0.7), inset 0 0 12px rgba(140, 70, 200, 0.4) !important;
+            border: 3px solid rgba(140, 70, 200, 1) !important;
+            box-shadow: 0 0 16px rgba(140, 70, 200, 1), 0 0 32px rgba(140, 70, 200, 0.6), inset 0 0 16px rgba(140, 70, 200, 0.8) !important;
         }
 
         .unit-portrait.is-terrain { font-size: 24px; }
@@ -7168,6 +7169,22 @@ button.btn-success {
             align-items: flex-start !important;
             padding-top: 120px !important;
             overflow-y: auto;
+            background: rgba(0, 0, 0, 0.85) !important;
+            min-height: 100vh !important;
+            height: 100% !important;
+        }
+
+        /* Ensure full viewport dark backdrop for test */
+        #beast-details-modal::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9) !important;
+            z-index: -1;
+            pointer-events: none;
         }
 
         #beast-details-modal .modal-card {
