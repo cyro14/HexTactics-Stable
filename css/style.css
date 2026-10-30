@@ -824,6 +824,706 @@ button.btn-success {
     }
 }
 
+/* === MOBILE PORTRAIT LAYOUT - BATTLE UI RESTRUCTURE === */
+/* Target: phones in portrait mode (max-width: 480px, max-height: 800px) */
+/* This section completely restructures the battle UI for portrait mode */
+
+@media (max-width: 480px) and (orientation: portrait) {
+    /* ==========================================
+       1. ROOT LAYOUT - Flex column for portrait
+       ========================================== */
+    #ui-layer {
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+    }
+    
+    /* Ensure game canvas takes available space */
+    #gameCanvas {
+        flex: 1;
+        min-height: 0;
+    }
+    
+    /* ==========================================
+       2. TOP BAR - Compact single row (~60px)
+       ========================================== */
+    .battle-top-bar {
+        flex-wrap: nowrap !important;
+        padding: 4px 8px !important;
+        margin: 4px 8px 0 !important;
+        gap: 4px !important;
+        border-radius: 4px !important;
+        min-height: 52px !important;
+        max-height: 60px !important;
+        overflow: visible !important; /* CRITICAL: dropdowns must not be clipped */
+    }
+    
+    .top-bar-left { order: 1; flex: 1; min-width: 0; gap: 4px; }
+    .top-bar-center { order: 2; width: auto; margin-top: 0; flex: 0 1 auto; min-width: 0; }
+    .top-bar-right { order: 3; flex: 0 0 auto; gap: 2px; }
+    
+    .turn-badge { font-size: 8px; padding: 3px 6px; gap: 4px; letter-spacing: .5px; }
+    .turn-badge-ico { width: 12px; height: 12px; }
+    .turn-badge-text { font-size: 8px; }
+    .turn-badge-count { font-size: 7px; padding: 1px 4px; }
+    
+    .tod-indicator { font-size: 8px; padding: 2px 4px; gap: 2px; }
+    .tod-label { display: none; }
+    .tod-indicator .mm-ico { width: 12px; height: 12px; }
+    
+    .mana-bar-top { max-width: 80px; }
+    #mana-trigger { font-size: 8px; gap: 2px; padding: 1px 4px; }
+    #mana-trigger img, #mana-trigger svg { width: 10px; height: 10px; }
+    .mana-bar-top { max-width: 70px; }
+    
+    .resource-chip { font-size: 9px; padding: 2px 6px; gap: 3px; }
+    .resource-chip .mm-ico, .resource-chip .mm-art { width: 10px; height: 10px; }
+    .chip-value { font-size: 9px; }
+    .chip-caret { width: 8px; height: 8px; }
+    
+    .top-btn-icon { width: 28px; height: 28px; padding: 3px; border-radius: 4px; }
+    .top-btn-icon img, .top-btn-icon svg { width: 14px; height: 14px; }
+    
+    .mana-bar-top { max-width: 70px; }
+    .mana-pip-top { width: 10px; height: 10px; }
+    
+    .battle-top-bar {
+        flex-wrap: nowrap !important;
+        padding: 3px 6px !important;
+        margin: 3px 6px 0 !important;
+        gap: 3px !important;
+        min-height: 48px !important;
+        max-height: 56px !important;
+        /* NO overflow:hidden - dropdowns need space */
+    }
+    
+    /* Mana dropdown positioning */
+    #mana-trigger { font-size: 8px; gap: 2px; padding: 2px 4px; }
+    #mana-trigger img, #mana-trigger svg { width: 10px; height: 10px; }
+    .mana-pip-top { width: 9px; height: 9px; }
+    
+    /* Resource dropdowns - full width on mobile */
+    .res-dropdown {
+        left: 6px !important;
+        right: 6px !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-height: 35vh;
+        overflow-y: auto;
+    }
+    .res-dropdown {
+        z-index: 3000;
+    }
+    .battle-top-bar { position: relative; }
+    .res-dropdown { position: fixed; top: 50px !important; z-index: 3000; }
+    
+    /* ==========================================
+       2. BATTLEFIELD - Main focus, full available height
+       ========================================== */
+    #gameCanvas {
+        flex: 1 1 auto;
+        min-height: 0;
+        width: 100%;
+        height: 100%;
+    }
+    
+    /* ==========================================
+       3. COMBAT LOG - Floating history button (bottom right)
+       ========================================== */
+    .battle-log {
+        position: fixed !important;
+        top: auto !important;
+        right: 8px !important;
+        left: auto !important;
+        bottom: 130px !important; /* Above action bar */
+        width: 44px !important;
+        height: 44px !important;
+        max-height: 44px !important;
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 50% !important;
+        padding: 0 !important;
+        background: linear-gradient(180deg, rgba(6, 6, 10, .96) 0%, rgba(3, 4, 8, .98) 100%) !important;
+        border: 1px solid rgba(138, 109, 18, .45) !important;
+        border-bottom-color: rgba(232, 200, 74, .3) !important;
+        border-radius: 50% !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(232, 200, 74, .1) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 25 !important;
+        pointer-events: auto !important;
+        overflow: hidden !important;
+        transition: all .3s ease !important;
+    }
+    
+    .battle-log .battle-log-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        border: none;
+        background: none;
+    }
+    
+    .battle-log .battle-log-title {
+        display: none;
+    }
+    
+    .battle-log .battle-log-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .battle-log .log-toggle-btn,
+    .battle-log .log-history-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .battle-log .log-toggle-btn .mm-ico,
+    .battle-log .log-history-btn .mm-ico {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .battle-log-body {
+        display: none !important; /* Hidden by default, shown in modal */
+    }
+    
+    .battle-log.collapsed .battle-log-body {
+        display: none;
+    }
+    
+    /* Full log modal adjustments for mobile */
+    .battle-modal {
+        width: 95% !important;
+        max-width: 95vw !important;
+        max-height: 85vh !important;
+        margin: 0 !important;
+        transform: translate(-50%, -50%) !important;
+    }
+    
+    .battle-modal-body {
+        max-height: 70vh !important;
+        padding: 12px !important;
+        font-size: 12px !important;
+    }
+    
+    /* ==========================================
+       4. SIDE PANEL - Collapsible bottom sheet (unit details)
+       ========================================== */
+    .battle-side-panel {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        max-height: 55vh !important;
+        top: auto !important;
+        bottom: 0 !important;
+        border-radius: 16px 16px 0 0 !important;
+        border-left: none !important;
+        border-top: 1px solid rgba(232, 200, 74, .3) !important;
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, .9), inset 0 1px 0 rgba(232, 200, 74, .12) !important;
+        z-index: 30 !important;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        background: transparent;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(.2,.8,.25,1);
+    }
+    
+    .battle-side-panel.open {
+        transform: translateY(0);
+    }
+    
+    .battle-side-panel > .side-panel-frame {
+        border-radius: 16px 16px 0 0;
+        border-left: none;
+        border-top: 1px solid rgba(232, 200, 74, .3);
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, .9), inset 0 1px 0 rgba(232, 200, 74, .14);
+    }
+    
+    .side-corner, .side-top-edge, .side-bottom-edge { display: none; }
+    
+    .side-panel-content {
+        padding: 8px 10px 12px;
+        gap: 6px;
+        overflow-y: auto;
+        max-height: 50vh;
+    }
+    
+    /* Compact unit card - horizontal layout */
+    .side-portrait-section {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        padding-bottom: 6px;
+        border-bottom: none;
+    }
+    
+    .unit-portrait-frame {
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
+    }
+    
+    .unit-portrait {
+        border-radius: 6px;
+    }
+    
+    .unit-portrait img {
+        transform: scale(1.3);
+    }
+    
+    .unit-portrait.is-terrain {
+        font-size: 24px;
+    }
+    
+    .portrait-rank {
+        width: 18px;
+        height: 18px;
+        font-size: 7px;
+        top: -3px;
+        right: -3px;
+        border-width: 1px;
+    }
+    
+    .side-unit-name {
+        font-size: 11px;
+        max-width: 140px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .side-unit-class {
+        display: none;
+    }
+    
+    /* "i" badge on portrait - indicates tap for details */
+    .unit-portrait::before {
+        content: 'i';
+        position: absolute;
+        right: -4px;
+        bottom: -4px;
+        width: 16px;
+        height: 16px;
+        z-index: 6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font: 700 10px/1 sans-serif;
+        color: #1a1204;
+        background: linear-gradient(180deg, #f7e07a, #d9ae2e);
+        border: 1px solid #f5e6a0;
+        border-radius: 50%;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+    }
+    
+    /* Micro stat bars - only HP and MP */
+    .side-stats-section {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        padding: 4px 0;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    
+    .side-stat-bars {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        flex: 1;
+        flex-wrap: wrap;
+    }
+    
+    .stat-bar-side-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 4px;
+        font-size: 8px;
+        min-width: 80px;
+        flex: 1;
+    }
+    
+    .stat-bar-side-row .sb-ico {
+        width: 9px;
+        height: 9px;
+    }
+    
+    .stat-bar-side-bg {
+        height: 7px;
+        border-radius: 2px;
+        flex: 1;
+    }
+    
+    .stat-bar-side-fill {
+        border-radius: 1px;
+    }
+    
+    .sb-val {
+        min-width: 32px;
+        font-size: 7px;
+    }
+    
+    /* Hide XP bar on mobile (available in modal) */
+    .side-stat-bars .stat-bar-side-row:nth-child(3) {
+        display: none;
+    }
+    
+    /* Hide detailed sections - available in modal */
+    .side-combat-section,
+    .side-terrain-section,
+    .side-traits-section {
+        display: none !important;
+    }
+    
+    /* ==========================================
+       5. ACTION BAR - Bottom fixed bar
+       ========================================== */
+    .battle-action-bar {
+        position: fixed !important;
+        left: env(safe-area-inset-left, 8px) !important;
+        right: env(safe-area-inset-right, 8px) !important;
+        bottom: env(safe-area-inset-bottom, 8px) !important;
+        top: auto !important;
+        border-radius: 12px 12px 0 0 !important;
+        max-width: none !important;
+        padding: 6px 10px 10px !important;
+        gap: 8px !important;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(232, 200, 74, .12) !important;
+        z-index: 35 !important;
+        padding-bottom: env(safe-area-inset-bottom, 8px) !important;
+        padding-left: env(safe-area-inset-left, 8px) !important;
+        padding-right: env(safe-area-inset-right, 8px) !important;
+    }
+    
+    .ab-utilities {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+    
+    .ab-btn {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 6px !important;
+        padding: 0 !important;
+    }
+    
+    .ab-btn .mm-ico { width: 16px; height: 16px; }
+    .ab-btn img { width: 20px; height: 20px; }
+    .ab-btn svg { width: 18px; height: 18px; }
+    
+    .ab-spells {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        overflow-x: auto;
+        max-width: calc(100vw - 160px);
+        scrollbar-width: thin;
+        padding-bottom: 2px;
+    }
+    
+    .ab-spells::before {
+        height: 24px;
+        margin-right: 2px;
+    }
+    
+    .spell-slot-lol {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 6px !important;
+    }
+    
+    .spell-slot-lol .sl-icon { font-size: 16px; }
+    .spell-slot-lol .sl-cost { font-size: 7px; bottom: 1px; right: 2px; gap: 1px; }
+    .spell-slot-lol .sl-cd { font-size: 11px; border-radius: 4px; }
+    .spell-slot-lol .sl-icon { font-size: 15px; }
+    .spell-slot-lol .sl-cost { font-size: 6px; bottom: 0; right: 2px; gap: 1px; }
+    .spell-slot-lol .sl-cd { font-size: 10px; border-radius: 4px; }
+    
+    /* Action buttons row - fixed layout */
+    .hud-actions-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        margin-top: 4px;
+        border-top: 1px solid rgba(201, 162, 39, .18);
+        padding-top: 8px;
+    }
+    
+    .hud-actions-row::before {
+        display: none;
+    }
+    
+    .btn-hud-action {
+        font-size: 9px;
+        padding: 6px 10px;
+        letter-spacing: .5px;
+        gap: 4px;
+        min-width: 0;
+        flex: 1;
+    }
+    
+    .btn-hud-action .mm-ico { width: 14px; height: 14px; }
+    .btn-hud-action .hud-btn-art { width: 16px; height: 20px; }
+    .btn-hud-action svg.hud-art-svg { width: 14px; height: 14px; }
+    .btn-hud-action .btn-label { font-size: 8px; }
+    
+    .btn-hud-action:hover:not(:disabled) {
+        transform: none;
+    }
+    
+    .btn-end-turn-style {
+        margin-left: auto;
+        min-width: 80px;
+        padding: 8px 12px;
+        font-size: 10px;
+        letter-spacing: 1px;
+        border-radius: 24px;
+    }
+    
+    .btn-cancel-action {
+        flex: 0 0 auto;
+        padding: 6px 8px;
+        font-size: 8px;
+    }
+    
+    /* Turn badge adjustments for action bar */
+    #turn-badge { 
+        font-size: 9px; 
+        padding: 4px 8px; 
+        gap: 4px; 
+        letter-spacing: 1px; 
+    }
+    .turn-badge-ico { width: 13px; height: 13px; }
+    .turn-badge-count { font-size: 8px; padding: 1px 3px; }
+    
+    /* ==========================================
+       5. COMBAT LOG - Floating button (right side)
+       ========================================== */
+    /* Already defined above */
+    
+    /* ==========================================
+       6. SIDE PANEL - Bottom sheet
+       ========================================== */
+    /* Already defined above */
+    
+    /* ==========================================
+       MODALS - Full screen adaptations
+       ========================================== */
+    .battle-modal {
+        width: 95% !important;
+        max-width: 95vw !important;
+        max-height: 85vh !important;
+        margin: 0 !important;
+    }
+    
+    .battle-modal-body {
+        max-height: 70vh !important;
+        padding: 12px !important;
+        font-size: 12px !important;
+    }
+    
+    .battle-modal button {
+        margin: 0 12px 12px !important;
+        width: calc(100% - 24px) !important;
+    }
+    
+    /* Full log modal */
+    #full-log-modal {
+        width: 95% !important;
+        max-width: 95vw !important;
+        max-height: 85vh !important;
+    }
+    
+    #full-log-modal .battle-modal-body {
+        max-height: 70vh !important;
+        padding: 12px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Beast details modal */
+    #beast-details-modal {
+        align-items: flex-start !important;
+        padding-top: 120px !important;
+        overflow-y: auto;
+    }
+    
+    #beast-details-modal .modal-card {
+        max-width: 100% !important;
+        width: calc(100% - 16px) !important;
+        margin: 0 !important;
+        max-height: calc(100vh - 140px) !important;
+        overflow-y: auto;
+    }
+    
+    /* ==========================================
+       SAFE AREA SUPPORT
+       ========================================== */
+    .battle-action-bar {
+        padding-bottom: env(safe-area-inset-bottom, 8px) !important;
+        padding-left: env(safe-area-inset-left, 8px) !important;
+        padding-right: env(safe-area-inset-right, 8px) !important;
+    }
+    
+    .battle-side-panel {
+        padding-bottom: env(safe-area-inset-bottom, 0) !important;
+    }
+    
+    .battle-action-bar {
+        padding-bottom: env(safe-area-inset-bottom, 8px) !important;
+        padding-left: env(safe-area-inset-left, 8px) !important;
+        padding-right: env(safe-area-inset-right, 8px) !important;
+    }
+    
+    /* ==========================================
+       TOUCH TARGET SIZES - Minimum 44x44px
+       ========================================== */
+    .ab-btn, .btn-hud-action, .btn-side-action,
+    .top-btn-icon, .log-toggle-btn, .log-history-btn,
+    .btn-hud-action, .ab-btn, .top-btn-icon {
+        min-width: 44px !important;
+        min-height: 44px !important;
+    }
+    
+    .btn-hud-action {
+        min-width: 44px !important;
+        min-height: 44px !important;
+        padding: 10px 12px !important;
+    }
+    
+    .ab-btn {
+        min-width: 44px !important;
+        min-height: 44px !important;
+    }
+    
+    .top-btn-icon {
+        min-width: 44px !important;
+        min-height: 44px !important;
+    }
+    
+    .log-toggle-btn, .log-history-btn {
+        min-width: 44px !important;
+        min-height: 44px !important;
+    }
+    
+    .btn-side-action {
+        min-width: 44px !important;
+        min-height: 44px !important;
+    }
+    
+    /* ==========================================
+       TEXT READABILITY
+       ========================================== */
+    html {
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+    
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* ==========================================
+   LANDSCAPE MOBILE - Compact adjustments
+   ========================================== */
+@media (max-height: 600px) and (orientation: landscape) {
+    .battle-side-panel {
+        max-height: 45vh !important;
+    }
+    
+    .battle-action-bar {
+        padding: 4px 8px 8px !important;
+        gap: 6px !important;
+    }
+    
+    .battle-side-panel {
+        max-height: 40vh !important;
+    }
+    
+    .side-panel-content {
+        max-height: 35vh !important;
+    }
+}
+
+/* ==========================================
+   PRINT STYLES
+   ========================================== */
+@media print {
+    .battle-top-bar,
+    .battle-action-bar,
+    .battle-side-panel,
+    .battle-log,
+    .battle-action-bar,
+    .hud-top,
+    .hud-bottom {
+        display: none !important;
+    }
+}
+
+/* ==========================================
+   HIGH CONTRAST MODE
+   ========================================== */
+@media (prefers-contrast: high) {
+    .battle-top-bar,
+    .battle-action-bar,
+    .battle-side-panel,
+    .battle-log {
+        border-width: 2px !important;
+    }
+    
+    .btn-hud-action,
+    .ab-btn,
+    .btn-side-action {
+        border-width: 2px !important;
+    }
+}
+
+/* ==========================================
+   REDUCED MOTION
+   ========================================== */
+@media (prefers-reduced-motion: reduce) {
+    .battle-side-panel,
+    .battle-log,
+    .battle-modal,
+    .turn-banner {
+        transition: none !important;
+        animation: none !important;
+    }
+    
+    .btn-end-turn-style {
+        animation: none !important;
+    }
+    
+    @keyframes endTurnPulse {
+        0%, 100% { box-shadow: none; }
+    }
+}
+
 .tag-badge {
     display: inline-block;
     padding: 2px 6px;
