@@ -6483,157 +6483,651 @@ button.btn-success {
      canto inferior direito.
    ------------------------------------------ */
 @media (max-width: 760px) {
-    /* ---- Mini-card no topo (abaixo do headset) ---- */
-    .battle-side-panel { top: 46px; left: 8px; right: 8px; bottom: auto; width: auto; height: auto; max-height: none; border-radius: 10px; }
-    .battle-side-panel > .side-panel-frame { border-radius: 10px; border-left-width: 1px; border-top-width: 1px; box-shadow: 0 6px 24px rgba(0, 0, 0, .85), inset 0 1px 0 rgba(232, 200, 74, .14); }
-    .side-corner, .side-top-edge, .side-bottom-edge { display: none; }
-    .side-panel-content { padding: 6px 8px; gap: 5px; }
+    /* ==========================================
+       MOBILE LAYOUT - General (max-width: 760px)
+       Includes both portrait and landscape mobile
+       ========================================== */
 
-    /* linha 1 do card: [foto 40px] [nome] */
-    .side-portrait-section { padding-bottom: 0; border-bottom: none; gap: 8px; }
-    .unit-portrait-frame { width: 40px; height: 40px; }
-    .unit-portrait img { transform: scale(1.25); }
-    .unit-portrait.is-terrain { font-size: 22px; }
-    .portrait-rank { width: 16px; height: 16px; font-size: 6px; top: -3px; right: -3px; border-width: 1px; }
-    .side-unit-name { font-size: 11px; }
-    .side-unit-class { display: none; }
-    /* selo "i" na foto: indique que abre os detalhes completos */
-    .unit-portrait::before {
-        content: 'i';
-        position: absolute;
-        right: -4px;
-        bottom: -4px;
-        width: 14px;
-        height: 14px;
-        z-index: 6;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font: 700 9px/1 sans-serif;
-        color: #1a1204;
-        background: linear-gradient(180deg, #f7e07a, #d9ae2e);
-        border: 1px solid #f5e6a0;
-        border-radius: 50%;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+    /* ------------------------------------------
+       TOP BAR - Single compact row (~40px)
+       ------------------------------------------ */
+    .battle-top-bar {
+        flex-wrap: nowrap;
+        padding: 4px 8px;
+        margin: 4px 8px 0;
+        gap: 6px;
+        /* NUNCA usar overflow: hidden aqui: os dropdowns de mana/recursos
+           são filhos absolutos que abrem ABAIXO da barra e seriam cortados */
     }
+    .top-bar-left { order: 1; flex: 1; min-width: 0; gap: 5px; }
+    /* o centro precisa de min-width: 0 para o chip de ouro encolher em vez
+       de estourar a linha única (o nowrap do flex cuida do resto) */
+    .top-bar-center { order: 2; width: auto; margin-top: 0; flex: 0 1 auto; min-width: 0; }
+    .top-bar-right { order: 3; flex: 0 0 auto; gap: 4px; }
+    .turn-badge { font-size: 8px; padding: 3px 6px; gap: 4px; letter-spacing: .5px; }
+    .turn-badge-ico { width: 12px; height: 12px; }
+    .tod-indicator { font-size: 8px; padding: 3px 5px; gap: 3px; }
+    .tod-label { display: none; }
+    #mana-trigger { font-size: 9px; gap: 3px; padding: 2px; }
+    #mana-trigger img { width: 12px; height: 12px; }
+    #mana-trigger svg { width: 12px; height: 12px; }
+    .resource-chip .mm-art { width: 11px; height: 11px; }
+    .mana-bar-top { max-width: 92px; }
+    .resource-chip { font-size: 10px; padding: 3px 7px; gap: 4px; }
+    .resource-chip .mm-ico { width: 11px; height: 11px; }
+    .chip-value { font-size: 10px; }
+    .chip-caret { width: 9px; height: 9px; }
+    .top-btn-icon { width: 28px; height: 28px; padding: 3px; border-radius: 4px; }
+    .top-btn-icon img { width: 15px; height: 15px; }
+    .top-btn-icon svg { width: 15px; height: 15px; }
 
-    /* linha 2 do card: barras micro — só HP e MP (a XP fica no modal) */
-    .side-stats-section { padding: 0; border: none; }
-    .side-stat-bars { gap: 3px; }
-    .stat-bar-side-row { gap: 4px; font-size: 8px; }
-    .stat-bar-side-row .sb-ico { width: 9px; height: 9px; }
-    .stat-bar-side-bg { height: 7px; border-radius: 2px; }
-    .stat-bar-side-fill { border-radius: 1px; }
-    .sb-val { min-width: 30px; font-size: 7px; }
-    .side-stat-bars .stat-bar-side-row:nth-child(3) { display: none; }
+    /* ---- Crônica: fita fina no topo-direita, ABAIXO do mini-card ---- */
+    .battle-log { left: auto; right: 8px; width: 210px; top: 134px; bottom: auto; max-height: 16vh; font-size: 9px; border-radius: 4px; }
+    .battle-log.collapsed { max-height: 32px !important; }
+    .battle-log-header { padding: 5px 8px; }
+    .battle-log-title { font-size: 8.5px; letter-spacing: 1px; gap: 5px; }
+    .battle-log-title .mm-ico { width: 11px; height: 11px; }
+    .log-toggle-btn, .log-history-btn { width: 22px; height: 22px; border-radius: 3px; }
+    .log-toggle-btn .mm-ico, .log-history-btn .mm-ico { width: 11px; height: 11px; }
 
-    /* stats completos moram no modal (clicar na foto) */
-    .side-combat-section, .side-terrain-section, .side-traits-section { display: none !important; }
+    .turn-banner { gap: 10px; padding: 10px 14px; }
+    .turn-banner-flourish { width: 26px; height: 26px; }
+    .turn-banner-ico { width: 22px; height: 22px; }
+    #turn-banner-title { font-size: .95rem; letter-spacing: 1.5px; }
+    .turn-banner-sub { font-size: 8.5px; letter-spacing: 2px; }
 
-    /* ---- Ações fora do card ---- */
-    /* Domar/Cancelar: fileira compacta ACIMA da action bar (esquerda) */
-    .side-actions-section { position: fixed; left: 12px; bottom: 74px; right: auto; width: auto; flex-direction: row; flex-wrap: nowrap; align-items: center; padding: 0; border: none; background: none; gap: 6px; }
-    .side-actions-section .btn-side-action { width: auto; flex: 0 0 auto; }
-    .btn-side-action { padding: 8px 10px; font-size: 9px; letter-spacing: .5px; gap: 4px; }
-    .btn-side-action .hud-btn-art { width: 14px; height: 18px; }
-    .btn-side-action svg.hud-art-svg { width: 16px; height: 16px; }
-    .btn-cancel-action { flex: 0 0 auto; margin-top: 0; padding: 8px 10px; font-size: 9px; }
-
-    /* Pronto: FAB dourado no canto inferior DIREITO */
-    #btn-end-turn { position: fixed; right: 12px; bottom: 12px; left: auto; flex: none; width: auto; min-width: 96px; padding: 14px 18px; font-size: 11px; letter-spacing: 1.5px; border-radius: 32px; }
-
-    /* ---- Action bar: canto inferior ESQUERDO (igual desktop, compacta) ---- */
-    .battle-action-bar { left: 12px; right: auto; bottom: 12px; top: auto; border-radius: 10px; max-width: calc(100vw - 132px); padding: 6px 8px; gap: 8px; box-shadow: 0 6px 24px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(232, 200, 74, .12); }
-    .ab-utilities { gap: 6px; }
-    .ab-btn { width: 38px; height: 38px; border-radius: 6px; }
-    .ab-btn .mm-ico { width: 15px; height: 15px; }
-    .ab-btn img { width: 19px; height: 19px; }
-    .ab-btn svg { width: 17px; height: 17px; }
-    .ab-spells { max-width: calc(100vw - 250px); gap: 5px; }
-    .ab-spells::before { height: 26px; margin-right: 2px; }
-    .spell-slot-lol { width: 38px; height: 38px; border-radius: 6px; }
-    .spell-slot-lol .sl-icon { font-size: 17px; }
-    .spell-slot-lol .sl-cost { font-size: 8px; bottom: 1px; right: 3px; gap: 2px; }
-    .spell-slot-lol .sl-cd { font-size: 13px; border-radius: 5px; }
-    /* ---- MODAL de detalhes: SEMPRE abaixo do mini-card, sem cobrir o header ---- */
-    #beast-details-modal {
-        /* muda o alinhamento do layer: em vez de centrar, empurra pra baixo */
-        align-items: flex-start !important;
-        padding-top: 110px !important; /* abaixo do mini-card (~100px) */
-        overflow-y: auto;
-    }
-    #beast-details-modal .modal-card {
-        max-width: 100% !important;
-        width: calc(100% - 16px) !important;
-        margin: 0 !important;
-        max-height: calc(100vh - 130px) !important;
-        overflow-y: auto;
-    }
-
-    /* ---- DROPDOWNs: z-index correto, um sobre o outro, não lado a lado ---- */
+    /* ---- DROPDOWNs: z-index correto, um sobre o outro ---- */
+    .battle-top-bar { position: relative; }
     .res-dropdown {
+        position: fixed !important;
+        top: 48px !important;
         left: 8px !important;
         right: 8px !important;
         width: auto !important;
         min-width: 0 !important;
         max-height: 40vh;
         overflow-y: auto;
+        z-index: 3000;
     }
     #resources-dropdown-container { position: static; }
     #creature-res-trigger + #creature-res-dropdown,
     .res-dropdown {
-        position: fixed;
+        position: fixed !important;
         top: 48px !important;
     }
-    /* coloca o dropdown como filho do top-bar (vira fixed abaixo dele) */
     .battle-top-bar { position: relative; }
-    .res-dropdown {
-        z-index: 3000;
-    }
+    .res-dropdown { z-index: 3000; }
 
-    /* ---- SHOP: grid compacto no retrato (vários itens na mesma visão) ---- */
-    .shop-grid {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
-        gap: 6px !important;
-    }
-    .shop-card {
-        padding: 8px 6px !important;
-        gap: 3px !important;
-    }
-    .shop-card .shop-title { font-size: 10px !important; }
-    .shop-card .shop-desc { font-size: 8.5px !important; line-height: 1.3 !important; }
-    .shop-card .shop-icon { font-size: 24px !important; }
-    .shop-card .beast-sprite-img { width: 32px !important; height: 32px !important; }
-    .shop-card button { font-size: 10px !important; padding: 6px 8px !important; margin-top: 4px !important; }
+    /* ==========================================
+       MOBILE PORTRAIT SPECIFIC (max-width: 480px, orientation: portrait)
+       ========================================== */
+    @media (orientation: portrait) and (max-width: 480px) {
+        /* ------------------------------------------
+           1. TOP BAR - Even more compact (~48px)
+           ------------------------------------------ */
+        .battle-top-bar {
+            flex-wrap: nowrap !important;
+            padding: 3px 6px !important;
+            margin: 3px 6px 0 !important;
+            gap: 3px !important;
+            min-height: 48px !important;
+            max-height: 56px !important;
+        }
 
-    /* ---- EVENTO/LAB: espaço para o retrato do personagem ---- */
-    #ev-icon {
-        width: 80px;
-        height: 80px;
-        border: 2px solid rgba(201, 162, 39, .5);
-        border-radius: 8px;
-        background: radial-gradient(circle at 35% 20%, rgba(40, 35, 20, .95), rgba(8, 8, 12, .98));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 8px;
-        font-size: 42px !important;
-        overflow: hidden;
-        box-shadow: 0 0 0 1px rgba(0,0,0,.9), 0 0 0 3px rgba(138,109,18,.35), 0 6px 18px rgba(0,0,0,.7);
-    }
-    #ev-icon img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        filter: drop-shadow(0 4px 8px rgba(0,0,0,.5));
-    }
-} /* fim do modo retrato — NÃO remover: sem este fechamento todo o
-     CSS seguinte (modal do histórico incluído) cai dentro da @media
-     e some no desktop (bug do botão Fechar não-clicável) */
+        .top-bar-left { order: 1; flex: 1; min-width: 0; gap: 4px; }
+        .top-bar-center { order: 2; width: auto; margin-top: 0; flex: 0 1 auto; min-width: 0; }
+        .top-bar-right { order: 3; flex: 0 0 auto; gap: 2px; }
 
-/* ------------------------------------------
-   MODAL DE HISTÓRICO COMPLETO
-   ------------------------------------------ */
+        .turn-badge { font-size: 8px; padding: 3px 6px; gap: 4px; letter-spacing: .5px; }
+        .turn-badge-ico { width: 12px; height: 12px; }
+        .turn-badge-text { font-size: 8px; }
+        .turn-badge-count { font-size: 7px; padding: 1px 4px; }
+
+        .tod-indicator { font-size: 8px; padding: 2px 4px; gap: 2px; }
+        .tod-label { display: none; }
+        .tod-indicator .mm-ico { width: 12px; height: 12px; }
+
+        .mana-bar-top { max-width: 80px; }
+        #mana-trigger { font-size: 8px; gap: 2px; padding: 1px 4px; }
+        #mana-trigger img, #mana-trigger svg { width: 10px; height: 10px; }
+        .mana-pip-top { width: 9px; height: 9px; }
+
+        .resource-chip { font-size: 9px; padding: 2px 6px; gap: 3px; }
+        .resource-chip .mm-ico, .resource-chip .mm-art { width: 10px; height: 10px; }
+        .chip-value { font-size: 9px; }
+        .chip-caret { width: 8px; height: 8px; }
+
+        .top-btn-icon { width: 28px; height: 28px; padding: 3px; border-radius: 4px; }
+        .top-btn-icon img, .top-btn-icon svg { width: 14px; height: 14px; }
+
+        /* Resource dropdowns - full width on mobile, fixed below top bar */
+        .res-dropdown {
+            position: fixed !important;
+            top: 48px !important;
+            left: 6px !important;
+            right: 6px !important;
+            width: auto !important;
+            min-width: 0 !important;
+            max-height: 35vh;
+            overflow-y: auto;
+            z-index: 3000;
+        }
+        #resources-dropdown-container { position: static; }
+        #creature-res-trigger + #creature-res-dropdown,
+        .res-dropdown {
+            position: fixed !important;
+            top: 48px !important;
+        }
+
+        /* ------------------------------------------
+           2. BATTLEFIELD - Main focus, full available height
+           ------------------------------------------ */
+        #gameCanvas {
+            flex: 1 1 auto;
+            min-height: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ------------------------------------------
+           3. COMBAT LOG - Floating history button (bottom right)
+           ------------------------------------------ */
+        .battle-log {
+            position: fixed !important;
+            top: auto !important;
+            right: 8px !important;
+            left: auto !important;
+            bottom: 130px !important;
+            width: 44px !important;
+            height: 44px !important;
+            max-height: 44px !important;
+            border-radius: 50% !important;
+            padding: 0 !important;
+            background: linear-gradient(180deg, rgba(6, 6, 10, .96) 0%, rgba(3, 4, 8, .98) 100%) !important;
+            border: 1px solid rgba(138, 109, 18, .45) !important;
+            border-bottom-color: rgba(232, 200, 74, .3) !important;
+            border-radius: 50% !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(232, 200, 74, .1) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 25 !important;
+            pointer-events: auto !important;
+            overflow: hidden !important;
+        }
+
+        .battle-log .battle-log-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            border: none;
+            background: none;
+        }
+
+        .battle-log .battle-log-title { display: none; }
+        .battle-log .battle-log-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .battle-log .log-toggle-btn,
+        .battle-log .log-history-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .battle-log .log-toggle-btn .mm-ico,
+        .battle-log .log-history-btn .mm-ico {
+            width: 18px;
+            height: 18px;
+        }
+
+        .battle-log-body { display: none !important; }
+
+        /* Full log modal adjustments for mobile */
+        .battle-modal {
+            width: 95% !important;
+            max-width: 95vw !important;
+            max-height: 85vh !important;
+            margin: 0 !important;
+            transform: translate(-50%, -50%) !important;
+        }
+
+        .battle-modal-body {
+            max-height: 70vh !important;
+            padding: 12px !important;
+            font-size: 12px !important;
+        }
+
+        /* ------------------------------------------
+           4. SIDE PANEL - Mini card at TOP (visible by default)
+           ------------------------------------------ */
+        .battle-side-panel {
+            position: fixed !important;
+            top: 46px !important;
+            left: 8px !important;
+            right: 8px !important;
+            bottom: auto !important;
+            width: auto !important;
+            height: auto !important;
+            max-height: none !important;
+            border-radius: 10px !important;
+            border-left-width: 1px !important;
+            border-top-width: 1px !important;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, .85), inset 0 1px 0 rgba(232, 200, 74, .14) !important;
+            z-index: 30 !important;
+            pointer-events: auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            background: linear-gradient(180deg, rgba(10, 10, 15, .97) 0%, rgba(4, 4, 8, .99) 100%) !important;
+            transform: none !important;
+            transition: none !important;
+        }
+
+        .battle-side-panel > .side-panel-frame {
+            border-radius: 16px 16px 0 0;
+            border-left: none;
+            border-top: 1px solid rgba(232, 200, 74, .3);
+            box-shadow: 0 -8px 32px rgba(0, 0, 0, .9), inset 0 1px 0 rgba(232, 200, 74, .14);
+        }
+
+        .side-corner, .side-top-edge, .side-bottom-edge { display: none; }
+
+        .side-panel-content {
+            padding: 8px 10px 12px;
+            gap: 6px;
+            overflow-y: auto;
+            max-height: 50vh;
+        }
+
+        /* Compact unit card - horizontal layout */
+        .side-portrait-section {
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 6px;
+            border-bottom: none;
+        }
+
+        .unit-portrait-frame {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+        }
+
+        .unit-portrait {
+            border-radius: 6px;
+        }
+
+        .unit-portrait img {
+            transform: scale(1.3);
+        }
+
+        .unit-portrait.is-terrain { font-size: 24px; }
+        .portrait-rank { width: 18px; height: 18px; font-size: 7px; top: -3px; right: -3px; border-width: 1px; }
+        .side-unit-name { font-size: 11px; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .side-unit-class { display: none; }
+
+        /* "i" badge on portrait - indicates tap for details */
+        .unit-portrait::before {
+            content: 'i';
+            position: absolute;
+            right: -4px;
+            bottom: -4px;
+            width: 16px;
+            height: 16px;
+            z-index: 6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font: 700 10px/1 sans-serif;
+            color: #1a1204;
+            background: linear-gradient(180deg, #f7e07a, #d9ae2e);
+            border: 1px solid #f5e6a0;
+            border-radius: 50%;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+        }
+
+        /* Micro stat bars - only HP and MP */
+        .side-stats-section {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            padding: 4px 0;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .side-stat-bars {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+
+        .stat-bar-side-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 4px;
+            font-size: 8px;
+            min-width: 80px;
+            flex: 1;
+        }
+
+        .stat-bar-side-row .sb-ico { width: 9px; height: 9px; }
+        .stat-bar-side-bg { height: 7px; border-radius: 2px; flex: 1; }
+        .stat-bar-side-fill { border-radius: 1px; }
+        .sb-val { min-width: 32px; font-size: 7px; }
+
+        /* Hide XP bar on mobile (available in modal) */
+        .side-stat-bars .stat-bar-side-row:nth-child(3) { display: none; }
+
+        /* Keep combat stats visible in mini-card */
+        .side-combat-section { display: block !important; }
+        .side-terrain-section { display: none !important; }
+        .side-traits-section { display: none !important; }
+
+        /* ------------------------------------------
+           5. ACTION BAR - Bottom fixed bar
+           ------------------------------------------ */
+        .battle-action-bar {
+            position: fixed !important;
+            left: env(safe-area-inset-left, 8px) !important;
+            right: env(safe-area-inset-right, 8px) !important;
+            bottom: env(safe-area-inset-bottom, 8px) !important;
+            top: auto !important;
+            border-radius: 12px 12px 0 0 !important;
+            max-width: none !important;
+            padding: 6px 10px 10px !important;
+            gap: 8px !important;
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(232, 200, 74, .12) !important;
+            z-index: 35 !important;
+            padding-bottom: env(safe-area-inset-bottom, 8px) !important;
+            padding-left: env(safe-area-inset-left, 8px) !important;
+            padding-right: env(safe-area-inset-right, 8px) !important;
+        }
+
+        .ab-utilities {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .ab-btn { width: 36px !important; height: 36px !important; border-radius: 6px !important; padding: 0 !important; }
+        .ab-btn .mm-ico { width: 16px; height: 16px; }
+        .ab-btn img { width: 20px; height: 20px; }
+        .ab-btn svg { width: 18px; height: 18px; }
+
+        .ab-spells {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            overflow-x: auto;
+            max-width: calc(100vw - 160px);
+            scrollbar-width: thin;
+            padding-bottom: 2px;
+        }
+
+        .ab-spells::before { height: 24px; margin-right: 2px; }
+
+        .spell-slot-lol { width: 36px !important; height: 36px !important; border-radius: 6px !important; }
+        .spell-slot-lol .sl-icon { font-size: 16px; }
+        .spell-slot-lol .sl-cost { font-size: 7px; bottom: 1px; right: 2px; gap: 1px; }
+        .spell-slot-lol .sl-cd { font-size: 11px; border-radius: 4px; }
+
+        /* Action buttons row - fixed layout */
+        .hud-actions-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 4px;
+            border-top: 1px solid rgba(201, 162, 39, .18);
+            padding-top: 8px;
+        }
+
+        .hud-actions-row::before { display: none; }
+
+        .btn-hud-action {
+            font-size: 9px;
+            padding: 6px 10px;
+            letter-spacing: .5px;
+            gap: 4px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .btn-hud-action .mm-ico { width: 14px; height: 14px; }
+        .btn-hud-action .hud-btn-art { width: 16px; height: 20px; }
+        .btn-hud-action svg.hud-art-svg { width: 14px; height: 14px; }
+        .btn-hud-action .btn-label { font-size: 8px; }
+
+        .btn-hud-action:hover:not(:disabled) { transform: none; }
+
+        .btn-end-turn-style {
+            margin-left: auto;
+            min-width: 80px;
+            padding: 8px 12px;
+            font-size: 10px;
+            letter-spacing: 1px;
+            border-radius: 24px;
+        }
+
+        .btn-cancel-action { flex: 0 0 auto; padding: 6px 8px; font-size: 8px; }
+
+        /* Turn badge adjustments for action bar */
+        #turn-badge { font-size: 9px; padding: 4px 8px; gap: 4px; letter-spacing: 1px; }
+        .turn-badge-ico { width: 13px; height: 13px; }
+        .turn-badge-count { font-size: 8px; padding: 1px 3px; }
+
+        /* ==========================================
+           6. COMBAT LOG - Horizontal bar at top-right (below mini-card)
+           ========================================== */
+
+        .battle-log {
+            position: fixed !important;
+            top: 100px !important;
+            right: 8px !important;
+            left: auto !important;
+            bottom: auto !important;
+            width: 210px !important;
+            height: auto !important;
+            max-height: 16vh !important;
+            border-radius: 4px !important;
+            padding: 4px 8px !important;
+            background: linear-gradient(180deg, rgba(6, 6, 10, .96) 0%, rgba(3, 4, 8, .98) 100%) !important;
+            border: 1px solid rgba(138, 109, 18, .45) !important;
+            border-bottom-color: rgba(232, 200, 74, .3) !important;
+            border-radius: 4px !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(232, 200, 74, .1) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            z-index: 25 !important;
+            pointer-events: auto !important;
+            overflow: hidden !important;
+        }
+
+        .battle-log .battle-log-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 2px 4px;
+            border-bottom: 1px solid rgba(138, 109, 18, .3);
+        }
+
+        .battle-log .battle-log-title {
+            display: block !important;
+            font-size: 8.5px !important;
+            letter-spacing: 1px !important;
+            gap: 5px !important;
+            color: var(--gold-light);
+        }
+
+        .battle-log .battle-log-title .mm-ico { width: 11px; height: 11px; }
+
+        .battle-log .battle-log-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .battle-log .log-toggle-btn,
+        .battle-log .log-history-btn {
+            width: 22px;
+            height: 22px;
+            border-radius: 3px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .battle-log .log-toggle-btn .mm-ico,
+        .battle-log .log-history-btn .mm-ico { width: 11px; height: 11px; }
+
+        .battle-log-body {
+            display: block !important;
+            overflow-y: auto;
+            max-height: 12vh;
+            padding: 4px;
+            font-size: 8px;
+            line-height: 1.4;
+        }
+
+        .battle-log.collapsed .battle-log-body { display: none !important; }
+
+        /* Full log modal adjustments for mobile */
+        .battle-modal {
+            width: 95% !important;
+            max-width: 95vw !important;
+            max-height: 85vh !important;
+            margin: 0 !important;
+            transform: translate(-50%, -50%) !important;
+        }
+
+        .battle-modal-body {
+            max-height: 70vh !important;
+            padding: 12px !important;
+            font-size: 12px !important;
+        }
+
+        .battle-modal button {
+            margin: 0 12px 12px !important;
+            width: calc(100% - 24px) !important;
+        }
+
+        /* Full log modal */
+        #full-log-modal {
+            width: 95% !important;
+            max-width: 95vw !important;
+            max-height: 85vh !important;
+        }
+
+        #full-log-modal .battle-modal-body {
+            max-height: 70vh !important;
+            padding: 12px !important;
+            font-size: 12px !important;
+        }
+
+        /* Beast details modal */
+        #beast-details-modal {
+            align-items: flex-start !important;
+            padding-top: 120px !important;
+            overflow-y: auto;
+        }
+
+        #beast-details-modal .modal-card {
+            max-width: 100% !important;
+            width: calc(100% - 16px) !important;
+            margin: 0 !important;
+            max-height: calc(100vh - 140px) !important;
+            overflow-y: auto;
+        }
+
+        /* ------------------------------------------
+           DROPDOWNs - Full width, stacked below top bar
+           ------------------------------------------ */
+        .battle-top-bar { position: relative; }
+        .res-dropdown {
+            position: fixed !important;
+            top: 48px !important;
+            left: 6px !important;
+            right: 6px !important;
+            width: auto !important;
+            min-width: 0 !important;
+            max-height: 35vh;
+            overflow-y: auto;
+            z-index: 3000;
+        }
+        #resources-dropdown-container { position: static; }
+        #creature-res-trigger + #creature-res-dropdown,
+        .res-dropdown {
+            position: fixed !important;
+            top: 48px !important;
+        }
+        /* coloca o dropdown como filho do top-bar (vira fixed abaixo dele) */
+        .battle-top-bar { position: relative; }
+        .res-dropdown { z-index: 3000; }
+
+        /* ------------------------------------------
+           SAFE AREA SUPPORT
+           ------------------------------------------ */
+        .battle-action-bar {
+            padding-bottom: env(safe-area-inset-bottom, 8px) !important;
+            padding-left: env(safe-area-inset-left, 8px) !important;
+            padding-right: env(safe-area-inset-right, 8px) !important;
+        }
+
+        .battle-side-panel { padding-bottom: env(safe-area-inset-bottom, 0) !important; }
+
+        /* ==========================================
+           TOUCH TARGET SIZES - Minimum 44x44px
+           ========================================== */
+        .ab-btn, .btn-hud-action, .btn-side-action,
+        .top-btn-icon, .log-toggle-btn, .log-history-btn {
+            min-width: 44px !important;
+            min-height: 44px !important;
+        }
+
+        .btn-hud-action { min-width: 44px !important; min-height: 44px !important; padding: 10px 12px !important; }
+        .ab-btn { min-width: 44px !important; min-height: 44px !important; }
+        .top-btn-icon { min-width: 44px !important; min-height: 44px !important; }
+        .log-toggle-btn, .log-history-btn { min-width: 44px !important; min-height: 44px !important; }
+        .btn-side-action { min-width: 44px !important; min-height: 44px !important; }
+
+        /* ==========================================
+           TEXT READABILITY
+           ========================================== */
+        html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+        body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    }
+}
+
+/* ==========================================
+   LANDSCAPE MOBILE - Compact adjustments
+   ========================================== */
+@media (max-height: 600px) and (orientation: landscape) {
+    .battle-side-panel { max-height: 45vh !important; }
+    .battle-action-bar { padding: 4px 8px 8px !important; gap: 6px !important; }
+    .battle-side-panel { max-height: 40vh !important; }
+    .side-panel-content { max-height: 35vh !important; }
+}
 .battle-modal {
     position: fixed;
     top: 50%;
