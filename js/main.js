@@ -1303,6 +1303,16 @@ window.openContinentMap = function() {
 
     $('btn-tame')?.addEventListener('click', () => { game.tameMode = !game.tameMode; updateUI(); renderer.draw(); });
 
+    // FAB Buttons
+    $('btn-fab-end-turn')?.addEventListener('click', () => {
+        if (!game.isAnimating) {
+            if (typeof autoSave === 'function') autoSave();
+            game.startNextTurn();
+        }
+    });
+
+    $('btn-fab-tame')?.addEventListener('click', () => { game.tameMode = !game.tameMode; updateUI(); renderer.draw(); });
+
     // Botões de Pausa e Popups
     $('btn-pause')?.addEventListener('click', () => { showPauseMenu(); });
     $('btn-resume')?.addEventListener('click', () => { hidePauseMenu(); });

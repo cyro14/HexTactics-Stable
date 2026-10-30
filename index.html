@@ -3,14 +3,17 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Biomancer Tactics - Lendas Vivas</title>
     <link rel="manifest" href="./manifest.json">
     <!-- Theme color for supported browsers; provide fallbacks for others -->
     <meta name="theme-color" content="#c9a227">
     <!-- Fallbacks / alternatives for browsers that don't support theme-color -->
     <meta name="msapplication-TileColor" content="#c9a227">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Biomancer Tactics">
+    <meta name="mobile-web-app-capable" content="yes">
     <link
         href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap"
         rel="stylesheet">
@@ -150,6 +153,16 @@
                 <div id="spell-bar" class="ab-spells hidden" role="toolbar" aria-label="Magias disponíveis"></div>
             </div>
 
+            <!-- FAB Buttons (Pronto e Domar) - Fixed at bottom right, on top of action bar -->
+            <div id="fab-buttons" class="fab-buttons" style="display: none;">
+                <button id="btn-fab-tame" class="fab-btn fab-btn-tame" title="Ativar Modo de Doma (D)" aria-label="Modo de doma">
+                    <svg class="fab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#c98a4b" stroke-width="2"/><path d="M14 14c1.1 1.1 1.5 2.4 1.3 3.5" fill="none" stroke="#c98a4b" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+                <button id="btn-fab-end-turn" class="fab-btn fab-btn-end-turn" title="Encerrar Turno Atual (Espaço)" aria-label="Encerrar turno">
+                    <img src="img/sprites/hourglass.png" alt="Ampulheta" style="width:24px;height:24px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6));">
+                </button>
+            </div>
+
             <!-- Side Panel (Painel Lateral Direito - estilo Wesnoth) -->
             <div id="side-panel" class="battle-side-panel hidden">
                 <div class="side-panel-frame">
@@ -170,6 +183,8 @@
                         </div>
                         <div id="unit-name" class="side-unit-name"></div>
                         <div id="unit-class" class="side-unit-class"></div>
+                        <!-- Traits e Status abaixo do nome -->
+                        <div id="unit-traits-status" class="side-unit-traits-status"></div>
                     </div>
 
                     <!-- Barras de Status (HP, MP, XP) -->

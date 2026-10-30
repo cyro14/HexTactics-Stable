@@ -2825,12 +2825,41 @@ function updateUI() {
         // Magias
         renderSpellBar();
 
-        // Botão de Doma
+        // Botão de Doma (no painel lateral)
         if (u.isLeader && u.faction === 1 && !u.hasAttacked && u.status !== 'stun' && u.status !== 'bind') {
             show('btn-tame');
             $('btn-tame').classList.toggle('active', game.tameMode);
         } else {
             hide('btn-tame');
+        }
+
+        // FAB Buttons (Pronto e Domar) - fixed at bottom right
+        const fabButtons = $('fab-buttons');
+        const btnFabTame = $('btn-fab-tame');
+        const btnFabEndTurn = $('btn-fab-end-turn');
+        if (u.isLeader && u.faction === 1 && !u.hasAttacked && u.status !== 'stun' && u.status !== 'bind') {
+            show(fabButtons);
+            btnFabTame.disabled = false;
+            btnFabTame.classList.toggle('active', game.tameMode);
+            // Update Domar button icon/state based on tame mode
+            if (game.tameMode) {
+                btnFabTame.classList.add('active');
+                btnFabTame.title = 'Cancelar Modo de Doma (D)';
+                btnFabTame.setAttribute('aria-label', 'Cancelar modo de doma');
+            } else {
+                btnFabTame.classList.remove('active');
+                btnFabTame.title = 'Ativar Modo de Doma (D)';
+                btnFabTame.setAttribute('aria-label', 'Modo de doma');
+            }
+        } else {
+            // Still show end turn FAB for player's leader
+            if (u.faction === 1 && u.isLeader) {
+                show(fabButtons);
+                btnFabTame.disabled = true;
+                btnFabTame.classList.remove('active');
+            } else {
+                hide(fabButtons);
+            }
         }
 
     } else if (game && game.selectedHex) {
