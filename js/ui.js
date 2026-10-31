@@ -2833,33 +2833,13 @@ function updateUI() {
             hide('btn-tame');
         }
 
-        // FAB Buttons (Pronto e Domar) - fixed at bottom right
-        const btnFabTame = $('btn-fab-tame');
+        // FAB Button (Pronto) - fixed at bottom right
         const btnFabEndTurn = $('btn-fab-end-turn');
         
         // Show end-turn FAB for any player unit (faction === 1)
-        // Show tame FAB only for leader who can tame
         if (u && u.faction === 1) {
             show('fab-buttons');
             btnFabEndTurn.disabled = false;
-            
-            // Tame button only for leader who can tame
-            if (u.isLeader && !u.hasAttacked && u.status !== 'stun' && u.status !== 'bind') {
-                btnFabTame.disabled = false;
-                btnFabTame.classList.toggle('active', game.tameMode);
-                if (game.tameMode) {
-                    btnFabTame.classList.add('active');
-                    btnFabTame.title = 'Cancelar Modo de Doma (D)';
-                    btnFabTame.setAttribute('aria-label', 'Cancelar modo de doma');
-                } else {
-                    btnFabTame.classList.remove('active');
-                    btnFabTame.title = 'Ativar Modo de Doma (D)';
-                    btnFabTame.setAttribute('aria-label', 'Modo de doma');
-                }
-            } else {
-                btnFabTame.disabled = true;
-                btnFabTame.classList.remove('active');
-            }
         } else {
             hide('fab-buttons');
         }

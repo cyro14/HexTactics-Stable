@@ -53,7 +53,6 @@
                             <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-2.5" />
                             <path d="M9 7h7M9 11h7" />
                         </svg>
-                        <span>Crônica da Batalha</span>
                     </span>
                     <span class="battle-log-controls">
                         <button id="btn-toggle-log" class="log-toggle-btn" title="Mostrar/Ocultar Crônica" aria-label="Alternar visibilidade do log">
@@ -155,7 +154,7 @@
                 <div id="test-gold-marker-ab" style="position: absolute; right: 12px; bottom: 12px; width: 100px; height: 60px; background: #e8c84a; border-radius: 8px; z-index: 100; pointer-events: none; border: 4px solid #e8c84a;"></div>
             </div>
 
-            <!-- FAB Buttons (Pronto e Domar) - Fixed at bottom right, on top of action bar -->
+            <!-- FAB Button (Pronto) - Fixed at bottom right, on top of action bar -->
             <div id="fab-buttons" class="fab-buttons">
                 <button id="btn-fab-end-turn" class="fab-btn fab-btn-end-turn" title="Encerrar Turno Atual (Espaço)" aria-label="Encerrar turno">
                     <svg class="fab-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -166,20 +165,6 @@
                             </linearGradient>
                         </defs>
                         <path d="M11 2C6.5 2 3 5.5 3 10s3.5 8 8 8 8-3.5 8-8-3.5-8-8-8zm0 14c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6zm0-10c-.6 0-1 .4-1 1v4c0 .6.4 1 1 1s1-.4 1-1V3c0-.6-.4-1-1-1zm0 6c-.6 0-1 .4-1 1v4c0 .6.4 1 1 1s1-.4 1-1v-4c0-.6-.4-1-1-1z" fill="url(#g-endturn-fab)" stroke="#8a6d12" stroke-width="0.8"/>
-                    </svg>
-                </button>
-                <button id="btn-fab-tame" class="fab-btn fab-btn-tame" title="Ativar Modo de Doma (D)" aria-label="Modo de doma">
-                    <svg class="fab-icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <defs>
-                            <linearGradient id="g-tame-fab" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0" stop-color="#ff8a75"/>
-                                <stop offset=".5" stop-color="#e0492e"/>
-                                <stop offset="1" stop-color="#8f1d10"/>
-                            </linearGradient>
-                        </defs>
-                        <circle cx="10" cy="10" r="6.2" fill="none" stroke="#c98a4b" stroke-width="1.6"/>
-                        <path d="M14.7 14.7c1.6 1.6 2.3 3 1.9 4.6" fill="none" stroke="#c98a4b" stroke-width="1.6" stroke-linecap="round"/>
-                        <path d="M10 12.9c-2.3-2-3.6-3.3-3.6-4.9 0-1.2 1-2.2 2.2-2.2.6 0 1.2.3 1.4.9.2-.6.8-.9 1.4-.9 1.2 0 2.2 1 2.2 2.2 0 1.6-1.3 2.9-3.6 4.9Z" fill="url(#g-tame-fab)" stroke="#ffc4b4" stroke-width=".5"/>
                     </svg>
                 </button>
             </div>

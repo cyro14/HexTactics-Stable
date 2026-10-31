@@ -28,6 +28,27 @@
     box-sizing: border-box;
 }
 
+/* Fullscreen mobile fix - ensure true fullscreen */
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+#game-container {
+    height: 100vh;
+    height: 100dvh;
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 100dvh;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
 body,
 html {
     margin: 0;
@@ -6613,10 +6634,14 @@ button.btn-success {
             z-index: 3000;
         }
         #resources-dropdown-container { position: static; }
-        #creature-res-trigger + #creature-res-dropdown,
-        .res-dropdown {
+        
+        /* Offset creature resources dropdown below the main resources dropdown */
+        #creature-res-dropdown {
             position: fixed !important;
-            top: 48px !important;
+            top: 148px !important; /* 48px + ~100px for main dropdown */
+            left: 6px !important;
+            right: 6px !important;
+            z-index: 3000;
         }
 
         /* ------------------------------------------
@@ -6630,11 +6655,11 @@ button.btn-success {
         }
 
         /* ------------------------------------------
-           3. COMBAT LOG - Horizontal bar at top-left (below mini-card)
+           3. COMBAT LOG - Horizontal bar at top-left (just below top bar)
            ------------------------------------------ */
         .battle-log {
             position: fixed !important;
-            top: 100px !important;
+            top: 48px !important;
             left: 8px !important;
             right: auto !important;
             bottom: auto !important;
@@ -6646,7 +6671,7 @@ button.btn-success {
             background: linear-gradient(180deg, rgba(232, 200, 74, 0.8) 0%, rgba(232, 200, 74, 0.6) 30%, rgba(6, 6, 10, .96) 60%, rgba(3, 4, 8, .98) 100%) !important;
             border: 1px solid rgba(138, 109, 18, .45) !important;
             border-top-color: #e8c84a !important;
-            border-top-width: 50px !important;
+            border-top-width: 4px !important;
             border-radius: 4px !important;
             box-shadow: 0 4px 16px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(232, 200, 74, .1) !important;
             display: flex !important;
