@@ -4738,6 +4738,14 @@ button.btn-success {
     padding: 11px 18px;
 }
 
+.mode-btn-history {
+    width: auto;
+    min-width: 160px;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    padding: 10px 16px;
+}
+
 /* ==========================================
    SELETOR DE SAVE (pós tela de modos)
 ========================================== */
@@ -5424,8 +5432,28 @@ button.btn-success {
         inset 0 1px 0 rgba(232, 200, 74, .1);
     backdrop-filter: blur(8px);
     padding: 6px;
-    z-index: 100;
+    z-index: 500;
 }
+
+/* Creature resources dropdown - appears below main resources dropdown */
+#creature-res-dropdown {
+    position: absolute !important;
+    top: calc(100% + 6px) !important;
+    left: 0 !important;
+    min-width: 180px !important;
+    background: linear-gradient(180deg, rgba(10, 10, 15, .98), rgba(4, 5, 10, .99)) !important;
+    border: 1px solid rgba(138, 109, 18, .55) !important;
+    border-radius: 4px !important;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, .9),
+        inset 0 1px 0 rgba(232, 200, 74, .1) !important;
+    backdrop-filter: blur(8px) !important;
+    padding: 6px !important;
+    z-index: 490 !important;
+    max-height: 30vh !important;
+    overflow-y: auto !important;
+}
+
 .res-row {
     display: flex;
     align-items: center;
@@ -7257,83 +7285,8 @@ button.btn-success {
         .battle-side-panel { padding-bottom: env(safe-area-inset-bottom, 0) !important; }
 
         /* ------------------------------------------
-           FAB BUTTONS - Fixed at bottom right, on top of action bar
-           ------------------------------------------ */
-        .fab-buttons {
-            position: fixed !important;
-            right: env(safe-area-inset-right, 8px) !important;
-            bottom: env(safe-area-inset-bottom, 8px) !important;
-            left: auto !important;
-            top: auto !important;
-            display: flex !important;
-            flex-direction: column-reverse !important;
-            gap: 8px !important;
-            z-index: 50 !important;
-            pointer-events: auto !important;
-        }
-
-        .fab-btn {
-            width: 56px !important;
-            height: 56px !important;
-            border-radius: 50% !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            border: none !important;
-            cursor: pointer !important;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, .5), 0 0 0 2px rgba(201, 162, 39, .3) !important;
-            transition: all .2s ease !important;
-            background: linear-gradient(180deg, #f4dd7a 0%, #d9ae2e 45%, #a37f14 100%) !important;
-            color: #1a1204 !important;
-        }
-
-        .fab-btn:hover:not(:disabled) {
-            transform: scale(1.08) !important;
-            box-shadow: 0 6px 24px rgba(0, 0, 0, .6), 0 0 0 3px rgba(201, 162, 39, .5) !important;
-        }
-
-        .fab-btn:active:not(:disabled) {
-            transform: scale(0.95) !important;
-        }
-
-        .fab-btn:disabled {
-            opacity: .4 !important;
-            cursor: not-allowed !important;
-            filter: grayscale(.5) !important;
-        }
-
-        .fab-btn-tame {
-            background: linear-gradient(180deg, #ff8a75 0%, #e0492e 45%, #8f1d10 100%) !important;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, .5), 0 0 0 2px rgba(224, 73, 46, .3) !important;
-        }
-
-        .fab-btn-tame:hover:not(:disabled) {
-            box-shadow: 0 6px 24px rgba(0, 0, 0, .6), 0 0 0 3px rgba(224, 73, 46, .5) !important;
-        }
-
-        .fab-btn-end-turn {
-            background: #e8c84a !important;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, .5), 0 0 0 4px #e8c84a !important;
-            border: 4px solid #e8c84a !important;
-        }
-
-        .fab-icon {
-            width: 24px !important;
-            height: 24px !important;
-            pointer-events: none !important;
-        }
-
-        .fab-btn-tame .fab-icon {
-            filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)) !important;
-        }
-
-        .fab-btn-end-turn img {
-            filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)) !important;
-        }
-
-        /* ==========================================
            TOUCH TARGET SIZES - Minimum 44x44px
-           ========================================== */
+           ------------------------------------------ */
         .ab-btn, .btn-hud-action, .btn-side-action,
         .top-btn-icon, .log-toggle-btn, .log-history-btn {
             min-width: 44px !important;
@@ -7353,6 +7306,80 @@ button.btn-success {
         body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
     }
 }
+.fab-buttons {
+    position: fixed !important;
+    right: env(safe-area-inset-right, 8px) !important;
+    bottom: env(safe-area-inset-bottom, 8px) !important;
+    left: auto !important;
+    top: auto !important;
+    display: flex !important;
+    flex-direction: column-reverse !important;
+    gap: 8px !important;
+    z-index: 50 !important;
+    pointer-events: auto !important;
+}
+
+.fab-btn {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: none !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .5), 0 0 0 2px rgba(201, 162, 39, .3) !important;
+    transition: all .2s ease !important;
+    background: linear-gradient(180deg, #f4dd7a 0%, #d9ae2e 45%, #a37f14 100%) !important;
+    color: #1a1204 !important;
+}
+
+.fab-btn:hover:not(:disabled) {
+    transform: scale(1.08) !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .6), 0 0 0 3px rgba(201, 162, 39, .5) !important;
+}
+
+.fab-btn:active:not(:disabled) {
+    transform: scale(0.95) !important;
+}
+
+.fab-btn:disabled {
+    opacity: .4 !important;
+    cursor: not-allowed !important;
+    filter: grayscale(.5) !important;
+}
+
+.fab-btn-tame {
+    background: linear-gradient(180deg, #ff8a75 0%, #e0492e 45%, #8f1d10 100%) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .5), 0 0 0 2px rgba(224, 73, 46, .3) !important;
+}
+
+.fab-btn-tame:hover:not(:disabled) {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .6), 0 0 0 3px rgba(224, 73, 46, .5) !important;
+}
+
+.fab-btn-end-turn {
+    background: #e8c84a !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .5), 0 0 0 4px #e8c84a !important;
+    border: 4px solid #e8c84a !important;
+}
+
+.fab-icon {
+    width: 24px !important;
+    height: 24px !important;
+    pointer-events: none !important;
+}
+
+.fab-btn-tame .fab-icon {
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)) !important;
+}
+
+.fab-btn-end-turn .fab-icon {
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)) !important;
+}
+
+/* Ensure FAB is hidden when game-container is hidden (menu, mode screens) */
+#game-container.hidden .fab-buttons { display: none !important; }
 
 /* ==========================================
    LANDSCAPE MOBILE - Compact adjustments
