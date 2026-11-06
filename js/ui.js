@@ -1277,7 +1277,7 @@ function updateManaUI() {
     // Injeta o gatilho compacto e a caixinha absoluta oculta
     container.innerHTML = `
         <div id="mana-trigger" style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:12px; font-weight:bold; color:var(--gold-light); padding:2px 4px; user-select:none;">
-            <svg class="mm-art" style="width:16px;height:16px;" viewBox="0 0 24 24" aria-hidden="true"><defs><radialGradient id="g-mana" cx=".35" cy=".3" r=".95"><stop offset="0" stop-color="#e2d1ff"/><stop offset=".55" stop-color="#9b59b6"/><stop offset="1" stop-color="#4a2060"/></radialGradient></defs><circle cx="12" cy="13.5" r="6.2" fill="url(#g-mana)" stroke="#d9c2ff" stroke-width=".9"/><path d="M8.8 11.2c.5-1.7 1.9-3 3.7-3.2" stroke="#e9dcff" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M12 1.6l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8Z" fill="#c9a8ff"/></svg> <span>Mana: ${totalAvailable}</span> <small style="font-size:8px; opacity:0.5; transform:scale(0.8);">▼</small>
+            <svg class="mm-art" style="width:16px;height:16px;" viewBox="0 0 24 24" aria-hidden="true"><defs><radialGradient id="g-mana" cx=".35" cy=".3" r=".95"><stop offset="0" stop-color="#e2d1ff"/><stop offset=".55" stop-color="#9b59b6"/><stop offset="1" stop-color="#4a2060"/></radialGradient></defs><circle cx="12" cy="13.5" r="6.2" fill="url(#g-mana)" stroke="#d9c2ff" stroke-width=".9"/><path d="M8.8 11.2c.5-1.7 1.9-3 3.7-3.2" stroke="#e9dcff" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M12 1.6l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8Z" fill="#c9a8ff"/></svg> <span class="mana-label">Mana:</span> <span class="mana-num">${totalAvailable}</span> <small style="font-size:8px; opacity:0.5; transform:scale(0.8);">▼</small>
         </div>
         <div id="mana-dropdown-list" class="hidden" style="position:absolute; top:calc(100% + 6px); left:0; background:rgba(10,10,15,0.98); border:1px solid var(--gold-dark); border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,0.9); z-index:2500; min-width:150px; display:flex; flex-direction:column; backdrop-filter:blur(10px);">
             ${hasMana ? listHtml : '<div style="color:#666; padding:10px; font-size:11px; font-style:italic; text-align:center;">Sem Mana</div>'}
@@ -1798,6 +1798,66 @@ function openFullLogModal() {
         content.innerHTML = '<div style="color:#666; font-style:italic; text-align:center; padding:20px;">Nenhum registro ainda.</div>';
     }
     modal.classList.remove('hidden');
+}
+
+// ==========================================
+// LAYOUT RESPONSIVO DA BATALHA (retrato/mobile)
+// - Move Pronto/Domar/Cancelar entre o painel lateral (desktop e
+//   paisagem) e o grupo à direita da barra inferior (retrato).
+// - Alça de recolher/expandir do painel contextual de criatura.
+// Os IDs são preservados, então os listeners acompanham os elementos.
+// Espelha o CSS: @media (orientation: portrait) and (max-width: 920px)
+// ==========================================
+const BATTLE_PORTRAIT_MQ = window.matchMedia('(orientation: portrait) and (max-width: 920px)');
+
+function applyBattleLayoutMode() {
+    const endBtn = $('btn-end-turn');
+    const tameBtn = $('btn-tame');
+    const cancelBtn = $('btn-cancel-action');
+    const abGroup = $('ab-end-group');
+    const sideActions = document.querySelector('#side-panel .side-actions-section');
+    if (!endBtn || !abGroup || !sideActions) return;
+
+    if (BATTLE_PORTRAIT_MQ.matches) {
+        // Retrato: Domar · Cancelar Ação · PRONTO (à direita da barra)
+        if (tameBtn) abGroup.appendChild(tameBtn);
+        if (cancelBtn) abGroup.appendChild(cancelBtn);
+        abGroup.appendChild(endBtn);
+    } else {
+        // Desktop/paisagem: ordem original do painel lateral
+        if (tameBtn) sideActions.appendChild(tameBtn);
+        sideActions.appendChild(endBtn);
+        if (cancelBtn) sideActions.appendChild(cancelBtn);
+    }
+}
+
+function initBattleResponsiveLayout() {
+    applyBattleLayoutMode();
+
+    const relayout = () => applyBattleLayoutMode();
+    if (BATTLE_PORTRAIT_MQ.addEventListener) BATTLE_PORTRAIT_MQ.addEventListener('change', relayout);
+    else if (BATTLE_PORTRAIT_MQ.addListener) BATTLE_PORTRAIT_MQ.addListener(relayout); // Safari antigo
+    window.addEventListener('resize', relayout);
+    window.addEventListener('orientationchange', relayout);
+
+    // Alça de recolher/expandir do painel contextual (retrato)
+    const panel = $('side-panel');
+    const toggle = $('side-panel-toggle');
+    if (panel && toggle) {
+        toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const minimized = panel.classList.toggle('minimized');
+            toggle.setAttribute('aria-expanded', String(!minimized));
+            try { localStorage.setItem('ht_sidepanel_collapsed', minimized ? '1' : '0'); } catch (err) { /* storage opcional */ }
+        });
+        // Preferência persistida do jogador
+        try {
+            if (localStorage.getItem('ht_sidepanel_collapsed') === '1') {
+                panel.classList.add('minimized');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        } catch (err) { /* storage opcional */ }
+    }
 }
 
 // ==========================================

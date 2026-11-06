@@ -2033,12 +2033,26 @@ class Renderer {
         this.ctx.imageSmoothingEnabled = false;
         this.ctx.webkitImageSmoothingEnabled = false;
 
-        if (force || this.hexSize < 35) {
+        // Retrato (celular): a sobra é vertical, então o encaixe prioriza a
+        // LARGURA do mapa — o jogador enxerga o mapa inteiro da esquerda à
+        // direita sem hexágonos cortados, e a altura flui com pan/pinça.
+        const portrait = this.canvas.height > this.canvas.width;
+        const refit = force
+            || (portrait ? this.hexSize < 22 : this.hexSize < 35)
+            || this._lastPortraitFit !== portrait; // girou a tela → refit
+        if (refit) {
             const mapW = this.game.cols * Math.sqrt(3);
             const mapH = this.game.rows * 1.5 + 0.5;
-            // 0.95: mapa maior por padrão — sprites mais perto da resolução
-            // nativa da arte = nítidos sem precisar de zoom manual
-            this.hexSize = Math.max(Math.min(this.canvas.width / mapW, this.canvas.height / mapH) * 0.95, 40);
+            if (portrait) {
+                // 0.9: folga lateral para o HUD respirar; piso 22 mantém os
+                // hexágonos legíveis (o mínimo do pinçar é 20)
+                this.hexSize = Math.max(Math.min((this.canvas.width / mapW) * 0.9, (this.canvas.height / mapH) * 0.95), 22);
+            } else {
+                // 0.95: mapa maior por padrão — sprites mais perto da resolução
+                // nativa da arte = nítidos sem precisar de zoom manual
+                this.hexSize = Math.max(Math.min(this.canvas.width / mapW, this.canvas.height / mapH) * 0.95, 40);
+            }
+            this._lastPortraitFit = portrait;
         }
         let pL = this.game.units.find(u => u.isLeader && u.faction === 1);
         if (pL) this.centerOn(pL.vq, pL.vr); else this.draw();

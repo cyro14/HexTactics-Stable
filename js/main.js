@@ -1646,3 +1646,12 @@ Game.prototype.handleDeath = function(deadUnit, killerUnit) {
 // Inicializa log de combate e listeners
 if (typeof initCombatLog === 'function') initCombatLog();
 if (typeof setupLogListeners === 'function') setupLogListeners();
+
+// Layout responsivo da batalha: posiciona Pronto/Domar/Cancelar conforme
+// a orientação e liga a alça de recolher do painel contextual
+if (typeof initBattleResponsiveLayout === 'function') initBattleResponsiveLayout();
+
+// Crônica flutuante (retrato): abre o histórico deslizante
+$('btn-log-fab')?.addEventListener('click', () => {
+    if (typeof openFullLogModal === 'function') openFullLogModal();
+});

@@ -70,6 +70,15 @@
                 <div id="combat-log" class="battle-log-body"></div>
             </div>
 
+            <!-- Botão flutuante da Crônica (somente retrato/mobile; no desktop
+                 o painel lateral de log continua sendo usado) -->
+            <button id="btn-log-fab" class="log-fab" title="Crônica da Batalha" aria-label="Abrir crônica da batalha">
+                <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
+                    <path d="M9 7h7M9 11h7M9 15h5" />
+                </svg>
+            </button>
+
             <!-- Top Bar (HUD Superior) - estilo Wesnoth -->
             <div id="top-bar" class="battle-top-bar">
                 <!-- Lado Esquerdo: Fase do Dia + Turno (colado na mana) + Mana -->
@@ -148,6 +157,11 @@
                 <!-- Slots de magia (populados pelo renderSpellBar; o divisor
                      é o ::before, então some junto quando não há magias) -->
                 <div id="spell-bar" class="ab-spells hidden" role="toolbar" aria-label="Magias disponíveis"></div>
+
+                <!-- Ações de turno no retrato: PRONTO (destaque à direita),
+                     Domar e Cancelar Ação entram aqui via applyBattleLayoutMode().
+                     No desktop estes botões voltam para o painel lateral. -->
+                <div id="ab-end-group" class="ab-end-group"></div>
             </div>
 
             <!-- Side Panel (Painel Lateral Direito - estilo Wesnoth) -->
@@ -158,6 +172,12 @@
                     <div class="side-top-edge" aria-hidden="true"></div>
                     <div class="side-bottom-edge" aria-hidden="true"></div>
                 </div>
+
+                <!-- Alça de recolher/expandir (retrato/mobile: o painel
+                     contextual vira uma folha na base do mapa) -->
+                <button id="side-panel-toggle" class="side-panel-toggle" title="Recolher/Expandir painel" aria-label="Recolher ou expandir painel da criatura" aria-expanded="true">
+                    <svg class="mm-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+                </button>
 
                 <!-- Conteúdo rolável (é este wrapper que captura os cliques) -->
                 <div class="side-panel-content">
