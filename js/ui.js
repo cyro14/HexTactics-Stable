@@ -1810,6 +1810,16 @@ function openFullLogModal() {
 // ==========================================
 const BATTLE_PORTRAIT_MQ = window.matchMedia('(orientation: portrait) and (max-width: 920px)');
 
+// Altura REAL da barra de ações -> variável CSS usada pelo painel
+// contextual (bottom). Medir (e não chutar 68px) mantém o painel e a
+// faixa recolhida acima dos botões mesmo com fonte escalada no sistema.
+function updateActionBarHeightVar() {
+    const abar = $('action-bar');
+    if (!abar) return;
+    const h = Math.round(abar.getBoundingClientRect().height);
+    if (h > 0) document.documentElement.style.setProperty('--battle-ab-h', h + 'px');
+}
+
 function applyBattleLayoutMode() {
     const endBtn = $('btn-end-turn');
     const tameBtn = $('btn-tame');
@@ -1829,6 +1839,7 @@ function applyBattleLayoutMode() {
         sideActions.appendChild(endBtn);
         if (cancelBtn) sideActions.appendChild(cancelBtn);
     }
+    updateActionBarHeightVar();
 }
 
 function initBattleResponsiveLayout() {
@@ -1839,6 +1850,9 @@ function initBattleResponsiveLayout() {
     else if (BATTLE_PORTRAIT_MQ.addListener) BATTLE_PORTRAIT_MQ.addListener(relayout); // Safari antigo
     window.addEventListener('resize', relayout);
     window.addEventListener('orientationchange', relayout);
+    // Reapós a estabilização do layout/fontes (a altura da barra pode mudar)
+    window.addEventListener('load', updateActionBarHeightVar);
+    setTimeout(updateActionBarHeightVar, 400);
 
     // Alça de recolher/expandir do painel contextual (retrato)
     const panel = $('side-panel');
