@@ -3770,27 +3770,48 @@ class Renderer {
 
                             // PNG já transparente (fundo removido offline
                             // por tools/strip_backgrounds.py)? Confia no alfa.
-                            let hasAlpha = false;
+                            let transparentCount = 0;
+                            let sampleSteps = 0;
                             for (let i = 3; i < data.length; i += 397) {
-                                if (data[i] < 250) { hasAlpha = true; break; }
+                                sampleSteps++;
+                                if (data[i] < 240) transparentCount++;
                             }
+                            let hasAlpha = (transparentCount / sampleSteps) > 0.02;
 
                             if (!hasAlpha) {
-                                // LEGADO: sprite com fundo sólido — chroma-key
-                                // lê o primeiro pixel como cor de fundo
-                                let bgR = data[0];
-                                let bgG = data[1];
-                                let bgB = data[2];
-                                let tolerance = 20;
-                                for (let i = 0; i < data.length; i += 4) {
-                                    let r = data[i];
-                                    let g = data[i + 1];
-                                    let b = data[i + 2];
+                                // Fallback dinâmico: flood-fill a partir das bordas caso a imagem seja sólida
+                                let w = tempCanvas.width;
+                                let h = tempCanvas.height;
+                                let bgR = data[0], bgG = data[1], bgB = data[2];
+                                let tol = 30;
+                                let visited = new Uint8Array(w * h);
+                                let queue = [];
 
-                                    if (Math.abs(r - bgR) < tolerance &&
-                                        Math.abs(g - bgG) < tolerance &&
-                                        Math.abs(b - bgB) < tolerance) {
-                                        data[i + 3] = 0; // Transparência absoluta!
+                                // Adiciona as bordas como sementes
+                                for (let x = 0; x < w; x++) {
+                                    queue.push(x, 0);
+                                    queue.push(x, h - 1);
+                                }
+                                for (let y = 1; y < h - 1; y++) {
+                                    queue.push(0, y);
+                                    queue.push(w - 1, y);
+                                }
+
+                                while (queue.length > 0) {
+                                    let cy = queue.pop();
+                                    let cx = queue.pop();
+                                    let idx = cy * w + cx;
+                                    if (visited[idx]) continue;
+                                    visited[idx] = 1;
+
+                                    let pIdx = idx * 4;
+                                    let r = data[pIdx], g = data[pIdx + 1], b = data[pIdx + 2];
+                                    if (Math.abs(r - bgR) <= tol && Math.abs(g - bgG) <= tol && Math.abs(b - bgB) <= tol) {
+                                        data[pIdx + 3] = 0;
+                                        if (cx > 0 && !visited[idx - 1]) queue.push(cx - 1, cy);
+                                        if (cx < w - 1 && !visited[idx + 1]) queue.push(cx + 1, cy);
+                                        if (cy > 0 && !visited[idx - w]) queue.push(cx, cy - 1);
+                                        if (cy < h - 1 && !visited[idx + w]) queue.push(cx, cy + 1);
                                     }
                                 }
                                 tempCtx.putImageData(imgData, 0, 0);

@@ -149,15 +149,15 @@ elif kind == "battle":
     # top-bar: badge de turno + chip de ouro dourados
     top_gold = count(0, w, int(h * 0.02), int(h * 0.15), lambda r, g, b: r > 170 and g > 130 and b < 100, 2)
     if mobile:
-        # modo retrato: mini-card no topo (foto 40px + nome + HP/MP micro),
-        # stats completos no modal; crônica recolhida abaixo do card;
+        # modo retrato: folha compacta na base (acima da action bar),
+        # stats completos no modal; crônica vira FAB;
         # action bar bottom-left; Pronto é FAB no canto inferior direito
-        panel_gold = count(0, w, int(h * 0.055), int(h * 0.17), lambda r, g, b: r > 150 and g > 100 and b < 90, 2)
-        hp_red = count(0, w, int(h * 0.055), int(h * 0.17), lambda r, g, b: r > 150 and g < 110 and b < 100, 2)
-        mp_blue = count(0, w, int(h * 0.055), int(h * 0.17), lambda r, g, b: r < 130 and g > 80 and b > 150, 2)
+        panel_gold = count(0, w, int(h * 0.55), int(h * 0.90), lambda r, g, b: r > 150 and g > 100 and b < 90, 2)
+        hp_red = count(0, w, int(h * 0.55), int(h * 0.90), lambda r, g, b: r > 150 and g < 110 and b < 100, 2)
+        mp_blue = count(0, w, int(h * 0.55), int(h * 0.90), lambda r, g, b: r < 130 and g > 80 and b > 150, 2)
         ready_gold = count(w - 130, w, h - 110, h, lambda r, g, b: r > 180 and g > 140 and b < 100, 2)
-        # crônica recolhida no topo-direita (top: ~134px)
-        log_gold = count(int(w * 0.3), w, int(h * 0.155), int(h * 0.24), lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
+        # crônica em FAB (dourado no canto superior ou botão FAB)
+        log_gold = count(0, w, 0, int(h * 0.15), lambda r, g, b: r > 160 and g > 120 and b < 100, 2)
         # action bar: canto inferior esquerdo
         action_gold = count(0, int(w * 0.62), h - 90, h, lambda r, g, b: r > 150 and g > 100 and b < 90, 2)
         panel_thresh = 3
@@ -176,8 +176,8 @@ elif kind == "battle":
     # lobo de mana invocado (sprite procedural): o battleSetup o SELECIONA,
     # então o retrato no painel/card mostra a pelagem violeta
     if mobile:
-        # mini-card: retrato 40px no topo-esquerda do card
-        wolf_violet = count(0, int(w * 0.3), int(h * 0.05), int(h * 0.17),
+        # mini-card / folha compacta: retrato no painel na base
+        wolf_violet = count(0, w, int(h * 0.55), int(h * 0.90),
                             lambda r, g, b: 50 < r < 160 and 35 < g < 130 and 90 < b < 200 and b > r, 2)
     else:
         # retrato 76px no topo do painel lateral direito
