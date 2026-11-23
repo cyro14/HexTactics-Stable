@@ -2020,7 +2020,47 @@ class Renderer {
         this.tCols = 12; // variantes de terreno por linha
         // cache de sprites de itens
         this._itemImgCache = {};
+        // cache de frames de tiles animados
+        this._animCache = {};
+        this._animLoop = null;
+        this._animStart = 0;
         window.addEventListener('resize', () => this.initCamera(false));
+    }
+
+    // ==========================================
+    // LOOP DE ANIMAÇÃO DE TILES (água, lava, floresta, etc.)
+    // Redesenha o mapa periodicamente para avançar os frames.
+    // O requestAnimationFrame fica sempre vivo; quando o container está
+    // hidden (menus), apenas pula o redesenho, sem matar o loop.
+    // ==========================================
+    startAnimLoop() {
+        if (this._animLoop) return;
+        const gc = document.getElementById('game-container');
+        if (!gc) return;
+        const self = this;
+        let last = 0;
+        const FRAME_MS = 66; // ~15fps, suficiente para animação de tiles
+        const loop = (ts) => {
+            // Mantém o loop vivo para poder retomar quando o jogo voltar
+            self._animLoop = requestAnimationFrame(loop);
+            if (!gc || gc.classList.contains('hidden')) {
+                last = ts;
+                return;
+            }
+            if (ts - last < FRAME_MS) return;
+            last = ts;
+            self.draw();
+        };
+        self._animLoop = requestAnimationFrame(loop);
+    }
+
+    // Verifica se o mapa de batalha atual possui algum terreno animado.
+    hasAnimatedTiles() {
+        if (!this.game || !this.game.map) return false;
+        for (const hex of this.game.map.values()) {
+            if (hex.terrain && hex.terrain.animated) return true;
+        }
+        return false;
     }
 
     initCamera(force = false) {
@@ -3304,6 +3344,12 @@ class Renderer {
         ctx.globalAlpha = 1.0;
         ctx.shadowBlur = 0;
 
+        // Inicia o loop de animação de tiles automaticamente quando há
+        // terrenos animados no mapa atual.
+        if (this.hasAnimatedTiles() && !this._animLoop) {
+            this.startAnimLoop();
+        }
+
         this.game.map.forEach(hex => {
             const p = this.getPos(hex.q, hex.r);
 
@@ -3318,11 +3364,38 @@ class Renderer {
             let tRows = 13;
             let selectedTile = { x: 0, y: 0 };
             let hash = Math.abs((hex.q * 101) + (hex.r * 37));
-            // FLIP HORIZONTAL aleatório determinístico + variante por hex
-            let flipH = ((hash >> 3) % 2) === 0;
+            // FLIP HORIZONTAL — desativado para água (orientação fixa)
+            // Outros terrenos mantêm variação determinística por posição
+            let isWaterTerrain = hex.terrain && (
+                hex.terrain.id === 'WATER' || hex.terrain.id === 'SEA' ||
+                hex.terrain.id === 'REEF' || hex.terrain.id === 'SWAMP'
+            );
+            let flipH = isWaterTerrain ? false : ((hash >> 3) % 2) === 0;
 
-            // CHECA SE É UM TERRENO COM SPRITE INDIVIDUAL
-            if (hex.terrain && hex.terrain.customSprite) {
+            // ANIMAÇÃO DE TILES (4 frames) — prioridade sobre sprite estático
+            if (hex.terrain && hex.terrain.animated) {
+                const frames = hex.terrain.frames;
+                const frameMs = hex.terrain.frameMs || 200;
+                const now = performance.now();
+                if (this._animStart === 0) this._animStart = now;
+                const frameIndex = Math.floor((now - this._animStart) / frameMs) % frames.length;
+                const framePath = frames[frameIndex];
+                if (!this._animCache[framePath]) {
+                    const img = new Image();
+                    img.onload = () => { this.draw(); };
+                    img.src = framePath;
+                    this._animCache[framePath] = img;
+                }
+                currentImg = this._animCache[framePath];
+                if (currentImg && currentImg.complete && currentImg.naturalWidth > 0) {
+                    drawCustom = true;
+                    tCols = 1;
+                    tRows = 1;
+                    selectedTile = { x: 0, y: 0 };
+                }
+            }
+            // CHECA SE É UM TERRENO COM SPRITE INDIVIDUAL (estático)
+            else if (hex.terrain && hex.terrain.customSprite) {
                 if (!window.terrainCache) window.terrainCache = {};
                 if (!window.terrainCache[hex.terrain.customSprite]) {
                     let img = new Image();
@@ -4313,7 +4386,40 @@ class KingdomRenderer {
         this.tileset.src = 'img/tiles/tileset12.png'; // 12 colunas
         this.tCols = 12;
 
+        // cache de frames de tiles animados
+        this._animCache = {};
+        this._animLoop = null;
+        this._animStart = 0;
+
         window.addEventListener('resize', () => this.initCamera());
+    }
+
+    // ==========================================
+    // LOOP DE ANIMAÇÃO DE TILES (reino)
+    // ==========================================
+    startAnimLoop() {
+        if (this._animLoop) return;
+        const self = this;
+        let last = 0;
+        const FRAME_MS = 66; // ~15fps
+        const loop = (ts) => {
+            self._animLoop = requestAnimationFrame(loop);
+            if (ts - last < FRAME_MS) return;
+            last = ts;
+            self.draw();
+        };
+        self._animLoop = requestAnimationFrame(loop);
+    }
+
+    // Verifica se o mapa atual possui algum terreno animado.
+    // Usado para iniciar o loop de animação só quando necessário.
+    hasAnimatedTiles() {
+        if (!this.game || !this.game.kingdomMap) return false;
+        for (const hex of this.game.kingdomMap.values()) {
+            const t = typeof hex.terrain === 'string' ? TERRAINS[hex.terrain] : hex.terrain;
+            if (t && t.animated) return true;
+        }
+        return false;
     }
 
     initCamera() {
@@ -4361,6 +4467,12 @@ class KingdomRenderer {
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         if (!this.game || !this.game.kingdomMap) return;
 
+        // Inicia o loop de animação de tiles automaticamente quando há
+        // terrenos animados no mapa atual.
+        if (this.hasAnimatedTiles() && !this._animLoop) {
+            this.startAnimLoop();
+        }
+
         this.game.kingdomMap.forEach(hex => {
             const p = this.getPos(hex.q, hex.r);
             const terrainData = typeof hex.terrain === 'string' ? TERRAINS[hex.terrain] : hex.terrain;
@@ -4377,11 +4489,38 @@ class KingdomRenderer {
             let tRows = 13;
             let selectedTile = { x: 0, y: 0 };
             let hash = Math.abs((hex.q * 101) + (hex.r * 37));
-            // FLIP HORIZONTAL aleatório determinístico + variante por hex
-            let flipH = ((hash >> 3) % 2) === 0;
+            // FLIP HORIZONTAL — desativado para água (orientação fixa)
+            // Outros terrenos mantêm variação determinística por posição
+            let isWaterTerrain = terrainData && (
+                terrainData.id === 'WATER' || terrainData.id === 'SEA' ||
+                terrainData.id === 'REEF' || terrainData.id === 'SWAMP'
+            );
+            let flipH = isWaterTerrain ? false : ((hash >> 3) % 2) === 0;
 
-            // CHECA SE É UM TERRENO COM SPRITE INDIVIDUAL
-            if (hex.terrain && hex.terrain.customSprite) {
+            // ANIMAÇÃO DE TILES (4 frames) — prioridade sobre sprite estático
+            if (hex.terrain && hex.terrain.animated) {
+                const frames = hex.terrain.frames;
+                const frameMs = hex.terrain.frameMs || 200;
+                const now = performance.now();
+                if (this._animStart === 0) this._animStart = now;
+                const frameIndex = Math.floor((now - this._animStart) / frameMs) % frames.length;
+                const framePath = frames[frameIndex];
+                if (!this._animCache[framePath]) {
+                    const img = new Image();
+                    img.onload = () => { this.draw(); };
+                    img.src = framePath;
+                    this._animCache[framePath] = img;
+                }
+                currentImg = this._animCache[framePath];
+                if (currentImg && currentImg.complete && currentImg.naturalWidth > 0) {
+                    drawCustom = true;
+                    tCols = 1;
+                    tRows = 1;
+                    selectedTile = { x: 0, y: 0 };
+                }
+            }
+            // CHECA SE É UM TERRENO COM SPRITE INDIVIDUAL (estático)
+            else if (hex.terrain && hex.terrain.customSprite) {
                 if (!window.terrainCache) window.terrainCache = {};
                 if (!window.terrainCache[hex.terrain.customSprite]) {
                     let img = new Image();

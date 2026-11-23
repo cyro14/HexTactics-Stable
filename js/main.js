@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
     renderer = new Renderer($('gameCanvas'), game);
     // Inicia o loop atmosférico (canvas overlay, ~30fps, não redesenha o mapa)
     renderer.startAmbientLoop();
+    // O loop de animação de tiles é iniciado automaticamente dentro de draw()
+    // quando há terrenos animados no mapa atual.
     let isDragging = false, startX, startY, initOffX, initOffY;
     let initialPinchDist = null, initialHexSize = null;
     let lastForecastTarget = null;

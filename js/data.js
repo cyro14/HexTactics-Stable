@@ -30,29 +30,57 @@ const getActiveArtifacts = () => { return (game && game.isRoguelite) ? activeArt
 // ==========================================
 
 const TERRAINS = {
-    // Linha 0: Planície
-    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#5b8c42', icon: null, variations: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 }, { x: 5, y: 0 }] },
+    // Linha 0: Planície (8-bit)
+    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#5b8c42', icon: null, customSprite: 'img/tiles/hexes/grassland.png', cols: 1, variations: [{ x: 0, y: 0 }] },
 
-    // Linha 1: Floresta
-    FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#1e4d2b', icon: null, variations: [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 }, { x: 4, y: 1 }, { x: 5, y: 1 }] },
+    // Linha 1: Floresta (8-bit) — animada 4 frames
+    FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#1e4d2b', icon: null, animated: true, frameMs: 200,
+        frames: [
+            'img/tiles/hexes/forest_hex_frame_1_of_4.png',
+            'img/tiles/hexes/forest_hex_frame_2_of_4.png',
+            'img/tiles/hexes/forest_hex_frame_3_of_4.png',
+            'img/tiles/hexes/forest_hex_frame_4_of_4.png'
+        ],
+        customSprite: 'img/tiles/hexes/forest_hex_frame_1_of_4.png', cols: 1, variations: [{ x: 0, y: 1 }] },
 
-    // Linha 2: Montanha
-    MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#5b5b5b', icon: null, variations: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }, { x: 3, y: 2 }, { x: 4, y: 2 }, { x: 5, y: 2 }] },
+    // Linha 2: Montanha (8-bit)
+    MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#5b5b5b', icon: null, customSprite: 'img/tiles/hexes/mountain.png', cols: 1, variations: [{ x: 0, y: 2 }] },
 
-    // Linha 3: Água (Lago)
-    WATER: { id: 'WATER', name: 'Lago', cost: 2, def: -0.10, color: '#3498db', icon: null, variations: [{ x: 0, y: 3 }, { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 3 }, { x: 4, y: 3 }, { x: 5, y: 3 }] },
+    // Linha 3: Água / Lago (8-bit) — animada 4 frames
+    WATER: { id: 'WATER', name: 'Lago', cost: 2, def: -0.10, color: '#3498db', icon: null, animated: true, frameMs: 160,
+        frames: [
+            'img/tiles/hexes/shallowwater_hex_frame_1_of_4.png',
+            'img/tiles/hexes/shallowwater_hex_frame_2_of_4.png',
+            'img/tiles/hexes/shallowwater_hex_frame_3_of_4.png',
+            'img/tiles/hexes/shallowwater_hex_frame_4_of_4.png'
+        ],
+        customSprite: 'img/tiles/hexes/shallowwater_hex_frame_1_of_4.png', cols: 1, variations: [{ x: 0, y: 3 }] },
 
-    // Linha 4: Mar (Água Funda)
-    SEA: { id: 'SEA', name: 'Mar', cost: 3, def: -0.20, color: '#2980b9', icon: null, variations: [{ x: 0, y: 4 }, { x: 1, y: 4 }, { x: 2, y: 4 }, { x: 3, y: 4 }, { x: 4, y: 4 }, { x: 5, y: 4 }] },
+    // Linha 4: Mar / Água Funda (8-bit) — animada 4 frames
+    SEA: { id: 'SEA', name: 'Mar', cost: 3, def: -0.20, color: '#2980b9', icon: null, animated: true, frameMs: 160,
+        frames: [
+            'img/tiles/hexes/deepwater_hex_frame_1_of_4.png',
+            'img/tiles/hexes/deepwater_hex_frame_2_of_4.png',
+            'img/tiles/hexes/deepwater_hex_frame_3_of_4.png',
+            'img/tiles/hexes/deepwater_hex_frame_4_of_4.png'
+        ],
+        customSprite: 'img/tiles/hexes/deepwater_hex_frame_1_of_4.png', cols: 1, variations: [{ x: 0, y: 4 }] },
 
-    // Linha 5: Deserto
-    DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#e6c86e', icon: null, variations: [{ x: 0, y: 5 }, { x: 1, y: 5 }, { x: 2, y: 5 }, { x: 3, y: 5 }, { x: 4, y: 5 }, { x: 5, y: 5 }] },
+    // Linha 5: Deserto (sprite individual)
+    DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#e6c86e', icon: null, customSprite: 'img/tiles/hexes/desert_hex_tile.png', cols: 1, variations: [{ x: 0, y: 0 }] },
 
-    // Linha 6: Neve
-    SNOW: { id: 'SNOW', name: 'Neve', cost: 2, def: -0.15, color: '#cce6f4', icon: null, variations: [{ x: 0, y: 6 }, { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 }] },
+    // Linha 6: Neve (sprite individual)
+    SNOW: { id: 'SNOW', name: 'Neve', cost: 2, def: -0.15, color: '#cce6f4', icon: null, customSprite: 'img/tiles/hexes/snow_hex_tile_64x64_1795263616491.png', cols: 1, variations: [{ x: 0, y: 0 }] },
 
-    // Linha 7: Pântano
-    SWAMP: { id: 'SWAMP', name: 'Pântano', cost: 2, def: 0.10, color: '#3b5323', icon: null, variations: [{ x: 0, y: 7 }, { x: 1, y: 7 }, { x: 2, y: 7 }, { x: 3, y: 7 }, { x: 4, y: 7 }, { x: 5, y: 7 }] },
+    // Linha 7: Pântano (8-bit) — animada 4 frames
+    SWAMP: { id: 'SWAMP', name: 'Pântano', cost: 2, def: 0.10, color: '#3b5323', icon: null, animated: true, frameMs: 240,
+        frames: [
+            'img/tiles/hexes/swamp_hex_frame_1_of_4.png',
+            'img/tiles/hexes/swamp_hex_frame_2_of_4.png',
+            'img/tiles/hexes/swamp_hex_frame_3_of_4.png',
+            'img/tiles/hexes/swamp_hex_frame_4_of_4.png'
+        ],
+        customSprite: 'img/tiles/hexes/swamp_hex_frame_1_of_4.png', cols: 1, variations: [{ x: 0, y: 7 }] },
 
     // Linha 8: Vila
     VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#c49a45', icon: null, variations: [{ x: 0, y: 8 }, { x: 1, y: 8 }, { x: 2, y: 8 }, { x: 3, y: 8 }, { x: 4, y: 8 }, { x: 5, y: 8 }] },
@@ -60,8 +88,8 @@ const TERRAINS = {
     // Linha 9: Castelo
     CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#3d444a', icon: null, variations: [{ x: 0, y: 9 }, { x: 1, y: 9 }, { x: 2, y: 9 }, { x: 3, y: 9 }, { x: 4, y: 9 }, { x: 5, y: 9 }] },
 
-    // Linha 10: Savana
-    SAVANNA: { id: 'SAVANNA', name: 'Savana', cost: 1, def: 0.05, color: '#d4a373', icon: null, variations: [{ x: 0, y: 10 }, { x: 1, y: 10 }, { x: 2, y: 10 }, { x: 3, y: 10 }, { x: 4, y: 10 }, { x: 5, y: 10 }] },
+    // Linha 10: Savana (sprite individual)
+    SAVANNA: { id: 'SAVANNA', name: 'Savana', cost: 1, def: 0.05, color: '#d4a373', icon: null, customSprite: 'img/tiles/hexes/savana_hex_tile_64x64_1795263753728.png', cols: 1, variations: [{ x: 0, y: 0 }] },
 
     // Linha 11: Floresta em Chamas
     BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas', cost: 2, def: -0.50, color: '#d35400', icon: null, variations: [{ x: 0, y: 11 }, { x: 1, y: 11 }, { x: 2, y: 11 }, { x: 3, y: 11 }, { x: 4, y: 11 }, { x: 5, y: 11 }] },
@@ -76,11 +104,39 @@ const TERRAINS = {
     // NOVOS TERRENOS ESPECIAIS (Sprites Individuais)
     // ==========================================
     QUICKSAND: { id: 'QUICKSAND', name: 'Areia Movediça', cost: 3, def: -0.20, color: '#d4a373', icon: null, customSprite: 'img/tiles/areia_movedica.png', cols: 6 },
-    LAVA_RIFT: { id: 'LAVA_RIFT', name: 'Fenda de Lava', cost: 3, def: -0.50, color: '#c0392b', icon: null, customSprite: 'img/tiles/fenda_lava.png', cols: 6 },
-    MANA_RIFT: { id: 'MANA_RIFT', name: 'Fenda de Mana', cost: 2, def: 0.10, color: '#9b59b6', icon: null, customSprite: 'img/tiles/fenda_mana.png', cols: 6 },
-    REEF: { id: 'REEF', name: 'Recife', cost: 2, def: 0.30, color: '#1abc9c', icon: null, customSprite: 'img/tiles/recife.png', cols: 6 },
+    LAVA_RIFT: { id: 'LAVA_RIFT', name: 'Fenda de Lava', cost: 3, def: -0.50, color: '#c0392b', icon: null, animated: true, frameMs: 120,
+        frames: [
+            'img/tiles/hexes/lava_hex_frame_1_of_4_1795211363310.png',
+            'img/tiles/hexes/lava_hex_frame_2_of_4_1795211363352.png',
+            'img/tiles/hexes/lava_hex_frame_3_of_4_1795211363410.png',
+            'img/tiles/hexes/lava_hex_frame_4_of_4_1795211363508.png'
+        ],
+        customSprite: 'img/tiles/fenda_lava.png', cols: 6 },
+    MANA_RIFT: { id: 'MANA_RIFT', name: 'Fenda de Mana', cost: 2, def: 0.10, color: '#9b59b6', icon: null, animated: true, frameMs: 200,
+        frames: [
+            'img/tiles/hexes/mana_hex_frame_1_of_4_1795264235267.png',
+            'img/tiles/hexes/mana_hex_frame_2_of_4_1795264235303.png',
+            'img/tiles/hexes/mana_hex_frame_3_of_4_1795264235352.png',
+            'img/tiles/hexes/mana_hex_frame_4_of_4_1795264235415.png'
+        ],
+        customSprite: 'img/tiles/fenda_mana.png', cols: 6 },
+    REEF: { id: 'REEF', name: 'Recife', cost: 2, def: 0.30, color: '#1abc9c', icon: null, animated: true, frameMs: 180,
+        frames: [
+            'img/tiles/hexes/recife_hex_frame_1_of_4_1795265360928.png',
+            'img/tiles/hexes/recife_hex_frame_2_of_4_1795265360977.png',
+            'img/tiles/hexes/recife_hex_frame_3_of_4_1795265361089.png',
+            'img/tiles/hexes/recife_hex_frame_4_of_4_1795265361158.png'
+        ],
+        customSprite: 'img/tiles/recife.png', cols: 6 },
     DNA_DEPOSIT: { id: 'DNA_DEPOSIT', name: 'Jazida de DNA', cost: 1, def: 0.10, color: '#2ecc71', icon: null, customSprite: 'img/tiles/jazida_dna.png', cols: 6 },
-    GOLD_DEPOSIT: { id: 'GOLD_DEPOSIT', name: 'Jazida de Ouro', cost: 1, def: 0.10, color: '#f1c40f', icon: null, customSprite: 'img/tiles/jazida_ouro.png', cols: 6 },
+    GOLD_DEPOSIT: { id: 'GOLD_DEPOSIT', name: 'Jazida de Ouro', cost: 1, def: 0.10, color: '#f1c40f', icon: null, animated: true, frameMs: 140,
+        frames: [
+            'img/tiles/hexes/gold_hex_frame_1_of_4_1795264592704.png',
+            'img/tiles/hexes/gold_hex_frame_2_of_4_1795264592744.png',
+            'img/tiles/hexes/gold_hex_frame_3_of_4_1795264592833.png',
+            'img/tiles/hexes/gold_hex_frame_4_of_4_1795264592889.png'
+        ],
+        customSprite: 'img/tiles/jazida_ouro.png', cols: 6 },
     BLACK_MARKET: { id: 'BLACK_MARKET', name: 'Mercado Negro', cost: 1, def: 0.20, color: '#2c3e50', icon: null, customSprite: 'img/tiles/mercado_negro.png', cols: 6 }
 };
 
@@ -422,62 +478,62 @@ const EVOS = {
 const BEASTS = {
     LAND: [
         { e: '🐭', name: 'Rato', hp: 20, atk: 5, mp: 5, range: 1, abilities: [], minLevel: 1, filter: 'none', sprite: 'img/units/rato.png', tags: ['STALKER', 'SILVESTRE'], fav: ['PLAINS'] },
-        { e: '🐦', name: 'Pássaro', hp: 30, atk: 9, mp: 5, range: 1, abilities: [], minLevel: 1, filter: 'none', sprite: 'img/units/pardal.png', tags: ['WING', 'SILVESTRE'], fav: ['FOREST'] },
-        { e: '🐦', name: 'Bem-te-vi', hp: 28, atk: 10, mp: 6, range: 2, abilities: ['swift'], minLevel: 1, filter: 'none', sprite: 'img/units/bemtevi.png', tags: ['WING', 'SILVESTRE'], fav: ['FOREST', 'PLAINS'] },
-        { e: '🦅', name: 'Corvo', hp: 32, atk: 11, mp: 5, range: 2, abilities: ['camouflage'], minLevel: 2, filter: 'none', sprite: 'img/units/corvo.png', tags: ['UMBRAL', 'WING'], fav: ['FOREST'] },
-        { e: '🐢', name: 'Tartaruga', hp: 70, atk: 6, mp: 2, range: 1, abilities: [], minLevel: 1, filter: 'none', sprite: 'img/units/tartaruga.png', tags: ['PRIMAL', 'ROCK'], fav: ['WATER', 'PLAINS'] },
+        { e: '🐦', name: 'Pássaro', hp: 30, atk: 9, mp: 5, range: 1, abilities: [], minLevel: 1, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/crow.png', tags: ['WING', 'SILVESTRE'], fav: ['FOREST'] },
+        { e: '🐦', name: 'Bem-te-vi', hp: 28, atk: 10, mp: 6, range: 2, abilities: ['swift'], minLevel: 1, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/bemtevi.png', tags: ['WING', 'SILVESTRE'], fav: ['FOREST', 'PLAINS'] },
+        { e: '🦅', name: 'Corvo', hp: 32, atk: 11, mp: 5, range: 2, abilities: ['camouflage'], minLevel: 2, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/crow.png', tags: ['UMBRAL', 'WING'], fav: ['FOREST'] },
+        { e: '🐢', name: 'Tartaruga', hp: 70, atk: 6, mp: 2, range: 1, abilities: [], minLevel: 1, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/turtle.png', tags: ['PRIMAL', 'ROCK'], fav: ['WATER', 'PLAINS'] },
         { e: '🐇', name: 'Coelho', hp: 25, atk: 4, mp: 6, range: 1, scale: 0.8, abilities: ['swift'], minLevel: 1, filter: 'none', tags: ['SILVESTRE'], fav: ['PLAINS'] },
-        { e: '🐴', name: 'Cavalo', hp: 45, atk: 7, mp: 6, range: 1, abilities: ['hit_run'], minLevel: 1, filter: 'none', sprite: 'img/units/cavalo.png', tags: ['ROCK'], fav: ['PLAINS'] },
-        { e: '🐴', name: 'Pesadelo', hp: 55, atk: 12, mp: 6, range: 1, abilities: ['hit_run', 'lifesteal'], minLevel: 3, filter: 'none', sprite: 'img/units/pesadelo.png', tags: ['UMBRAL', 'STALKER'], fav: ['ASHES', 'PLAINS'] },
-        { e: '🦄', name: 'Unicórnio', hp: 50, atk: 10, mp: 6, range: 1, abilities: ['dodge', 'swift'], minLevel: 3, filter: 'brightness(115%) drop-shadow(0 0 4px #fff)', sprite: 'img/units/unicornio.png', tags: ['CELESTIAL', 'MYSTIC'], fav: ['PLAINS', 'FOREST'] },
+        { e: '🐴', name: 'Cavalo', hp: 45, atk: 7, mp: 6, range: 1, abilities: ['hit_run'], minLevel: 1, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/horse.png', tags: ['ROCK'], fav: ['PLAINS'] },
+        { e: '🐴', name: 'Pesadelo', hp: 55, atk: 12, mp: 6, range: 1, abilities: ['hit_run', 'lifesteal'], minLevel: 3, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/nightmare.png', tags: ['UMBRAL', 'STALKER'], fav: ['ASHES', 'PLAINS'] },
+        { e: '🦄', name: 'Unicórnio', hp: 50, atk: 10, mp: 6, range: 1, abilities: ['dodge', 'swift'], minLevel: 3, filter: 'brightness(115%) drop-shadow(0 0 4px #fff)', sprite: 'img/sprites/Novos 8bits/units/unicorn.png', tags: ['CELESTIAL', 'MYSTIC'], fav: ['PLAINS', 'FOREST'] },
         { e: '🦇', name: 'Morcego', hp: 25, atk: 8, mp: 4, range: 1, abilities: ['lifesteal'], minLevel: 1, filter: 'none', tags: ['WING', 'UMBRAL'], fav: ['FOREST'] },
         { e: '🐍', name: 'Cobra', hp: 25, atk: 10, mp: 3, range: 1, abilities: ['poison', 'camouflage'], minLevel: 1, filter: 'none', tags: ['VENOM', 'SAND'], fav: ['DESERT'] },
-        { e: '🦂', name: 'Escorpião', hp: 30, atk: 11, mp: 3, range: 1, abilities: ['poison'], minLevel: 1, filter: 'none', sprite: 'img/units/escorpiao.png', tags: ['VENOM', 'SAND', 'CARAPACE'], fav: ['DESERT'] },
-        { e: '🦂', name: 'Escorpião Ancião', hp: 60, atk: 17, mp: 4, range: 1, abilities: ['poison', 'carapace'], minLevel: 3, filter: 'none', sprite: 'img/units/escorpiao_imperador.png', tags: ['VENOM', 'SAND', 'CARAPACE'], fav: ['DESERT'] },
+        { e: '🦂', name: 'Escorpião', hp: 30, atk: 11, mp: 3, range: 1, abilities: ['poison'], minLevel: 1, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/scorpion.png', tags: ['VENOM', 'SAND', 'CARAPACE'], fav: ['DESERT'] },
+        { e: '🦂', name: 'Escorpião Ancião', hp: 60, atk: 17, mp: 4, range: 1, abilities: ['poison', 'carapace'], minLevel: 3, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/scorpion-2.png', tags: ['VENOM', 'SAND', 'CARAPACE'], fav: ['DESERT'] },
         { e: '🐒', name: 'Macaco', hp: 35, atk: 10, mp: 4, range: 1, abilities: ['dodge'], minLevel: 1, filter: 'none', tags: ['SILVESTRE', 'PRIMAL'], fav: ['FOREST'] },
-        { e: '🦊', name: 'Raposa', hp: 25, atk: 12, mp: 5, range: 1, scale: 1.5, abilities: ['swift'], minLevel: 1, filter: 'none', sprite: 'img/units/raposa.png', tags: ['SILVESTRE', 'MYSTIC'], fav: ['FOREST'] },
-        { e: '🦊', name: 'Raposa de Fogo', hp: 35, atk: 15, mp: 5, range: 1, abilities: ['swift', 'burn'], minLevel: 2, filter: 'none', sprite: 'img/units/raposa_fogo.png', tags: ['FIRE', 'SILVESTRE'], fav: ['FOREST', 'ASHES'] },
+        { e: '🦊', name: 'Raposa', hp: 25, atk: 12, mp: 5, range: 1, scale: 1.5, abilities: ['swift'], minLevel: 1, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/fox.png', tags: ['SILVESTRE', 'MYSTIC'], fav: ['FOREST'] },
+        { e: '🦊', name: 'Raposa de Fogo', hp: 35, atk: 15, mp: 5, range: 1, abilities: ['swift', 'burn'], minLevel: 2, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/firefox-2.png', tags: ['FIRE', 'SILVESTRE'], fav: ['FOREST', 'ASHES'] },
         { e: '🐺', name: 'Lobo', hp: 35, atk: 12, mp: 4, range: 1, abilities: [], minLevel: 2, filter: 'none', tags: ['STALKER', 'ICE'], fav: ['SNOW'] },
         { e: '🐗', name: 'Javali', hp: 50, atk: 8, mp: 3, range: 1, abilities: [], minLevel: 2, filter: 'none', tags: ['STALKER', 'ROCK'], fav: ['PLAINS'] },
         { e: '🐻', name: 'Urso', hp: 65, atk: 15, mp: 3, range: 1, abilities: ['stun'], minLevel: 2, filter: 'none', tags: ['MYSTIC', 'SILVESTRE'], fav: ['FOREST'] },
-        { e: '🐘', name: 'Elefante', hp: 90, atk: 12, mp: 2, range: 1, abilities: [], minLevel: 3, filter: 'none', sprite: 'img/units/elefante.png', tags: ['PRIMAL', 'SAND'], fav: ['DESERT'] },
-        { e: '🦁', name: 'Leão Selvagem', hp: 80, atk: 18, mp: 4, range: 1, abilities: ['leadership'], minLevel: 2, filter: 'none', sprite: 'img/units/leao.png', tags: ['STALKER', 'SAND'], fav: ['DESERT'] },
+        { e: '🐘', name: 'Elefante', hp: 90, atk: 12, mp: 2, range: 1, abilities: [], minLevel: 3, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/elephant.png', tags: ['PRIMAL', 'SAND'], fav: ['DESERT'] },
+        { e: '🦁', name: 'Leão Selvagem', hp: 80, atk: 18, mp: 4, range: 1, abilities: ['leadership'], minLevel: 2, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/lion.png', tags: ['STALKER', 'SAND'], fav: ['DESERT'] },
         { e: '🕷️', name: 'Aranha Gigante', hp: 40, atk: 14, mp: 4, range: 1, abilities: ['poison', 'camouflage'], minLevel: 2, filter: 'none', tags: ['VENOM', 'UMBRAL'], fav: ['FOREST'] },
         { e: '🐯', name: 'Tigre', hp: 55, atk: 16, mp: 5, range: 1, abilities: ['dodge'], minLevel: 3, filter: 'none', tags: ['STALKER', 'SILVESTRE'], fav: ['FOREST'] },
-        { e: '🪨', name: 'Golem de Pedra', hp: 100, atk: 10, mp: 2, range: 1, abilities: ['pierce'], minLevel: 4, filter: 'none', sprite: 'img/sprites/golem.png', tags: ['ROCK', 'CARAPACE'], fav: ['MOUNTAIN'] },
+        { e: '🪨', name: 'Golem de Pedra', hp: 100, atk: 10, mp: 2, range: 1, abilities: ['pierce'], minLevel: 4, filter: 'none', sprite: 'img/sprites/Novos 8bits/boss/rock-golem.png', tags: ['ROCK', 'CARAPACE'], fav: ['MOUNTAIN'] },
         { e: '🦘', name: 'Canguru', hp: 45, mp: 4, atk: 12, range: 1, abilities: ['dodge'], filter: 'none', tags: ['SILVESTRE', 'SAND'], fav: ['DESERT', 'PLAINS'] },
         { e: '🦌', name: 'Cervo', hp: 35, mp: 5, atk: 10, range: 1, abilities: ['swift'], filter: 'brightness(120%) drop-shadow(0 0 2px yellow)', tags: ['CELESTIAL', 'SILVESTRE'], fav: ['FOREST'] },
         { e: '🦎', name: 'Salamandra', hp: 40, mp: 3, atk: 14, range: 1, scale: 1.2, abilities: ['burn'], filter: 'hue-rotate(-50deg) saturate(200%)', tags: ['FIRE', 'CARAPACE'], fav: ['MOUNTAIN', 'DESERT'] },
-        { e: '🐕‍🦺', name: 'Cão Infernal', hp: 50, mp: 4, atk: 16, range: 1, abilities: ['swift'], filter: 'none', sprite: 'img/units/cao_infernal.png', tags: ['FIRE', 'UMBRAL'], fav: ['MOUNTAIN'] },
-        { e: '🐕', name: 'Filhote de Hotweiler', hp: 35, mp: 4, atk: 11, range: 1, abilities: ['swift'], filter: 'none', sprite: 'img/units/filhote_hotweiler.png', tags: ['FIRE', 'PRIMAL'], fav: ['MOUNTAIN', 'PLAINS'] },
-        { e: '🐕', name: 'Hotweiler Ancião', hp: 75, mp: 4, atk: 20, range: 1, abilities: ['swift', 'burn'], filter: 'none', sprite: 'img/units/hotweiler_anciao.png', tags: ['FIRE', 'UMBRAL'], fav: ['MOUNTAIN'] },
+        { e: '🐕‍🦺', name: 'Cão Infernal', hp: 50, mp: 4, atk: 16, range: 1, abilities: ['swift'], filter: 'none', sprite: 'img/sprites/Novos 8bits/units/hotweiler.png', tags: ['FIRE', 'UMBRAL'], fav: ['MOUNTAIN'] },
+        { e: '🐕', name: 'Filhote de Hotweiler', hp: 35, mp: 4, atk: 11, range: 1, abilities: ['swift'], filter: 'none', sprite: 'img/sprites/Novos 8bits/baby/baby-hotweiler.png', tags: ['FIRE', 'PRIMAL'], fav: ['MOUNTAIN', 'PLAINS'] },
+        { e: '🐕', name: 'Hotweiler Ancião', hp: 75, mp: 4, atk: 20, range: 1, abilities: ['swift', 'burn'], filter: 'none', sprite: 'img/sprites/Novos 8bits/units/hotweiler-2.png', tags: ['FIRE', 'UMBRAL'], fav: ['MOUNTAIN'] },
         { e: '🦉', name: 'Coruja', hp: 30, mp: 5, atk: 12, range: 2, abilities: ['flying', 'pierce'], filter: 'none', sprite: 'img/units/coruja.png', tags: ['UMBRAL', 'WING'], fav: ['FOREST'] },
-        { e: '🦅', name: 'Pássaro Trovão', hp: 45, mp: 6, atk: 18, range: 2, scale: 1.2, abilities: ['flying', 'electric'], filter: 'none', sprite: 'img/units/passaro_trovao.png', tags: ['WING', 'ELECTRIC'], fav: ['MOUNTAIN'] },
-        { e: '✨', name: 'Qilin', hp: 80, mp: 5, atk: 18, range: 1, abilities: ['swift', 'crystal_skin'], minLevel: 4, filter: 'none', sprite: 'img/units/qilin.png', tags: ['CELESTIAL', 'MYSTIC'], fav: ['MOUNTAIN', 'PLAINS'] },
-        { e: '🐗', name: 'Aravata', hp: 85, mp: 4, atk: 17, range: 1, abilities: ['carapace', 'counter'], minLevel: 4, filter: 'none', sprite: 'img/units/aravata.png', tags: ['PRIMAL', 'ROCK'], fav: ['FOREST', 'MOUNTAIN'] },
+        { e: '🦅', name: 'Pássaro Trovão', hp: 45, mp: 6, atk: 18, range: 2, scale: 1.2, abilities: ['flying', 'electric'], filter: 'none', sprite: 'img/sprites/Novos 8bits/units/thunderbird.png', tags: ['WING', 'ELECTRIC'], fav: ['MOUNTAIN'] },
+        { e: '✨', name: 'Qilin', hp: 80, mp: 5, atk: 18, range: 1, abilities: ['swift', 'crystal_skin'], minLevel: 4, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/qilin.png', tags: ['CELESTIAL', 'MYSTIC'], fav: ['MOUNTAIN', 'PLAINS'] },
+        { e: '🐗', name: 'Aravata', hp: 85, mp: 4, atk: 17, range: 1, abilities: ['carapace', 'counter'], minLevel: 4, filter: 'none', sprite: 'img/sprites/Novos 8bits/boss/aravata.png', tags: ['PRIMAL', 'ROCK'], fav: ['FOREST', 'MOUNTAIN'] },
 
         // ---- Novas criaturas: artes que existiam em img/ mas não eram usadas ----
-        { e: '🌪️', name: 'Saci-Pererê', hp: 45, atk: 14, mp: 6, range: 1, abilities: ['swift', 'dodge'], minLevel: 2, filter: 'none', sprite: 'img/units/saci_perere.png', tags: ['SILVESTRE', 'STALKER'], fav: ['FOREST'] },
+        { e: '🌪️', name: 'Saci-Pererê', hp: 45, atk: 14, mp: 6, range: 1, abilities: ['swift', 'dodge'], minLevel: 2, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/perere.png', tags: ['SILVESTRE', 'STALKER'], fav: ['FOREST'] },
         { e: '🧌', name: 'Goblin Saqueador', hp: 30, atk: 11, mp: 5, range: 1, abilities: ['hit_run'], minLevel: 1, filter: 'none', sprite: 'img/sprites/goblin.png', tags: ['STALKER', 'SILVESTRE'], fav: ['FOREST'] },
-        { e: '🦌', name: 'Jackalope', hp: 35, atk: 13, mp: 6, range: 1, abilities: ['swift'], minLevel: 2, filter: 'none', sprite: 'img/units/jackalope.png', tags: ['SILVESTRE', 'MYSTIC'], fav: ['PLAINS', 'FOREST'] },
-        { e: '🦎', name: 'Lagarto Escarlate', hp: 40, atk: 14, mp: 4, range: 1, abilities: ['poison'], minLevel: 2, filter: 'none', sprite: 'img/units/lagarto.png', tags: ['VENOM', 'FIRE'], fav: ['DESERT', 'SWAMP'] },
-        { e: '🦎', name: 'Lagarto de Gola', hp: 42, atk: 13, mp: 5, range: 1, abilities: ['swift', 'dodge'], minLevel: 2, filter: 'none', sprite: 'img/units/lagarto_gola.png', tags: ['SILVESTRE', 'SAND'], fav: ['DESERT', 'PLAINS'] },
+        { e: '🦌', name: 'Jackalope', hp: 35, atk: 13, mp: 6, range: 1, abilities: ['swift'], minLevel: 2, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/jackalope.png', tags: ['SILVESTRE', 'MYSTIC'], fav: ['PLAINS', 'FOREST'] },
+        { e: '🦎', name: 'Lagarto Escarlate', hp: 40, atk: 14, mp: 4, range: 1, abilities: ['poison'], minLevel: 2, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/lizard.png', tags: ['VENOM', 'FIRE'], fav: ['DESERT', 'SWAMP'] },
+        { e: '🦎', name: 'Lagarto de Gola', hp: 42, atk: 13, mp: 5, range: 1, abilities: ['swift', 'dodge'], minLevel: 2, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/lizard-gola.png', tags: ['SILVESTRE', 'SAND'], fav: ['DESERT', 'PLAINS'] },
         { e: '💀', name: 'Esqueleto Guerreiro', hp: 45, atk: 12, mp: 3, range: 1, abilities: ['counter'], minLevel: 2, filter: 'none', sprite: 'img/units/zumbi.png', tags: ['UMBRAL'], fav: ['SWAMP', 'ASHES'] },
-        { e: '🧟', name: 'Zumbi Ancião', hp: 60, atk: 15, mp: 2, range: 1, abilities: ['counter', 'lifesteal'], minLevel: 3, filter: 'none', sprite: 'img/units/zumbi_anciao.png', tags: ['UMBRAL'], fav: ['SWAMP', 'ASHES'] },
-        { e: '🦊', name: 'Raposa de Quatro Caudas', hp: 40, atk: 16, mp: 6, range: 1, scale: 1.2, abilities: ['swift', 'dodge'], minLevel: 3, filter: 'none', sprite: 'img/units/raposa_mistica.png', tags: ['MYSTIC', 'SILVESTRE'], fav: ['FOREST'] },
+        { e: '🧟', name: 'Zumbi Ancião', hp: 60, atk: 15, mp: 2, range: 1, abilities: ['counter', 'lifesteal'], minLevel: 3, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/zombie.png', tags: ['UMBRAL'], fav: ['SWAMP', 'ASHES'] },
+        { e: '🦊', name: 'Raposa de Quatro Caudas', hp: 40, atk: 16, mp: 6, range: 1, scale: 1.2, abilities: ['swift', 'dodge'], minLevel: 3, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/kitsune.png', tags: ['MYSTIC', 'SILVESTRE'], fav: ['FOREST'] },
         { e: '🧛', name: 'Vampiro Errante', hp: 55, atk: 17, mp: 5, range: 1, abilities: ['lifesteal', 'dodge'], minLevel: 3, filter: 'none', sprite: 'img/units/vampiro.png', tags: ['UMBRAL', 'STALKER'], fav: ['FOREST', 'SWAMP'] },
         { e: '🧛', name: 'Vampiro Ancião', hp: 75, atk: 22, mp: 5, range: 1, abilities: ['lifesteal', 'swift'], minLevel: 4, filter: 'none', sprite: 'img/units/vampiro_anciao.png', tags: ['UMBRAL', 'STALKER'], fav: ['FOREST', 'SWAMP'] },
         { e: '🗡️', name: 'Assassino Sombrio', hp: 45, atk: 17, mp: 5, range: 1, abilities: ['dodge', 'camouflage'], minLevel: 3, filter: 'none', sprite: 'img/sprites/assassin.png', tags: ['STALKER', 'UMBRAL'], fav: ['FOREST', 'MOUNTAIN'] },
         { e: '👹', name: 'Ogro Azul', hp: 75, atk: 15, mp: 3, range: 1, abilities: ['stun'], minLevel: 3, filter: 'none', sprite: 'img/sprites/blue_ogre.png', tags: ['PRIMAL', 'ABYSSAL'], fav: ['WATER', 'SWAMP'] },
         { e: '🦅', name: 'Águia Real', hp: 45, atk: 15, mp: 5, range: 2, abilities: ['flying', 'pierce'], minLevel: 3, filter: 'none', sprite: 'img/units/aguia.png', tags: ['WING', 'SILVESTRE'], fav: ['MOUNTAIN'] },
-        { e: '🦉', name: 'Coruja Umbral', hp: 40, atk: 14, mp: 4, range: 2, abilities: ['flying', 'camouflage'], minLevel: 3, filter: 'none', sprite: 'img/units/coruja_umbral.png', tags: ['UMBRAL', 'WING'], fav: ['FOREST'] },
+        { e: '🦉', name: 'Coruja Umbral', hp: 40, atk: 14, mp: 4, range: 2, abilities: ['flying', 'camouflage'], minLevel: 3, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/coruja-umbral.png', tags: ['UMBRAL', 'WING'], fav: ['FOREST'] },
         { e: '🦕', name: 'Dino Blindado', hp: 85, atk: 13, mp: 2, range: 1, abilities: ['carapace'], minLevel: 4, filter: 'none', sprite: 'img/sprites/dino-carapaca.png', tags: ['PRIMAL', 'CARAPACE'], fav: ['SWAMP'] },
         { e: '🌋', name: 'Golem de Lava', hp: 95, atk: 16, mp: 2, range: 1, abilities: ['burn', 'carapace'], minLevel: 4, filter: 'none', sprite: 'img/sprites/lava_golem.png', tags: ['FIRE', 'ROCK'], fav: ['MOUNTAIN', 'ASHES'] },
-        { e: '🦕', name: 'Sauropode Ancião', hp: 110, atk: 12, mp: 2, range: 1, scale: 1.4, abilities: ['pierce'], minLevel: 4, filter: 'none', sprite: 'img/units/sauropode.png', tags: ['PRIMAL', 'SILVESTRE'], fav: ['FOREST'] },
+        { e: '🦕', name: 'Sauropode Ancião', hp: 110, atk: 12, mp: 2, range: 1, scale: 1.4, abilities: ['pierce'], minLevel: 4, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/mosassauro.png', tags: ['PRIMAL', 'SILVESTRE'], fav: ['FOREST'] },
         { e: '🦁', name: 'Leão do Céu', hp: 60, atk: 19, mp: 5, range: 1, abilities: ['flying', 'leadership'], minLevel: 5, filter: 'none', sprite: 'img/sprites/leao-do-ceu.png', tags: ['WING', 'CELESTIAL'], fav: ['MOUNTAIN', 'PLAINS'] },
         { e: '😈', name: 'Demônio da Lâmina', hp: 70, atk: 22, mp: 4, range: 1, abilities: ['corte_amplo'], minLevel: 5, filter: 'none', sprite: 'img/sprites/blade-demon.png', tags: ['UMBRAL', 'FIRE'], fav: ['ASHES'] },
-        { e: '🐕', name: 'Cerberus Sanguinário', hp: 80, atk: 20, mp: 4, range: 1, abilities: ['lifesteal', 'burn'], minLevel: 5, filter: 'none', sprite: 'img/sprites/blood-cerberus.png', tags: ['UMBRAL', 'FIRE'], fav: ['ASHES', 'SWAMP'] },
-        { e: '👼', name: 'Anjo Vingador', hp: 65, atk: 21, mp: 5, range: 2, abilities: ['flying', 'electric'], minLevel: 5, filter: 'brightness(115%)', sprite: 'img/sprites/anjo.png', tags: ['CELESTIAL', 'ELECTRIC'], fav: ['PLAINS'] },
+        { e: '🐕', name: 'Cerberus Sanguinário', hp: 80, atk: 20, mp: 4, range: 1, abilities: ['lifesteal', 'burn'], minLevel: 5, filter: 'none', sprite: 'img/sprites/Novos 8bits/boss/cerberus.png', tags: ['UMBRAL', 'FIRE'], fav: ['ASHES', 'SWAMP'] },
+        { e: '👼', name: 'Anjo Vingador', hp: 65, atk: 21, mp: 5, range: 2, abilities: ['flying', 'electric'], minLevel: 5, filter: 'brightness(115%)', sprite: 'img/sprites/Novos 8bits/leaders/angel.png', tags: ['CELESTIAL', 'ELECTRIC'], fav: ['PLAINS'] },
 
         // ---- Criaturas do plano ajustar (importadas + fundo removido) ----
         { e: '👁️', name: 'Vigia Abissal', hp: 50, atk: 15, mp: 4, range: 2, abilities: ['bind'], minLevel: 3, filter: 'none', sprite: 'img/sprites/vigia_abissal.png', tags: ['ABYSSAL', 'MYSTIC'], fav: ['WATER'] },
