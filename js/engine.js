@@ -91,6 +91,12 @@ class Unit {
             if (!this.abilities.includes('corte_amplo')) this.abilities.push('corte_amplo');
         }
 
+        // Atualiza sprite inicial se houver variante configurada (dia/noite ou evolução)
+        if (typeof this.getSprite === 'function') {
+            let dynSpr = this.getSprite();
+            if (dynSpr) this.sprite = dynSpr;
+        }
+
         this.equipment = (d.equipment || []).map(e => {
             if (typeof e === 'string' && typeof ITEMS !== 'undefined') {
                 let foundId = Object.keys(ITEMS).find(k => ITEMS[k].icon === e);
@@ -190,6 +196,10 @@ class Unit {
                 '🐦': () => { this.emoji = '🦅'; this.name = "Fênix"; if (!this.tags.includes('CELESTIAL')) this.tags.push('CELESTIAL'); if (!this.tags.includes('FIRE')) this.tags.push('FIRE'); }
             };
             if (evs[this.emoji]) evs[this.emoji]();
+            if (typeof this.getSprite === 'function') {
+                let nextSprite = this.getSprite();
+                if (nextSprite) this.sprite = nextSprite;
+            }
             if (typeof unlockInBestiary === 'function') unlockInBestiary(this.name);
         }
 
@@ -201,6 +211,42 @@ class Unit {
 
         if (renderer) renderer.draw();
         game.isAnimating = false;
+    }
+
+    getSprite() {
+        // 1. Dinâmica Dia / Noite
+        if (typeof DAY_NIGHT_UNITS !== 'undefined') {
+            let dn = DAY_NIGHT_UNITS[this.name] || DAY_NIGHT_UNITS[this.baseName];
+            if (dn) {
+                let isNight = false;
+                if (typeof game !== 'undefined' && game && game.turnCount !== undefined) {
+                    let cycle = game.turnCount % 10;
+                    isNight = (cycle >= 6 && cycle <= 8);
+                }
+                let s = isNight ? dn.night : dn.day;
+                if (s) return s;
+            }
+        }
+        // 2. Sprite da Evolução por Nível
+        if (typeof UNIT_EVO_SPRITES !== 'undefined') {
+            let evoDict = UNIT_EVO_SPRITES[this.baseName] || UNIT_EVO_SPRITES[this.name];
+            if (evoDict) {
+                let lvl = Math.min(this.level || 1, 3);
+                while (lvl >= 1) {
+                    if (evoDict[lvl]) return evoDict[lvl];
+                    lvl--;
+                }
+                if (evoDict[0]) return evoDict[0]; // Baby fallback
+            }
+        }
+        // 3. Sprite padrão da unidade
+        if (this.sprite) return this.sprite;
+        // 4. Fallback no mapa global
+        if (typeof BEAST_SPRITE_MAP !== 'undefined') {
+            let bm = BEAST_SPRITE_MAP[this.name] || BEAST_SPRITE_MAP[this.baseName];
+            if (bm) return bm;
+        }
+        return null;
     }
 
     // ==========================================
@@ -3820,12 +3866,14 @@ class Renderer {
             // ==========================================
             let uiTopY = p.y - r;
 
-            if (u.sprite) {
+            let curSprite = (typeof u.getSprite === 'function') ? u.getSprite() : u.sprite;
+
+            if (curSprite) {
                 if (!window.imageCache) window.imageCache = {};
 
-                if (!window.imageCache[u.sprite]) {
+                if (!window.imageCache[curSprite]) {
                     // Coloca uma trava temporária para evitar loops de carregamento
-                    window.imageCache[u.sprite] = "LOADING";
+                    window.imageCache[curSprite] = "LOADING";
 
                     let img = new Image();
                     img.onload = () => {
@@ -3918,20 +3966,20 @@ class Renderer {
                             octx.drawImage(tempCanvas, pad, pad);
                             octx.filter = 'none';
                             // Guarda o canvas processado (contornado) no cache
-                            window.imageCache[u.sprite] = outC;
+                            window.imageCache[curSprite] = outC;
                         } catch (e) {
                             // Caso dê erro de CORS local, mantém a imagem original como fallback
-                            window.imageCache[u.sprite] = img;
+                            window.imageCache[curSprite] = img;
                         }
                         this.draw();
                     };
                     img.onerror = () => {
-                        window.imageCache[u.sprite] = "ERROR";
+                        window.imageCache[curSprite] = "ERROR";
                     };
-                    img.src = u.sprite;
+                    img.src = curSprite;
                 }
 
-                let cachedAsset = window.imageCache[u.sprite];
+                let cachedAsset = window.imageCache[curSprite];
                 // Verifica se o asset já foi processado e está pronto
                 if (cachedAsset && cachedAsset !== "LOADING" && cachedAsset !== "ERROR") {
                     let isRealBoss = typeof BEASTS !== 'undefined' && BEASTS.BOSSES && BEASTS.BOSSES.some(b => b.name === u.name);

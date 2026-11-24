@@ -1,0 +1,434 @@
+{
+  "DAY_NIGHT": {
+    "Boto": {
+      "day": "img/sprites/Novos 8bits/units/boto-dia.png",
+      "night": "img/sprites/Novos 8bits/units/boto-night.png"
+    },
+    "Rei Bárbaro": {
+      "day": "img/sprites/Novos 8bits/leaders/human-king-dia.png",
+      "night": "img/sprites/Novos 8bits/leaders/ogre-king-noite.png"
+    },
+    "Rei Humano": {
+      "day": "img/sprites/Novos 8bits/leaders/human-king-dia.png",
+      "night": "img/sprites/Novos 8bits/leaders/ogre-king-noite.png"
+    }
+  },
+  "EVO_SPRITES": {
+    "Morcego": {
+      "1": "img/sprites/Novos 8bits/units/bat.png",
+      "2": "img/sprites/Novos 8bits/units/bat (2).png",
+      "3": "img/sprites/Novos 8bits/units/blood-bat.png"
+    },
+    "Urso": {
+      "1": "img/sprites/Novos 8bits/units/bear.png",
+      "2": "img/sprites/Novos 8bits/units/bear (2).png",
+      "3": "img/sprites/Novos 8bits/boss/werebear.png"
+    },
+    "Corvo": {
+      "1": "img/sprites/Novos 8bits/units/crow.png",
+      "2": "img/sprites/Novos 8bits/units/crow-2.png"
+    },
+    "Coruja Umbral": {
+      "1": "img/sprites/Novos 8bits/units/coruja-umbral.png",
+      "2": "img/sprites/Novos 8bits/units/coruja-umbral-2.png"
+    },
+    "Porco-Espinho Elétrico": {
+      "1": "img/sprites/Novos 8bits/units/eletric-hedgehog.png",
+      "2": "img/sprites/Novos 8bits/units/eletric-hedgeho-2.png"
+    },
+    "Raposa": {
+      "1": "img/sprites/Novos 8bits/units/fox.png",
+      "2": "img/sprites/Novos 8bits/units/firefox-2.png",
+      "3": "img/sprites/Novos 8bits/units/kitsune.png"
+    },
+    "Sapo": {
+      "1": "img/sprites/Novos 8bits/units/frog.png",
+      "2": "img/sprites/Novos 8bits/units/frog-2.png",
+      "3": "img/sprites/Novos 8bits/units/winged-frog.png"
+    },
+    "Gatuno": {
+      "1": "img/sprites/Novos 8bits/units/gatuno.png",
+      "2": "img/sprites/Novos 8bits/units/gatuno-2.png"
+    },
+    "Rato": {
+      "1": "img/sprites/Novos 8bits/units/giant rat.png",
+      "2": "img/sprites/Novos 8bits/units/giant-rat-2.png",
+      "3": "img/sprites/Novos 8bits/boss/ratking.png"
+    },
+    "Hotweiler": {
+      "0": "img/sprites/Novos 8bits/baby/baby-hotweiler.png",
+      "1": "img/sprites/Novos 8bits/units/hotweiler.png",
+      "2": "img/sprites/Novos 8bits/units/hotweiler-2.png"
+    },
+    "Cão Infernal": {
+      "1": "img/sprites/Novos 8bits/units/hotweiler.png",
+      "2": "img/sprites/Novos 8bits/units/hotweiler-2.png"
+    },
+    "Javali": {
+      "1": "img/sprites/Novos 8bits/units/javali.png",
+      "2": "img/sprites/Novos 8bits/units/javali-2.png",
+      "3": "img/sprites/Novos 8bits/units/javali-3.png"
+    },
+    "Leão": {
+      "1": "img/sprites/Novos 8bits/units/lion.png",
+      "2": "img/sprites/Novos 8bits/units/lion-2.png",
+      "3": "img/sprites/Novos 8bits/units/lion-3.png"
+    },
+    "Leão Selvagem": {
+      "1": "img/sprites/Novos 8bits/units/lion.png",
+      "2": "img/sprites/Novos 8bits/units/lion-2.png",
+      "3": "img/sprites/Novos 8bits/units/lion-3.png"
+    },
+    "Lagarto": {
+      "1": "img/sprites/Novos 8bits/units/lizard.png",
+      "2": "img/sprites/Novos 8bits/units/lizard-2.png",
+      "3": "img/sprites/Novos 8bits/boss/lizard-3.png"
+    },
+    "Lagarto Escarlate": {
+      "1": "img/sprites/Novos 8bits/units/lizard.png",
+      "2": "img/sprites/Novos 8bits/units/lizard-2.png",
+      "3": "img/sprites/Novos 8bits/boss/lizard-3.png"
+    },
+    "Macaco": {
+      "1": "img/sprites/Novos 8bits/units/monkey.png",
+      "2": "img/sprites/Novos 8bits/units/monkey-2.png",
+      "3": "img/sprites/Novos 8bits/units/monkey-3.png"
+    },
+    "Papabard": {
+      "1": "img/sprites/Novos 8bits/units/papabard.png",
+      "2": "img/sprites/Novos 8bits/units/papabard-2.png"
+    },
+    "Pinguim": {
+      "1": "img/sprites/Novos 8bits/units/penguin.png",
+      "2": "img/sprites/Novos 8bits/units/penguin-2.png",
+      "3": "img/sprites/Novos 8bits/units/penguin-3.png"
+    },
+    "Escorpião": {
+      "1": "img/sprites/Novos 8bits/units/scorpion.png",
+      "2": "img/sprites/Novos 8bits/units/scorpion-2.png"
+    },
+    "Tubarão": {
+      "1": "img/sprites/Novos 8bits/units/shark.png",
+      "2": "img/sprites/Novos 8bits/units/shark-2.png",
+      "3": "img/sprites/Novos 8bits/units/zombie-shark.png"
+    },
+    "Trent": {
+      "0": "img/sprites/Novos 8bits/baby/baby-trent.png",
+      "1": "img/sprites/Novos 8bits/units/trent.png",
+      "2": "img/sprites/Novos 8bits/boss/trent-2.png"
+    },
+    "Tuiuiú": {
+      "0": "img/sprites/Novos 8bits/baby/baby-tuiuiu.png",
+      "1": "img/sprites/Novos 8bits/units/tuiuiu.png",
+      "2": "img/sprites/Novos 8bits/units/tuiuiu-2.png"
+    },
+    "Tuiuiú Guardião": {
+      "1": "img/sprites/Novos 8bits/units/tuiuiu.png",
+      "2": "img/sprites/Novos 8bits/units/tuiuiu-2.png"
+    },
+    "Tartaruga": {
+      "0": "img/sprites/Novos 8bits/baby/baby-turtle.png",
+      "1": "img/sprites/Novos 8bits/units/turtle.png",
+      "2": "img/sprites/Novos 8bits/units/turtle-earth.png",
+      "3": "img/sprites/Novos 8bits/units/turtle-3.png"
+    },
+    "Baleia": {
+      "0": "img/sprites/Novos 8bits/baby/baby-whale.png",
+      "1": "img/sprites/Novos 8bits/units/whale.png",
+      "2": "img/sprites/Novos 8bits/boss/earth-whale.png",
+      "3": "img/sprites/Novos 8bits/boss/cosmic-whale.png"
+    },
+    "Zumbi": {
+      "1": "img/sprites/Novos 8bits/units/zombie.png",
+      "2": "img/sprites/Novos 8bits/units/zombie-2.png"
+    },
+    "Zumbi Ancião": {
+      "1": "img/sprites/Novos 8bits/units/zombie.png",
+      "2": "img/sprites/Novos 8bits/units/zombie-2.png"
+    },
+    "Banshee": {
+      "0": "img/sprites/Novos 8bits/baby/baby-banshee.png",
+      "1": "img/sprites/Novos 8bits/units/banshe.png",
+      "2": "img/sprites/Novos 8bits/units/banshee-2.png"
+    },
+    "Centopeia Metálica": {
+      "0": "img/sprites/Novos 8bits/baby/baby-centopeia-metalica.png",
+      "1": "img/boss/centopeia-metalica.png",
+      "2": "img/sprites/Novos 8bits/boss/centopeia-metalica-3.png"
+    },
+    "Leviatã": {
+      "0": "img/sprites/Novos 8bits/boss/baby-leviatan.png",
+      "1": "img/boss/leviata.png",
+      "2": "img/sprites/Novos 8bits/boss/leviatan-2.png",
+      "3": "img/sprites/Novos 8bits/boss/leviatan-3.png"
+    },
+    "Cuca": {
+      "1": "img/sprites/Novos 8bits/boss/cuca.png",
+      "2": "img/sprites/Novos 8bits/boss/cuca-2.png"
+    },
+    "Capelobo": {
+      "1": "img/sprites/Novos 8bits/boss/capelobo.png",
+      "2": "img/sprites/Novos 8bits/boss/capelobo-2.png"
+    },
+    "Bigfoot": {
+      "1": "img/sprites/Novos 8bits/units/bigfoot.png",
+      "2": "img/sprites/Novos 8bits/boss/bigfoot-2.png"
+    },
+    "Grifo": {
+      "1": "img/sprites/Novos 8bits/units/grifo.png",
+      "2": "img/sprites/Novos 8bits/boss/grifo-2.png"
+    },
+    "Ifrit": {
+      "1": "img/sprites/Novos 8bits/boss/ifrit.png",
+      "2": "img/sprites/Novos 8bits/boss/ifrit-2.png"
+    },
+    "Mapinguari": {
+      "1": "img/sprites/Novos 8bits/boss/mapinguari.png",
+      "2": "img/sprites/Novos 8bits/boss/mapinguari-2.png"
+    },
+    "Mosassauro": {
+      "1": "img/sprites/Novos 8bits/units/mosassauro.png",
+      "2": "img/sprites/Novos 8bits/boss/mosassauro-2.png"
+    },
+    "Nessie": {
+      "1": "img/sprites/Novos 8bits/boss/ness.png",
+      "2": "img/sprites/Novos 8bits/boss/ness-2.png"
+    },
+    "Verme da Areia": {
+      "1": "img/sprites/Novos 8bits/boss/sand-worm.png",
+      "2": "img/sprites/Novos 8bits/boss/sand-worm-2.png"
+    },
+    "Verme de Areia": {
+      "1": "img/sprites/Novos 8bits/boss/sand-worm.png",
+      "2": "img/sprites/Novos 8bits/boss/sand-worm-2.png"
+    },
+    "Treeslender": {
+      "1": "img/sprites/Novos 8bits/boss/treeslender.png",
+      "2": "img/sprites/Novos 8bits/boss/treeslender-2.png",
+      "3": "img/sprites/Novos 8bits/boss/treeslender-3.png"
+    },
+    "Wendigo": {
+      "1": "img/sprites/Novos 8bits/boss/wendigo.png",
+      "2": "img/sprites/Novos 8bits/boss/wendigo-2.png"
+    },
+    "Yeti": {
+      "1": "img/sprites/Novos 8bits/boss/yeti.png",
+      "2": "img/sprites/Novos 8bits/boss/yeti-2.png"
+    },
+    "Yeti Atirador": {
+      "1": "img/sprites/Novos 8bits/boss/yeti.png",
+      "2": "img/sprites/Novos 8bits/boss/yeti-2.png"
+    },
+    "Yurei": {
+      "1": "img/sprites/Novos 8bits/boss/yurei.png",
+      "2": "img/sprites/Novos 8bits/boss/yurei-2.png"
+    },
+    "Dragão Sombrio": {
+      "1": "img/sprites/Novos 8bits/boss/dark-dragon.png",
+      "2": "img/sprites/Novos 8bits/boss/dark-dragon-2.png",
+      "3": "img/sprites/Novos 8bits/boss/dark-dragon-3.png"
+    },
+    "Chefe Orc": {
+      "1": "img/sprites/Novos 8bits/leaders/orc.png",
+      "2": "img/sprites/Novos 8bits/leaders/orc-2.png"
+    },
+    "Necromante": {
+      "1": "img/sprites/Novos 8bits/leaders/necromante.png",
+      "2": "img/sprites/Novos 8bits/leaders/necromante-2.png"
+    },
+    "Arqueira": {
+      "1": "img/sprites/Novos 8bits/leaders/darkelf-archer.png",
+      "2": "img/sprites/Novos 8bits/leaders/darkelf-archer-2.png"
+    },
+    "Bruxa": {
+      "1": "img/sprites/Novos 8bits/leaders/witch.png",
+      "2": "img/sprites/Novos 8bits/leaders/witch-2.png"
+    },
+    "Sereia": {
+      "1": "img/sprites/Novos 8bits/leaders/siren.png",
+      "2": "img/sprites/Novos 8bits/leaders/siren-2.png"
+    },
+    "Lord Vampiro": {
+      "1": "img/sprites/Novos 8bits/leaders/vampire.png",
+      "2": "img/sprites/Novos 8bits/leaders/vampire-2.png"
+    },
+    "Anubis": {
+      "1": "img/sprites/Novos 8bits/leaders/anubis.png"
+    },
+    "Centauro Espectral": {
+      "1": "img/sprites/Novos 8bits/leaders/mystic-centaur.png",
+      "2": "img/sprites/Novos 8bits/leaders/mystic-centaur-2.png"
+    },
+    "Matriarca Harpia": {
+      "1": "img/sprites/Novos 8bits/leaders/harpia.png",
+      "2": "img/sprites/Novos 8bits/leaders/harpia-2.png"
+    },
+    "Gárgula Anciã": {
+      "1": "img/sprites/Novos 8bits/leaders/gargula.png",
+      "2": "img/sprites/Novos 8bits/leaders/gargula-2.png"
+    },
+    "Doutor da Praga": {
+      "1": "img/sprites/Novos 8bits/leaders/plague-doctor.png",
+      "2": "img/sprites/Novos 8bits/leaders/plague-doctor-2.png"
+    },
+    "Cthullu": {
+      "1": "img/sprites/Novos 8bits/leaders/cthulhu.png"
+    },
+    "T-Rex": {
+      "1": "img/sprites/Novos 8bits/leaders/Rock-rex.png",
+      "2": "img/sprites/Novos 8bits/leaders/Rock-rex-2.png"
+    },
+    "Rainha do Gelo": {
+      "1": "img/sprites/Novos 8bits/leaders/yuki.png",
+      "2": "img/sprites/Novos 8bits/leaders/yuki-2.png",
+      "3": "img/sprites/Novos 8bits/leaders/yuki-3.png"
+    },
+    "Anjo": {
+      "1": "img/sprites/Novos 8bits/leaders/angel.png",
+      "2": "img/sprites/Novos 8bits/leaders/angel-2.png"
+    },
+    "Anjo Vingador": {
+      "1": "img/sprites/Novos 8bits/leaders/angel.png",
+      "2": "img/sprites/Novos 8bits/leaders/angel-2.png"
+    },
+    "Príncipe Elfo Sombrio": {
+      "1": "img/sprites/Novos 8bits/leaders/darkelf-prince.png",
+      "2": "img/sprites/Novos 8bits/leaders/darkelf-prince-2.png"
+    },
+    "Mago da Morte": {
+      "1": "img/sprites/Novos 8bits/leaders/death-mage.png",
+      "2": "img/sprites/Novos 8bits/leaders/death-mage-2.png",
+      "3": "img/sprites/Novos 8bits/leaders/death-mage-3.png"
+    },
+    "Guerreiro Fantasma": {
+      "1": "img/sprites/Novos 8bits/leaders/ghost-warrior.png",
+      "2": "img/sprites/Novos 8bits/leaders/ghost-warrior-2.png",
+      "3": "img/sprites/Novos 8bits/leaders/ghost-warrior-3.png"
+    },
+    "Caçador": {
+      "1": "img/sprites/Novos 8bits/leaders/hunter.png",
+      "2": "img/sprites/Novos 8bits/leaders/hunter-2.png"
+    },
+    "Medusa": {
+      "1": "img/sprites/Novos 8bits/leaders/medusa.png",
+      "2": "img/sprites/Novos 8bits/leaders/medusa-2.png"
+    },
+    "Súcubo": {
+      "1": "img/sprites/Novos 8bits/leaders/succubus.png",
+      "2": "img/sprites/Novos 8bits/leaders/succubus-2.png"
+    },
+    "Sapo Guerreiro": {
+      "1": "img/sprites/Novos 8bits/units/frog-warrior.png",
+      "2": "img/sprites/Novos 8bits/units/frog-warrior-2.png"
+    },
+    "Manticora": {
+      "1": "img/sprites/Novos 8bits/boss/manticore.png",
+      "2": "img/sprites/Novos 8bits/boss/manticora-2.png"
+    },
+    "Morto-Vivo de Eldorado": {
+      "1": "img/sprites/Novos 8bits/units/eldorado-undead.png",
+      "2": "img/sprites/Novos 8bits/leaders/eldourado-undead-2.png"
+    },
+    "Tigre": {
+      "1": "img/sprites/Novos 8bits/units/tiger.png",
+      "2": "img/sprites/Novos 8bits/units/white-tiger.png",
+      "3": "img/sprites/Novos 8bits/boss/winged-tiger.png"
+    },
+    "Brontossauro": {
+      "1": "img/sprites/Novos 8bits/boss/mokele-mbembe.png",
+      "2": "img/sprites/Novos 8bits/boss/brachio-2.png"
+    },
+    "Dragão Esqueleto": {
+      "1": "img/sprites/Novos 8bits/boss/eskeleton-dragon.png",
+      "2": "img/sprites/Novos 8bits/boss/skeleton-dragon-2.png"
+    }
+  },
+  "SINGLE_SPRITES": {
+    "Arquimago": "img/sprites/Novos 8bits/leaders/archemage.png",
+    "Apófis": "img/sprites/Novos 8bits/boss/apophis.png",
+    "Aravata": "img/sprites/Novos 8bits/boss/aravata.png",
+    "Bake-Kujira": "img/sprites/Novos 8bits/boss/bake-kujira.png",
+    "Basilisco": "img/sprites/Novos 8bits/boss/basilisco.png",
+    "Dragão-Morcego": "img/sprites/Novos 8bits/units/bat-dragon.png",
+    "Bem-te-vi": "img/sprites/Novos 8bits/units/bemtevi.png",
+    "Boitatá": "img/sprites/Novos 8bits/boss/boitata.png",
+    "Canguru": "img/sprites/Novos 8bits/units/canguru.png",
+    "Cérbero": "img/sprites/Novos 8bits/boss/cerberus.png",
+    "Cerberus Sanguinário": "img/sprites/Novos 8bits/boss/cerberus.png",
+    "Cervo da Neve": "img/sprites/Novos 8bits/units/cervo-neve.png",
+    "Cervo": "img/sprites/Novos 8bits/units/cervo.png",
+    "Coruja Maga": "img/sprites/Novos 8bits/boss/coruja-mage.png",
+    "Tigre Dente-de-Sabre": "img/sprites/Novos 8bits/boss/dente-sabre.png",
+    "Dragão da Terra": "img/sprites/Novos 8bits/boss/earth-dragon.png",
+    "Rei Lich de Eldorado": "img/sprites/Novos 8bits/boss/eldorado-lichking.png",
+    "Elefante": "img/sprites/Novos 8bits/units/elephant.png",
+    "Arqueira Elfa": "img/sprites/Novos 8bits/leaders/elf-archer-2.png",
+    "Feiticeira": "img/sprites/Novos 8bits/leaders/feiticeira.png",
+    "Feiticeira do Fogo": "img/sprites/Novos 8bits/leaders/feiticeira-fogo.png",
+    "Feiticeira do Gelo": "img/sprites/Novos 8bits/leaders/feiticeira-gelo.png",
+    "Feiticeira da Luz": "img/sprites/Novos 8bits/leaders/feiticeira-luz.png",
+    "Feiticeira do Metal": "img/sprites/Novos 8bits/leaders/feiticeira-metal.png",
+    "Feiticeira das Plantas": "img/sprites/Novos 8bits/leaders/feiticeira-plant.png",
+    "Feiticeira da Areia": "img/sprites/Novos 8bits/leaders/feiticeira-sand.png",
+    "Feiticeira do Sangue": "img/sprites/Novos 8bits/leaders/feiticeira-sangue.png",
+    "Feiticeira da Tempestade": "img/sprites/Novos 8bits/leaders/feiticeira-tempestade.png",
+    "Feiticeira Umbral": "img/sprites/Novos 8bits/leaders/feiticeira-umbral.png",
+    "Fenghuang": "img/sprites/Novos 8bits/boss/fenghuang-tevi.png",
+    "Dragão de Fogo": "img/sprites/Novos 8bits/boss/fire-dragon.png",
+    "Sapo de Fogo": "img/sprites/Novos 8bits/units/fire-frog.png",
+    "Lagarto de Fogo": "img/sprites/Novos 8bits/boss/fire-lizard.png",
+    "Elfo da Floresta": "img/sprites/Novos 8bits/leaders/forest-elf.png",
+    "Sapo Fantasma": "img/sprites/Novos 8bits/units/ghost-frog.png",
+    "Grifo-Coruja": "img/sprites/Novos 8bits/boss/grifo-coruja.png",
+    "Grootslang": "img/sprites/Novos 8bits/boss/grootslang.png",
+    "Mula sem Cabeça": "img/sprites/Novos 8bits/units/headless-mula.png",
+    "Hipocampo": "img/sprites/Novos 8bits/units/hipocampo.png",
+    "Cavalo": "img/sprites/Novos 8bits/units/horse.png",
+    "Dragão do Gelo": "img/sprites/Novos 8bits/boss/ice-dragon.png",
+    "Golem de Gelo": "img/sprites/Novos 8bits/boss/ice-golem.png",
+    "Jackalope": "img/sprites/Novos 8bits/units/jackalope.png",
+    "Leviatã Alfa": "img/sprites/Novos 8bits/boss/leviata-formab.png",
+    "Dragão da Luz": "img/sprites/Novos 8bits/boss/light-dragon.png",
+    "Lagarto de Gola": "img/sprites/Novos 8bits/units/lizard-gola.png",
+    "Mamute Colossal": "img/sprites/Novos 8bits/units/mamute.png",
+    "Minotauro": "img/sprites/Novos 8bits/boss/minotauro.png",
+    "Coruja Lunar": "img/sprites/Novos 8bits/units/moon-owl.png",
+    "Pesadelo": "img/sprites/Novos 8bits/units/nightmare.png",
+    "Pégaso": "img/sprites/Novos 8bits/units/pegaso.png",
+    "Saci-Pererê": "img/sprites/Novos 8bits/units/perere.png",
+    "Doutor da Praga Ígneo": "img/sprites/Novos 8bits/leaders/plague-doctor-fire.png",
+    "Plessiossauro": "img/sprites/Novos 8bits/boss/plessio.png",
+    "Qilin": "img/sprites/Novos 8bits/units/qilin.png",
+    "Canguru Rochoso": "img/sprites/Novos 8bits/boss/rock-canguru.png",
+    "Golem de Pedra": "img/sprites/Novos 8bits/boss/rock-golem.png",
+    "Sátiro": "img/sprites/Novos 8bits/units/satiro.png",
+    "Cobra": "img/sprites/Novos 8bits/units/snake.png",
+    "Tamanduá": "img/sprites/Novos 8bits/units/tamandua.png",
+    "Templário": "img/sprites/Novos 8bits/leaders/templar-3.png",
+    "Pássaro Trovão": "img/sprites/Novos 8bits/units/thunderbird.png",
+    "Tritão": "img/sprites/Novos 8bits/units/tritao.png",
+    "Unicórnio": "img/sprites/Novos 8bits/units/unicorn.png",
+    "Urso-Coruja": "img/sprites/Novos 8bits/boss/urso-coruja.png",
+    "Urso de Guerra": "img/sprites/Novos 8bits/boss/urso-polar-guerra.png",
+    "Rei Tartaruga Alado": "img/sprites/Novos 8bits/units/winged-turtleking.png",
+    "Golem Rochoso Zumbi": "img/sprites/Novos 8bits/boss/zombie-rock-golem.png",
+    "Mega Besta Solar": "img/sprites/Novos 8bits/units/pokemon-upgrade-mega (4).png",
+    "Mega Besta Lunar": "img/sprites/Novos 8bits/units/pokemon-upgrade-mega (5).png",
+    "Mega Besta Terrestre": "img/sprites/Novos 8bits/units/pokemon-upgrade-mega (9).png",
+    "Mega Besta Cósmica": "img/sprites/Novos 8bits/units/pokemon-upgrade-mega (42).png",
+    "Entidade Ancestral I": "img/sprites/Novos 8bits/boss/IMG-20261118-WA0017.png",
+    "Entidade Ancestral II": "img/sprites/Novos 8bits/boss/IMG-20261118-WA0019.png",
+    "Entidade Ancestral III": "img/sprites/Novos 8bits/boss/IMG-20261118-WA0020.png",
+    "Entidade Ancestral IV": "img/sprites/Novos 8bits/boss/IMG-20261118-WA0021.png"
+  },
+  "BABY_SPRITES": {
+    "Filhote Aquático": "img/sprites/Novos 8bits/baby/pokemon-downgrade-baby (38).png",
+    "Filhote Terrestre": "img/sprites/Novos 8bits/baby/pokemon-downgrade-baby (39).png",
+    "Filhote Alado": "img/sprites/Novos 8bits/baby/pokemon-downgrade-baby (42).png",
+    "Filhote Silvestre": "img/sprites/Novos 8bits/baby/pokemon-downgrade-baby (43).png",
+    "Filhote Elétrico": "img/sprites/Novos 8bits/baby/pokemon-downgrade-baby (44).png",
+    "Filhote Gélido": "img/sprites/Novos 8bits/baby/pokemon-downgrade-baby (45).png",
+    "Filhote Sombrio": "img/sprites/Novos 8bits/baby/pokemon-downgrade-baby (46).png",
+    "Filhote Sagrado": "img/sprites/Novos 8bits/baby/pokemon-downgrade-baby (47).png"
+  }
+}
