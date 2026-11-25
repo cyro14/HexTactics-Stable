@@ -59,6 +59,7 @@ class Unit {
             hasAttacked: d.hasAttacked || false, status: d.status || null,
             isBoss: d.isBoss || false, alerted: d.alerted || false,
             filter: d.filter || 'none', tags: d.tags || [], fav: d.fav || [],
+            witchElement: d.witchElement || null,
             furyAtk: d.furyAtk || 0, knownSpells: d.knownSpells || [],
             grimTags: d.grimTags || [], spellsCast: d.spellsCast || 0,
             _origFaction: d._origFaction, _mcDuration: d._mcDuration,
@@ -226,6 +227,11 @@ class Unit {
                 let s = isNight ? dn.night : dn.day;
                 if (s) return s;
             }
+        }
+        // 1b. Feiticeira Elemental: forma baseada no elemento ativo (u.witchElement)
+        if (this.witchElement && typeof WITCH_ELEMENT_FORMS !== 'undefined') {
+            let ws = WITCH_ELEMENT_FORMS[this.witchElement];
+            if (ws) return ws;
         }
         // 2. Sprite da Evolução por Nível
         if (typeof UNIT_EVO_SPRITES !== 'undefined') {

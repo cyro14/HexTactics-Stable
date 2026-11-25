@@ -153,7 +153,7 @@
     },
     "Centopeia Metálica": {
       "0": "img/sprites/Novos 8bits/baby/baby-centopeia-metalica.png",
-      "1": "img/boss/centopeia-metalica.png",
+      "1": "img/sprites/Novos 8bits/boss/centopeia-metalica-3.png",
       "2": "img/sprites/Novos 8bits/boss/centopeia-metalica-3.png"
     },
     "Leviatã": {
@@ -360,7 +360,7 @@
     "Coruja Maga": "img/sprites/Novos 8bits/boss/coruja-mage.png",
     "Tigre Dente-de-Sabre": "img/sprites/Novos 8bits/boss/dente-sabre.png",
     "Dragão da Terra": "img/sprites/Novos 8bits/boss/earth-dragon.png",
-    "Rei Lich de Eldorado": "img/sprites/Novos 8bits/boss/eldorado-lichking.png",
+    "Rei Lich de Eldorado": "img/boss/lich_king_eldorado.png",
     "Elefante": "img/sprites/Novos 8bits/units/elephant.png",
     "Arqueira Elfa": "img/sprites/Novos 8bits/leaders/elf-archer-2.png",
     "Feiticeira": "img/sprites/Novos 8bits/leaders/feiticeira.png",

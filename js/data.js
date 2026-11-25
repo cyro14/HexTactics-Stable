@@ -331,7 +331,7 @@ const SPELLS = [
     { id: 'sl_forma_falcao', name: 'Postura do Falcão', icon: null, cost: {}, level: 1, type: 'def', range: 0, tags: ['PRIMAL'], desc: 'Gratuito. Alterna para Falcão: Perde o ataque do Urso, ganha 3 de Alcance, ataques Perfurantes e voar.', effect: async (game, caster) => { if (caster.emoji === '🦅') return false; if (caster.emoji === '🐻') { caster.maxHp -= 20; caster.hp = Math.min(caster.maxHp, caster.hp); caster.maxMp += 2; caster.mp += 2; caster.atk = Math.max(1, caster.atk - 5); } caster.emoji = '🦅'; caster.range = 3; if (!caster.abilities.includes('pierce', 'flying')) caster.abilities.push('pierce', 'flying'); showPopup("Forma Falcão!", caster, '#3498db'); return true; } },
     { id: 'sl_forma_dragao', name: 'Postura do Dragao', icon: null, cost: { 'PRIMAL': 10, 'SILVESTRE': 7 }, level: 5, type: 'def', range: 0, tags: ['PRIMAL'], desc: 'Transformação Suprema! +Ataque e HP, Voo e Dano em Área.', effect: async (game, caster) => { caster.emoji = '🐉'; caster.name = "Dragão Supremo"; caster.maxHp += 50; caster.hp += 50; caster.atk += 30; caster.maxMp += 1; caster.mp += 1; if (!caster.abilities.includes('flying')) caster.abilities.push('flying'); if (!caster.abilities.includes('corte_amplo')) caster.abilities.push('corte_amplo'); if (typeof showPopup === 'function') showPopup("DRAGÃO DESPERTO!", caster, '#c0392b'); return true; } },
     { id: 'sl_execucao', name: 'Execução', icon: null, cost: { 'STALKER': 2 }, level: 1, type: 'atk', range: 1, tags: ['STALKER'], desc: 'Ataque fatal. Se o alvo morrer, você recupera seu turno e movimento.', effect: async (game, caster, target) => { if (!target) return false; caster._isExecuting = true; await game.executeCombat(caster, target); caster._isExecuting = false; return true; } },
-    { id: 'sl_evocar_dragao', name: 'Evocar Dragão Ígneo', icon: null, cost: { 'MYSTIC': 8, 'FIRE': 8 }, level: 2, type: 'def', range: 1, tags: ['MYSTIC'], desc: 'Invoca um Dragão no campo que dura até o fim da batalha.', effect: async (game, caster, target, targetHex) => { if (target) return false; let d = new Unit({ q: targetHex.q, r: targetHex.r, faction: 1, name: "Dragão Evocado", baseName: "Dragão Evocado", emoji: "🐉", sprite: 'img/boss/wyvern_pedra2.png', filter: 'brightness(115%) sepia(50%) hue-rotate(-35deg) saturate(260%)', hp: 60, maxHp: 60, mp: 4, maxMp: 4, atk: 18, range: 2, abilities: ['burn'], tags: ['FIRE'], isNew: false }); game.units.push(d); showPopup("Invocado!", d, '#e74c3c'); return true; } },
+    { id: 'sl_evocar_dragao', name: 'Evocar Dragão Ígneo', icon: null, cost: { 'MYSTIC': 8, 'FIRE': 8 }, level: 2, type: 'def', range: 1, tags: ['MYSTIC'], desc: 'Invoca um Dragão no campo que dura até o fim da batalha.', effect: async (game, caster, target, targetHex) => { if (target) return false; let d = new Unit({ q: targetHex.q, r: targetHex.r, faction: 1, name: "Dragão Evocado", baseName: "Dragão Evocado", emoji: "🐉", sprite: 'img/sprites/Novos 8bits/boss/earth-dragon.png', filter: 'brightness(115%) sepia(50%) hue-rotate(-35deg) saturate(260%)', hp: 60, maxHp: 60, mp: 4, maxMp: 4, atk: 18, range: 2, abilities: ['burn'], tags: ['FIRE'], isNew: false }); game.units.push(d); showPopup("Invocado!", d, '#e74c3c'); return true; } },
     { id: 'sl_evocar_lobo', name: 'Evocar Lobo de Mana', icon: null, cost: { 'MYSTIC': 4 }, level: 1, type: 'def', range: 1, tags: ['MYSTIC'], desc: 'Invoca um Lobo espiritual (Fera) para lutar ao seu lado.', effect: async (game, caster, target, targetHex) => { if (target) return false; let d = new Unit({ q: targetHex.q, r: targetHex.r, faction: 1, name: "Lobo de Mana", baseName: "Lobo de Mana", emoji: "🐺", sprite: 'img/units/lobo.png', filter: 'saturate(280%) hue-rotate(200deg) brightness(110%) drop-shadow(0 0 4px rgba(155,89,182,.6))', hp: 35, maxHp: 35, mp: 4, maxMp: 4, atk: 12, range: 1, abilities: ['dodge'], tags: ['MYSTIC'], isNew: false }); game.units.push(d); showPopup("Invocado!", d, '#9b59b6'); return true; } },
     { id: 'sl_evocar_golem', name: 'Evocar Golem de Pedra', icon: null, cost: { 'MYSTIC': 2, 'ROCK': 2 }, level: 1, type: 'def', range: 1, tags: ['MYSTIC'], desc: 'Invoca um Golem resistente de Pedra.', effect: async (game, caster, target, targetHex) => { if (target) return false; let d = new Unit({ q: targetHex.q, r: targetHex.r, faction: 1, name: "Golem de Pedra", baseName: "Golem de Pedra", emoji: "🪨", sprite: 'img/sprites/golem.png', hp: 80, maxHp: 80, mp: 2, maxMp: 2, atk: 10, range: 1, abilities: ['carapace'], tags: ['ROCK'], isNew: false }); game.units.push(d); showPopup("Invocado!", d, '#95a5a6'); return true; } },
     { id: 'sl_cancao_sereia', name: 'Canção da Sereia', icon: null, cost: { 'ABYSSAL': 5 }, level: 2, type: 'atk', range: 3, tags: ['ABYSSAL'], desc: 'Atrai o inimigo 1 casa para perto e aplica Encantar (Atordoado).', effect: async (game, caster, target) => { if (!target) return false; target.status = 'stun'; let path = Hex.getNeighbors(target.q, target.r).sort((a, b) => Hex.distance(a, caster) - Hex.distance(b, caster)); for (let h of path) { if (game.map.has(`${h.q},${h.r}`) && !game.getUnitAt(h.q, h.r)) { await game.moveUnit(target, h.q, h.r); break; } } showPopup("Encantado!", target, '#ff69b4'); return true; } },
@@ -393,34 +393,34 @@ const LEADERS = [
     { id: 'mage', name: 'Arquimago', loreFaction: 'ORDEM', emoji: '🧙🏻‍♂️', hp: 60, atk: 12, mp: 4, range: 2, limit: 3, knownSpells: ['sl_arcane_dart'], desc: 'Consegue utilizar duas magias por turno.', tags: ['MYSTIC'], sprite: 'img/sprites/Novos 8bits/leaders/archemage.png' },
     { id: 'orc', name: 'Chefe Orc', loreFaction: 'PRIMORDIAL', emoji: '👹', hp: 80, atk: 15, mp: 5, range: 1, limit: 6, abilities: ['leadership'], knownSpells: ['sl_savage_cry'], desc: 'Líder de Horda (+10% ATK por aliado).', tags: ['PRIMAL'], sprite: 'img/sprites/Novos 8bits/leaders/orc.png' },
     { id: 'necro', name: 'Necromante', loreFaction: 'SOMBRAS', emoji: '💀', hp: 60, atk: 12, mp: 4, range: 2, limit: 6, knownSpells: ['sl_dark_touch'], desc: 'Exército Morto (Domina como Umbral ao matar).', tags: ['UMBRAL'], sprite: 'img/sprites/Novos 8bits/leaders/necromante.png' },
-    { id: 'paladin', name: 'Paladina', loreFaction: 'ORDEM', emoji: '🛡️', hp: 85, atk: 10, mp: 4, range: 1, limit: 3, abilities: ['leadership'], knownSpells: ['sl_heal'], desc: 'Unidades compradas ganham a tag Celestial. Aliados até 2 hexes curam 2 HP por turno.', tags: ['CELESTIAL', 'CARAPACE'], sprite: 'img/lideres/paladina.png' },
+    { id: 'paladin', name: 'Paladina', loreFaction: 'ORDEM', emoji: '🛡️', hp: 85, atk: 10, mp: 4, range: 1, limit: 3, abilities: ['leadership'], knownSpells: ['sl_heal'], desc: 'Unidades compradas ganham a tag Celestial. Aliados até 2 hexes curam 2 HP por turno.', tags: ['CELESTIAL', 'CARAPACE'], sprite: 'img/lideres/templar.png' },
     { id: 'ranger', name: 'Arqueira', loreFaction: 'SILVESTRE', emoji: '🏹', hp: 65, atk: 14, mp: 5, range: 3, limit: 3, abilities: ['camouflage'], knownSpells: ['sl_gust'], desc: 'Alcance longo e Doma feras Silvestres facilmente. Silvestres adjacentes a ela recebem +1 de Alcance.', tags: ['SILVESTRE', 'STALKER'], fav: ['FOREST'], sprite: 'img/sprites/Novos 8bits/leaders/darkelf-archer.png' },
-    { id: 'pyro', name: 'Piromante', loreFaction: 'FORASTEIROS', emoji: '🔥', hp: 55, atk: 16, mp: 4, range: 2, limit: 3, knownSpells: ['sl_ember'], desc: 'Feras compradas e domadas vêm com queimadura e ganham a tag Ígnea.', tags: ['FIRE'], abilities: ['burn'], sprite: 'img/lideres/piromante.png' },
-    { id: 'admiral', name: 'Almirante', loreFaction: 'ABISSAL', emoji: '🏴‍☠️', hp: 65, atk: 13, mp: 5, range: 1, limit: 3, knownSpells: ['sl_tidal'], desc: 'Custo de movimento na Água é livre (1). Encontra e doma mais feras Abissais.', tags: ['ABYSSAL'], fav: ['WATER'], sprite: 'img/lideres/almirante.png' },
+    { id: 'pyro', name: 'Piromante', loreFaction: 'FORASTEIROS', emoji: '🔥', hp: 55, atk: 16, mp: 4, range: 2, limit: 3, knownSpells: ['sl_ember'], desc: 'Feras compradas e domadas vêm com queimadura e ganham a tag Ígnea.', tags: ['FIRE'], abilities: ['burn'], sprite: 'img/sprites/Novos 8bits/leaders/feiticeira-fogo.png' },
+    { id: 'admiral', name: 'Almirante', loreFaction: 'ABISSAL', emoji: '🏴‍☠️', hp: 65, atk: 13, mp: 5, range: 1, limit: 3, knownSpells: ['sl_tidal'], desc: 'Custo de movimento na Água é livre (1). Encontra e doma mais feras Abissais.', tags: ['ABYSSAL'], fav: ['WATER'], sprite: 'img/sprites/Novos 8bits/units/tritao.png' },
     { id: 'vampire', name: 'Lord Vampiro', loreFaction: 'SOMBRAS', emoji: '🧛🏻‍♂️', hp: 65, atk: 16, mp: 6, range: 1, limit: 5, knownSpells: ['sl_mordida_vamp'], desc: 'Roubo de vida. Doma feras abatidas transformando em Rastreadores. Fome se não atacar.', tags: ['UMBRAL', 'STALKER'], abilities: ['lifesteal'], sprite: 'img/sprites/Novos 8bits/leaders/vampire.png' },
     { id: 'L_CENTAUR', name: 'Centauro Espectral', scale: 1.2, loreFaction: 'SILVESTRE', emoji: '🏇', hp: 70, maxHp: 70, mp: 6, maxMp: 6, limit: 3, atk: 12, range: 1, tags: ['MYSTIC', 'SILVESTRE'], fav: ['PLAINS'], desc: 'Ganha +10% de ATK Base por cada hexágono percorrido antes de atacar no turno.', sprite: 'img/sprites/Novos 8bits/leaders/mystic-centaur.png' },
     { id: 'L_ANUBIS', name: 'Anubis', loreFaction: 'DESERTO', emoji: '🐕‍🦺', hp: 80, maxHp: 80, mp: 3, maxMp: 3, atk: 16, range: 1, limit: 3, tags: ['UMBRAL', 'SAND'], fav: ['DESERT'], desc: 'Sempre que elimina um inimigo, ganha +1 ATK permanentemente (Acumula na run).', sprite: 'img/sprites/Novos 8bits/leaders/anubis.png' },
-    { id: 'L_SHAPESHIFTER', name: 'Metamorfo', loreFaction: 'SILVESTRE', emoji: '🕵️‍♂️', hp: 85, maxHp: 85, mp: 4, maxMp: 4, atk: 12, limit: 3, range: 1, tags: ['PRIMAL', 'SILVESTRE'], fav: ['FOREST'], desc: 'Alterna posturas sem custo de mana. Urso (+Defesa, Alc:1) ou Falcão (-Defesa, Perfurante, Alc:3).', sprite: 'img/lideres/metamorfo.png' },
-    { id: 'L_EXECUTIONER', name: 'Carrasco', loreFaction: 'SOMBRAS', emoji: '🪓', hp: 90, maxHp: 90, mp: 3, maxMp: 3, atk: 14, limit: 3, range: 1, tags: ['STALKER'], fav: ['MOUNTAIN'], desc: 'Possui o ataque especial Execução. Se matar o alvo, recupera a ação e o movimento.', sprite: 'img/lideres/carrasco.png' },
+    { id: 'L_SHAPESHIFTER', name: 'Metamorfo', loreFaction: 'SILVESTRE', emoji: '🕵️‍♂️', hp: 85, maxHp: 85, mp: 4, maxMp: 4, atk: 12, limit: 3, range: 1, tags: ['PRIMAL', 'SILVESTRE'], fav: ['FOREST'], desc: 'Alterna posturas sem custo de mana. Urso (+Defesa, Alc:1) ou Falcão (-Defesa, Perfurante, Alc:3).', sprite: 'img/sprites/Novos 8bits/units/satiro.png' },
+    { id: 'L_EXECUTIONER', name: 'Carrasco', loreFaction: 'SOMBRAS', emoji: '🪓', hp: 90, maxHp: 90, mp: 3, maxMp: 3, atk: 14, limit: 3, range: 1, tags: ['STALKER'], fav: ['MOUNTAIN'], desc: 'Possui o ataque especial Execução. Se matar o alvo, recupera a ação e o movimento.', sprite: 'img/boss/minotauro.png' },
     { id: 'L_SUMMONER', name: 'Invocador', loreFaction: 'ORDEM', emoji: '👨‍🎨', hp: 60, maxHp: 60, mp: 3, maxMp: 3, atk: 8, limit: 3, range: 2, tags: ['MYSTIC'], knownSpells: ['sl_evocar_lobo'], desc: 'Mestre dos tokens. Usa mana para evocar criaturas como o Dragão Ígneo direto no tabuleiro.', sprite: 'img/lideres/invocador.png' },
-    { id: 'L_GENIE', name: 'Gênia', loreFaction: 'FORASTEIROS', emoji: '🧞‍♀️', hp: 75, maxHp: 75, mp: 5, maxMp: 4, atk: 12, limit: 3, range: 2, tags: ['MYSTIC', 'SAND'], fav: ['DESERT'], desc: 'Possui "Três Desejos". Ao iniciar a fase, escolha entre injetar Ouro, Recursos ou ganhar um Item Épico.', sprite: 'img/lideres/genia.png' },
-    { id: 'L_TROLL', name: 'Troll', loreFaction: 'SILVESTRE', emoji: '🧌', hp: 130, maxHp: 130, mp: 3, maxMp: 3, atk: 14, range: 1, limit: 3, tags: ['PRIMAL', 'SILVESTRE'], fav: ['MOUNTAIN', 'FOREST'], desc: 'O Tanque Absoluto. Recupera 15% do HP se passar o turno sem atacar em Montanhas/Florestas.', sprite: 'img/lideres/troll.png' },
+    { id: 'L_GENIE', name: 'Gênia', loreFaction: 'FORASTEIROS', emoji: '🧞‍♀️', hp: 75, maxHp: 75, mp: 5, maxMp: 4, atk: 12, limit: 3, range: 2, tags: ['MYSTIC', 'SAND'], fav: ['DESERT'], desc: 'Possui "Três Desejos". Ao iniciar a fase, escolha entre injetar Ouro, Recursos ou ganhar um Item Épico.', sprite: 'img/sprites/aparicao_argentea.png' },
+    { id: 'L_TROLL', name: 'Troll', loreFaction: 'SILVESTRE', emoji: '🧌', hp: 130, maxHp: 130, mp: 3, maxMp: 3, atk: 14, range: 1, limit: 3, tags: ['PRIMAL', 'SILVESTRE'], fav: ['MOUNTAIN', 'FOREST'], desc: 'O Tanque Absoluto. Recupera 15% do HP se passar o turno sem atacar em Montanhas/Florestas.', sprite: 'img/sprites/Novos 8bits/boss/mapinguari.png' },
     { id: 'L_SIREN', name: 'Sereia', loreFaction: 'ABISSAL', emoji: '🧜🏻‍♀️', hp: 70, maxHp: 70, mp: 3, maxMp: 3, atk: 10, range: 2, limit: 3, abilities: ['dive'], tags: ['ABYSSAL', 'MYSTIC'], fav: ['WATER'], knownSpells: ['sl_cancao_sereia'], desc: 'Usa a Canção da Sereia para puxar inimigos para perto e atordoá-los.', sprite: 'img/sprites/Novos 8bits/leaders/siren.png' },
-    { id: 'L_FAIRY', name: 'Fada', loreFaction: 'SILVESTRE', emoji: '🧚🏻‍♀️', hp: 60, maxHp: 60, mp: 5, maxMp: 5, atk: 10, range: 2, limit: 3, tags: ['MYSTIC', 'SILVESTRE'], fav: ['FOREST'], knownSpells: ['sl_heal'], desc: 'Maga de Suporte. Suas magias curam aliados em área ou concedem turnos extras.', sprite: 'img/lideres/fada.png' },
+    { id: 'L_FAIRY', name: 'Fada', loreFaction: 'SILVESTRE', emoji: '🧚🏻‍♀️', hp: 60, maxHp: 60, mp: 5, maxMp: 5, atk: 10, range: 2, limit: 3, tags: ['MYSTIC', 'SILVESTRE'], fav: ['FOREST'], knownSpells: ['sl_heal'], desc: 'Maga de Suporte. Suas magias curam aliados em área ou concedem turnos extras.', sprite: 'img/sprites/Novos 8bits/leaders/feiticeira-plant.png' },
     { id: 'L_WITCH', name: 'Bruxa', loreFaction: 'SOMBRAS', emoji: '🧙🏼‍♀️', hp: 65, maxHp: 65, mp: 4, maxMp: 4, atk: 12, range: 2, limit: 3, tags: ['VENOM', 'UMBRAL'], fav: ['FOREST'], knownSpells: ['sl_venom_spit'], desc: 'Alquimista. Pode sacrificar um aliado com a magia Caldeirão para curar toda a equipe massivamente.', sprite: 'img/sprites/Novos 8bits/leaders/witch.png' },
     { id: 'L_BARBARIAN', name: 'Rei Bárbaro', loreFaction: 'ORDEM', emoji: '🤴', hp: 80, maxHp: 80, mp: 4, maxMp: 4, atk: 12, limit: 3, range: 1, tags: ['PRIMAL', 'ICE'], fav: ['SNOW'], desc: 'Fúria Imortal: Quanto mais HP perder, mais forte ele fica.', sprite: 'img/sprites/Novos 8bits/leaders/human-king-dia.png' },
     { id: 'L_TREX', name: 'T-Rex', loreFaction: 'PRIMORDIAL', scale: 2, emoji: '🦖', hp: 150, maxHp: 150, mp: 3, maxMp: 2, atk: 25, range: 1, limit: 3, tags: ['PRIMAL', 'ROCK', 'STALKER'], fav: ['DIRT'], desc: 'Kaiju. Bate em todos à frente. A cada passo, esmaga florestas e vilas, tornando-as planícies.', sprite: 'img/sprites/Novos 8bits/leaders/Rock-rex.png' },
     { id: 'L_ICE_QUEEN', name: 'Rainha do Gelo', loreFaction: 'ORDEM', emoji: '👸🏼', hp: 75, maxHp: 75, mp: 3, maxMp: 3, atk: 12, limit: 3, range: 2, tags: ['ICE'], fav: ['SNOW'], filter: 'hue-rotate(180deg)', abilities: ['frost_armor', 'freeze'], knownSpells: ['sl_ice_shard'], desc: 'Magia glacial. Inimigos que a atacam corpo-a-corpo sofrem Congelamento (Chilled) instantâneo.', sprite: 'img/sprites/Novos 8bits/leaders/yuki.png' },
     { id: 'L_HARPY', name: 'Matriarca Harpia', loreFaction: 'PRIMORDIAL', emoji: '🦅', hp: 65, maxHp: 65, mp: 5, maxMp: 5, atk: 14, limit: 3, range: 1, tags: ['WING', 'PRIMAL'], fav: ['MOUNTAIN'], filter: 'saturate(150%)', abilities: ['flying', 'dodge'], desc: 'Senhora dos ventos. Ignora custos de terreno pesado (sempre move por 1 MP) e possui esquiva natural alta.', sprite: 'img/sprites/Novos 8bits/leaders/harpia.png' },
-    { id: 'shaman', name: 'Xamã da Tempestade', loreFaction: 'TEMPESTADE', scale: 1.4, emoji: '🧙‍♂️', desc: 'Mestre dos raios. Seus feitiços ricocheteiam e causam caos nas fileiras inimigas.', limit: 3, hp: 75, mp: 4, atk: 12, range: 2, limit: 6, tags: ['ELECTRIC', 'MYSTIC'], fav: ['MOUNTAIN'], filter: 'hue-rotate(45deg) saturate(200%)', knownSpells: ['sl_furia_tempestade'], sprite: 'img/lideres/xama_tempestade.png' },
-    { id: 'ld_dragao_galatico', name: 'Dragão Galático', loreFaction: 'FORASTEIROS', emoji: '🌌', maxHp: 180, hp: 180, mp: 5, maxMp: 5, atk: 45, range: 1, limit: 3, scale: 1.5, fav: 'MOUNTAIN', tags: ['CELESTIAL', 'FIRE'], abilities: ['flying'], sprite: 'img/lideres/dragao_galatico.png', desc: 'Uma entidade cósmica. Sobrevoa os perigos e incendeia o campo.', },
+    { id: 'shaman', name: 'Xamã da Tempestade', loreFaction: 'TEMPESTADE', scale: 1.4, emoji: '🧙‍♂️', desc: 'Mestre dos raios. Seus feitiços ricocheteiam e causam caos nas fileiras inimigas.', limit: 3, hp: 75, mp: 4, atk: 12, range: 2, limit: 6, tags: ['ELECTRIC', 'MYSTIC'], fav: ['MOUNTAIN'], filter: 'hue-rotate(45deg) saturate(200%)', knownSpells: ['sl_furia_tempestade'], sprite: 'img/sprites/Novos 8bits/leaders/feiticeira-tempestade.png' },
+    { id: 'ld_dragao_galatico', name: 'Dragão Galático', loreFaction: 'FORASTEIROS', emoji: '🌌', maxHp: 180, hp: 180, mp: 5, maxMp: 5, atk: 45, range: 1, limit: 3, scale: 1.5, fav: 'MOUNTAIN', tags: ['CELESTIAL', 'FIRE'], abilities: ['flying'], sprite: 'img/sprites/Novos 8bits/boss/light-dragon.png', desc: 'Uma entidade cósmica. Sobrevoa os perigos e incendeia o campo.', },
     { id: 'ld_gargula', name: 'Gárgula Anciã', loreFaction: 'PRIMORDIAL', emoji: '🗿', maxHp: 200, hp: 200, mp: 3, maxMp: 3, atk: 35, range: 1, limit: 3, fav: 'MOUNTAIN', tags: ['ROCK', 'WING'], abilities: ['flying', 'counter'], desc: 'Estátua viva de altíssima defesa. Voa e pune quem a ataca de perto.', sprite: 'img/sprites/Novos 8bits/leaders/gargula.png' },
-    { id: 'ld_golem_gelo', name: 'Golem de Gelo', loreFaction: 'ORDEM', emoji: '🧊', maxHp: 250, hp: 250, mp: 3, maxMp: 3, atk: 30, range: 1, limit: 3, fav: 'SNOW', tags: ['ROCK', 'ICE'], abilities: [], desc: 'Um colosso glacial. Caminha devagar, mas congela os mares.', sprite: 'img/lideres/golem_gelo.png' },
-    { id: 'ld_porco_eletrico', name: 'Porco-Espinho Elétrico', loreFaction: 'TEMPESTADE', emoji: '🦔', maxHp: 140, hp: 140, mp: 7, maxMp: 7, atk: 25, range: 1, limit: 3, tags: ['CARAPACE', 'ELECTRIC'], abilities: ['counter', 'eletric'], desc: 'Agulhas carregadas. Eletrocuta a água para criar armadilhas pelo mapa.', sprite: 'img/lideres/espinho_eletrico.png' },
-    { id: 'ld_escaravelho', name: 'Escaravelho das Pragas', loreFaction: 'DESERTO', emoji: '🪲', maxHp: 160, hp: 160, mp: 4, maxMp: 4, atk: 35, range: 1, limit: 3, scale: 1.2, tags: ['SAND', 'VENOM'], abilities: ['poison'], fav: 'DESERT', sprite: 'img/lideres/escaravelho.png', desc: 'Emerge das areias espalhando toxinas mortais pelo campo.', },
+    { id: 'ld_golem_gelo', name: 'Golem de Gelo', loreFaction: 'ORDEM', emoji: '🧊', maxHp: 250, hp: 250, mp: 3, maxMp: 3, atk: 30, range: 1, limit: 3, fav: 'SNOW', tags: ['ROCK', 'ICE'], abilities: [], desc: 'Um colosso glacial. Caminha devagar, mas congela os mares.', sprite: 'img/sprites/Novos 8bits/boss/ice-golem.png' },
+    { id: 'ld_porco_eletrico', name: 'Porco-Espinho Elétrico', loreFaction: 'TEMPESTADE', emoji: '🦔', maxHp: 140, hp: 140, mp: 7, maxMp: 7, atk: 25, range: 1, limit: 3, tags: ['CARAPACE', 'ELECTRIC'], abilities: ['counter', 'eletric'], desc: 'Agulhas carregadas. Eletrocuta a água para criar armadilhas pelo mapa.', sprite: 'img/sprites/Novos 8bits/units/eletric-hedgehog.png' },
+    { id: 'ld_escaravelho', name: 'Escaravelho das Pragas', loreFaction: 'DESERTO', emoji: '🪲', maxHp: 160, hp: 160, mp: 4, maxMp: 4, atk: 35, range: 1, limit: 3, scale: 1.2, tags: ['SAND', 'VENOM'], abilities: ['poison'], fav: 'DESERT', sprite: 'img/sprites/Novos 8bits/units/scorpion.png', desc: 'Emerge das areias espalhando toxinas mortais pelo campo.', },
     { id: 'ld_doutor_praga', name: 'Doutor da Praga', loreFaction: 'SOMBRAS', emoji: '🐦‍⬛', maxHp: 130, hp: 130, mp: 4, maxMp: 4, atk: 20, range: 2, limit: 3, tags: ['VENOM'], abilities: ['poison'], sprite: 'img/sprites/Novos 8bits/leaders/plague-doctor.png', desc: 'Mestre alquimista. Todas as feras aliadas compradas se tornam Venenosas.', knownSpells: ['sl_miasma_curativo'] },
-    { id: 'ld_orixa', name: 'Orixá', loreFaction: 'DESERTO', emoji: '🔮', maxHp: 75, hp: 75, mp: 5, maxMp: 5, atk: 13, range: 2, limit: 3, tags: ['MYSTIC', 'SAND'], fav: ['DESERT'], abilities: ['crystal_skin'], knownSpells: ['sl_arcane_dart'], sprite: 'img/lideres/orixa.png', desc: 'Guardião das areias sagradas. Pele de Cristal o protege das intempéries do deserto.' },
-    { id: 'ld_valquiria', name: 'Valquíria Gélida', loreFaction: 'ORDEM', emoji: '❄️', maxHp: 85, hp: 85, mp: 5, maxMp: 5, atk: 15, range: 1, limit: 3, tags: ['ICE', 'WING'], fav: ['SNOW'], abilities: ['flying', 'frost_armor'], knownSpells: ['sl_ice_shard'], sprite: 'img/lideres/valquiria_gelida.png', desc: 'Enviada dos céus do norte. Voa sobre o campo e congela quem ousa atacá-la.' },
+    { id: 'ld_orixa', name: 'Orixá', loreFaction: 'DESERTO', emoji: '🔮', maxHp: 75, hp: 75, mp: 5, maxMp: 5, atk: 13, range: 2, limit: 3, tags: ['MYSTIC', 'SAND'], fav: ['DESERT'], abilities: ['crystal_skin'], knownSpells: ['sl_arcane_dart'], sprite: 'img/boss/fenghuang.png', desc: 'Guardião das areias sagradas. Pele de Cristal o protege das intempéries do deserto.' },
+    { id: 'ld_valquiria', name: 'Valquíria Gélida', loreFaction: 'ORDEM', emoji: '❄️', maxHp: 85, hp: 85, mp: 5, maxMp: 5, atk: 15, range: 1, limit: 3, tags: ['ICE', 'WING'], fav: ['SNOW'], abilities: ['flying', 'frost_armor'], knownSpells: ['sl_ice_shard'], sprite: 'img/sprites/Novos 8bits/leaders/yuki-2.png', desc: 'Enviada dos céus do norte. Voa sobre o campo e congela quem ousa atacá-la.' },
     { id: 'ld_cthullu', name: 'Cthullu', loreFaction: 'ABISSAL', emoji: '🐙', maxHp: 110, hp: 110, mp: 4, maxMp: 4, atk: 18, range: 2, limit: 3, tags: ['ABYSSAL', 'UMBRAL'], fav: ['WATER'], abilities: ['bind', 'dive'], knownSpells: ['sl_tidal'], sprite: 'img/sprites/Novos 8bits/leaders/cthulhu.png', desc: 'O horror antigo desperta. Amarra os inimigos com tentáculos e se esconde nas profundezas.' },
     {"id": "ld_arcanjo", "name": "Arcanjo Celestial", "loreFaction": "ORDEM", "emoji": "👼", "hp": 75, "atk": 16, "mp": 5, "range": 2, "limit": 3, "abilities": ["flying", "electric"], "tags": ["CELESTIAL", "ELECTRIC"], "sprite": "img/sprites/Novos 8bits/leaders/angel.png", "desc": "Guerreiro sagrado dos céus. Voa sobre os perigos e alveja inimigos com raios sagrados."},
     {"id": "ld_darkelf_prince", "name": "Príncipe Elfo Sombrio", "loreFaction": "SOMBRAS", "emoji": "🧝", "hp": 70, "atk": 17, "mp": 5, "range": 1, "limit": 4, "abilities": ["swift", "dodge"], "tags": ["UMBRAL", "STALKER"], "sprite": "img/sprites/Novos 8bits/leaders/darkelf-prince.png", "desc": "Nobre das sombras. Golpes ágeis que impedem o contra-ataque adversário."},
@@ -431,7 +431,8 @@ const LEADERS = [
     {"id": "ld_succubus", "name": "Súcubo Voraz", "loreFaction": "SOMBRAS", "emoji": "😈", "hp": 70, "atk": 16, "mp": 5, "range": 1, "limit": 4, "abilities": ["lifesteal", "dodge"], "tags": ["UMBRAL", "MYSTIC"], "sprite": "img/sprites/Novos 8bits/leaders/succubus.png", "desc": "Sedutora das trevas que recupera vigor massivo ao causar dano corpo-a-corpo."},
     {"id": "ld_feiticeira", "name": "Feiticeira Elemental", "loreFaction": "ORDEM", "emoji": "🔮", "hp": 65, "atk": 15, "mp": 5, "range": 2, "limit": 3, "abilities": ["crystal_skin"], "tags": ["MYSTIC", "CELESTIAL"], "sprite": "img/sprites/Novos 8bits/leaders/feiticeira.png", "desc": "Mestra dos elementos dotada de Pele de Cristal protetora contra condições nocivas."},
     {"id": "ld_forest_elf", "name": "Elfo da Floresta", "loreFaction": "SILVESTRE", "emoji": "🧝‍♂️", "hp": 70, "atk": 15, "mp": 5, "range": 2, "limit": 3, "abilities": ["camouflage", "swift"], "tags": ["SILVESTRE", "WING"], "sprite": "img/sprites/Novos 8bits/leaders/forest-elf.png", "desc": "Guardião dos bosques antigos que se oculta na folhagem para emboscar intrusos."},
-    {"id": "ld_templar", "name": "Cavaleiro Templário", "loreFaction": "ORDEM", "emoji": "⚔️", "hp": 90, "atk": 14, "mp": 4, "range": 1, "limit": 3, "abilities": ["leadership", "carapace"], "tags": ["CELESTIAL", "CARAPACE"], "sprite": "img/sprites/Novos 8bits/leaders/templar-3.png", "desc": "Paladino de armadura sagrada que reflete dano e fortalece seus companheiros."}
+    {"id": "ld_templar", "name": "Cavaleiro Templário", "loreFaction": "ORDEM", "emoji": "⚔️", "hp": 90, "atk": 14, "mp": 4, "range": 1, "limit": 3, "abilities": ["leadership", "carapace"], "tags": ["CELESTIAL", "CARAPACE"], "sprite": "img/sprites/Novos 8bits/leaders/templar-3.png", "desc": "Paladino de armadura sagrada que reflete dano e fortalece seus companheiros."},
+    {"id": "ld_rei_estranho", "name": "Rei Estranho", "loreFaction": "FORASTEIROS", "emoji": "👑", "hp": 85, "maxHp": 85, "mp": 4, "maxMp": 4, "atk": 14, "range": 1, "limit": 3, "abilities": ["lifesteal"], "tags": ["UMBRAL", "MYSTIC"], "fav": ["ASHES"], "sprite": "img/lideres/strange-king-dia.png", "desc": "Monarca amaldiçoado: sua forma muda conforme a hora do dia — humano ao sol, ogre à noite."}
 ];
 
 const FACTIONS = { WILD: { id: 0 }, PLAYER: { id: 1 }, AI: { id: 2 } };
@@ -471,8 +472,36 @@ const DAY_NIGHT_UNITS = {
     "Rei Humano": {
         "day": "img/sprites/Novos 8bits/leaders/human-king-dia.png",
         "night": "img/sprites/Novos 8bits/leaders/ogre-king-noite.png"
+    },
+    "Rei Estranho": {
+        "day": "img/lideres/strange-king-dia.png",
+        "night": "img/lideres/strange-king-noite.png"
     }
 };
+
+// ==========================================
+// FEITICEIRA ELEMENTAL — FORMAS POR ELEMENTO
+// ==========================================
+// A Feiticeira troca de sprite conforme o elemento ativo.
+// O sistema de elementos define `unit.witchElement = 'FIRE' | 'ICE' | ...`
+// (a implementar futuramente); enquanto isso, ela usa a forma base.
+const WITCH_ELEMENT_FORMS = {
+    "FIRE": "img/sprites/Novos 8bits/leaders/feiticeira-fogo.png",
+    "ICE": "img/sprites/Novos 8bits/leaders/feiticeira-gelo.png",
+    "CELESTIAL": "img/sprites/Novos 8bits/leaders/feiticeira-luz.png",
+    "METAL": "img/sprites/Novos 8bits/leaders/feiticeira-metal.png",
+    "ROCK": "img/sprites/Novos 8bits/leaders/feiticeira-metal.png",
+    "SILVESTRE": "img/sprites/Novos 8bits/leaders/feiticeira-plant.png",
+    "SAND": "img/sprites/Novos 8bits/leaders/feiticeira-sand.png",
+    "VENOM": "img/sprites/Novos 8bits/leaders/feiticeira-sangue.png",
+    "ELECTRIC": "img/sprites/Novos 8bits/leaders/feiticeira-tempestade.png",
+    "UMBRAL": "img/sprites/Novos 8bits/leaders/feiticeira-umbral.png"
+};
+
+// Helper: sprite da Feiticeira para um elemento (retorna null se forma base)
+function getWitchElementSprite(elementTag) {
+    return (elementTag && typeof WITCH_ELEMENT_FORMS !== 'undefined') ? (WITCH_ELEMENT_FORMS[elementTag] || null) : null;
+}
 
 const UNIT_EVO_SPRITES = {
     "Morcego": {
@@ -487,7 +516,8 @@ const UNIT_EVO_SPRITES = {
     },
     "Corvo": {
         "1": "img/sprites/Novos 8bits/units/crow.png",
-        "2": "img/sprites/Novos 8bits/units/crow-2.png"
+        "2": "img/sprites/Novos 8bits/units/crow-2.png",
+        "3": "img/units/corvo_umbral.png"
     },
     "Coruja Umbral": {
         "1": "img/sprites/Novos 8bits/units/coruja-umbral.png",
@@ -519,11 +549,13 @@ const UNIT_EVO_SPRITES = {
     "Hotweiler": {
         "0": "img/sprites/Novos 8bits/baby/baby-hotweiler.png",
         "1": "img/sprites/Novos 8bits/units/hotweiler.png",
-        "2": "img/sprites/Novos 8bits/units/hotweiler-2.png"
+        "2": "img/sprites/Novos 8bits/units/hotweiler-2.png",
+        "3": "img/units/hotweiler_anciao.png"
     },
     "Cão Infernal": {
         "1": "img/sprites/Novos 8bits/units/hotweiler.png",
-        "2": "img/sprites/Novos 8bits/units/hotweiler-2.png"
+        "2": "img/sprites/Novos 8bits/units/hotweiler-2.png",
+        "3": "img/units/hotweiler_anciao.png"
     },
     "Javali": {
         "1": "img/sprites/Novos 8bits/units/javali.png",
@@ -531,11 +563,13 @@ const UNIT_EVO_SPRITES = {
         "3": "img/sprites/Novos 8bits/units/javali-3.png"
     },
     "Leão": {
+        "0": "img/units/leao_jovem.png",
         "1": "img/sprites/Novos 8bits/units/lion.png",
         "2": "img/sprites/Novos 8bits/units/lion-2.png",
         "3": "img/sprites/Novos 8bits/units/lion-3.png"
     },
     "Leão Selvagem": {
+        "0": "img/units/leao_jovem.png",
         "1": "img/sprites/Novos 8bits/units/lion.png",
         "2": "img/sprites/Novos 8bits/units/lion-2.png",
         "3": "img/sprites/Novos 8bits/units/lion-3.png"
@@ -566,7 +600,8 @@ const UNIT_EVO_SPRITES = {
     },
     "Escorpião": {
         "1": "img/sprites/Novos 8bits/units/scorpion.png",
-        "2": "img/sprites/Novos 8bits/units/scorpion-2.png"
+        "2": "img/sprites/Novos 8bits/units/scorpion-2.png",
+        "3": "img/units/escorpiao_imperador.png"
     },
     "Tubarão": {
         "1": "img/sprites/Novos 8bits/units/shark.png",
@@ -581,7 +616,8 @@ const UNIT_EVO_SPRITES = {
     "Tuiuiú": {
         "0": "img/sprites/Novos 8bits/baby/baby-tuiuiu.png",
         "1": "img/sprites/Novos 8bits/units/tuiuiu.png",
-        "2": "img/sprites/Novos 8bits/units/tuiuiu-2.png"
+        "2": "img/sprites/Novos 8bits/units/tuiuiu-2.png",
+        "3": "img/boss/tuiuiu_anciao.png"
     },
     "Tuiuiú Guardião": {
         "1": "img/sprites/Novos 8bits/units/tuiuiu.png",
@@ -614,7 +650,7 @@ const UNIT_EVO_SPRITES = {
     },
     "Centopeia Metálica": {
         "0": "img/sprites/Novos 8bits/baby/baby-centopeia-metalica.png",
-        "1": "img/boss/centopeia-metalica.png",
+        "1": "img/sprites/Novos 8bits/boss/centopeia-metalica-3.png",
         "2": "img/sprites/Novos 8bits/boss/centopeia-metalica-3.png"
     },
     "Leviatã": {
@@ -637,7 +673,8 @@ const UNIT_EVO_SPRITES = {
     },
     "Grifo": {
         "1": "img/sprites/Novos 8bits/units/grifo.png",
-        "2": "img/sprites/Novos 8bits/boss/grifo-2.png"
+        "2": "img/sprites/Novos 8bits/boss/grifo-2.png",
+        "3": "img/sprites/Novos 8bits/boss/grifo-coruja.png"
     },
     "Ifrit": {
         "1": "img/sprites/Novos 8bits/boss/ifrit.png",
@@ -802,6 +839,56 @@ const UNIT_EVO_SPRITES = {
     "Dragão Esqueleto": {
         "1": "img/sprites/Novos 8bits/boss/eskeleton-dragon.png",
         "2": "img/sprites/Novos 8bits/boss/skeleton-dragon-2.png"
+    },
+    "Cervo": {
+        "1": "img/sprites/Novos 8bits/units/cervo.png",
+        "2": "img/units/cervo-2.png"
+    },
+    "Cervo da Neve": {
+        "1": "img/sprites/Novos 8bits/units/cervo-neve.png",
+        "2": "img/units/cervo-2.png"
+    },
+    "Coelho": {
+        "1": "img/units/coelho.png",
+        "2": "img/sprites/Novos 8bits/units/jackalope.png",
+        "3": "img/units/jackalope-2.png"
+    },
+    "Jackalope": {
+        "1": "img/sprites/Novos 8bits/units/jackalope.png",
+        "2": "img/units/jackalope-2.png"
+    },
+    "Canguru": {
+        "1": "img/sprites/Novos 8bits/units/canguru.png",
+        "2": "img/sprites/Novos 8bits/boss/rock-canguru.png"
+    },
+    "Canguru Rochoso": {
+        "1": "img/sprites/Novos 8bits/boss/rock-canguru.png"
+    },
+    "Pássaro Trovão": {
+        "1": "img/units/passaro_trovao.png",
+        "2": "img/sprites/Novos 8bits/units/thunderbird.png"
+    },
+    "Lobo": {
+        "1": "img/units/lobo.png",
+        "2": "img/units/lobo_alfa.png"
+    },
+    "Lobo do Inverno": {
+        "1": "img/units/lobo_alfa.png"
+    },
+    "Vampiro Errante": {
+        "1": "img/units/vampiro.png",
+        "2": "img/units/vampiro_anciao.png"
+    },
+    "Vampiro Ancião": {
+        "1": "img/units/vampiro_anciao.png"
+    },
+    "Bem-te-vi": {
+        "1": "img/sprites/Novos 8bits/units/bemtevi.png",
+        "2": "img/sprites/Novos 8bits/boss/fenghuang-tevi.png"
+    },
+    "Raposa de Quatro Caudas": {
+        "1": "img/sprites/Novos 8bits/units/kitsune.png",
+        "2": "img/units/4_tails.png"
     }
 };
 
@@ -902,7 +989,7 @@ const EVOS = {
 
 const BEASTS = {
     LAND: [
-        { e: '🐭', name: 'Rato', hp: 20, atk: 5, mp: 5, range: 1, abilities: [], minLevel: 1, filter: 'none', sprite: 'img/units/rato.png', tags: ['STALKER', 'SILVESTRE'], fav: ['PLAINS'] },
+        { e: '🐭', name: 'Rato', hp: 20, atk: 5, mp: 5, range: 1, abilities: [], minLevel: 1, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/giant rat.png', tags: ['STALKER', 'SILVESTRE'], fav: ['PLAINS'] },
         { e: '🐦', name: 'Pássaro', hp: 30, atk: 9, mp: 5, range: 1, abilities: [], minLevel: 1, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/crow.png', tags: ['WING', 'SILVESTRE'], fav: ['FOREST'] },
         { e: '🐦', name: 'Bem-te-vi', hp: 28, atk: 10, mp: 6, range: 2, abilities: ['swift'], minLevel: 1, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/bemtevi.png', tags: ['WING', 'SILVESTRE'], fav: ['FOREST', 'PLAINS'] },
         { e: '🦅', name: 'Corvo', hp: 32, atk: 11, mp: 5, range: 2, abilities: ['camouflage'], minLevel: 2, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/crow.png', tags: ['UMBRAL', 'WING'], fav: ['FOREST'] },
@@ -931,8 +1018,8 @@ const BEASTS = {
         { e: '🦎', name: 'Salamandra', hp: 40, mp: 3, atk: 14, range: 1, scale: 1.2, abilities: ['burn'], filter: 'hue-rotate(-50deg) saturate(200%)', tags: ['FIRE', 'CARAPACE'], fav: ['MOUNTAIN', 'DESERT'] },
         { e: '🐕‍🦺', name: 'Cão Infernal', hp: 50, mp: 4, atk: 16, range: 1, abilities: ['swift'], filter: 'none', sprite: 'img/sprites/Novos 8bits/units/hotweiler.png', tags: ['FIRE', 'UMBRAL'], fav: ['MOUNTAIN'] },
         { e: '🐕', name: 'Filhote de Hotweiler', hp: 35, mp: 4, atk: 11, range: 1, abilities: ['swift'], filter: 'none', sprite: 'img/sprites/Novos 8bits/baby/baby-hotweiler.png', tags: ['FIRE', 'PRIMAL'], fav: ['MOUNTAIN', 'PLAINS'] },
-        { e: '🐕', name: 'Hotweiler Ancião', hp: 75, mp: 4, atk: 20, range: 1, abilities: ['swift', 'burn'], filter: 'none', sprite: 'img/sprites/Novos 8bits/units/hotweiler-2.png', tags: ['FIRE', 'UMBRAL'], fav: ['MOUNTAIN'] },
-        { e: '🦉', name: 'Coruja', hp: 30, mp: 5, atk: 12, range: 2, abilities: ['flying', 'pierce'], filter: 'none', sprite: 'img/units/coruja.png', tags: ['UMBRAL', 'WING'], fav: ['FOREST'] },
+        { e: '🐕', name: 'Hotweiler Ancião', hp: 75, mp: 4, atk: 20, range: 1, abilities: ['swift', 'burn'], filter: 'none', sprite: 'img/units/hotweiler_anciao.png', tags: ['FIRE', 'UMBRAL'], fav: ['MOUNTAIN'] },
+        { e: '🦉', name: 'Coruja', hp: 30, mp: 5, atk: 12, range: 2, abilities: ['flying', 'pierce'], filter: 'none', sprite: 'img/sprites/Novos 8bits/units/moon-owl.png', tags: ['UMBRAL', 'WING'], fav: ['FOREST'] },
         { e: '🦅', name: 'Pássaro Trovão', hp: 45, mp: 6, atk: 18, range: 2, scale: 1.2, abilities: ['flying', 'electric'], filter: 'none', sprite: 'img/sprites/Novos 8bits/units/thunderbird.png', tags: ['WING', 'ELECTRIC'], fav: ['MOUNTAIN'] },
         { e: '✨', name: 'Qilin', hp: 80, mp: 5, atk: 18, range: 1, abilities: ['swift', 'crystal_skin'], minLevel: 4, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/qilin.png', tags: ['CELESTIAL', 'MYSTIC'], fav: ['MOUNTAIN', 'PLAINS'] },
         { e: '🐗', name: 'Aravata', hp: 85, mp: 4, atk: 17, range: 1, abilities: ['carapace', 'counter'], minLevel: 4, filter: 'none', sprite: 'img/sprites/Novos 8bits/boss/aravata.png', tags: ['PRIMAL', 'ROCK'], fav: ['FOREST', 'MOUNTAIN'] },
@@ -943,7 +1030,7 @@ const BEASTS = {
         { e: '🦌', name: 'Jackalope', hp: 35, atk: 13, mp: 6, range: 1, abilities: ['swift'], minLevel: 2, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/jackalope.png', tags: ['SILVESTRE', 'MYSTIC'], fav: ['PLAINS', 'FOREST'] },
         { e: '🦎', name: 'Lagarto Escarlate', hp: 40, atk: 14, mp: 4, range: 1, abilities: ['poison'], minLevel: 2, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/lizard.png', tags: ['VENOM', 'FIRE'], fav: ['DESERT', 'SWAMP'] },
         { e: '🦎', name: 'Lagarto de Gola', hp: 42, atk: 13, mp: 5, range: 1, abilities: ['swift', 'dodge'], minLevel: 2, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/lizard-gola.png', tags: ['SILVESTRE', 'SAND'], fav: ['DESERT', 'PLAINS'] },
-        { e: '💀', name: 'Esqueleto Guerreiro', hp: 45, atk: 12, mp: 3, range: 1, abilities: ['counter'], minLevel: 2, filter: 'none', sprite: 'img/units/zumbi.png', tags: ['UMBRAL'], fav: ['SWAMP', 'ASHES'] },
+        { e: '💀', name: 'Esqueleto Guerreiro', hp: 45, atk: 12, mp: 3, range: 1, abilities: ['counter'], minLevel: 2, filter: 'none', sprite: 'img/sprites/esqueleto.png', tags: ['UMBRAL'], fav: ['SWAMP', 'ASHES'] },
         { e: '🧟', name: 'Zumbi Ancião', hp: 60, atk: 15, mp: 2, range: 1, abilities: ['counter', 'lifesteal'], minLevel: 3, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/zombie.png', tags: ['UMBRAL'], fav: ['SWAMP', 'ASHES'] },
         { e: '🦊', name: 'Raposa de Quatro Caudas', hp: 40, atk: 16, mp: 6, range: 1, scale: 1.2, abilities: ['swift', 'dodge'], minLevel: 3, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/kitsune.png', tags: ['MYSTIC', 'SILVESTRE'], fav: ['FOREST'] },
         { e: '🧛', name: 'Vampiro Errante', hp: 55, atk: 17, mp: 5, range: 1, abilities: ['lifesteal', 'dodge'], minLevel: 3, filter: 'none', sprite: 'img/units/vampiro.png', tags: ['UMBRAL', 'STALKER'], fav: ['FOREST', 'SWAMP'] },
@@ -1034,7 +1121,7 @@ const BEASTS = {
     WATER: [
         { e: '🐊', name: 'Crocodilo', hp: 55, atk: 14, mp: 3, range: 1, abilities: ['dive'], minLevel: 2, filter: 'none', tags: ['PRIMAL', 'ABYSSAL'], fav: ['WATER'] },
         { e: '🦈', name: 'Tubarão', hp: 45, atk: 18, mp: 4, range: 1, abilities: ['lifesteal', 'dive'], minLevel: 2, filter: 'none', tags: ['STALKER', 'ABYSSAL'], fav: ['WATER'] },
-        { e: '🦑', name: 'Kraken', hp: 75, atk: 12, mp: 2, range: 1, abilities: ['bind', 'dive'], minLevel: 3, filter: 'none', sprite: 'img/boss/kraken.png', tags: ['MYSTIC', 'ABYSSAL'], fav: ['WATER'] },
+        { e: '🦑', name: 'Kraken', hp: 75, atk: 12, mp: 2, range: 1, abilities: ['bind', 'dive'], minLevel: 3, filter: 'none', sprite: 'img/boss/bake_kujira.png', tags: ['MYSTIC', 'ABYSSAL'], fav: ['WATER'] },
         { e: '🦀', name: 'Caranguejo Blindado', hp: 65, atk: 12, mp: 2, range: 1, abilities: ['counter'], minLevel: 2, filter: 'none', sprite: 'img/units/caranguejo.png', tags: ['CARAPACE', 'ABYSSAL'], fav: ['WATER'] },
         { e: '🐍', name: 'Enguia Elétrica', hp: 35, atk: 15, mp: 4, range: 1, abilities: ['electric', 'dive'], minLevel: 3, filter: 'hue-rotate(200deg)', tags: ['ELECTRIC', 'ABYSSAL'], fav: ['WATER'] },
         { e: '🐸', name: 'Sapo', hp: 25, atk: 9, mp: 3, range: 1, abilities: ['poison'], minLevel: 1, filter: 'none', sprite: 'img/units/sapo.png', tags: ['VENOM', 'ABYSSAL'], fav: ['WATER'] },
@@ -1054,9 +1141,9 @@ const BEASTS = {
         { e: '🐐', name: 'Bode da Neve', hp: 40, atk: 9, mp: 4, range: 2, abilities: [], minLevel: 1, filter: 'none', tags: ['ROCK', 'ICE'], fav: ['MOUNTAIN', 'SNOW'] },
         { e: '☃️', name: 'Yeti Atirador', hp: 45, atk: 11, mp: 2, range: 2, abilities: ['freeze'], minLevel: 2, filter: 'none', sprite: 'img/boss/yeti.png', tags: ['MYSTIC', 'ICE'], fav: ['SNOW'] },
         { e: '🐺', name: 'Lobo do Inverno', hp: 50, atk: 14, mp: 4, range: 1, abilities: ['freeze'], minLevel: 3, filter: 'brightness(200%) grayscale(100%)', sprite: 'img/units/lobo_alfa.png', tags: ['STALKER', 'ICE'], fav: ['SNOW'] },
-        { e: '🐧', name: 'Pinguim', hp: 30, atk: 8, mp: 4, range: 1, scale: 0.8, abilities: [], minLevel: 1, filter: 'none', sprite: 'img/units/pinguim.png', tags: ['ABYSSAL', 'ICE'], fav: ['WATER', 'SNOW'] },
-        { e: '🐧', name: 'Pinguim Deslizante', hp: 45, atk: 11, mp: 5, range: 1, abilities: ['swift', 'dodge'], minLevel: 2, filter: 'none', sprite: 'img/units/pinguim_deslizante.png', tags: ['ABYSSAL', 'ICE'], fav: ['WATER', 'SNOW'] },
-        { e: '🐧', name: 'Pinguim Imperador', hp: 70, atk: 15, mp: 4, range: 1, abilities: ['leadership', 'freeze'], minLevel: 3, filter: 'none', sprite: 'img/units/pinguim_imperador.png', tags: ['ABYSSAL', 'ICE'], fav: ['WATER', 'SNOW'] },
+        { e: '🐧', name: 'Pinguim', hp: 30, atk: 8, mp: 4, range: 1, scale: 0.8, abilities: [], minLevel: 1, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/penguin.png', tags: ['ABYSSAL', 'ICE'], fav: ['WATER', 'SNOW'] },
+        { e: '🐧', name: 'Pinguim Deslizante', hp: 45, atk: 11, mp: 5, range: 1, abilities: ['swift', 'dodge'], minLevel: 2, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/penguin-2.png', tags: ['ABYSSAL', 'ICE'], fav: ['WATER', 'SNOW'] },
+        { e: '🐧', name: 'Pinguim Imperador', hp: 70, atk: 15, mp: 4, range: 1, abilities: ['leadership', 'freeze'], minLevel: 3, filter: 'none', sprite: 'img/sprites/Novos 8bits/units/penguin-3.png', tags: ['ABYSSAL', 'ICE'], fav: ['WATER', 'SNOW'] },
         {"e": "🦌", "name": "Cervo da Neve", "hp": 42, "atk": 12, "mp": 5, "range": 1, "abilities": ["swift", "frost_armor"], "minLevel": 2, "filter": "none", "sprite": "img/sprites/Novos 8bits/units/cervo-neve.png", "tags": ["ICE", "SILVESTRE"], "fav": ["SNOW"]},
         {"e": "🐉", "name": "Dragão do Gelo", "hp": 115, "atk": 24, "mp": 4, "range": 2, "abilities": ["flying", "freeze"], "minLevel": 4, "filter": "none", "sprite": "img/sprites/Novos 8bits/boss/ice-dragon.png", "tags": ["ICE", "WING"], "fav": ["SNOW", "MOUNTAIN"]}],
 
@@ -1065,25 +1152,25 @@ const BEASTS = {
         { e: '🦁', sprite: 'img/boss/rei_leao.png', name: 'Rei Leão', hp: 200, atk: 25, mp: 4, range: 1, abilities: ['leadership', 'hit_run'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['PRIMAL', 'SAND'], fav: ['DESERT'], spawnRegion: 'EAST' },
 
         // SUDESTE (Fogo/Cinzas)
-        { e: '🔥', sprite: 'img/boss/fornalha.png', name: 'Fornalha', hp: 220, atk: 28, mp: 3, range: 2, abilities: ['burn', 'carapace'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['FIRE', 'ROCK'], fav: ['ASHES', 'MOUNTAIN'], spawnRegion: 'SE' },
+        { e: '🔥', sprite: 'img/sprites/Novos 8bits/boss/ifrit.png', name: 'Fornalha', hp: 220, atk: 28, mp: 3, range: 2, abilities: ['burn', 'carapace'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['FIRE', 'ROCK'], fav: ['ASHES', 'MOUNTAIN'], spawnRegion: 'SE' },
 
         // SUL (Pântano Tóxico)
-        { e: '🪲', sprite: 'img/boss/centopeia-metalica.png', name: 'Centopeia Metálica', hp: 210, atk: 30, mp: 5, range: 1, abilities: ['poison', 'carapace'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['VENOM', 'CARAPACE'], fav: ['SWAMP', 'PLAINS'], spawnRegion: 'SOUTH' },
+        { e: '🪲', sprite: 'img/sprites/Novos 8bits/boss/centopeia-metalica-3.png', name: 'Centopeia Metálica', hp: 210, atk: 30, mp: 5, range: 1, abilities: ['poison', 'carapace'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['VENOM', 'CARAPACE'], fav: ['SWAMP', 'PLAINS'], spawnRegion: 'SOUTH' },
 
         // SUDOESTE (Costa Abissal)
-        { e: '🐉', sprite: 'img/boss/hidra_venenosa.png', name: 'Hidra Venenosa', hp: 250, atk: 26, mp: 3, range: 2, abilities: ['poison', 'lifesteal'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['ABYSSAL', 'VENOM'], fav: ['WATER'], spawnRegion: 'SW' },
+        { e: '🐉', sprite: 'img/sprites/Novos 8bits/boss/grootslang.png', name: 'Hidra Venenosa', hp: 250, atk: 26, mp: 3, range: 2, abilities: ['poison', 'lifesteal'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['ABYSSAL', 'VENOM'], fav: ['WATER'], spawnRegion: 'SW' },
 
         // OESTE (Floresta)
-        { e: '🌳', sprite: 'img/boss/arvore_umbralina.png', name: 'Árvore Umbralina', hp: 280, atk: 22, mp: 2, range: 1, abilities: ['lifesteal', 'bind'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['SILVESTRE', 'UMBRAL'], fav: ['FOREST'], spawnRegion: 'WEST' },
+        { e: '🌳', sprite: 'img/sprites/Novos 8bits/boss/treeslender.png', name: 'Árvore Umbralina', hp: 280, atk: 22, mp: 2, range: 1, abilities: ['lifesteal', 'bind'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['SILVESTRE', 'UMBRAL'], fav: ['FOREST'], spawnRegion: 'WEST' },
 
         // NOROESTE (Montanha)
-        { e: '🐲', sprite: 'img/boss/wyvern_pedra2.png', name: 'Wyvern Ancião', hp: 230, atk: 32, mp: 5, range: 1, abilities: ['flying', 'pierce'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['ROCK', 'WING'], fav: ['MOUNTAIN'], spawnRegion: 'NW' },
+        { e: '🐲', sprite: 'img/sprites/Novos 8bits/boss/earth-dragon.png', name: 'Wyvern Ancião', hp: 230, atk: 32, mp: 5, range: 1, abilities: ['flying', 'pierce'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['ROCK', 'WING'], fav: ['MOUNTAIN'], spawnRegion: 'NW' },
 
         // NORTE (Neve)
         { e: '❄️', sprite: 'img/boss/wendigo.png', name: 'Wendigo', hp: 240, atk: 35, mp: 5, range: 1, abilities: ['freeze', 'lifesteal'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['ICE', 'UMBRAL'], fav: ['SNOW'], spawnRegion: 'NORTH' },
 
         // NORDESTE (Planície / Tormenta)
-        { e: '👼', sprite: 'img/boss/arcanjo_caido.png', name: 'Arcanjo Caído', hp: 200, atk: 38, mp: 5, range: 2, abilities: ['flying', 'electric'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['CELESTIAL', 'ELECTRIC'], fav: ['PLAINS'], spawnRegion: 'NE' },
+        { e: '👼', sprite: 'img/sprites/Novos 8bits/leaders/angel-2.png', name: 'Arcanjo Caído', hp: 200, atk: 38, mp: 5, range: 2, abilities: ['flying', 'electric'], minLevel: 1, maxLevel: 99, filter: 'none', tags: ['CELESTIAL', 'ELECTRIC'], fav: ['PLAINS'], spawnRegion: 'NE' },
 
         // CENTRO (Chefe Final Supremo)
         { e: '🌌', sprite: 'img/boss/leviata.png', name: 'Leviatã Umbral', hp: 600, atk: 50, mp: 4, range: 3, abilities: ['corte_amplo', 'crystal_skin'], minLevel: 5, maxLevel: 99, filter: 'none', tags: ['ABYSSAL', 'UMBRAL', 'MYSTIC'], fav: ['WATER', 'ASHES'], spawnRegion: 'CENTER' },
@@ -1098,32 +1185,32 @@ const BEASTS = {
     ELITES: [
         // Fogo / Vulcânico
         { e: '🧞‍♂️', sprite: 'img/boss/ifrit.png', name: 'Ifrit', hp: 120, atk: 22, mp: 4, range: 2, abilities: ['burn', 'dodge'], minLevel: 2, filter: 'none', tags: ['FIRE', 'MYSTIC'], fav: ['ASHES'] },
-        { e: '🦅', sprite: 'img/boss/fenix.png', name: 'Fênix', hp: 90, atk: 18, mp: 5, range: 2, abilities: ['flying', 'burn'], minLevel: 2, filter: 'none', tags: ['FIRE', 'WING'], fav: ['ASHES'] },
+        { e: '🦅', sprite: 'img/boss/fenghuang.png', name: 'Fênix', hp: 90, atk: 18, mp: 5, range: 2, abilities: ['flying', 'burn'], minLevel: 2, filter: 'none', tags: ['FIRE', 'WING'], fav: ['ASHES'] },
         { e: '🔥', sprite: 'img/boss/mula.png', name: 'Mula sem Cabeça', hp: 130, atk: 20, mp: 6, range: 1, abilities: ['hit_run', 'burn'], minLevel: 2, filter: 'none', tags: ['FIRE', 'STALKER'], fav: ['ASHES', 'PLAINS'] },
         { e: '🐍', sprite: 'img/boss/boitata.png', name: 'Boitatá', hp: 140, atk: 24, mp: 4, range: 1, abilities: ['burn', 'camouflage'], minLevel: 3, filter: 'none', tags: ['FIRE', 'VENOM'], fav: ['SWAMP', 'FOREST'] },
         { e: '🐕', sprite: 'img/boss/cerberus.png', name: 'Cérbero', hp: 150, atk: 26, mp: 4, range: 1, abilities: ['lifesteal', 'burn'], minLevel: 2, filter: 'none', tags: ['FIRE', 'UMBRAL'], fav: ['ASHES', 'SWAMP'] },
         { e: '🦣', sprite: 'img/boss/mamute.png', name: 'Mamute Colossal', hp: 200, atk: 24, mp: 3, range: 1, abilities: ['carapace', 'stun'], minLevel: 2, filter: 'none', tags: ['ICE', 'PRIMAL'], fav: ['SNOW'] },
 
         // Neve
-        { e: '🐻‍❄️', sprite: 'img/boss/urso_polar_guerra.png', name: 'Urso de Guerra', hp: 160, atk: 25, mp: 3, range: 1, abilities: ['carapace', 'stun'], minLevel: 2, filter: 'none', tags: ['ICE', 'PRIMAL'], fav: ['SNOW'] },
+        { e: '🐻‍❄️', sprite: 'img/sprites/Novos 8bits/boss/urso-polar-guerra.png', name: 'Urso de Guerra', hp: 160, atk: 25, mp: 3, range: 1, abilities: ['carapace', 'stun'], minLevel: 2, filter: 'none', tags: ['ICE', 'PRIMAL'], fav: ['SNOW'] },
         { e: '🦍', sprite: 'img/boss/yeti.png', name: 'Yeti', hp: 180, atk: 22, mp: 3, range: 1, abilities: ['freeze', 'corte_amplo'], minLevel: 2, filter: 'none', tags: ['ICE', 'ROCK'], fav: ['SNOW'] },
-        { e: '🐺', sprite: 'img/boss/werewolf.png', name: 'Lobisomem', hp: 110, atk: 28, mp: 5, range: 1, abilities: ['lifesteal', 'swift'], minLevel: 2, filter: 'none', tags: ['ICE', 'STALKER'], fav: ['SNOW', 'FOREST'] },
+        { e: '🐺', sprite: 'img/units/lobo_alfa.png', name: 'Lobisomem', hp: 110, atk: 28, mp: 5, range: 1, abilities: ['lifesteal', 'swift'], minLevel: 2, filter: 'none', tags: ['ICE', 'STALKER'], fav: ['SNOW', 'FOREST'] },
 
         // Floresta / Pântano
         { e: '🐊', sprite: 'img/boss/cuca.png', name: 'Cuca', hp: 110, atk: 15, mp: 3, range: 3, abilities: ['poison', 'bind'], minLevel: 2, filter: 'none', tags: ['VENOM', 'MYSTIC'], fav: ['SWAMP'] },
         { e: '🦅', sprite: 'img/boss/tuiuiu.png', name: 'Tuiuiú Guardião', hp: 125, atk: 19, mp: 5, range: 2, abilities: ['flying', 'swift'], minLevel: 2, filter: 'none', tags: ['WING', 'SILVESTRE'], fav: ['SWAMP', 'PLAINS'] },
-        { e: '🦅', sprite: 'img/boss/grifo.png', name: 'Grifo', hp: 130, atk: 20, mp: 5, range: 1, abilities: ['flying', 'swift'], minLevel: 2, filter: 'none', tags: ['WING', 'SILVESTRE'], fav: ['FOREST', 'MOUNTAIN'] },
-        { e: '👻', sprite: 'img/boss/banshee.png', name: 'Banshee', hp: 95, atk: 18, mp: 4, range: 2, abilities: ['dodge', 'bind'], minLevel: 2, filter: 'none', tags: ['UMBRAL', 'MYSTIC'], fav: ['SWAMP'] },
+        { e: '🦅', sprite: 'img/sprites/Novos 8bits/units/grifo.png', name: 'Grifo', hp: 130, atk: 20, mp: 5, range: 1, abilities: ['flying', 'swift'], minLevel: 2, filter: 'none', tags: ['WING', 'SILVESTRE'], fav: ['FOREST', 'MOUNTAIN'] },
+        { e: '👻', sprite: 'img/sprites/Novos 8bits/units/banshe.png', name: 'Banshee', hp: 95, atk: 18, mp: 4, range: 2, abilities: ['dodge', 'bind'], minLevel: 2, filter: 'none', tags: ['UMBRAL', 'MYSTIC'], fav: ['SWAMP'] },
 
         // Deserto / Planície / Tempestade
-        { e: '🪱', sprite: 'img/boss/verme_areia.png', name: 'Verme de Areia', hp: 150, atk: 26, mp: 3, range: 1, abilities: ['camouflage', 'stun'], minLevel: 2, filter: 'none', tags: ['SAND', 'STALKER'], fav: ['DESERT'] },
+        { e: '🪱', sprite: 'img/sprites/Novos 8bits/boss/sand-worm.png', name: 'Verme de Areia', hp: 150, atk: 26, mp: 3, range: 1, abilities: ['camouflage', 'stun'], minLevel: 2, filter: 'none', tags: ['SAND', 'STALKER'], fav: ['DESERT'] },
         { e: '🐎', sprite: 'img/boss/pegaso.png', name: 'Pégaso', hp: 100, atk: 16, mp: 6, range: 1, abilities: ['flying', 'hit_run'], minLevel: 2, filter: 'none', tags: ['WING', 'CELESTIAL'], fav: ['PLAINS'] },
-        { e: '🦅', sprite: 'img/boss/ziz.png', name: 'Ziz', hp: 140, atk: 22, mp: 5, range: 2, abilities: ['flying', 'electric'], minLevel: 3, filter: 'none', tags: ['WING', 'ELECTRIC'], fav: ['PLAINS', 'MOUNTAIN'] },
+        { e: '🦅', sprite: 'img/sprites/Novos 8bits/units/thunderbird.png', name: 'Ziz', hp: 140, atk: 22, mp: 5, range: 2, abilities: ['flying', 'electric'], minLevel: 3, filter: 'none', tags: ['WING', 'ELECTRIC'], fav: ['PLAINS', 'MOUNTAIN'] },
         { e: '🐂', sprite: 'img/boss/mino.png', name: 'Minotauro da Tormenta', hp: 170, atk: 28, mp: 4, range: 1, abilities: ['corte_amplo', 'electric'], minLevel: 3, filter: 'none', tags: ['PRIMAL', 'ELECTRIC'], fav: ['PLAINS'] },
 
         // Abissal / Montanha / Umbral
         { e: '🦕', sprite: 'img/boss/plessiossauro.png', name: 'Plessiossauro', hp: 160, atk: 22, mp: 4, range: 1, abilities: ['dive', 'swift'], minLevel: 2, filter: 'none', tags: ['ABYSSAL', 'PRIMAL'], fav: ['WATER'] },
-        { e: '🐉', sprite: 'img/boss/wyvern_pedra.png', name: 'Wyvern de Pedra', hp: 150, atk: 20, mp: 4, range: 1, abilities: ['flying', 'carapace'], minLevel: 2, filter: 'none', tags: ['ROCK', 'WING'], fav: ['MOUNTAIN'] },
+        { e: '🐉', sprite: 'img/sprites/Novos 8bits/boss/basilisco.png', name: 'Wyvern de Pedra', hp: 150, atk: 20, mp: 4, range: 1, abilities: ['flying', 'carapace'], minLevel: 2, filter: 'none', tags: ['ROCK', 'WING'], fav: ['MOUNTAIN'] },
         { e: '🎃', sprite: 'img/boss/cavaleiro_cabeça.png', name: 'Cavaleiro Sem Cabeça', hp: 140, atk: 25, mp: 5, range: 1, abilities: ['hit_run', 'lifesteal'], minLevel: 3, filter: 'none', tags: ['UMBRAL', 'STALKER'], fav: ['DESERT', 'ASHES'] }
     ]
 };
@@ -1143,9 +1230,9 @@ const BEAST_SPRITE_MAP = {
     "Anubis": "img/sprites/Novos 8bits/leaders/anubis.png",
     "Aparição Argêntea": "img/sprites/aparicao_argentea.png",
     "Apófis": "img/sprites/Novos 8bits/boss/apophis.png",
-    "Aranha Gigante": "img/units/aranha.png",
+    "Aranha Gigante": "img/sprites/Novos 8bits/boss/manticore.png",
     "Aravata": "img/sprites/Novos 8bits/boss/aravata.png",
-    "Arcanjo Caído": "img/boss/arcanjo_caido.png",
+    "Arcanjo Caído": "img/sprites/Novos 8bits/leaders/angel-2.png",
     "Arcanjo Celestial": "img/sprites/Novos 8bits/leaders/angel.png",
     "Arqueira": "img/sprites/Novos 8bits/leaders/darkelf-archer.png",
     "Arqueira Elfa": "img/sprites/Novos 8bits/leaders/elf-archer-2.png",
@@ -1176,7 +1263,7 @@ const BEAST_SPRITE_MAP = {
     "Caçador Feroz": "img/sprites/Novos 8bits/leaders/hunter.png",
     "Caçador Ocre": "img/sprites/cacador_ocre.png",
     "Centauro Espectral": "img/sprites/Novos 8bits/leaders/mystic-centaur.png",
-    "Centopeia Metálica": "img/boss/centopeia-metalica.png",
+    "Centopeia Metálica": "img/sprites/Novos 8bits/boss/centopeia-metalica-3.png",
     "Cerberus Sanguinário": "img/sprites/Novos 8bits/boss/cerberus.png",
     "Cervo": "img/sprites/Novos 8bits/units/cervo.png",
     "Cervo da Neve": "img/sprites/Novos 8bits/units/cervo-neve.png",
@@ -1184,12 +1271,12 @@ const BEAST_SPRITE_MAP = {
     "Cobra": "img/sprites/Novos 8bits/units/snake.png",
     "Coelho": "img/units/coelho.png",
     "Colosso Umbral": "img/sprites/colosso_umbral.png",
-    "Coruja": "img/units/coruja.png",
+    "Coruja": "img/sprites/Novos 8bits/units/moon-owl.png",
     "Coruja Lunar": "img/sprites/Novos 8bits/units/moon-owl.png",
     "Coruja Maga": "img/sprites/Novos 8bits/boss/coruja-mage.png",
     "Coruja Umbral": "img/sprites/Novos 8bits/units/coruja-umbral.png",
     "Corvo": "img/sprites/Novos 8bits/units/crow.png",
-    "Crocodilo": "img/units/crocodilo.png",
+    "Crocodilo": "img/boss/spino.png",
     "Cthullu": "img/sprites/Novos 8bits/leaders/cthulhu.png",
     "Cuca": "img/sprites/Novos 8bits/boss/cuca.png",
     "Cão Infernal": "img/sprites/Novos 8bits/units/hotweiler.png",
@@ -1208,7 +1295,7 @@ const BEAST_SPRITE_MAP = {
     "Dragão-Morcego": "img/sprites/Novos 8bits/units/bat-dragon.png",
     "Elefante": "img/sprites/Novos 8bits/units/elephant.png",
     "Elfo da Floresta": "img/sprites/Novos 8bits/leaders/forest-elf.png",
-    "Enguia Elétrica": "img/units/enguia.png",
+    "Enguia Elétrica": "img/sprites/Novos 8bits/units/snake.png",
     "Entidade Ancestral I": "img/sprites/Novos 8bits/boss/IMG-20261118-WA0017.png",
     "Entidade Ancestral II": "img/sprites/Novos 8bits/boss/IMG-20261118-WA0019.png",
     "Entidade Ancestral III": "img/sprites/Novos 8bits/boss/IMG-20261118-WA0020.png",
@@ -1216,7 +1303,7 @@ const BEAST_SPRITE_MAP = {
     "Escorpião": "img/sprites/Novos 8bits/units/scorpion.png",
     "Escorpião Ancião": "img/units/escorpiao_imperador.png",
     "Espectro Violeta": "img/sprites/espectro_violeta.png",
-    "Esqueleto Guerreiro": "img/units/zumbi.png",
+    "Esqueleto Guerreiro": "img/sprites/esqueleto.png",
     "Feiticeira": "img/sprites/Novos 8bits/leaders/feiticeira.png",
     "Feiticeira Elemental": "img/sprites/Novos 8bits/leaders/feiticeira.png",
     "Feiticeira Umbral": "img/sprites/Novos 8bits/leaders/feiticeira-umbral.png",
@@ -1245,8 +1332,8 @@ const BEAST_SPRITE_MAP = {
     "Filhote de Tartaruga": "img/sprites/Novos 8bits/baby/baby-turtle.png",
     "Filhote de Trent": "img/sprites/Novos 8bits/baby/baby-trent.png",
     "Filhote de Tuiuiú": "img/sprites/Novos 8bits/baby/baby-tuiuiu.png",
-    "Fornalha": "img/boss/fornalha.png",
-    "Fênix": "img/boss/fenix.png",
+    "Fornalha": "img/sprites/Novos 8bits/boss/ifrit.png",
+    "Fênix": "img/boss/fenghuang.png",
     "Gatuno": "img/sprites/Novos 8bits/units/gatuno.png",
     "Goblin Saqueador": "img/sprites/goblin.png",
     "Golem Rochoso Zumbi": "img/sprites/Novos 8bits/boss/zombie-rock-golem.png",
@@ -1260,14 +1347,14 @@ const BEAST_SPRITE_MAP = {
     "Guerreiro Fantasma": "img/sprites/Novos 8bits/leaders/ghost-warrior.png",
     "Gárgula Anciã": "img/sprites/Novos 8bits/leaders/gargula.png",
     "Gárgula Cinzenta": "img/sprites/gargula_cinzenta.png",
-    "Hidra Venenosa": "img/boss/hidra_venenosa.png",
+    "Hidra Venenosa": "img/sprites/Novos 8bits/boss/grootslang.png",
     "Hipocampo": "img/sprites/Novos 8bits/units/hipocampo.png",
     "Hotweiler": "img/sprites/Novos 8bits/units/hotweiler.png",
     "Hotweiler Ancião": "img/units/hotweiler_anciao.png",
     "Ifrit": "img/sprites/Novos 8bits/boss/ifrit.png",
     "Jackalope": "img/sprites/Novos 8bits/units/jackalope.png",
     "Javali": "img/sprites/Novos 8bits/units/javali.png",
-    "Kraken": "img/boss/kraken.png",
+    "Kraken": "img/boss/bake_kujira.png",
     "Lagarto": "img/sprites/Novos 8bits/units/lizard.png",
     "Lagarto Escarlate": "img/sprites/Novos 8bits/units/lizard.png",
     "Lagarto de Fogo": "img/sprites/Novos 8bits/boss/fire-lizard.png",
@@ -1278,7 +1365,7 @@ const BEAST_SPRITE_MAP = {
     "Leão": "img/sprites/Novos 8bits/units/lion.png",
     "Leão Selvagem": "img/sprites/Novos 8bits/units/lion.png",
     "Leão do Céu": "img/sprites/leao-do-ceu.png",
-    "Lobisomem": "img/boss/werewolf.png",
+    "Lobisomem": "img/units/lobo_alfa.png",
     "Lobo": "img/units/lobo.png",
     "Lobo do Inverno": "img/units/lobo_alfa.png",
     "Lord Vampiro": "img/sprites/Novos 8bits/leaders/vampire.png",
@@ -1310,12 +1397,12 @@ const BEAST_SPRITE_MAP = {
     "Papabard": "img/sprites/Novos 8bits/units/papabard.png",
     "Pesadelo": "img/sprites/Novos 8bits/units/nightmare.png",
     "Pinguim": "img/sprites/Novos 8bits/units/penguin.png",
-    "Pinguim Deslizante": "img/units/pinguim_deslizante.png",
-    "Pinguim Imperador": "img/units/pinguim_imperador.png",
+    "Pinguim Deslizante": "img/sprites/Novos 8bits/units/penguin-2.png",
+    "Pinguim Imperador": "img/sprites/Novos 8bits/units/penguin-3.png",
     "Plessiossauro": "img/sprites/Novos 8bits/boss/plessio.png",
     "Porco-Espinho Elétrico": "img/sprites/Novos 8bits/units/eletric-hedgehog.png",
     "Príncipe Elfo Sombrio": "img/sprites/Novos 8bits/leaders/darkelf-prince.png",
-    "Pássaro": "img/units/pardal.png",
+    "Pássaro": "img/sprites/passaro.png",
     "Pássaro Trovão": "img/sprites/Novos 8bits/units/thunderbird.png",
     "Pégaso": "img/sprites/Novos 8bits/units/pegaso.png",
     "Qilin": "img/sprites/Novos 8bits/units/qilin.png",
@@ -1327,7 +1414,7 @@ const BEAST_SPRITE_MAP = {
     "Rei Bárbaro": "img/sprites/Novos 8bits/leaders/human-king-dia.png",
     "Rei Humano": "img/sprites/Novos 8bits/leaders/human-king-dia.png",
     "Rei Leão": "img/boss/rei_leao.png",
-    "Rei Lich de Eldorado": "img/sprites/Novos 8bits/boss/eldorado-lichking.png",
+    "Rei Lich de Eldorado": "img/boss/lich_king_eldorado.png",
     "Rei Tartaruga Alado": "img/sprites/Novos 8bits/units/winged-turtleking.png",
     "Rei dos Ratos": "img/sprites/Novos 8bits/boss/ratking.png",
     "Saci-Pererê": "img/sprites/Novos 8bits/units/perere.png",
@@ -1366,16 +1453,16 @@ const BEAST_SPRITE_MAP = {
     "Verme de Areia": "img/sprites/Novos 8bits/boss/sand-worm.png",
     "Vigia Abissal": "img/sprites/vigia_abissal.png",
     "Wendigo": "img/sprites/Novos 8bits/boss/wendigo.png",
-    "Wyvern Ancião": "img/boss/wyvern_pedra2.png",
-    "Wyvern de Pedra": "img/boss/wyvern_pedra.png",
+    "Wyvern Ancião": "img/sprites/Novos 8bits/boss/earth-dragon.png",
+    "Wyvern de Pedra": "img/sprites/Novos 8bits/boss/basilisco.png",
     "Yeti": "img/sprites/Novos 8bits/boss/yeti.png",
     "Yeti Atirador": "img/sprites/Novos 8bits/boss/yeti.png",
     "Yurei": "img/sprites/Novos 8bits/boss/yurei.png",
-    "Ziz": "img/boss/ziz.png",
+    "Ziz": "img/sprites/Novos 8bits/units/thunderbird.png",
     "Zumbi": "img/sprites/Novos 8bits/units/zombie.png",
     "Zumbi Ancião": "img/sprites/Novos 8bits/units/zombie.png",
     "Águia Real": "img/units/aguia.png",
-    "Árvore Umbralina": "img/boss/arvore_umbralina.png",
+    "Árvore Umbralina": "img/sprites/Novos 8bits/boss/treeslender.png",
 };
 
 const ARTIFACTS = [
