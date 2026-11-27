@@ -3425,8 +3425,14 @@ class Renderer {
             let flipH = isWaterTerrain ? false : ((hash >> 3) % 2) === 0;
 
             // ANIMAÇÃO DE TILES (4 frames) — prioridade sobre sprite estático
+            // Variantes por pasta (ex.: desert1/desert2): a variante do hex é
+            // escolhida deterministicamente pela posição (hash) e cada uma
+            // tem seu próprio ciclo de 4 frames.
             if (hex.terrain && hex.terrain.animated) {
-                const frames = hex.terrain.frames;
+                let frames = hex.terrain.frames;
+                if (hex.terrain.variantFrames && hex.terrain.variantFrames.length > 0) {
+                    frames = hex.terrain.variantFrames[hash % hex.terrain.variantFrames.length];
+                }
                 const frameMs = hex.terrain.frameMs || 200;
                 const now = performance.now();
                 if (this._animStart === 0) this._animStart = now;
@@ -4552,8 +4558,14 @@ class KingdomRenderer {
             let flipH = isWaterTerrain ? false : ((hash >> 3) % 2) === 0;
 
             // ANIMAÇÃO DE TILES (4 frames) — prioridade sobre sprite estático
+            // Variantes por pasta (ex.: desert1/desert2): a variante do hex é
+            // escolhida deterministicamente pela posição (hash) e cada uma
+            // tem seu próprio ciclo de 4 frames.
             if (hex.terrain && hex.terrain.animated) {
-                const frames = hex.terrain.frames;
+                let frames = hex.terrain.frames;
+                if (hex.terrain.variantFrames && hex.terrain.variantFrames.length > 0) {
+                    frames = hex.terrain.variantFrames[hash % hex.terrain.variantFrames.length];
+                }
                 const frameMs = hex.terrain.frameMs || 200;
                 const now = performance.now();
                 if (this._animStart === 0) this._animStart = now;

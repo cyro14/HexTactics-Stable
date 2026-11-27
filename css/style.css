@@ -3814,6 +3814,20 @@ button.btn-success {
     overflow-y: auto;
 }
 
+/* Em telas estreitas o conteúdo (3 cards) excede a altura da viewport;
+   centralizar verticalmente com overflow recorta o topo (o título some).
+   Alinhar ao topo no mobile mantém o título visível e permite rolar. */
+@media (max-width: 600px) {
+    #mode-screen {
+        justify-content: flex-start;
+    }
+
+    #mode-screen .mode-content {
+        padding-top: 14px;
+        padding-bottom: 20px;
+    }
+}
+
 .mode-content {
     max-width: 1020px;
     gap: 18px;

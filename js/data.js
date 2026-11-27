@@ -29,115 +29,154 @@ const getActiveArtifacts = () => { return (game && game.isRoguelite) ? activeArt
 // DADOS DO JOGO: TERRENOS (Mapeamento Imagem 6x11)
 // ==========================================
 
+// ==========================================
+// DADOS DO JOGO: TERRENOS — HEXES AQUARELADOS (img/tiles/hexes/<terreno>/)
+// ==========================================
+// Cada pasta de terreno guarda as variações numeradas (ex.: desert1, desert2)
+// e cada variação é uma animação de 4 frames. Terrenos com mais de uma
+// variação usam `variantFrames`: cada hex escolhe a variante pela posição
+// (determinístico), e todas as variantes animam juntas.
+
+// Frames aquarelados padrão: hex_watercolor_frame_<i>_of_4_<stamp>.png
+const wcFrames = (folder, stamps) => stamps.map((ts, i) => `img/tiles/hexes/${folder}/hex_watercolor_frame_${i + 1}_of_4_${ts}.png`);
+// Frames numerados: <base><i>_of_4[_<stamp>].png (ex.: desert2_1_of_4.png, mountain1_2_of_4_1795...png)
+const numFrames = (folder, base, stamps) => [1, 2, 3, 4].map(i => `img/tiles/hexes/${folder}/${base}${i}_of_4${stamps ? '_' + stamps[i - 1] : ''}.png`);
+
 const TERRAINS = {
-    // Linha 0: Planície (8-bit)
-    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#5b8c42', icon: null, customSprite: 'img/tiles/hexes/grassland.png', cols: 1, variations: [{ x: 0, y: 0 }] },
+    // Planície — 2 variações aquareladas, 4 frames cada
+    PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#5b8c42', icon: null, animated: true, frameMs: 200,
+        variantFrames: [
+            numFrames('grassland', 'grassland1_', ['1795710075605', '1795710075720', '1795710075796', '1795710075865']),
+            wcFrames('grassland', ['1795795463526', '1795795463639', '1795795463700', '1795795463758'])
+        ],
+        frames: numFrames('grassland', 'grassland1_', ['1795710075605', '1795710075720', '1795710075796', '1795710075865']),
+        customSprite: 'img/tiles/hexes/grassland/grassland1_1_of_4_1795710075605.png', cols: 1, variations: [{ x: 0, y: 0 }] },
 
-    // Linha 1: Floresta (8-bit) — animada 4 frames
+    // Floresta — 2 variações aquareladas, 4 frames cada
     FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#1e4d2b', icon: null, animated: true, frameMs: 200,
-        frames: [
-            'img/tiles/hexes/forest_hex_frame_1_of_4.png',
-            'img/tiles/hexes/forest_hex_frame_2_of_4.png',
-            'img/tiles/hexes/forest_hex_frame_3_of_4.png',
-            'img/tiles/hexes/forest_hex_frame_4_of_4.png'
+        variantFrames: [
+            numFrames('forest', 'forest1_'),
+            wcFrames('forest', ['1795794344629', '1795794344702', '1795794344780', '1795794344864'])
         ],
-        customSprite: 'img/tiles/hexes/forest_hex_frame_1_of_4.png', cols: 1, variations: [{ x: 0, y: 1 }] },
+        frames: numFrames('forest', 'forest1_'),
+        customSprite: 'img/tiles/hexes/forest/forest1_1_of_4.png', cols: 1, variations: [{ x: 0, y: 1 }] },
 
-    // Linha 2: Montanha (8-bit)
-    MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#5b5b5b', icon: null, customSprite: 'img/tiles/hexes/mountain.png', cols: 1, variations: [{ x: 0, y: 2 }] },
+    // Montanha — 2 variações aquareladas, 4 frames cada
+    MOUNTAIN: { id: 'MOUNTAIN', name: 'Montanha', cost: 3, def: 0.40, color: '#5b5b5b', icon: null, animated: true, frameMs: 220,
+        variantFrames: [
+            numFrames('mountain', 'mountain1_', ['1795734374695', '1795734374793', '1795734374860', '1795734374990']),
+            wcFrames('mountain', ['1795796394012', '1795796394109', '1795796394175', '1795796394273'])
+        ],
+        frames: numFrames('mountain', 'mountain1_', ['1795734374695', '1795734374793', '1795734374860', '1795734374990']),
+        customSprite: 'img/tiles/hexes/mountain/mountain1_1_of_4_1795734374695.png', cols: 1, variations: [{ x: 0, y: 2 }] },
 
-    // Linha 3: Água / Lago (8-bit) — animada 4 frames
+    // Água / Lago — aquarela animada
     WATER: { id: 'WATER', name: 'Lago', cost: 2, def: -0.10, color: '#3498db', icon: null, animated: true, frameMs: 160,
-        frames: [
-            'img/tiles/hexes/shallowwater_hex_frame_1_of_4.png',
-            'img/tiles/hexes/shallowwater_hex_frame_2_of_4.png',
-            'img/tiles/hexes/shallowwater_hex_frame_3_of_4.png',
-            'img/tiles/hexes/shallowwater_hex_frame_4_of_4.png'
-        ],
-        customSprite: 'img/tiles/hexes/shallowwater_hex_frame_1_of_4.png', cols: 1, variations: [{ x: 0, y: 3 }] },
+        frames: wcFrames('shallowwater', ['1795715587916', '1795715588036', '1795715588111', '1795715588191']),
+        customSprite: 'img/tiles/hexes/shallowwater/hex_watercolor_frame_1_of_4_1795715587916.png', cols: 1, variations: [{ x: 0, y: 3 }] },
 
-    // Linha 4: Mar / Água Funda (8-bit) — animada 4 frames
+    // Mar / Água Funda — 2 variações aquareladas, 4 frames cada
     SEA: { id: 'SEA', name: 'Mar', cost: 3, def: -0.20, color: '#2980b9', icon: null, animated: true, frameMs: 160,
-        frames: [
-            'img/tiles/hexes/deepwater_hex_frame_1_of_4.png',
-            'img/tiles/hexes/deepwater_hex_frame_2_of_4.png',
-            'img/tiles/hexes/deepwater_hex_frame_3_of_4.png',
-            'img/tiles/hexes/deepwater_hex_frame_4_of_4.png'
+        variantFrames: [
+            numFrames('deepwater', 'deepwater1_', ['1795715732469', '1795715732574', '1795715732657', '1795715732744']),
+            wcFrames('deepwater', ['1795796288004', '1795796288086', '1795796288152', '1795796288266'])
         ],
-        customSprite: 'img/tiles/hexes/deepwater_hex_frame_1_of_4.png', cols: 1, variations: [{ x: 0, y: 4 }] },
+        frames: numFrames('deepwater', 'deepwater1_', ['1795715732469', '1795715732574', '1795715732657', '1795715732744']),
+        customSprite: 'img/tiles/hexes/deepwater/deepwater1_1_of_4_1795715732469.png', cols: 1, variations: [{ x: 0, y: 4 }] },
 
-    // Linha 5: Deserto (sprite individual)
-    DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#e6c86e', icon: null, customSprite: 'img/tiles/hexes/desert_hex_tile.png', cols: 1, variations: [{ x: 0, y: 0 }] },
+    // Deserto — 2 variações (desert1/desert2), 4 frames cada
+    DESERT: { id: 'DESERT', name: 'Deserto', cost: 2, def: 0.00, color: '#e6c86e', icon: null, animated: true, frameMs: 200,
+        variantFrames: [
+            ['img/tiles/hexes/desert/desert1_frame_1_of_4.png', 'img/tiles/hexes/desert/desert1_2_of_4.png', 'img/tiles/hexes/desert/desert1_3_of_4.png', 'img/tiles/hexes/desert/desert1_4_of_4.png'],
+            numFrames('desert', 'desert2_')
+        ],
+        frames: ['img/tiles/hexes/desert/desert1_frame_1_of_4.png', 'img/tiles/hexes/desert/desert1_2_of_4.png', 'img/tiles/hexes/desert/desert1_3_of_4.png', 'img/tiles/hexes/desert/desert1_4_of_4.png'],
+        customSprite: 'img/tiles/hexes/desert/desert1_frame_1_of_4.png', cols: 1, variations: [{ x: 0, y: 0 }] },
 
-    // Linha 6: Neve (sprite individual)
-    SNOW: { id: 'SNOW', name: 'Neve', cost: 2, def: -0.15, color: '#cce6f4', icon: null, customSprite: 'img/tiles/hexes/snow_hex_tile_64x64_1795263616491.png', cols: 1, variations: [{ x: 0, y: 0 }] },
+    // Neve — aquarela animada
+    SNOW: { id: 'SNOW', name: 'Neve', cost: 2, def: -0.15, color: '#cce6f4', icon: null, animated: true, frameMs: 200,
+        frames: wcFrames('snow', ['1795730046633', '1795730046748', '1795730046873', '1795730046932']),
+        customSprite: 'img/tiles/hexes/snow/hex_watercolor_frame_1_of_4_1795730046633.png', cols: 1, variations: [{ x: 0, y: 0 }] },
 
-    // Linha 7: Pântano (8-bit) — animada 4 frames
+    // Pântano — 2 variações aquareladas, 4 frames cada
     SWAMP: { id: 'SWAMP', name: 'Pântano', cost: 2, def: 0.10, color: '#3b5323', icon: null, animated: true, frameMs: 240,
-        frames: [
-            'img/tiles/hexes/swamp_hex_frame_1_of_4.png',
-            'img/tiles/hexes/swamp_hex_frame_2_of_4.png',
-            'img/tiles/hexes/swamp_hex_frame_3_of_4.png',
-            'img/tiles/hexes/swamp_hex_frame_4_of_4.png'
+        variantFrames: [
+            numFrames('swamp', 'swamp1_', ['1795782979805', '1795782979860', '1795782979922', '1795782980055']),
+            wcFrames('swamp', ['1795796688043', '1795796688131', '1795796688233', '1795796688319'])
         ],
-        customSprite: 'img/tiles/hexes/swamp_hex_frame_1_of_4.png', cols: 1, variations: [{ x: 0, y: 7 }] },
+        frames: numFrames('swamp', 'swamp1_', ['1795782979805', '1795782979860', '1795782979922', '1795782980055']),
+        customSprite: 'img/tiles/hexes/swamp/swamp1_1_of_4_1795782979805.png', cols: 1, variations: [{ x: 0, y: 7 }] },
 
-    // Linha 8: Vila
-    VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#c49a45', icon: null, variations: [{ x: 0, y: 8 }, { x: 1, y: 8 }, { x: 2, y: 8 }, { x: 3, y: 8 }, { x: 4, y: 8 }, { x: 5, y: 8 }] },
+    // Vila — 2 variações aquareladas, 4 frames cada
+    VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#c49a45', icon: null, animated: true, frameMs: 220,
+        variantFrames: [
+            wcFrames('vilages', ['1795735258037', '1795735258221', '1795735258289', '1795735258351']),
+            wcFrames('vilages', ['1795742025674', '1795742025781', '1795742025885', '1795742025942'])
+        ],
+        frames: wcFrames('vilages', ['1795735258037', '1795735258221', '1795735258289', '1795735258351']),
+        customSprite: 'img/tiles/hexes/vilages/hex_watercolor_frame_1_of_4_1795735258037.png', cols: 1, variations: [{ x: 0, y: 8 }, { x: 1, y: 8 }, { x: 2, y: 8 }, { x: 3, y: 8 }, { x: 4, y: 8 }, { x: 5, y: 8 }] },
 
-    // Linha 9: Castelo
-    CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#3d444a', icon: null, variations: [{ x: 0, y: 9 }, { x: 1, y: 9 }, { x: 2, y: 9 }, { x: 3, y: 9 }, { x: 4, y: 9 }, { x: 5, y: 9 }] },
+    // Castelo — 2 variações aquareladas, 4 frames cada
+    CASTLE: { id: 'CASTLE', name: 'Castelo', cost: 1, def: 0.60, color: '#3d444a', icon: null, animated: true, frameMs: 220,
+        variantFrames: [
+            wcFrames('castles', ['1795742883022', '1795742883115', '1795742883183', '1795742883284']),
+            wcFrames('castles', ['1795743114034', '1795743114159', '1795743114314', '1795743114414'])
+        ],
+        frames: wcFrames('castles', ['1795742883022', '1795742883115', '1795742883183', '1795742883284']),
+        customSprite: 'img/tiles/hexes/castles/hex_watercolor_frame_1_of_4_1795742883022.png', cols: 1, variations: [{ x: 0, y: 9 }, { x: 1, y: 9 }, { x: 2, y: 9 }, { x: 3, y: 9 }, { x: 4, y: 9 }, { x: 5, y: 9 }] },
 
-    // Linha 10: Savana (sprite individual)
-    SAVANNA: { id: 'SAVANNA', name: 'Savana', cost: 1, def: 0.05, color: '#d4a373', icon: null, customSprite: 'img/tiles/hexes/savana_hex_tile_64x64_1795263753728.png', cols: 1, variations: [{ x: 0, y: 0 }] },
+    // Savana — aquarela animada
+    SAVANNA: { id: 'SAVANNA', name: 'Savana', cost: 1, def: 0.05, color: '#d4a373', icon: null, animated: true, frameMs: 200,
+        frames: wcFrames('savana', ['1795783795871', '1795783796018', '1795783796090', '1795783796184']),
+        customSprite: 'img/tiles/hexes/savana/hex_watercolor_frame_1_of_4_1795783795871.png', cols: 1, variations: [{ x: 0, y: 0 }] },
 
-    // Linha 11: Floresta em Chamas
+    // Floresta em Chamas (fallback do tileset antigo)
     BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas', cost: 2, def: -0.50, color: '#d35400', icon: null, variations: [{ x: 0, y: 11 }, { x: 1, y: 11 }, { x: 2, y: 11 }, { x: 3, y: 11 }, { x: 4, y: 11 }, { x: 5, y: 11 }] },
 
-    // Linha 12 (Reaproveitando a linha 11 do sprite!): Cinzas
-    ASHES: { id: 'ASHES', name: 'Cinzas', cost: 2, def: -0.50, color: '#444444', icon: null, variations: [{ x: 0, y: 12 }, { x: 1, y: 12 }, { x: 2, y: 12 }, { x: 3, y: 12 }, { x: 4, y: 12 }, { x: 5, y: 12 }] },
+    // Cinzas — frames da raiz (pasta cinzas/ ainda vazia)
+    ASHES: { id: 'ASHES', name: 'Cinzas', cost: 2, def: -0.50, color: '#444444', icon: null, animated: true, frameMs: 220,
+        frames: [
+            'img/tiles/hexes/cinzas_hex_frame_1_of_4.png',
+            'img/tiles/hexes/cinzas_hex_frame_2_of_4.png',
+            'img/tiles/hexes/cinzas_hex_frame_3_of_4.png',
+            'img/tiles/hexes/cinzas_hex_frame_4_of_4.png'
+        ],
+        customSprite: 'img/tiles/hexes/cinzas_hex_frame_1_of_4.png', cols: 1, variations: [{ x: 0, y: 12 }, { x: 1, y: 12 }, { x: 2, y: 12 }, { x: 3, y: 12 }, { x: 4, y: 12 }, { x: 5, y: 12 }] },
 
-    // Água Eletrizada (Agora com sprite individual!)
+    // Água Eletrizada (sprite individual antigo; sem pasta nova)
     ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada', cost: 2, def: -0.50, color: '#1c4568', icon: null, customSprite: 'img/tiles/agua_eletrificada.png', cols: 6 },
 
     // ==========================================
-    // NOVOS TERRENOS ESPECIAIS (Sprites Individuais)
+    // TERRENOS ESPECIAIS (hexes aquarelados em img/tiles/hexes/)
     // ==========================================
     QUICKSAND: { id: 'QUICKSAND', name: 'Areia Movediça', cost: 3, def: -0.20, color: '#d4a373', icon: null, customSprite: 'img/tiles/areia_movedica.png', cols: 6 },
     LAVA_RIFT: { id: 'LAVA_RIFT', name: 'Fenda de Lava', cost: 3, def: -0.50, color: '#c0392b', icon: null, animated: true, frameMs: 120,
-        frames: [
-            'img/tiles/hexes/lava_hex_frame_1_of_4_1795211363310.png',
-            'img/tiles/hexes/lava_hex_frame_2_of_4_1795211363352.png',
-            'img/tiles/hexes/lava_hex_frame_3_of_4_1795211363410.png',
-            'img/tiles/hexes/lava_hex_frame_4_of_4_1795211363508.png'
+        variantFrames: [
+            numFrames('lava', 'lava1_', ['1795782969897', '1795782969945', '1795782970067', '1795782970140']),
+            wcFrames('lava', ['1795796577192', '1795796577351', '1795796577444', '1795796577547'])
         ],
-        customSprite: 'img/tiles/fenda_lava.png', cols: 6 },
+        frames: numFrames('lava', 'lava1_', ['1795782969897', '1795782969945', '1795782970067', '1795782970140']),
+        customSprite: 'img/tiles/hexes/lava/lava1_1_of_4_1795782969897.png', cols: 1 },
     MANA_RIFT: { id: 'MANA_RIFT', name: 'Fenda de Mana', cost: 2, def: 0.10, color: '#9b59b6', icon: null, animated: true, frameMs: 200,
-        frames: [
-            'img/tiles/hexes/mana_hex_frame_1_of_4_1795264235267.png',
-            'img/tiles/hexes/mana_hex_frame_2_of_4_1795264235303.png',
-            'img/tiles/hexes/mana_hex_frame_3_of_4_1795264235352.png',
-            'img/tiles/hexes/mana_hex_frame_4_of_4_1795264235415.png'
-        ],
-        customSprite: 'img/tiles/fenda_mana.png', cols: 6 },
+        frames: wcFrames('mana', ['1795734575616', '1795734575725', '1795734575859', '1795734575941']),
+        customSprite: 'img/tiles/hexes/mana/hex_watercolor_frame_1_of_4_1795734575616.png', cols: 1 },
     REEF: { id: 'REEF', name: 'Recife', cost: 2, def: 0.30, color: '#1abc9c', icon: null, animated: true, frameMs: 180,
-        frames: [
-            'img/tiles/hexes/recife_hex_frame_1_of_4_1795265360928.png',
-            'img/tiles/hexes/recife_hex_frame_2_of_4_1795265360977.png',
-            'img/tiles/hexes/recife_hex_frame_3_of_4_1795265361089.png',
-            'img/tiles/hexes/recife_hex_frame_4_of_4_1795265361158.png'
+        frames: wcFrames('recife', ['1795729406865', '1795729406968', '1795729407061', '1795729407122']),
+        customSprite: 'img/tiles/hexes/recife/hex_watercolor_frame_1_of_4_1795729406865.png', cols: 1 },
+    // Jazida de DNA — 2 variações (dna1 + aquarela), 4 frames cada
+    DNA_DEPOSIT: { id: 'DNA_DEPOSIT', name: 'Jazida de DNA', cost: 1, def: 0.10, color: '#2ecc71', icon: null, animated: true, frameMs: 200,
+        variantFrames: [
+            numFrames('dna', 'dna1_'),
+            wcFrames('dna', ['1795743523345', '1795743523485', '1795743523640', '1795743523707'])
         ],
-        customSprite: 'img/tiles/recife.png', cols: 6 },
-    DNA_DEPOSIT: { id: 'DNA_DEPOSIT', name: 'Jazida de DNA', cost: 1, def: 0.10, color: '#2ecc71', icon: null, customSprite: 'img/tiles/jazida_dna.png', cols: 6 },
+        frames: numFrames('dna', 'dna1_'),
+        customSprite: 'img/tiles/hexes/dna/dna1_1_of_4.png', cols: 1 },
     GOLD_DEPOSIT: { id: 'GOLD_DEPOSIT', name: 'Jazida de Ouro', cost: 1, def: 0.10, color: '#f1c40f', icon: null, animated: true, frameMs: 140,
-        frames: [
-            'img/tiles/hexes/gold_hex_frame_1_of_4_1795264592704.png',
-            'img/tiles/hexes/gold_hex_frame_2_of_4_1795264592744.png',
-            'img/tiles/hexes/gold_hex_frame_3_of_4_1795264592833.png',
-            'img/tiles/hexes/gold_hex_frame_4_of_4_1795264592889.png'
-        ],
-        customSprite: 'img/tiles/jazida_ouro.png', cols: 6 },
-    BLACK_MARKET: { id: 'BLACK_MARKET', name: 'Mercado Negro', cost: 1, def: 0.20, color: '#2c3e50', icon: null, customSprite: 'img/tiles/mercado_negro.png', cols: 6 }
+        frames: wcFrames('gold', ['1795742561503', '1795742561663', '1795742561742', '1795742561802']),
+        customSprite: 'img/tiles/hexes/gold/hex_watercolor_frame_1_of_4_1795742561503.png', cols: 1 },
+    BLACK_MARKET: { id: 'BLACK_MARKET', name: 'Mercado Negro', cost: 1, def: 0.20, color: '#2c3e50', icon: null, animated: true, frameMs: 200,
+        frames: wcFrames('merchant', ['1795746191036', '1795746191186', '1795746191254', '1795746191329']),
+        customSprite: 'img/tiles/hexes/merchant/hex_watercolor_frame_1_of_4_1795746191036.png', cols: 1 }
 };
 
 const TAGS = {
