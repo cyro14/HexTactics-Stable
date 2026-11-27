@@ -23,6 +23,18 @@
         <!-- Overlay atmosférico: efeitos ambiente vivem aqui em rAF próprio,
              SEM redescer o mapa inteiro a cada frame -->
         <canvas id="ambientCanvas" class="layer" style="pointer-events:none; z-index:5;"></canvas>
+        <!-- Tela de loading: cobre a batalha enquanto os assets pré-carregam -->
+        <div id="battle-loading" class="battle-loading hidden">
+            <svg class="bl-spinner" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-dasharray="42" stroke-dashoffset="14" stroke-linecap="round" />
+            </svg>
+            <span class="bl-title">Preparando o campo de batalha</span>
+            <div class="bl-bar">
+                <div class="bl-bar-fill" id="bl-bar-fill"></div>
+            </div>
+            <span class="bl-pct" id="bl-pct">...</span>
+        </div>
         <div id="ui-layer" class="layer">
             <!-- Banner de Turno: REMOVIDO — o indicador oficial é o campo
                  fixo #turn-badge (ao lado da mana) na barra superior -->

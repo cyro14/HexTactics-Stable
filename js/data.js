@@ -41,16 +41,15 @@ const getActiveArtifacts = () => { return (game && game.isRoguelite) ? activeArt
 const wcFrames = (folder, stamps) => stamps.map((ts, i) => `img/tiles/hexes/${folder}/hex_watercolor_frame_${i + 1}_of_4_${ts}.png`);
 // Frames numerados: <base><i>_of_4[_<stamp>].png (ex.: desert2_1_of_4.png, mountain1_2_of_4_1795...png)
 const numFrames = (folder, base, stamps) => [1, 2, 3, 4].map(i => `img/tiles/hexes/${folder}/${base}${i}_of_4${stamps ? '_' + stamps[i - 1] : ''}.png`);
+// Frames com total arbitrario: <prefixo><i>_of_<denom>[_<stamp>].png
+// count = quantos frames existem; denom = denominador no nome do arquivo (ex.: shallow2 -> _of_12)
+const hexFramesN = (folder, prefix, count, stamps, denom) => Array.from({ length: count }, (_, k) => `img/tiles/hexes/${folder}/${prefix}${k + 1}_of_${denom || count}${stamps ? '_' + stamps[k] : ''}.png`);
 
 const TERRAINS = {
-    // Planície — 2 variações aquareladas, 4 frames cada
+    // Planície — aquarela animada
     PLAINS: { id: 'PLAINS', name: 'Planície', cost: 1, def: 0.00, color: '#5b8c42', icon: null, animated: true, frameMs: 200,
-        variantFrames: [
-            numFrames('grassland', 'grassland1_', ['1795710075605', '1795710075720', '1795710075796', '1795710075865']),
-            wcFrames('grassland', ['1795795463526', '1795795463639', '1795795463700', '1795795463758'])
-        ],
-        frames: numFrames('grassland', 'grassland1_', ['1795710075605', '1795710075720', '1795710075796', '1795710075865']),
-        customSprite: 'img/tiles/hexes/grassland/grassland1_1_of_4_1795710075605.png', cols: 1, variations: [{ x: 0, y: 0 }] },
+        frames: wcFrames('grassland', ['1795795463526', '1795795463639', '1795795463700', '1795795463758']),
+        customSprite: 'img/tiles/hexes/grassland/hex_watercolor_frame_1_of_4_1795795463526.png', cols: 1, variations: [{ x: 0, y: 0 }] },
 
     // Floresta — 2 variações aquareladas, 4 frames cada
     FOREST: { id: 'FOREST', name: 'Floresta', cost: 2, def: 0.20, color: '#1e4d2b', icon: null, animated: true, frameMs: 200,
@@ -70,15 +69,20 @@ const TERRAINS = {
         frames: numFrames('mountain', 'mountain1_', ['1795734374695', '1795734374793', '1795734374860', '1795734374990']),
         customSprite: 'img/tiles/hexes/mountain/mountain1_1_of_4_1795734374695.png', cols: 1, variations: [{ x: 0, y: 2 }] },
 
-    // Água / Lago — aquarela animada
+    // Água / Lago — 2 variações: shallow (4 frames) + shallow2 (12 frames)
     WATER: { id: 'WATER', name: 'Lago', cost: 2, def: -0.10, color: '#3498db', icon: null, animated: true, frameMs: 160,
-        frames: wcFrames('shallowwater', ['1795715587916', '1795715588036', '1795715588111', '1795715588191']),
-        customSprite: 'img/tiles/hexes/shallowwater/hex_watercolor_frame_1_of_4_1795715587916.png', cols: 1, variations: [{ x: 0, y: 3 }] },
+        variantFrames: [
+            hexFramesN('shallowwater', 'shallow_', 4, ['1795715587916', '1795715588036', '1795715588111', '1795715588191']),
+            hexFramesN('shallowwater', 'shallow2_', 10, ['1795812992339', '1795812992393', '1795812992445', '1795812992505', '1795812992589', '1795812992666', '1795812992738', '1795812992865', '1795812992901', '1795812992946'], 12)
+        ],
+        frames: hexFramesN('shallowwater', 'shallow_', 4, ['1795715587916', '1795715588036', '1795715588111', '1795715588191']),
+        customSprite: 'img/tiles/hexes/shallowwater/shallow_1_of_4_1795715587916.png', cols: 1, variations: [{ x: 0, y: 3 }] },
 
-    // Mar / Água Funda — 2 variações aquareladas, 4 frames cada
+    // Mar / Água Funda — 3 variações: deepwater1 (4), deep (6) e aquarela (4)
     SEA: { id: 'SEA', name: 'Mar', cost: 3, def: -0.20, color: '#2980b9', icon: null, animated: true, frameMs: 160,
         variantFrames: [
             numFrames('deepwater', 'deepwater1_', ['1795715732469', '1795715732574', '1795715732657', '1795715732744']),
+            hexFramesN('deepwater', 'deep_', 6, ['1795808610306', '1795808610363', '1795808610408', '1795808610473', '1795808610634', '1795808610715']),
             wcFrames('deepwater', ['1795796288004', '1795796288086', '1795796288152', '1795796288266'])
         ],
         frames: numFrames('deepwater', 'deepwater1_', ['1795715732469', '1795715732574', '1795715732657', '1795715732744']),
@@ -98,14 +102,10 @@ const TERRAINS = {
         frames: wcFrames('snow', ['1795730046633', '1795730046748', '1795730046873', '1795730046932']),
         customSprite: 'img/tiles/hexes/snow/hex_watercolor_frame_1_of_4_1795730046633.png', cols: 1, variations: [{ x: 0, y: 0 }] },
 
-    // Pântano — 2 variações aquareladas, 4 frames cada
+    // Pântano — aquarela animada
     SWAMP: { id: 'SWAMP', name: 'Pântano', cost: 2, def: 0.10, color: '#3b5323', icon: null, animated: true, frameMs: 240,
-        variantFrames: [
-            numFrames('swamp', 'swamp1_', ['1795782979805', '1795782979860', '1795782979922', '1795782980055']),
-            wcFrames('swamp', ['1795796688043', '1795796688131', '1795796688233', '1795796688319'])
-        ],
-        frames: numFrames('swamp', 'swamp1_', ['1795782979805', '1795782979860', '1795782979922', '1795782980055']),
-        customSprite: 'img/tiles/hexes/swamp/swamp1_1_of_4_1795782979805.png', cols: 1, variations: [{ x: 0, y: 7 }] },
+        frames: wcFrames('swamp', ['1795796688043', '1795796688131', '1795796688233', '1795796688319']),
+        customSprite: 'img/tiles/hexes/swamp/hex_watercolor_frame_1_of_4_1795796688043.png', cols: 1, variations: [{ x: 0, y: 7 }] },
 
     // Vila — 2 variações aquareladas, 4 frames cada
     VILLAGE: { id: 'VILLAGE', name: 'Vila', cost: 1, def: 0.20, color: '#c49a45', icon: null, animated: true, frameMs: 220,
@@ -133,15 +133,10 @@ const TERRAINS = {
     // Floresta em Chamas (fallback do tileset antigo)
     BURNING_FOREST: { id: 'BURNING_FOREST', name: 'Floresta em Chamas', cost: 2, def: -0.50, color: '#d35400', icon: null, variations: [{ x: 0, y: 11 }, { x: 1, y: 11 }, { x: 2, y: 11 }, { x: 3, y: 11 }, { x: 4, y: 11 }, { x: 5, y: 11 }] },
 
-    // Cinzas — frames da raiz (pasta cinzas/ ainda vazia)
+    // Cinzas — aquarela animada (pasta cinzas/)
     ASHES: { id: 'ASHES', name: 'Cinzas', cost: 2, def: -0.50, color: '#444444', icon: null, animated: true, frameMs: 220,
-        frames: [
-            'img/tiles/hexes/cinzas_hex_frame_1_of_4.png',
-            'img/tiles/hexes/cinzas_hex_frame_2_of_4.png',
-            'img/tiles/hexes/cinzas_hex_frame_3_of_4.png',
-            'img/tiles/hexes/cinzas_hex_frame_4_of_4.png'
-        ],
-        customSprite: 'img/tiles/hexes/cinzas_hex_frame_1_of_4.png', cols: 1, variations: [{ x: 0, y: 12 }, { x: 1, y: 12 }, { x: 2, y: 12 }, { x: 3, y: 12 }, { x: 4, y: 12 }, { x: 5, y: 12 }] },
+        frames: wcFrames('cinzas', ['1795785239298', '1795785239370', '1795785239427', '1795785239504']),
+        customSprite: 'img/tiles/hexes/cinzas/hex_watercolor_frame_1_of_4_1795785239298.png', cols: 1, variations: [{ x: 0, y: 12 }, { x: 1, y: 12 }, { x: 2, y: 12 }, { x: 3, y: 12 }, { x: 4, y: 12 }, { x: 5, y: 12 }] },
 
     // Água Eletrizada (sprite individual antigo; sem pasta nova)
     ELECTRIC_WATER: { id: 'ELECTRIC_WATER', name: 'Água Eletrizada', cost: 2, def: -0.50, color: '#1c4568', icon: null, customSprite: 'img/tiles/agua_eletrificada.png', cols: 6 },

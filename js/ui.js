@@ -4434,6 +4434,86 @@ async function triggerStageEnd(win) {
     }
 }
 
+// ==========================================
+// TELA DE LOADING DA BATALHA
+// ==========================================
+// Pré-carrega o primeiro frame de cada terreno presente no mapa + os sprites
+// das unidades; os frames restantes das animações continuam carregando em
+// segundo plano (o engine repinta sozinho quando cada um chega).
+window.showBattleLoading = function () {
+    const el = $('battle-loading');
+    if (!el) return;
+    el.classList.remove('hidden');
+    el.classList.remove('bl-done');
+    window.setBattleLoadingProgress(0, 0);
+};
+
+window.setBattleLoadingProgress = function (loaded, total) {
+    const fill = $('bl-bar-fill'), pct = $('bl-pct');
+    if (!fill || !pct) return;
+    const p = total > 0 ? Math.round((loaded / total) * 100) : 0;
+    fill.style.width = p + '%';
+    pct.textContent = total > 0 ? (p + '%') : '...';
+};
+
+window.hideBattleLoading = function () {
+    const el = $('battle-loading');
+    if (!el || el.classList.contains('hidden')) return;
+    el.classList.add('bl-done');
+    setTimeout(() => { el.classList.add('hidden'); el.classList.remove('bl-done'); }, 280);
+};
+
+function collectBattleAssetUrls() {
+    const urls = new Set();
+    try {
+        if (game && game.map) {
+            for (const hex of game.map.values()) {
+                const t = hex.terrain;
+                if (!t) continue;
+                if (t.customSprite) urls.add(t.customSprite);
+                if (t.frames && t.frames[0]) urls.add(t.frames[0]);
+                if (t.variantFrames) t.variantFrames.forEach(v => { if (v && v[0]) urls.add(v[0]); });
+            }
+        }
+        if (game && game.units) {
+            for (const u of game.units) {
+                const s = (typeof u.getSprite === 'function') ? u.getSprite() : u.sprite;
+                if (s) urls.add(s);
+            }
+        }
+    } catch (e) { /* defensivo: nunca bloquear a entrada */ }
+    return [...urls].filter(Boolean);
+}
+
+window.preloadBattleAssets = function () {
+    const list = collectBattleAssetUrls();
+    const total = list.length;
+    if (total === 0) return Promise.resolve();
+    let loaded = 0;
+    window.setBattleLoadingProgress(0, total);
+    return Promise.all(list.map(src => new Promise(res => {
+        const img = new Image();
+        const done = () => { loaded++; window.setBattleLoadingProgress(loaded, total); res(); };
+        img.onload = done;
+        img.onerror = done;
+        img.src = src;
+    })));
+};
+
+window.queueRestOfBattleFrames = function () {
+    try {
+        if (!game || !game.map) return;
+        for (const hex of game.map.values()) {
+            const t = hex.terrain;
+            if (!t) continue;
+            const queue = [];
+            if (t.frames) queue.push(...t.frames);
+            if (t.variantFrames) t.variantFrames.forEach(v => { if (v) queue.push(...v); });
+            queue.forEach(f => { const i = new Image(); i.src = f; });
+        }
+    } catch (e) { /* silencioso */ }
+};
+
 function advanceCampaign() {
     game.isAnimating = true; // Trava o jogo imediatamente!
     const tb = $('turn-blocker');
@@ -4455,6 +4535,7 @@ function advanceCampaign() {
     hide('event-screen');
     hide('continent-map-screen');
     hide('kingdom-screen');
+    showBattleLoading();
     show('game-container');
 
     setTimeout(async () => {
@@ -4463,6 +4544,11 @@ function advanceCampaign() {
         game.battleStartRoster = r.map(u => ({ name: u.name, baseName: u.baseName, level: u.level, isLeader: u.isLeader }));
         game.generateCampaignMap(r);
         renderer.initCamera(true);
+
+        // LOADING: pré-carrega tiles/sprites do mapa gerado antes de revelar
+        await preloadBattleAssets();
+        hideBattleLoading();
+        queueRestOfBattleFrames();
 
         // INTRO ORDENADA: segura o banner de turno do updateUI — a fila
         // mostra tudo na sequência certa (chefe → objetivo → turno)
@@ -4560,6 +4646,8 @@ function startGame(load, isRoguelite = false, leaderId = null, isDuel = false, o
         game.currentTurn = 1;
         game.gameOver = false; game.selectPlayerLeader();
         updateUI(); renderer.initCamera(true); show('game-container');
+        showBattleLoading();
+        preloadBattleAssets().then(() => { hideBattleLoading(); queueRestOfBattleFrames(); });
     } else {
         if (localStorage.getItem(sk)) localStorage.removeItem(sk);
         game.currentLevel = 1; game.gold = 0; game.dna = 0; game.isRoguelite = isRoguelite; rosterMemory = []; deployedRoster = []; game.inventory = [];
