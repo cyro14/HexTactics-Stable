@@ -2058,6 +2058,11 @@ class Game {
 // ==========================================
 // RENDERER E DESENHO DA TELA
 // ==========================================
+// ZOOM DE CÂMERA: multiplica o hex "encaixado na tela" para renderizar a
+// arte HD dos tiles perto da resolução nativa (hexágonos grandes, sem
+// reduzir a textura). O mapa escapa da viewport e navega com pan/pinça.
+const HEX_ZOOM = 1.5;
+
 class Renderer {
     constructor(canvas, game) {
         this.canvas = canvas;
@@ -2138,11 +2143,11 @@ class Renderer {
             if (portrait) {
                 // 0.9: folga lateral para o HUD respirar; piso 22 mantém os
                 // hexágonos legíveis (o mínimo do pinçar é 20)
-                this.hexSize = Math.max(Math.min((this.canvas.width / mapW) * 0.9, (this.canvas.height / mapH) * 0.95), 22);
+                this.hexSize = Math.max(Math.min((this.canvas.width / mapW) * 0.9, (this.canvas.height / mapH) * 0.95) * HEX_ZOOM, 22);
             } else {
-                // 0.95: mapa maior por padrão — sprites mais perto da resolução
-                // nativa da arte = nítidos sem precisar de zoom manual
-                this.hexSize = Math.max(Math.min(this.canvas.width / mapW, this.canvas.height / mapH) * 0.95, 40);
+                // 0.95 · HEX_ZOOM: mapa maior por padrão — hexágonos grandes
+                // com a arte HD perto da resolução nativa; navegação por pan/pinça
+                this.hexSize = Math.max(Math.min(this.canvas.width / mapW, this.canvas.height / mapH) * 0.95 * HEX_ZOOM, 40);
             }
             this._lastPortraitFit = portrait;
         }

@@ -779,7 +779,7 @@ window.openContinentMap = function() {
     $('gameCanvas').addEventListener('wheel', e => {
         if (game.currentTurn !== FACTIONS.PLAYER.id || game.gameOver || game.isAnimating) return;
         e.preventDefault();
-        renderer.hexSize = Math.max(20, Math.min(renderer.hexSize + (e.deltaY > 0 ? -5 : 5), 120));
+        renderer.hexSize = Math.max(20, Math.min(renderer.hexSize + (e.deltaY > 0 ? -5 : 5), 220));
         renderer.draw();
     }, { passive: false });
 
@@ -799,7 +799,7 @@ window.openContinentMap = function() {
         if (e.touches.length === 2 && initialPinchDist) {
             e.preventDefault();
             const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-            renderer.hexSize = Math.max(20, Math.min(initialHexSize * (dist / initialPinchDist), 120));
+            renderer.hexSize = Math.max(20, Math.min(initialHexSize * (dist / initialPinchDist), 220));
             renderer.draw();
         } else if (e.touches.length === 1 && startX !== undefined) {
             const dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
